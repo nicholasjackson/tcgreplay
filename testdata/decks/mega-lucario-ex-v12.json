@@ -1,0 +1,51 @@
+{
+  "id": "v12",
+  "name": "Mega Lucario ex v12",
+  "owner": "NicJackson",
+  "format": "Standard",
+  "adopted": "2026-10-04",
+  "derivation": "v11 with -1 Rocky Fighting Energy, +1 Team Rocket's Petrel",
+  "counts": { "pokemon": 16, "trainer": 32, "energy": 12, "total": 60, "basic_pokemon": 11 },
+  "pokemon": [
+    { "count": 3, "name": "Riolu", "set": "MEG", "number": "76", "stage": "Basic", "hp": 80, "type": "Fighting", "weakness": "Psychic" },
+    { "count": 3, "name": "Mega Lucario ex", "set": "MEG", "number": "179", "stage": "Stage 1", "evolves_from": "Riolu", "hp": 340, "type": "Fighting", "weakness": "Psychic", "prizes": 3 },
+    { "count": 3, "name": "Solrock", "set": "MEG", "number": "75", "stage": "Basic", "hp": 110, "type": "Fighting", "weakness": "Grass" },
+    { "count": 2, "name": "Lunatone", "set": "MEG", "number": "74", "stage": "Basic", "hp": 110, "type": "Fighting", "weakness": "Grass" },
+    { "count": 2, "name": "Makuhita", "set": "MEG", "number": "72", "stage": "Basic", "hp": 80, "type": "Fighting", "weakness": "Psychic" },
+    { "count": 2, "name": "Hariyama", "set": "MEG", "number": "73", "stage": "Stage 1", "evolves_from": "Makuhita", "hp": 150, "type": "Fighting", "weakness": "Psychic" },
+    { "count": 1, "name": "Meowth ex", "set": "POR", "number": "121", "stage": "Basic", "hp": 170, "type": "Colorless", "weakness": "Fighting", "prizes": 2 }
+  ],
+  "trainer": [
+    { "count": 4, "name": "Lillie's Determination", "set": "MEG", "number": "119", "kind": "Supporter" },
+    { "count": 4, "name": "Fighting Gong", "set": "MEG", "number": "116", "kind": "Item" },
+    { "count": 4, "name": "Poké Pad", "set": "POR", "number": "81", "kind": "Item" },
+    { "count": 4, "name": "Premium Power Pro", "set": "MEG", "number": "124", "kind": "Item" },
+    { "count": 4, "name": "Ultra Ball", "set": "MEG", "number": "131", "kind": "Item" },
+    { "count": 2, "name": "Judge", "set": "POR", "number": "76", "kind": "Supporter" },
+    { "count": 2, "name": "Boss's Orders", "set": "MEG", "number": "114", "kind": "Supporter" },
+    { "count": 2, "name": "Air Balloon", "set": "BLK", "number": "79", "kind": "Tool" },
+    { "count": 2, "name": "Gravity Mountain", "set": "SSP", "number": "177", "kind": "Stadium" },
+    { "count": 1, "name": "Wally's Compassion", "set": "MEG", "number": "132", "kind": "Supporter" },
+    { "count": 1, "name": "Team Rocket's Petrel", "set": "DRI", "number": "176", "kind": "Supporter" },
+    { "count": 1, "name": "Switch", "set": "MEG", "number": "130", "kind": "Item" },
+    { "count": 1, "name": "Maximum Belt", "set": "TEF", "number": "154", "kind": "Tool", "ace_spec": true }
+  ],
+  "energy": [
+    { "count": 10, "name": "Basic Fighting Energy", "set": "MEE", "number": "14", "kind": "Basic" },
+    { "count": 2, "name": "Rocky Fighting Energy", "set": "POR", "number": "87", "kind": "Special" }
+  ],
+  "key_attacks": [
+    { "pokemon": "Mega Lucario ex", "name": "Aura Jab", "cost": "F", "damage": 130, "rider": "Attach up to 3 Basic [F] Energy from your discard pile to your Benched Pokemon in any way you like." },
+    { "pokemon": "Mega Lucario ex", "name": "Mega Brave", "cost": "FF", "damage": 270, "rider": "During your next turn, this Pokemon can't use Mega Brave." },
+    { "pokemon": "Hariyama", "name": "Wild Press", "cost": "FFF", "damage": 210, "rider": "This Pokemon also does 70 damage to itself." },
+    { "pokemon": "Solrock", "name": "Cosmic Beam", "cost": "F", "damage": 70, "rider": "Does nothing if you have no Lunatone on your Bench. Damage is not affected by Weakness or Resistance." },
+    { "pokemon": "Lunatone", "name": "Power Gem", "cost": "FF", "damage": 50 },
+    { "pokemon": "Meowth ex", "name": "Tuck Tail", "cost": "CCC", "damage": 60, "rider": "Put this Pokemon and all attached cards into your hand." },
+    { "pokemon": "Riolu", "name": "Accelerating Stab", "cost": "F", "damage": 30, "rider": "self-lock" }
+  ],
+  "key_abilities": [
+    { "pokemon": "Lunatone", "name": "Lunar Cycle", "text": "Once during your turn, if you have Solrock in play, you may discard a Basic [F] Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn." },
+    { "pokemon": "Hariyama", "name": "Heave-Ho Catcher", "text": "Once during your turn, when you play this Pokemon from your hand to evolve 1 of your Pokemon, you may use this Ability. Switch in 1 of your opponent's Benched Pokemon to the Active Spot." },
+    { "pokemon": "Meowth ex", "name": "Last-Ditch Catch", "text": "Once during your turn, when you play this Pokemon from your hand onto your Bench, search your deck for a Supporter card, reveal it and put it into your hand." }
+  ]
+}

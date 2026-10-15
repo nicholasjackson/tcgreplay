@@ -1,0 +1,494 @@
+{
+  "schema_version": 1,
+  "generated": "2026-10-15",
+  "description": "Pokemon TCG Live battle logs from NicJackson's point of view, pasted verbatim, for replay-tool test data. 'expected' fields were derived by parsing each log and cross-checked against the hand-kept game ledger.",
+  "source": "Pokemon TCG Live in-client battle log export (text)",
+  "player": "NicJackson",
+  "decks": [
+    {
+      "id": "v12",
+      "text": "decks/mega-lucario-ex-v12.txt",
+      "json": "decks/mega-lucario-ex-v12.json"
+    }
+  ],
+  "corpus_parser_notes": [
+    "Logs are from the player's point of view: the player's own draws are itemised; the opponent's are usually only 'drew N cards'.",
+    "Owner prefixes are the only way to tell sides apart; in the mirror every card name appears on both sides.",
+    "Damage-counter placement and movement lines sometimes print the ACTING player as the owner of the TARGET (e.g. 'X put 13 damage counters on X's Lunatone' when the Lunatone is NicJackson's).",
+    "Multiple copies of the same card are not uniquely identified; 'A's Mega Lucario ex was switched with A's Mega Lucario ex' is normal.",
+    "Damage breakdown blocks are indented with three spaces and a bullet (U+2022) and are followed by one or two blank lines.",
+    "Both straight (U+0027) and curly (U+2019) apostrophes occur: headline attack lines use 'on X’s Pokémon'; most other lines use straight apostrophes.",
+    "Prize lines are 'X took a Prize card.' or 'X took N Prize cards.'; the cards taken are hidden for the opponent ('A card was added to X's hand.').",
+    "Borrowed attacks appear as the borrowing Pokémon using the borrowed attack's name; Night Joker additionally emits a '- X chose <attack>' sub-line AFTER the damage line.",
+    "A log can end mid-turn on a concession, so the last turn block may contain only a draw."
+  ],
+  "games": [
+    {
+      "id": "2026-10-10_aml3w_metagross-doublade",
+      "file": "logs/2026-10-10_aml3w_metagross-doublade.txt",
+      "bytes": 13212,
+      "lines": 318,
+      "sha256": "c917935bae1c912361cf99bead096381a6f6f7bb61a4220e6de7d1ab4c53a5a3",
+      "date": "2026-10-10",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "Aml3w",
+      "opponent_archetype": "Steven's Metagross ex / Doublade / Genesect ex",
+      "family": "hand scaler",
+      "expected": {
+        "coin_toss_winner": "Aml3w",
+        "went_first": "NicJackson",
+        "turns": {
+          "NicJackson": 6,
+          "Aml3w": 6
+        },
+        "total_turns": 12,
+        "prizes_taken": {
+          "NicJackson": 4,
+          "Aml3w": 4
+        },
+        "winner": "NicJackson",
+        "end_reason": "opponent_conceded"
+      },
+      "ledger_result": "W-concession",
+      "borrowed_attacks": [],
+      "features": [
+        "mulligan",
+        "damage_breakdown",
+        "weakness_applied",
+        "self_damage",
+        "tool_attached",
+        "heal",
+        "retreat_with_discard",
+        "evolution_via_supporter_subline",
+        "both_players_hand_reset",
+        "hidden_opponent_draws",
+        "concession"
+      ],
+      "parser_quirks": [
+        "Same-name switch: 'NicJackson's Mega Lucario ex' switched with itself by name; multiple copies are indistinguishable in the log."
+      ],
+      "note": "Weaponized Swords scales off Honedge/Doublade/Aegislash revealed from HAND; Judge strips it."
+    },
+    {
+      "id": "2026-10-11_absolutezere_ns-zoroark",
+      "file": "logs/2026-10-11_absolutezere_ns-zoroark.txt",
+      "bytes": 15613,
+      "lines": 356,
+      "sha256": "d2cf48d64841b0f62584ec4eb8e6f5dfba0cd3b4e08d492024307968eecf0979",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "Absolutezere",
+      "opponent_archetype": "N's Zoroark ex / N's Zekrom / Munkidori / Pecharunt ex",
+      "family": "counter-box",
+      "expected": {
+        "coin_toss_winner": "NicJackson",
+        "went_first": "Absolutezere",
+        "turns": {
+          "Absolutezere": 7,
+          "NicJackson": 6
+        },
+        "total_turns": 13,
+        "prizes_taken": {
+          "NicJackson": 3,
+          "Absolutezere": 5
+        },
+        "winner": "Absolutezere",
+        "end_reason": "self_conceded"
+      },
+      "ledger_result": "L-conceded",
+      "borrowed_attacks": [
+        "Rampaging Thunder",
+        "Shred",
+        "Virtuous Flame (all via Night Joker)"
+      ],
+      "features": [
+        "damage_breakdown",
+        "self_damage",
+        "special_condition_poisoned",
+        "pokemon_checkup",
+        "stadium_replaced",
+        "tool_attached",
+        "retreat_with_discard",
+        "damage_counters_moved",
+        "borrowed_attack_choice_line",
+        "hidden_opponent_draws",
+        "concession"
+      ],
+      "parser_quirks": [
+        "Same-name switch: 'Absolutezere's N's Zoroark ex' switched with itself by name; multiple copies are indistinguishable in the log."
+      ],
+      "note": "Night Joker borrows Benched N's attacks without paying their cost; Munkidori moves poison counters."
+    },
+    {
+      "id": "2026-10-11_carlos0oz_dragapult",
+      "file": "logs/2026-10-11_carlos0oz_dragapult.txt",
+      "bytes": 9850,
+      "lines": 238,
+      "sha256": "5349a0bc13f1492309787769c480eaebc9445ecc42ce77e76709610d1e067b51",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "carlos0oz",
+      "opponent_archetype": "Dragapult ex / Budew / Dudunsparce / Fezandipiti ex",
+      "family": "spread/snipe",
+      "expected": {
+        "coin_toss_winner": "carlos0oz",
+        "went_first": "carlos0oz",
+        "turns": {
+          "carlos0oz": 5,
+          "NicJackson": 4
+        },
+        "total_turns": 9,
+        "prizes_taken": {
+          "NicJackson": 5,
+          "carlos0oz": 0
+        },
+        "winner": "NicJackson",
+        "end_reason": "opponent_conceded"
+      },
+      "ledger_result": "W-concession",
+      "borrowed_attacks": [],
+      "features": [
+        "mulligan",
+        "damage_breakdown",
+        "weakness_applied",
+        "coin_flip_in_game",
+        "stadium_replaced",
+        "tool_attached",
+        "damage_counters_placed",
+        "hidden_opponent_draws",
+        "concession"
+      ],
+      "parser_quirks": [],
+      "note": "Opponent took 3 mulligans; Gravity Mountain makes Dragapult ex 290 so Mega Brave + PPP (300) kills."
+    },
+    {
+      "id": "2026-10-11_chef0221_alakazam-dusclops",
+      "file": "logs/2026-10-11_chef0221_alakazam-dusclops.txt",
+      "bytes": 10312,
+      "lines": 252,
+      "sha256": "93a7654c4167b54ff5c7d135dafa978dc6a21df388d684d9a9f73e1964809fcb",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "CHEF0221",
+      "opponent_archetype": "Alakazam / Dusclops / Budew / Fezandipiti ex",
+      "family": "hand scaler",
+      "expected": {
+        "coin_toss_winner": "CHEF0221",
+        "went_first": "NicJackson",
+        "turns": {
+          "NicJackson": 6,
+          "CHEF0221": 5
+        },
+        "total_turns": 11,
+        "prizes_taken": {
+          "NicJackson": 6,
+          "CHEF0221": 2
+        },
+        "winner": "NicJackson",
+        "end_reason": "all_prizes_taken"
+      },
+      "ledger_result": "W-earned",
+      "borrowed_attacks": [],
+      "features": [
+        "damage_breakdown",
+        "weakness_applied",
+        "tool_attached",
+        "energy_on_attach_trigger",
+        "retreat_with_discard",
+        "devolve",
+        "evolution_via_supporter_subline",
+        "both_players_hand_reset",
+        "special_red_card",
+        "damage_counters_placed",
+        "self_ko_ability",
+        "simultaneous_ko",
+        "double_switch",
+        "hidden_opponent_draws"
+      ],
+      "parser_quirks": [],
+      "note": "Three Dusclops Cursed Blast self-KOs handed over three prizes; Special Red Card and Strange Timepiece appear."
+    },
+    {
+      "id": "2026-10-11_gatorusoju_mewex-bronzong-lopunny",
+      "file": "logs/2026-10-11_gatorusoju_mewex-bronzong-lopunny.txt",
+      "bytes": 10286,
+      "lines": 266,
+      "sha256": "4ec8e74e06eb7eae8f16ed7054bfe1089fb9d6e7004aee43a8f6aa62129195a2",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "GatoruSoju",
+      "opponent_archetype": "Mew ex / Bronzong / Mega Lopunny ex / Dusknoir / Mega Kangaskhan ex",
+      "family": "counter-box",
+      "expected": {
+        "coin_toss_winner": "NicJackson",
+        "went_first": "GatoruSoju",
+        "turns": {
+          "GatoruSoju": 7,
+          "NicJackson": 6
+        },
+        "total_turns": 13,
+        "prizes_taken": {
+          "NicJackson": 4,
+          "GatoruSoju": 6
+        },
+        "winner": "GatoruSoju",
+        "end_reason": "all_prizes_taken"
+      },
+      "ledger_result": "L-played",
+      "borrowed_attacks": [
+        "Gale Thrust (Mega Lopunny ex via Mew ex Memory Helix)"
+      ],
+      "features": [
+        "damage_breakdown",
+        "weakness_applied",
+        "resistance_applied",
+        "zero_damage_attack",
+        "energy_on_attach_trigger",
+        "evolution_via_supporter_subline",
+        "both_players_hand_reset",
+        "damage_counters_placed",
+        "self_ko_ability",
+        "simultaneous_ko",
+        "hidden_opponent_draws"
+      ],
+      "parser_quirks": [
+        "Gale Thrust breakdown prints 'Damage: 170' twice but only 170 is added (60 + 170 = 230); do not sum breakdown lines blindly.",
+        "Resistance prints as a negative breakdown line and as 'took -30 less damage' (double negative) in the headline."
+      ],
+      "note": "Bronzong Evolution Jammer lock; Mew ex borrows Gale Thrust for 230, 460 into a Psychic-weak Mega."
+    },
+    {
+      "id": "2026-10-11_haagensen_ns-zoroark-rematch",
+      "file": "logs/2026-10-11_haagensen_ns-zoroark-rematch.txt",
+      "bytes": 11517,
+      "lines": 276,
+      "sha256": "3006de729e31d804c1f34f7d2a3ebeb7b869c905c6ed46458bb94fc26623bd1d",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "Haagensen",
+      "opponent_archetype": "N's Zoroark ex / N's Zekrom / N's Reshiram / Fezandipiti ex / Pecharunt ex",
+      "family": "counter-box",
+      "expected": {
+        "coin_toss_winner": "NicJackson",
+        "went_first": "Haagensen",
+        "turns": {
+          "Haagensen": 5,
+          "NicJackson": 5
+        },
+        "total_turns": 10,
+        "prizes_taken": {
+          "NicJackson": 6,
+          "Haagensen": 4
+        },
+        "winner": "NicJackson",
+        "end_reason": "all_prizes_taken"
+      },
+      "ledger_result": "W-earned",
+      "borrowed_attacks": [
+        "Rampaging Thunder",
+        "Virtuous Flame (via Night Joker)"
+      ],
+      "features": [
+        "mulligan",
+        "damage_breakdown",
+        "stadium_replaced",
+        "tool_attached",
+        "retreat_with_discard",
+        "special_red_card",
+        "borrowed_attack_choice_line",
+        "two_card_item",
+        "hidden_opponent_draws"
+      ],
+      "parser_quirks": [
+        "Player's own mulligan: the revealed list is the REJECTED hand; the replacement hand is never printed.",
+        "Transformation Tome must be played as two copies but is logged as a single 'played' line."
+      ],
+      "note": "Rematch of the Absolutezere archetype; Mega Brave + Belt 320 one-shots a 280 HP Zoroark. Transformation Tome and Special Red Card."
+    },
+    {
+      "id": "2026-10-11_ledjo23_alakazam-donk",
+      "file": "logs/2026-10-11_ledjo23_alakazam-donk.txt",
+      "bytes": 2116,
+      "lines": 61,
+      "sha256": "8b1ed91720c794b860b395f9c0e4748ec0bf542b4aeae308a36419e8e41e89bf",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "LeDjo23",
+      "opponent_archetype": "Alakazam / Budew / Duskull",
+      "family": "hand scaler",
+      "expected": {
+        "coin_toss_winner": "LeDjo23",
+        "went_first": "NicJackson",
+        "turns": {
+          "NicJackson": 2,
+          "LeDjo23": 2
+        },
+        "total_turns": 4,
+        "prizes_taken": {
+          "NicJackson": 0,
+          "LeDjo23": 1
+        },
+        "winner": "LeDjo23",
+        "end_reason": "bench_out"
+      },
+      "ledger_result": "L-donk",
+      "borrowed_attacks": [],
+      "features": [
+        "damage_breakdown",
+        "weakness_applied",
+        "energy_on_attach_trigger",
+        "evolution_via_supporter_subline",
+        "damage_counters_placed",
+        "hidden_opponent_draws",
+        "bench_out"
+      ],
+      "parser_quirks": [],
+      "note": "Shortest game: lone Solrock, two dead draws, bench-out on the opponent's second turn."
+    },
+    {
+      "id": "2026-10-11_lukiees_mirror",
+      "file": "logs/2026-10-11_lukiees_mirror.txt",
+      "bytes": 12602,
+      "lines": 328,
+      "sha256": "5ed8db313bf72fb5ad0e31ad9b5401a00824c83ce0b05633cda5e7c018a579f6",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "Lukiees",
+      "opponent_archetype": "Mega Lucario ex mirror (Lunatone/Solrock, Salvatore, Dudunsparce)",
+      "family": "mirror",
+      "expected": {
+        "coin_toss_winner": "Lukiees",
+        "went_first": "Lukiees",
+        "turns": {
+          "Lukiees": 8,
+          "NicJackson": 8
+        },
+        "total_turns": 16,
+        "prizes_taken": {
+          "NicJackson": 6,
+          "Lukiees": 3
+        },
+        "winner": "NicJackson",
+        "end_reason": "all_prizes_taken"
+      },
+      "ledger_result": "W-earned",
+      "borrowed_attacks": [],
+      "features": [
+        "damage_breakdown",
+        "weakness_applied",
+        "tool_attached",
+        "heal",
+        "retreat_with_discard",
+        "evolution_via_supporter_subline",
+        "both_players_hand_reset",
+        "hidden_opponent_draws"
+      ],
+      "parser_quirks": [],
+      "note": "Both sides share card names, so owner prefixes are mandatory. Same Mega uses Mega Brave then Aura Jab on consecutive turns."
+    },
+    {
+      "id": "2026-10-11_screennameadded_mewex-froslass-dragapult",
+      "file": "logs/2026-10-11_screennameadded_mewex-froslass-dragapult.txt",
+      "bytes": 9490,
+      "lines": 224,
+      "sha256": "ed71ff0cbc8ae351a0c507bf7b8e07d8d2c83924a35ae9f2ba297d4ff64ced84",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "Screennameadded",
+      "opponent_archetype": "Mew ex / Mega Froslass ex / Lillie's Clefairy ex / Dragapult ex",
+      "family": "counter-box",
+      "expected": {
+        "coin_toss_winner": "Screennameadded",
+        "went_first": "Screennameadded",
+        "turns": {
+          "Screennameadded": 4,
+          "NicJackson": 4
+        },
+        "total_turns": 8,
+        "prizes_taken": {
+          "NicJackson": 6,
+          "Screennameadded": 5
+        },
+        "winner": "NicJackson",
+        "end_reason": "all_prizes_taken"
+      },
+      "ledger_result": "W-earned",
+      "borrowed_attacks": [
+        "Full Moon Rondo",
+        "Resentful Refrain (via Mew ex Memory Helix)"
+      ],
+      "features": [
+        "damage_breakdown",
+        "weakness_applied",
+        "resistance_applied",
+        "self_damage",
+        "tool_attached",
+        "energy_on_attach_trigger",
+        "simultaneous_ko",
+        "hidden_opponent_draws"
+      ],
+      "parser_quirks": [
+        "Resentful Refrain breakdown has no 'Base damage' line ('6 cards in hand: 300 damage').",
+        "Resistance prints as a negative breakdown line and as 'took -30 less damage' (double negative) in the headline."
+      ],
+      "note": "Resentful Refrain counts the DEFENDER's hand; final Wild Press KOs both Actives and the attacker still wins."
+    },
+    {
+      "id": "2026-10-11_swayharri_alakazam-dudunsparce",
+      "file": "logs/2026-10-11_swayharri_alakazam-dudunsparce.txt",
+      "bytes": 8573,
+      "lines": 219,
+      "sha256": "35fbc31fc28700b6aca4ed47cf03f406055076b4dceb584dd2e775f3f049b889",
+      "date": "2026-10-11",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "SWAYharri",
+      "opponent_archetype": "Alakazam / Dudunsparce / Genesect / Dedenne",
+      "family": "hand scaler",
+      "expected": {
+        "coin_toss_winner": "NicJackson",
+        "went_first": "SWAYharri",
+        "turns": {
+          "SWAYharri": 5,
+          "NicJackson": 5
+        },
+        "total_turns": 10,
+        "prizes_taken": {
+          "NicJackson": 4,
+          "SWAYharri": 1
+        },
+        "winner": "NicJackson",
+        "end_reason": "opponent_conceded"
+      },
+      "ledger_result": "W-concession",
+      "borrowed_attacks": [],
+      "features": [
+        "damage_breakdown",
+        "weakness_applied",
+        "resistance_applied",
+        "stadium_replaced",
+        "tool_attached",
+        "energy_on_attach_trigger",
+        "tool_trigger_on_ko",
+        "evolution_via_supporter_subline",
+        "both_players_hand_reset",
+        "damage_counters_placed",
+        "hidden_opponent_draws",
+        "concession"
+      ],
+      "parser_quirks": [
+        "Resistance prints as a negative breakdown line and as 'took -30 less damage' (double negative) in the headline."
+      ],
+      "note": "Two-round Stadium war (Gravity Mountain vs Battle Cage); Lucky Helmet and Enriching Energy triggers."
+    }
+  ]
+}

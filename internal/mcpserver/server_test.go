@@ -1,0 +1,114 @@
+package mcpserver
+
+import (
+	"context"
+	"encoding/json"
+	"os"
+	"strings"
+	"testing"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/nicholasjackson/tcgreplay/internal/game"
+	"github.com/nicholasjackson/tcgreplay/internal/state"
+)
+
+func connect(t *testing.T) (*mcp.ClientSession, *game.Manager) {
+	t.Helper()
+	ctx := context.Background()
+	m := game.NewManager(t.TempDir(), nil)
+	srv := (&Server{M: m, Version: "test"}).MCP()
+	st, ct := mcp.NewInMemoryTransports()
+	if _, err := srv.Connect(ctx, st, nil); err != nil {
+		t.Fatal(err)
+	}
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "test"}, nil).Connect(ctx, ct, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { cs.Close() })
+	return cs, m
+}
+
+func call(t *testing.T, cs *mcp.ClientSession, name string, args map[string]any) (string, bool) {
+	t.Helper()
+	res, err := cs.CallTool(context.Background(), &mcp.CallToolParams{Name: name, Arguments: args})
+	if err != nil {
+		t.Fatalf("%s: %v", name, err)
+	}
+	var b strings.Builder
+	for _, c := range res.Content {
+		if tc, ok := c.(*mcp.TextContent); ok {
+			b.WriteString(tc.Text)
+		}
+	}
+	return b.String(), res.IsError
+}
+
+func TestMCPRoundTrip(t *testing.T) {
+	cs, m := connect(t)
+	if out, _ := call(t, cs, "ping", nil); out != "pong" {
+		t.Fatalf("ping: %q", out)
+	}
+	deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, isErr := call(t, cs, "new_game", map[string]any{"deck_p1": string(deck), "deck_p2": string(deck), "id": "mcp-1"})
+	if isErr {
+		t.Fatal(out)
+	}
+
+	out, isErr = call(t, cs, "get_state", nil)
+	if isErr {
+		t.Fatal(out)
+	}
+	var st struct {
+		Board state.BoardView `json:"board"`
+	}
+	if err := json.Unmarshal([]byte(out), &st); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Board.Sides[state.P2].Hand) != 7 || len(st.Board.Sides[state.P1].Hand) != 0 || st.Board.Sides[state.P1].HandCount != 7 {
+		t.Fatalf("seat view wrong: p2 hand %d, p1 visible %d", len(st.Board.Sides[state.P2].Hand), len(st.Board.Sides[state.P1].Hand))
+	}
+
+	// Reveal is refused in play mode; acting as p1 is refused too.
+	if out, isErr = call(t, cs, "get_state", map[string]any{"view": "reveal"}); !isErr {
+		t.Fatal("reveal allowed in play mode")
+	}
+	if out, isErr = call(t, cs, "draw", map[string]any{"seat": "p1"}); !isErr {
+		t.Fatal("acting as p1 allowed in play mode")
+	}
+
+	// Place an active: pull a Riolu (p2-1) into hand first via move.
+	g, _ := m.Current()
+	if l, _ := g.State().Find("p2-1"); l.Zone != state.Hand {
+		if out, isErr = call(t, cs, "move", map[string]any{"iid": "p2-1", "to": "hand"}); isErr {
+			t.Fatal(out)
+		}
+	}
+	out, isErr = call(t, cs, "place_active", map[string]any{"iid": "p2-1"})
+	if isErr || !strings.Contains(out, "Riolu") {
+		t.Fatalf("place_active: %s", out)
+	}
+	if out, isErr = call(t, cs, "bench", map[string]any{"iid": "p2-1"}); !isErr {
+		t.Fatal("benching a card already in play should fail")
+	}
+	if !strings.Contains(out, "not p2's hand") {
+		t.Fatalf("unhelpful error: %s", out)
+	}
+
+	out, _ = call(t, cs, "get_log", map[string]any{"since": 17})
+	if !strings.Contains(out, "p2-1 Riolu p2:hand → p2:active") {
+		t.Fatalf("log: %s", out)
+	}
+
+	out, isErr = call(t, cs, "set_mode", map[string]any{"mode": "review"})
+	if isErr {
+		t.Fatal(out)
+	}
+	if out, isErr = call(t, cs, "get_state", map[string]any{"view": "reveal"}); isErr {
+		t.Fatal(out)
+	}
+}
