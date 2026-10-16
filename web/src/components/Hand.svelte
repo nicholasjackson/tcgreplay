@@ -1,17 +1,35 @@
 <script>
   // A fanned hand. The human's hand is face up; the opponent's shows known
-  // cards face up and the rest as backs.
-  import { app } from '../lib/store.svelte.js';
+  // cards face up and the rest as backs. Face-up cards are sorted Pokémon,
+  // Trainers, Energy and by name, with copies of a card stacked together.
+  import { app, cardInfo } from '../lib/store.svelte.js';
   import { dropOnZone, handMenu, readDrag } from '../lib/actions.js';
   import Card from './Card.svelte';
 
   let { seat, small = false } = $props();
 
   const side = $derived(app.board.sides[seat]);
-  const cards = $derived.by(() => {
-    const known = side.hand || [];
+  const order = { Pokemon: 0, Trainer: 1, Energy: 2 };
+  // groups is the hand as fan slots: one per distinct face-up card (its
+  // copies stacked), then one per face-down card.
+  const groups = $derived.by(() => {
+    const known = [...(side.hand || [])].sort((a, b) => {
+      const ca = order[cardInfo(a.def)?.category] ?? 3;
+      const cb = order[cardInfo(b.def)?.category] ?? 3;
+      return ca - cb || (a.name || '').localeCompare(b.name || '') || a.iid.localeCompare(b.iid);
+    });
+    const out = [];
+    for (const c of known) {
+      const g = out.at(-1);
+      if (g && c.name && g.name === c.name) g.cards.push(c);
+      else out.push({ key: c.iid, name: c.name, cards: [c] });
+    }
     const backs = Math.max(0, side.hand_count - known.length);
-    return [...known, ...Array.from({ length: backs }, (_, i) => ({ iid: `${seat}-hidden-${i}`, hidden: true }))];
+    for (let i = 0; i < backs; i++) {
+      const iid = `${seat}-hidden-${i}`;
+      out.push({ key: iid, cards: [{ iid, hidden: true }] });
+    }
+    return out;
   });
   let over = $state(false);
 
@@ -43,15 +61,20 @@
   role="list"
   aria-label="{seat} hand"
 >
-  {#each cards as c, i (c.iid)}
-    <div class="slot" style:--a="{angle(i, cards.length)}deg" style:--y="{lift(i, cards.length)}px" role="listitem">
-      <Card
-        card={c}
-        size={small ? 'sm' : 'md'}
-        lift={false}
-        from="{seat}:hand"
-        onmenu={c.hidden ? null : (ev) => (app.menu = { x: ev.clientX, y: ev.clientY, ...handMenu(c) })}
-      />
+  {#each groups as g, i (g.key)}
+    <div class="slot" style:--a="{angle(i, groups.length)}deg" style:--y="{lift(i, groups.length)}px" role="listitem">
+      {#each g.cards as c (c.iid)}
+        <div class="copy">
+          <Card
+            card={c}
+            size={small ? 'sm' : 'md'}
+            lift={false}
+            from="{seat}:hand"
+            onmenu={c.hidden ? null : (ev) => (app.menu = { x: ev.clientX, y: ev.clientY, ...handMenu(c) })}
+          />
+        </div>
+      {/each}
+      {#if g.cards.length > 1}<span class="dup">×{g.cards.length}</span>{/if}
     </div>
   {/each}
   <span class="count">{side.hand_count} in hand</span>
@@ -71,6 +94,8 @@
   .hand.small { min-height: calc(var(--cw) * 0.62 * 1.4 + 10px); padding: 4px 20px; align-items: flex-start; }
   .hand.over { background: var(--drop); }
   .slot {
+    position: relative;
+    display: flex;
     margin: 0 calc(var(--cw) * -0.16);
     transform: translateY(var(--y)) rotate(var(--a));
     transform-origin: 50% 120%;
@@ -82,6 +107,21 @@
     transform: translateY(calc(var(--cw) * -0.3)) rotate(0deg) scale(1.6);
     transition-delay: 0.1s;
     z-index: 5;
+  }
+  /* Copies of a card stack with a sliver of each showing. */
+  .copy + .copy { margin-left: calc(var(--cw) * -0.82); }
+  .small .copy + .copy { margin-left: calc(var(--cw) * -0.5); }
+  .dup {
+    position: absolute;
+    top: -0.6em;
+    right: -0.4em;
+    z-index: 3;
+    background: var(--accent);
+    color: #111;
+    border-radius: 1em;
+    padding: 0.1em 0.5em;
+    font: 700 0.85em system-ui;
+    box-shadow: 0 1px 3px #0008;
   }
   .count {
     position: absolute;

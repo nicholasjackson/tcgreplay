@@ -2,6 +2,7 @@ package importer
 
 import (
 	"encoding/json"
+	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
@@ -199,6 +200,9 @@ func TestCorpusSeeds(t *testing.T) {
 						t.Errorf("seed %d: observed %d %s, want %d", seed, got, name, n)
 					}
 				}
+				if msg := oneToolEach(res.Events()); msg != "" {
+					t.Errorf("seed %d: %s", seed, msg)
+				}
 			}
 		})
 	}
@@ -266,6 +270,70 @@ func TestOppDeckCounts(t *testing.T) {
 		}
 		if !maps.Equal(got, want) {
 			t.Errorf("seed %d: opponent deck %v, want %v", seed, got, want)
+		}
+	}
+}
+
+// oneToolEach replays events and reports the first Pokémon holding more
+// than one Tool, which the rules never allow.
+func oneToolEach(events []state.Event) string {
+	st := state.New()
+	for i := range events {
+		if err := st.Apply(&events[i]); err != nil {
+			return err.Error()
+		}
+		for _, seat := range state.Seats {
+			for _, l := range st.StackLocs(seat) {
+				if s, _ := st.Stack(l); len(s.Tools) > 1 {
+					return fmt.Sprintf("event %d: %s holds %d Tools", events[i].ID, l, len(s.Tools))
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// TestToolCredits places a Tool on the copy the damage breakdown proves
+// held it: the Night Joker that counted Binding Mochi came from a Zoroark
+// holding one.
+func TestToolCredits(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	text, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-11_absolutezere_ns-zoroark.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for seed := uint64(1); seed <= 25; seed++ {
+		res, err := Import(string(text), Options{MyDeck: entries, Seed: seed})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, w := range res.Report.Warnings {
+			t.Errorf("seed %d: %s", seed, w)
+		}
+		st := state.New()
+		evs := res.Events()
+		checked := false
+		for i := range evs {
+			e := &evs[i]
+			if err := st.Apply(e); err != nil {
+				t.Fatal(err)
+			}
+			if e.Type != state.EvDamage || e.Seat != OppSeat {
+				continue
+			}
+			// Damage events hold the new total; this is the 290 hit on Nic's
+			// Mega Lucario ex.
+			if p, _ := e.Decode(); p.(*state.DamagePayload).Value != 290 || p.(*state.DamagePayload).Target.Seat != MeSeat {
+				continue
+			}
+			a := st.Sides[OppSeat].Active
+			if !slices.ContainsFunc(a.Tools, func(x state.IID) bool { return st.Cards[x].Name == "Binding Mochi" }) {
+				t.Errorf("seed %d: the Zoroark that hit for 290 with Binding Mochi holds %v", seed, a.Tools)
+			}
+			checked = true
+		}
+		if !checked {
+			t.Fatalf("seed %d: no 290 damage found", seed)
 		}
 	}
 }

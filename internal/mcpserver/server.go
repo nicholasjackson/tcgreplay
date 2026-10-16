@@ -45,7 +45,7 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 
 - Reference cards by iid (e.g. "p2-12"), never by name. get_state lists iids.
 - Locations: "active", "bench:N" (0-based), "hand", "deck", "deck:top", "deck:bottom", "discard", "lost", "prizes:N", "stadium". Prefix a seat to target the other side: "p1:active".
-- In play mode you act as your own seat and only on your turn (promoting after a knockout is allowed any time). In review mode you act for the seat whose turn it is, or pass seat explicitly.
+- In play mode you act as your own seat and only on your turn (promoting after a knockout is allowed any time). In review mode either seat may act at any time (pass seat; it defaults to the seat whose turn it is), though only the turn in progress can be ended.
 - play_trainer, use_ability and attack open a compound action: following verbs join it until end_action, another opener, or end_turn.
 - Every write returns the events and a delta, so you rarely need to re-read the board. Warnings are advisory, never blocking.
 - Quote card text from card_text, not memory.`
@@ -145,6 +145,9 @@ type (
 		Deck  string `json:"deck" jsonschema:"the assumed opponent list in TCG Live export format, 60 cards; set codes optional"`
 		ID    string `json:"id,omitempty" jsonschema:"game to rebuild; defaults to the current game"`
 		NewID string `json:"new_id,omitempty" jsonschema:"build a separate game with this id instead of replacing; required when the game has branches"`
+	}
+	Undo struct {
+		N int `json:"n,omitempty" jsonschema:"moves to undo, default 1"`
 	}
 	ProfileArg struct {
 		Seat string `json:"seat,omitempty" jsonschema:"whose list; defaults to Nic's opponent"`
@@ -663,6 +666,17 @@ func (s *Server) register(srv *mcp.Server) {
 			return nil, err
 		}
 		return fmt.Sprintf("on branch %s at event %d", name, in.EventID), nil
+	})
+	add(srv, "undo", "Step the current branch back over its last n moves (default 1); its head moves to just before them. The events stay in the log. Only moves made on the playmat can be undone, never the imported game itself.", func(ctx context.Context, in Undo) (any, error) {
+		g, err := s.M.Current()
+		if err != nil {
+			return nil, err
+		}
+		head, err := g.Undo(in.N)
+		if err != nil {
+			return nil, err
+		}
+		return fmt.Sprintf("branch %s now at event %d", g.Branch(), head), nil
 	})
 	add(srv, "checkout", "Switch to an existing branch.", func(ctx context.Context, in Checkout) (any, error) {
 		g, err := s.M.Current()

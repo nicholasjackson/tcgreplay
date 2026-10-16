@@ -155,6 +155,11 @@ func (g *Game) StartGame(first state.Seat, actor state.Actor) (*Result, error) {
 func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	// Even in review mode, where the turn lock is lifted, only the turn
+	// in progress can end.
+	if g.st.Phase == state.PhasePlaying && g.st.TurnOpen && g.st.Current != seat {
+		return nil, fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, g.st.Turn, seat)
+	}
 	g.open = nil
 	res, err := g.runLocked(seat, actor, actionSpec{label: "End turn", kind: "turn"}, func(t *tx) error {
 		return t.emit(seat, state.EvTurn, state.TurnPayload{Phase: "end", Number: t.st.Turn})

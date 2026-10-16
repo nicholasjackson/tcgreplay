@@ -379,3 +379,25 @@ func TestStadiumReplacesAndEffectsExpire(t *testing.T) {
 		t.Fatalf("effect did not expire: %d", n)
 	}
 }
+
+func TestToolHP(t *testing.T) {
+	basic := &cards.Card{Name: "Riolu", Category: "Pokemon", Stage: "Basic", HP: 70}
+	stage1 := &cards.Card{Name: "N's Zoroark ex", Category: "Pokemon", Stage: "Stage1", HP: 280}
+	for _, tc := range []struct {
+		effect string
+		p      *cards.Card
+		want   int
+	}{
+		{"The Pokémon this card is attached to gets +100 HP.", stage1, 100}, // Hero's Cape
+		{"The Basic Pokémon this card is attached to gets +50 HP.", basic, 50},
+		{"The Basic Pokémon this card is attached to gets +50 HP.", stage1, 0},
+		{"The Pokémon ex this card is attached to gets +60 HP.", stage1, 60},
+		{"The Pokémon ex this card is attached to gets +60 HP.", basic, 0},
+		{"The {G} Pokémon this card is attached to gets +30 HP.", basic, 0}, // condition not understood
+		{"Attacks used by the Pokémon this card is attached to do 50 more damage to your opponent's Active Pokémon ex.", stage1, 0},
+	} {
+		if got := toolHP(tc.effect, tc.p); got != tc.want {
+			t.Errorf("toolHP(%q, %s) = %d, want %d", tc.effect, tc.p.Name, got, tc.want)
+		}
+	}
+}

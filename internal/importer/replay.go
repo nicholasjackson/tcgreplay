@@ -79,6 +79,13 @@ type replay struct {
 	mulligans map[string][][]string
 	// adding names a card about to be attached, for disambiguate.
 	adding []string
+	// doubts are lines the replay applied but that disagree with an earlier
+	// arbitrary choice (e.g. which copy got a Tool). The search tries
+	// other choices to clear them.
+	doubts []Problem
+	// toolSlot restricts stackNamed to Pokémon without a Tool, for
+	// attaching one: a Pokémon holds only one Tool.
+	toolSlot bool
 	// lastRef is the Pokémon the current headline last named (e.g. the one
 	// Wally's Compassion healed), where later sublines' cards come from.
 	lastRef   *state.Loc
@@ -300,7 +307,7 @@ func (r *replay) stackNamed(seat state.Seat, name, zone string) (state.Loc, erro
 			continue
 		}
 		st, _ := r.st.Stack(l)
-		if r.bound[st.Top()] == name {
+		if r.bound[st.Top()] == name && !(r.toolSlot && len(st.Tools) > 0) {
 			cands = append(cands, l)
 		}
 	}
@@ -326,6 +333,9 @@ func (r *replay) stackNamed(seat state.Seat, name, zone string) (state.Loc, erro
 	where := ""
 	if zone != "" {
 		where = " in the " + zone
+	}
+	if r.toolSlot {
+		return state.Loc{}, fmt.Errorf("%s has no %s without a Tool in play%s", r.players[seat], name, where)
 	}
 	return state.Loc{}, fmt.Errorf("%s has no %s in play%s", r.players[seat], name, where)
 }

@@ -2,7 +2,7 @@
   // The middle of the mat: Stadium, turn, coin, a play area to drop
   // Trainers on, lingering effects and the turn buttons.
   import { app, canAct } from '../lib/store.svelte.js';
-  import { dropOnZone, endTurn, readDrag } from '../lib/actions.js';
+  import { dropOnZone, endTurn, readDrag, seatArgs } from '../lib/actions.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
 
@@ -32,9 +32,13 @@
     if (Array.isArray(r)) app.caption = `Coin: ${r.join(', ')}`;
     setTimeout(() => (app.caption = ''), 2000);
   }
+  // In review mode the controls act for whoever's turn it is.
+  const review = $derived(snap?.mode === 'review');
+  const actor = $derived(review && b.current ? b.current : app.human);
+  const nameOf = (seat) => b.sides?.[seat]?.name || (seat === app.human ? 'You' : 'Claude');
   function whoseTurn() {
     if (setup) return 'Setup';
-    const who = b.current === app.human ? 'Your turn' : b.current === app.claude ? "Claude's turn" : b.current;
+    const who = b.current === app.human ? 'Your turn' : `${nameOf(b.current)}'s turn`;
     return `Turn ${b.turn} · ${who}`;
   }
 </script>
@@ -67,8 +71,12 @@
         {#if snap?.open_action}
           <button onclick={() => act('end_action')} title="Close the open compound action">End action {snap.open_action}</button>
         {/if}
-        <button onclick={() => act('draw', { n: 1 })} disabled={!canAct()}>Draw</button>
-        <button class="primary" onclick={endTurn} disabled={!myTurn && snap?.mode !== 'review'}>End turn</button>
+        <button onclick={() => act('draw', { n: 1, ...seatArgs(actor) })} disabled={!canAct()}>
+          {actor === app.human ? 'Draw' : `Draw for ${nameOf(actor)}`}
+        </button>
+        <button class="primary" onclick={() => endTurn(actor)} disabled={!myTurn && !review}>
+          {actor === app.human ? 'End turn' : `End ${nameOf(actor)}'s turn`}
+        </button>
       {/if}
     </div>
 

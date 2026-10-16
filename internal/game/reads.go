@@ -2,6 +2,7 @@ package game
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -482,6 +483,46 @@ func (g *Game) JumpTo(eventID int, base string) (string, error) {
 		}
 		return name, g.checkoutLocked(name)
 	}
+}
+
+// Undo steps the current branch back over its last n actions: its head
+// moves to just before them. Nothing is deleted (the events stay in the
+// log), but only moves made on the playmat can be undone, never an
+// imported game's own history or the setup.
+func (g *Game) Undo(n int) (int, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if n < 1 {
+		n = 1
+	}
+	path, err := g.log.PathTo(g.log.Head())
+	if err != nil {
+		return 0, err
+	}
+	i := len(path)
+	for k := 0; k < n && i > 0; k++ {
+		i--
+		for a := path[i].Action; a != "" && i > 0 && path[i-1].Action == a; {
+			i--
+		}
+	}
+	for _, e := range path[i:] {
+		if e.Actor == state.ActorImport || e.Type == state.EvSetup {
+			return 0, fmt.Errorf("can only undo moves made on the playmat; event %d is part of the game itself", e.ID)
+		}
+	}
+	if i == len(path) {
+		return 0, errors.New("nothing to undo")
+	}
+	head := path[i-1].ID
+	branch := g.log.Current()
+	if err := g.log.Branch(branch, head); err != nil {
+		return 0, err
+	}
+	if err := g.checkoutLocked(branch); err != nil {
+		return 0, err
+	}
+	return head, nil
 }
 
 // Checkout switches to an existing branch.

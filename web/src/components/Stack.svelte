@@ -70,7 +70,7 @@
           <span class="chain" title={stack.pokemon.map((p) => p.name).join(' → ')}>{stack.pokemon.length}</span>
         {/if}
         <div class="badges">
-          {#if stack.damage}<span class="dmg">{stack.damage}</span>{/if}
+          {#if stack.damage_turn}<span class="dmg" title="{stack.damage_turn} damage this turn; {stack.damage} in total">{stack.damage_turn}</span>{/if}
           {#if left !== null && hp}<span class="hpleft" class:low={left <= hp * 0.3}>{Math.max(left, 0)}/{hp}</span>{/if}
           {#if conds.includes('poisoned')}<span class="marker poison" title="Poisoned">P</span>{/if}
           {#if conds.includes('burned')}<span class="marker burn" title="Burned">B</span>{/if}
@@ -143,6 +143,7 @@
     gap: 3px;
     pointer-events: none;
   }
+  .badges .dmg { pointer-events: auto; cursor: help; }
   .badges span {
     font: 700 0.85em/1 system-ui;
     padding: 0.25em 0.5em;
@@ -163,6 +164,7 @@
     gap: 2px;
     opacity: 0;
     transition: opacity 0.15s;
+    z-index: 50; /* above the card while it is enlarged on hover */
   }
   .main:hover .controls { opacity: 1; }
   .controls button {

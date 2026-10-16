@@ -21,15 +21,17 @@ type CardView struct {
 
 // StackView is a Pokémon in play.
 type StackView struct {
-	Slot        string     `json:"slot"`
-	Pokemon     []CardView `json:"pokemon"`
-	Energy      []CardView `json:"energy,omitempty"`
-	Tools       []CardView `json:"tools,omitempty"`
-	Damage      int        `json:"damage,omitempty"`
-	HP          int        `json:"hp,omitempty"`
-	HPLeft      *int       `json:"hp_left,omitempty"`
-	Conditions  []string   `json:"conditions,omitempty"`
-	EnteredTurn int        `json:"entered_turn,omitempty"`
+	Slot    string     `json:"slot"`
+	Pokemon []CardView `json:"pokemon"`
+	Energy  []CardView `json:"energy,omitempty"`
+	Tools   []CardView `json:"tools,omitempty"`
+	Damage  int        `json:"damage,omitempty"`
+	// DamageTurn is the damage put on it since the current turn began.
+	DamageTurn  int      `json:"damage_turn,omitempty"`
+	HP          int      `json:"hp,omitempty"`
+	HPLeft      *int     `json:"hp_left,omitempty"`
+	Conditions  []string `json:"conditions,omitempty"`
+	EnteredTurn int      `json:"entered_turn,omitempty"`
 }
 
 // PrizeView is one prize slot.
@@ -69,8 +71,43 @@ type BoardView struct {
 	Sides    map[Seat]SideView `json:"sides"`
 }
 
-// HPFunc returns a card's printed HP, or 0 if unknown.
-type HPFunc func(def string) int
+// StackDamage returns the damage on every Pokémon in play, keyed by the
+// stack's first card, which stays put through evolution and switching.
+func (s *State) StackDamage() map[IID]int {
+	out := map[IID]int{}
+	for _, seat := range Seats {
+		for _, l := range s.StackLocs(seat) {
+			st, _ := s.Stack(l)
+			if len(st.Pokemon) > 0 {
+				out[st.Pokemon[0]] = st.Damage
+			}
+		}
+	}
+	return out
+}
+
+// SetTurnDamage fills each stack's DamageTurn from the damage it had when
+// the turn began (StackDamage then). A Pokémon put into play since counts
+// from zero; healing counts as none.
+func (b *BoardView) SetTurnDamage(start map[IID]int) {
+	set := func(sv *StackView) {
+		if sv == nil || len(sv.Pokemon) == 0 {
+			return
+		}
+		sv.DamageTurn = max(sv.Damage-start[sv.Pokemon[0].IID], 0)
+	}
+	for seat, side := range b.Sides {
+		set(side.Active)
+		for _, sv := range side.Bench {
+			set(sv)
+		}
+		b.Sides[seat] = side
+	}
+}
+
+// HPFunc returns the maximum HP of a Pokémon whose current card is pokemon
+// with tools attached (definition ids), or 0 if unknown.
+type HPFunc func(pokemon string, tools []string) int
 
 // Project builds a view. For ViewSeat, viewer selects the seat.
 func (s *State) Project(view View, viewer Seat, hp HPFunc) BoardView {
@@ -103,7 +140,11 @@ func (s *State) Project(view View, viewer Seat, hp HPFunc) BoardView {
 			EnteredTurn: st.EnteredTurn,
 		}
 		if hp != nil && st.Top() != "" {
-			if h := hp(s.Cards[st.Top()].Def); h > 0 {
+			tools := make([]string, len(st.Tools))
+			for i, t := range st.Tools {
+				tools[i] = s.Cards[t].Def
+			}
+			if h := hp(s.Cards[st.Top()].Def, tools); h > 0 {
 				left := h - st.Damage
 				v.HP, v.HPLeft = h, &left
 			}

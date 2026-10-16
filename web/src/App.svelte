@@ -6,6 +6,7 @@
   import Hand from './components/Hand.svelte';
   import Strip from './components/Strip.svelte';
   import Timeline from './components/Timeline.svelte';
+  import PlaybackBar from './components/PlaybackBar.svelte';
   import ContextMenu from './components/ContextMenu.svelte';
   import Modal from './components/Modal.svelte';
   import Zoom from './components/Zoom.svelte';
@@ -89,6 +90,7 @@
     {/if}
   </div>
 
+  <PlaybackBar />
   {#if app.caption}
     <div class="caption">{app.caption}</div>
   {/if}
@@ -158,7 +160,10 @@
   .muted { color: var(--muted); }
   .caption {
     position: fixed;
-    top: 56px;
+    top: 112px;
+    white-space: pre-line;
+    font-size: 15px;
+    line-height: 1.45;
     left: 50%;
     transform: translateX(-50%);
     background: #000d;

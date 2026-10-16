@@ -100,6 +100,9 @@ func Import(text string, opts Options) (*Result, error) {
 		}
 	}
 	res := best.res
+	for _, d := range best.doubts {
+		res.Report.Warnings = append(res.Report.Warnings, fmt.Sprintf("line %d: %s; Tool placement may be off", d.Line, d.Err))
+	}
 	if trace != nil {
 		opts.Trace = trace
 		if res, _, err = replayOnce(secs, me, opp, opts, seed, best.decisions); err != nil {
@@ -108,6 +111,9 @@ func Import(text string, opts Options) (*Result, error) {
 	}
 	if fallback != "" {
 		res.Report.Warnings = append(res.Report.Warnings, fallback)
+	}
+	if trace != nil {
+		res.Report.Warnings = append(res.Report.Warnings, best.res.Report.Warnings...)
 	}
 	res.Seed = seed
 	return res, nil
@@ -118,6 +124,18 @@ type attempt struct {
 	res       *Result
 	choices   []choice
 	decisions map[string]int
+	doubts    []Problem
+}
+
+// first is the earliest line with a problem or a doubt.
+func (a *attempt) first() int {
+	line := 0
+	for _, p := range append(slices.Clone(a.res.Report.Problems), a.doubts...) {
+		if line == 0 || p.Line < line {
+			line = p.Line
+		}
+	}
+	return line
 }
 
 // search replays the log; where the log cannot tell identical cards
@@ -130,21 +148,25 @@ func search(secs []*Section, me, opp string, opts Options, seed uint64) (*attemp
 		if err != nil {
 			return nil, err
 		}
-		return &attempt{res, r.choices, d}, nil
+		return &attempt{res, r.choices, d, r.doubts}, nil
 	}
 	worse := func(a, b *attempt) bool { // is a worse than b?
 		pa, pb := a.res.Report.Problems, b.res.Report.Problems
 		if len(pa) != len(pb) {
 			return len(pa) > len(pb)
 		}
-		return len(pa) > 0 && pa[0].Line < pb[0].Line
+		if len(a.doubts) != len(b.doubts) {
+			return len(a.doubts) > len(b.doubts)
+		}
+		fa, fb := a.first(), b.first()
+		return fa > 0 && fa < fb
 	}
 	best, err := run(map[string]int{})
 	if err != nil {
 		return nil, err
 	}
-	for runs := 0; runs < 200 && len(best.res.Report.Problems) > 0; {
-		first := best.res.Report.Problems[0].Line
+	for runs := 0; runs < 200 && len(best.res.Report.Problems)+len(best.doubts) > 0; {
+		first := best.first()
 		improved := false
 		for i := len(best.choices) - 1; i >= 0 && !improved && runs < 200; i-- {
 			c := best.choices[i]

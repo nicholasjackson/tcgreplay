@@ -20,6 +20,14 @@ export const app = $state({
   modal: null, // {kind, ...}
   zoom: null, // card view
   dragging: null,
+  // Playback (see playback.svelte.js): viewHead is the event the board
+  // shows; held marks moves by Claude not yet played; replay is a replay
+  // in progress.
+  viewHead: 0,
+  held: null,
+  replay: null,
+  replaySpeed: 1,
+  acting: false, // a request of the viewer's own is in flight
   deckListShow: 'all', // deck list filter: all, unplayed or undrawn
   lastLog: 0, // highest log id seen, to mark new lines
 });

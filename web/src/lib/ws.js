@@ -1,6 +1,6 @@
 // Websocket client: one connection, auto-reconnect, request/response by id.
 import { app, toast } from './store.svelte.js';
-import { showSnapshot } from './playback.svelte.js';
+import { goLive, showSnapshot } from './playback.svelte.js';
 
 let sock = null;
 let nextId = 1;
@@ -62,9 +62,16 @@ export function request(verb, args = {}) {
   return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
 }
 
+const READS = new Set(['deck_list', 'search_deck', 'look_top', 'list_games']);
+
 // act sends a verb, shows errors and warnings as toasts, and returns the
 // result's data (or undefined on error).
 export async function act(verb, args = {}) {
+  // Changing the board from an earlier position would be confusing: show
+  // the latest board first. Reads leave a replay alone.
+  const read = READS.has(verb);
+  if (!read && (app.replay || app.held)) goLive();
+  if (!read) app.acting = true;
   try {
     const r = await request(verb, args);
     if (!r.ok) {
@@ -76,5 +83,8 @@ export async function act(verb, args = {}) {
   } catch (e) {
     toast(e.message, 'error');
     return undefined;
+  } finally {
+    // Let the resulting snapshot arrive before clearing.
+    setTimeout(() => (app.acting = false), 300);
   }
 }

@@ -7,7 +7,7 @@ const DRAG_TYPE = 'application/x-tcgreplay';
 
 // seatArgs acts for the card's owner in review mode, so either side can be
 // moved while demonstrating a line.
-function seatArgs(owner) {
+export function seatArgs(owner) {
   if (app.snap?.mode === 'review' && owner && owner !== app.human) return { seat: owner };
   return {};
 }
@@ -348,8 +348,8 @@ function firstEmptyBench(seat) {
 }
 
 // endTurn ends the human's turn and copies the prompt for Claude.
-export async function endTurn() {
-  const data = await act('end_turn');
+export async function endTurn(seat = app.human) {
+  const data = await act('end_turn', seatArgs(seat));
   if (!data?.prompt) return;
   try {
     await navigator.clipboard.writeText(data.prompt);

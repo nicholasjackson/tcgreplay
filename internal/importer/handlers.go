@@ -161,9 +161,14 @@ func buildHandlers(a, b string) []handler {
 		}),
 		h(`{P} attached (.+) to (.+) (in the Active Spot|on the Bench)\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
+			role := state.AsTool
+			if strings.Contains(m[2], "Energy") {
+				role = state.AsEnergy
+			}
 			r.adding = []string{m[2]}
+			r.toolSlot = role == state.AsTool
 			l, err := r.stackNamed(seat, m[3], zoneHint(m[4]))
-			r.adding = nil
+			r.adding, r.toolSlot = nil, false
 			if err != nil {
 				return err
 			}
@@ -177,10 +182,6 @@ func buildHandlers(a, b string) []handler {
 			iid, err := r.take(seat, zones, m[2])
 			if err != nil {
 				return err
-			}
-			role := state.AsTool
-			if strings.Contains(m[2], "Energy") {
-				role = state.AsEnergy
 			}
 			return r.move(seat, iid, l, role, "")
 		}),
@@ -277,10 +278,13 @@ func buildHandlers(a, b string) []handler {
 				return err
 			}
 			dmg := count(m[6])
-			if dmg == 0 {
-				return nil
+			if dmg > 0 {
+				if err := r.addDamage(actor, l, dmg); err != nil {
+					return err
+				}
 			}
-			return r.addDamage(actor, l, dmg)
+			r.checkToolCredits(n, actor, l)
+			return nil
 		}),
 		h(`{P}'s (.+?) used (.+?)\.`, noop),
 		h(`{P} put (\d+) damage counters? on {P}'s (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
@@ -809,4 +813,42 @@ func (r *replay) stackHolding(seat state.Seat, names []string) (state.Loc, bool)
 		}
 	}
 	return state.Loc{}, false
+}
+
+var toolCreditRe = regexp.MustCompile(`^\(Pokémon Tool\) (.+): -?\d+ damage$`)
+
+// checkToolCredits reads an attack's damage breakdown: a Tool it credits
+// was attached to the attacker or the defender. If neither holds it, the
+// replay attached that Tool to the wrong copy of a Pokémon earlier (the log
+// rarely says which); recording a doubt lets the search try the others.
+func (r *replay) checkToolCredits(n *Node, actor state.Seat, defender state.Loc) {
+	for _, c := range n.Children {
+		if c.Depth != 1 || c.Text != "Damage breakdown:" {
+			continue
+		}
+		// Each breakdown line is its own bullet node.
+		var items []string
+		for _, b := range c.Children {
+			if b.Depth == 2 {
+				items = append(items, b.Items...)
+			}
+		}
+		for _, item := range items {
+			m := toolCreditRe.FindStringSubmatch(item)
+			if m == nil {
+				continue
+			}
+			holds := func(l state.Loc) bool {
+				st, err := r.st.Stack(l)
+				if err != nil || st == nil {
+					return false
+				}
+				return slices.ContainsFunc(st.Tools, func(t state.IID) bool { return r.bound[t] == m[1] })
+			}
+			if !holds(state.Loc{Seat: actor, Zone: state.Active}) && !holds(defender) {
+				r.doubts = append(r.doubts, Problem{Line: n.No, Text: n.Text,
+					Err: fmt.Sprintf("the damage counts %s, but neither Pokémon holds it in the reconstruction", m[1])})
+			}
+		}
+	}
 }

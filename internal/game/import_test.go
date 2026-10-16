@@ -2,6 +2,8 @@ package game
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -209,5 +211,210 @@ func TestDeckList(t *testing.T) {
 	g.SetMode(ModePlay)
 	if _, err := g.DeckList(state.P1, "", "test", "test"); err == nil {
 		t.Error("reveal deck list in play mode")
+	}
+}
+
+// TestTurnDamage shows only damage put on a Pokémon since the turn began.
+func TestTurnDamage(t *testing.T) {
+	deckText, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Skip("no test corpus")
+	}
+	text, err := os.ReadFile("../../testdata/logs/2026-10-11_carlos0oz_dragapult.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := NewManager(t.TempDir(), nil)
+	res, err := m.Import(context.Background(), ImportRequest{Log: string(text), Deck: string(deckText), Seed: 1, ID: "g"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := res.Game
+	// Mega Brave's damage on Dragapult ex, and the start of that turn.
+	path, _ := g.log.PathTo(g.Head())
+	brave, start := 0, 0
+	for _, e := range path {
+		if e.Type == state.EvTurn {
+			if p, _ := e.Decode(); p.(*state.TurnPayload).Phase == "start" && brave == 0 {
+				start = e.ID
+			}
+		}
+		if e.Type == state.EvDamage && brave == 0 {
+			p, _ := e.Decode()
+			if dp := p.(*state.DamagePayload); dp.Target.Seat == state.P2 && dp.Value == 300 {
+				brave = e.ID
+			}
+		}
+	}
+	if brave == 0 {
+		t.Fatal("no 300 damage on p2 found")
+	}
+	active := func(ev int, seat state.Seat) *state.StackView {
+		t.Helper()
+		if _, err := g.JumpTo(ev, fmt.Sprintf("at-%d", ev)); err != nil {
+			t.Fatal(err)
+		}
+		snap, err := g.UISnapshot("", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return snap.Board.Sides[seat].Active
+	}
+	if lucario := active(start, state.P1); lucario.Damage != 200 || lucario.DamageTurn != 0 {
+		t.Errorf("turn start: Mega Lucario ex damage %d, this turn %d; want 200 and 0", lucario.Damage, lucario.DamageTurn)
+	}
+	if dragapult := active(brave, state.P2); dragapult.Damage != 300 || dragapult.DamageTurn != 300 {
+		t.Errorf("after Mega Brave: Dragapult ex damage %d, this turn %d; want 300 and 300", dragapult.Damage, dragapult.DamageTurn)
+	}
+}
+
+// TestReviewEitherSide lets either seat act at any time in review mode,
+// but only the turn in progress can end; play mode keeps the turn lock.
+func TestReviewEitherSide(t *testing.T) {
+	deckText, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Skip("no test corpus")
+	}
+	text, err := os.ReadFile("../../testdata/logs/2026-10-11_carlos0oz_dragapult.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := NewManager(t.TempDir(), nil)
+	res, err := m.Import(context.Background(), ImportRequest{Log: string(text), Deck: string(deckText), Seed: 1, ID: "g"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := res.Game
+	cur := g.State().Current
+	other := cur.Other()
+	if _, err := g.Draw(other, state.ActorHuman, 1); err != nil {
+		t.Errorf("review: %s could not draw on %s's turn: %v", other, cur, err)
+	}
+	if _, err := g.EndTurn(other, state.ActorHuman); err == nil {
+		t.Errorf("review: %s ended %s's turn", other, cur)
+	}
+	if _, err := g.EndTurn(cur, state.ActorHuman); err != nil {
+		t.Errorf("review: %s could not end its turn: %v", cur, err)
+	}
+	g.SetMode(ModePlay)
+	now := g.State().Current
+	if _, err := g.Draw(now.Other(), state.ActorHuman, 1); err == nil {
+		t.Error("play: drew on the other seat's turn")
+	}
+}
+
+// TestReplay steps through a branch one action at a time.
+func TestReplay(t *testing.T) {
+	deckText, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Skip("no test corpus")
+	}
+	text, err := os.ReadFile("../../testdata/logs/2026-10-11_ledjo23_alakazam-donk.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := NewManager(t.TempDir(), nil)
+	res, err := m.Import(context.Background(), ImportRequest{Log: string(text), Deck: string(deckText), Seed: 1, ID: "g"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := res.Game
+	head := g.Head()
+	r, err := g.Replay("", 20, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.To != head || len(r.Steps) == 0 {
+		t.Fatalf("replay to %d with %d steps", r.To, len(r.Steps))
+	}
+	prev := 20
+	for _, s := range r.Steps {
+		if s.First != prev+1 || s.Last < s.First || len(s.Lines) != s.Last-s.First+1 {
+			t.Fatalf("step %+v does not follow event %d", s, prev)
+		}
+		prev = s.Last
+	}
+	if prev != head {
+		t.Errorf("steps end at %d, want %d", prev, head)
+	}
+	// The start board is the position right after event 20.
+	if _, err := g.JumpTo(20, "at-20"); err != nil {
+		t.Fatal(err)
+	}
+	snap, err := g.UISnapshot("", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, _ := json.Marshal(snap.Board)
+	b, _ := json.Marshal(r.Start)
+	if string(a) != string(b) {
+		t.Error("replay start differs from the board at event 20")
+	}
+	// A branch's own moves follow its fork point.
+	if _, err := g.Draw(state.P1, state.ActorClaude, 1); err != nil {
+		t.Fatal(err)
+	}
+	r, err = g.Replay("", 20, 0)
+	if err != nil || len(r.Steps) != 1 || r.Steps[0].First != head+1 {
+		t.Fatalf("branch replay: %+v, %v", r, err)
+	}
+	if _, err := g.Replay("", head, 0); err == nil {
+		t.Error("replayed from an event on another branch")
+	}
+}
+
+// TestUndo steps back over playmat moves but never into the import.
+func TestUndo(t *testing.T) {
+	deckText, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Skip("no test corpus")
+	}
+	text, err := os.ReadFile("../../testdata/logs/2026-10-11_ledjo23_alakazam-donk.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := NewManager(t.TempDir(), nil)
+	res, err := m.Import(context.Background(), ImportRequest{Log: string(text), Deck: string(deckText), Seed: 1, ID: "g"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := res.Game
+	if _, err := g.Undo(1); err == nil {
+		t.Fatal("undid part of the import")
+	}
+	if _, err := g.JumpTo(20, "try"); err != nil {
+		t.Fatal(err)
+	}
+	before := snapshot(t, g)
+	a, err := g.Draw(state.P1, state.ActorClaude, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := g.Draw(state.P1, state.ActorClaude, 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := g.Draw("", state.ActorClaude, 1); err == nil {
+		t.Error("drew for no seat")
+	}
+	head, err := g.Undo(1)
+	if err != nil || head != a.Events[len(a.Events)-1] {
+		t.Fatalf("undo 1: head %d, %v; want %d", head, err, a.Events[len(a.Events)-1])
+	}
+	if head, err = g.Undo(1); err != nil || head != 20 {
+		t.Fatalf("undo 2: head %d, %v; want 20", head, err)
+	}
+	if snapshot(t, g) != before {
+		t.Error("undo did not restore the position")
+	}
+	if g.Branch() != "try" {
+		t.Errorf("on branch %s", g.Branch())
+	}
+	// Reloading keeps the branch where undo left it.
+	g2, err := m.Load("g")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g2.Head() != 20 {
+		t.Errorf("reloaded head %d, want 20", g2.Head())
 	}
 }

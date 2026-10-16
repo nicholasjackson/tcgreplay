@@ -10,7 +10,10 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+	"regexp"
 	"slices"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -191,6 +194,9 @@ func (t *tx) move(iid state.IID, to state.Loc, as, face string) error {
 }
 
 func (t *tx) draw(seat state.Seat, n int) error {
+	if _, ok := t.st.Sides[seat]; !ok {
+		return fmt.Errorf("unknown seat %q", seat)
+	}
 	for i := 0; i < n; i++ {
 		deck := t.st.Sides[seat].Deck
 		if len(deck) == 0 {
@@ -305,11 +311,17 @@ func (g *Game) notify(res *Result) {
 	}
 }
 
+// checkTurn is the turn lock: a seat's verbs only on its turn. Review mode
+// is a sandbox for exploring lines, where either side may act at any time
+// (soft rule warnings still apply).
 func (g *Game) checkTurn(seat state.Seat) error {
 	switch g.st.Phase {
 	case state.PhaseEmpty:
 		return errors.New("no game set up")
 	case state.PhaseSetup:
+		return nil
+	}
+	if g.mode == ModeReview {
 		return nil
 	}
 	if !g.st.TurnOpen {
@@ -339,14 +351,49 @@ func (g *Game) card(st *state.State, iid state.IID) *cards.Card {
 	return cc
 }
 
-func (g *Game) hp(def string) int {
+// hp is a Pokémon's maximum HP: printed HP plus what its Tools add.
+func (g *Game) hp(def string, tools []string) int {
 	if g.db == nil || def == "" {
 		return 0
 	}
-	if c := g.db.Cached(def); c != nil {
-		return c.HP
+	c := g.db.Cached(def)
+	if c == nil || c.HP == 0 {
+		return 0
 	}
-	return 0
+	hp := c.HP
+	for _, t := range tools {
+		if tc := g.db.Cached(t); tc != nil {
+			hp += toolHP(tc.Effect, c)
+		}
+	}
+	return hp
+}
+
+// toolHPRe matches Tool text like "The Pokémon this card is attached to
+// gets +100 HP" (Hero's Cape), optionally naming which Pokémon.
+var toolHPRe = regexp.MustCompile(`(?i)the ([\w ]*?)pok[eé]mon( ex)? this card is attached to gets \+(\d+) hp`)
+
+// toolHP is the HP a Tool with effect text gives Pokémon p. A condition
+// the code does not understand counts as unmet rather than guessed at.
+func toolHP(effect string, p *cards.Card) int {
+	m := toolHPRe.FindStringSubmatch(effect)
+	if m == nil {
+		return 0
+	}
+	switch strings.ToLower(strings.TrimSpace(m[1])) {
+	case "":
+	case "basic":
+		if !p.IsBasic() {
+			return 0
+		}
+	default:
+		return 0
+	}
+	if m[2] != "" && !strings.HasSuffix(p.Name, " ex") {
+		return 0
+	}
+	n, _ := strconv.Atoi(m[3])
+	return n
 }
 
 // EndAction closes the open compound action.

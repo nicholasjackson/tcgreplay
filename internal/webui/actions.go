@@ -41,6 +41,8 @@ type args struct {
 	Mode      string   `json:"mode,omitempty"`
 	Branch    string   `json:"branch,omitempty"`
 	Event     int      `json:"event,omitempty"`
+	From      int      `json:"from,omitempty"`
+	Until     int      `json:"until,omitempty"`
 	Game      string   `json:"game,omitempty"`
 	Text      string   `json:"text,omitempty"`
 	UntilTurn int      `json:"until_turn,omitempty"`
@@ -147,6 +149,15 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 		return nil, nil, nil
 	case "checkout":
 		return nil, nil, g.Checkout(a.Branch)
+	case "replay":
+		viewer := s.Human
+		c.mu.Lock()
+		if c.reveal {
+			viewer = ""
+		}
+		c.mu.Unlock()
+		v, err := g.Replay(viewer, a.From, a.Until)
+		return v, nil, err
 	case "rewind":
 		base := a.Name
 		if base == "" {
@@ -251,7 +262,8 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 		r, err = g.RemoveEffect(seat, human, a.Name)
 	case "end_turn":
 		since := g.TurnStartedAt(seat)
-		if r, err = g.EndTurn(seat, human); err == nil {
+		if r, err = g.EndTurn(seat, human); err == nil && g.Mode() == game.ModePlay {
+			// Hand the turn to Claude; in review either side is played here.
 			st := g.State()
 			r.Data = map[string]any{"prompt": fmt.Sprintf(
 				"Your turn in tcgreplay (game %s, branch %s). Call get_log since %d and play turn %d.",
