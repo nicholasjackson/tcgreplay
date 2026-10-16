@@ -51,7 +51,10 @@ func (l *List) Total() int {
 var (
 	sectionRe = regexp.MustCompile(`^(Pok[eé]mon|Trainer|Energy)\s*:\s*(\d+)\s*$`)
 	totalRe   = regexp.MustCompile(`(?i)^Total Cards\s*:\s*(\d+)\s*$`)
-	lineRe    = regexp.MustCompile(`^(\d+)\s+(.+?)\s+([A-Za-z0-9-]+)\s+([A-Za-z0-9-]+)$`)
+	// Set codes are upper case (SVI, PR-SV) and numbers hold a digit (113,
+	// TG05), so a name-only line like "4 Lillie's Clefairy ex" is not
+	// mistaken for name "Lillie's", set "Clefairy", number "ex".
+	lineRe = regexp.MustCompile(`^(\d+)\s+(.+?)\s+([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)?)\s+([A-Za-z]*\d+[A-Za-z]?)$`)
 	// Some exports omit set and number, e.g. "8 Basic Fighting Energy".
 	bareRe = regexp.MustCompile(`^(\d+)\s+(.+)$`)
 )
@@ -114,6 +117,17 @@ var basicEnergy = map[string]string{
 
 var basicEnergyName = regexp.MustCompile(`(?i)^Basic\s+\{?([A-Z]+)\}?\s+Energy$`)
 
+// BasicEnergyDef maps a Basic Energy name ("Basic Fire Energy" or
+// "Basic {R} Energy") to its SVE print.
+func BasicEnergyDef(name string) (string, bool) {
+	m := basicEnergyName.FindStringSubmatch(name)
+	if m == nil {
+		return "", false
+	}
+	id, ok := basicEnergy[strings.ToUpper(m[1])]
+	return id, ok
+}
+
 // Resolve fills Def for each entry using db. Unresolved entries are listed
 // in the returned error but keep their names, so the deck still loads.
 func (l *List) Resolve(ctx context.Context, db cards.DB) error {
@@ -134,8 +148,14 @@ func (l *List) Resolve(ctx context.Context, db cards.DB) error {
 			err = errors.New("no set code")
 		}
 		// Basic Energy prints vary; fall back to the SVE set.
-		if m := basicEnergyName.FindStringSubmatch(e.Name); m != nil {
-			if id, ok := basicEnergy[strings.ToUpper(m[1])]; ok {
+		if id, ok := BasicEnergyDef(e.Name); ok {
+			e.Def = id
+			continue
+		}
+		// A list written by name alone (e.g. an assumed opponent list)
+		// gets the card's current print.
+		if e.Set == "" {
+			if id, nerr := db.ByName(ctx, e.Name); nerr == nil {
 				e.Def = id
 				continue
 			}

@@ -15,13 +15,15 @@
   });
   let over = $state(false);
 
+  // The human's hand fans up from the bottom edge; the opponent's, at the
+  // top, hangs down from it, so its cards also enlarge downward.
   function angle(i, n) {
     const spread = Math.min(5, 50 / Math.max(n, 1));
-    return (i - (n - 1) / 2) * spread;
+    return (i - (n - 1) / 2) * spread * (small ? -1 : 1);
   }
   function lift(i, n) {
     const c = i - (n - 1) / 2;
-    return Math.abs(c) * Math.abs(c) * (small ? 0.6 : 1.4);
+    return c * c * (small ? -0.6 : 1.4);
   }
   async function drop(ev) {
     ev.preventDefault();
@@ -46,6 +48,7 @@
       <Card
         card={c}
         size={small ? 'sm' : 'md'}
+        lift={false}
         from="{seat}:hand"
         onmenu={c.hidden ? null : (ev) => (app.menu = { x: ev.clientX, y: ev.clientY, ...handMenu(c) })}
       />
@@ -59,13 +62,13 @@
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    padding: 18px 40px 8px;
+    padding: calc(var(--cw) * 0.2) 40px calc(var(--cw) * 0.08);
     min-height: calc(var(--cw) * 1.4 + 24px);
     position: relative;
     border-radius: 10px;
     transition: background 0.15s;
   }
-  .hand.small { min-height: calc(var(--cw) * 0.62 * 1.4 + 10px); padding: 4px 20px; }
+  .hand.small { min-height: calc(var(--cw) * 0.62 * 1.4 + 10px); padding: 4px 20px; align-items: flex-start; }
   .hand.over { background: var(--drop); }
   .slot {
     margin: 0 calc(var(--cw) * -0.16);
@@ -73,16 +76,18 @@
     transform-origin: 50% 120%;
     transition: transform 0.2s ease;
   }
-  .small .slot { margin: 0 calc(var(--cw) * -0.2); }
+  .small .slot { margin: 0 calc(var(--cw) * -0.2); transform-origin: 50% -20%; }
+  .hand.small .slot:hover { transform: rotate(0deg) scale(2); z-index: 5; transition-delay: 0.1s; }
   .hand:not(.small) .slot:hover {
-    transform: translateY(-22px) rotate(0deg) scale(1.08);
+    transform: translateY(calc(var(--cw) * -0.3)) rotate(0deg) scale(1.6);
+    transition-delay: 0.1s;
     z-index: 5;
   }
   .count {
     position: absolute;
     right: 12px;
     bottom: 4px;
-    font-size: 11px;
+    font-size: 0.8em;
     color: var(--muted);
   }
 </style>

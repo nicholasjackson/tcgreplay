@@ -49,6 +49,8 @@ func main() {
 	flag.StringVar(&c.uiAddr, "ui-addr", "127.0.0.1:7777", "address for the playmat UI; empty disables it")
 	noDaemon := flag.Bool("no-daemon", false, "serve MCP over stdio in-process instead of relaying to the daemon")
 	daemon := flag.Bool("daemon", false, "run the shared daemon (normally started by the shim)")
+	replace := flag.Bool("replace", false, "with -daemon, stop a daemon already running on the data dir instead of exiting")
+	logStderr := flag.Bool("log-stderr", false, "log to stderr instead of the data dir's log file (for running the daemon in a terminal)")
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
 
@@ -58,7 +60,7 @@ func main() {
 	}
 	// stdout carries the MCP protocol, so logs go to stderr and a file.
 	log.SetOutput(os.Stderr)
-	if err := os.MkdirAll(c.dataDir, 0o755); err == nil {
+	if err := os.MkdirAll(c.dataDir, 0o755); err == nil && !*logStderr {
 		if f, err := os.OpenFile(filepath.Join(c.dataDir, "tcgreplay.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644); err == nil {
 			log.SetOutput(f)
 			defer f.Close()
@@ -73,7 +75,7 @@ func main() {
 	var err error
 	switch {
 	case *daemon:
-		err = runDaemon(ctx, c)
+		err = runDaemon(ctx, c, *replace)
 	case *noDaemon:
 		err = runInProcess(ctx, c)
 	default:
@@ -96,6 +98,9 @@ func newServer(c config) (*game.Manager, *mcp.Server) {
 func runInProcess(ctx context.Context, c config) error {
 	m, srv := newServer(c)
 	log.Printf("tcgreplay %s in-process: data %s, cache %s, claude plays %s", version, c.dataDir, c.cacheDir, c.seat)
+	if err := m.Resume(); err != nil {
+		log.Printf("could not reopen the last game: %v", err)
+	}
 	if c.uiAddr != "" {
 		startUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)
 	}

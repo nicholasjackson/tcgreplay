@@ -124,17 +124,21 @@
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 16px;
-    padding: 8px 12px;
+    gap: calc(var(--cw) * 0.18);
+    padding: calc(var(--cw) * 0.08) 12px;
+    /* Keep prizes and piles beside the field, not at the screen edges. */
+    width: 100%;
+    max-width: calc(var(--cw) * 9.6 + 80px);
+    margin-inline: auto;
   }
   .field {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: calc(var(--cw) * 0.11);
   }
   .mirrored .field { flex-direction: column-reverse; }
-  .row { display: flex; gap: 10px; justify-content: center; }
+  .row { display: flex; gap: calc(var(--cw) * 0.11); justify-content: center; }
   .bench { flex-wrap: wrap; }
   .prizes {
     display: grid;
@@ -152,14 +156,14 @@
   .prize.taken { opacity: 0.35; cursor: default; }
   .prizes .count {
     position: absolute;
-    bottom: -18px;
+    bottom: -1.5em;
     left: 0;
     right: 0;
     text-align: center;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 0.85em;
   }
-  .piles { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .piles { display: flex; flex-direction: column; gap: calc(var(--cw) * 0.11); align-items: center; }
   .mirrored .piles { flex-direction: column-reverse; }
   .pile {
     min-width: calc(var(--cw) * 0.9);
@@ -177,5 +181,5 @@
   .pile.over { background: var(--drop); border-color: var(--accent); }
   .pile.deck :global(.card) { --w: calc(var(--cw) * 0.8); }
   .pile :global(.card:not(.sm)) { --w: calc(var(--cw) * 0.8); }
-  .label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .label { font-size: 0.8em; color: var(--muted); white-space: nowrap; }
 </style>

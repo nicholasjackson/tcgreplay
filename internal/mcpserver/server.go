@@ -136,6 +136,19 @@ type (
 		Me      string `json:"me,omitempty" jsonschema:"the log owner's player name; detected from the log if omitted"`
 		ID      string `json:"id,omitempty" jsonschema:"game id; generated from the date and opponent if empty"`
 	}
+	Sample struct {
+		Deck string `json:"deck,omitempty" jsonschema:"assumed list for the seat in TCG Live export format; it is reconciled with what the log proves and stored for later samples on any branch. Omit to reuse the last list given"`
+		Seat string `json:"seat,omitempty" jsonschema:"whose hidden cards to sample; defaults to Nic's opponent"`
+		Seed uint64 `json:"seed,omitempty" jsonschema:"makes the sample reproducible; omit for a fresh one"`
+	}
+	OppDeck struct {
+		Deck  string `json:"deck" jsonschema:"the assumed opponent list in TCG Live export format, 60 cards; set codes optional"`
+		ID    string `json:"id,omitempty" jsonschema:"game to rebuild; defaults to the current game"`
+		NewID string `json:"new_id,omitempty" jsonschema:"build a separate game with this id instead of replacing; required when the game has branches"`
+	}
+	ProfileArg struct {
+		Seat string `json:"seat,omitempty" jsonschema:"whose list; defaults to Nic's opponent"`
+	}
 	GameID struct {
 		ID string `json:"id"`
 	}
@@ -289,7 +302,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return map[string]any{"game": g.ID, "result": compact(res)}, nil
 	})
-	add(srv, "import_log", "Import a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact; the opponent's hidden cards stay unknown unless opp_deck is given. Returns the game summary, any log lines that could not be reconstructed (problems) and warnings. Use rewind or the UI timeline to step through it.", func(ctx context.Context, in ImportLog) (any, error) {
+	add(srv, "import_log", "Import a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact. Pass opp_deck, a likely 60-card list for the opponent's archetype, so both decks are complete: cards the log never names (prizes, hand, deck) are dealt at random from what the list has left. Without it they stay unknown; set_opponent_deck can add a list later. Returns the game summary, report.observed (the minimum count of each opponent card the log proves), problems and warnings.", func(ctx context.Context, in ImportLog) (any, error) {
 		res, err := s.M.Import(ctx, game.ImportRequest{ID: in.ID, Log: in.Log, Deck: in.Deck, OppDeck: in.OppDeck, Me: in.Me})
 		if err != nil {
 			return nil, err
@@ -300,6 +313,26 @@ func (s *Server) register(srv *mcp.Server) {
 			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
 		}
 		return map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings}, nil
+	})
+	add(srv, "set_opponent_deck", "Rebuild an imported game with an assumed opponent list: same log and seed, so Nic's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game unless new_id is given; refuses to replace a game with branches.", func(ctx context.Context, in OppDeck) (any, error) {
+		id := in.ID
+		if id == "" {
+			g, err := s.M.Current()
+			if err != nil {
+				return nil, err
+			}
+			id = g.ID
+		}
+		res, err := s.M.SetOpponentDeck(ctx, id, in.Deck, in.NewID)
+		if err != nil {
+			return nil, err
+		}
+		g := res.Game
+		warnings := res.Warnings
+		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
+			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
+		}
+		return map[string]any{"game": g.ID, "head": g.Head(), "observed": res.Report.Observed, "problems": res.Report.Problems, "warnings": warnings}, nil
 	})
 	add(srv, "list_games", "List stored games, newest first.", func(ctx context.Context, _ Empty) (any, error) {
 		return s.M.List()
@@ -642,6 +675,39 @@ func (s *Server) register(srv *mcp.Server) {
 		return fmt.Sprintf("on branch %s at event %d", in.Branch, g.Head()), nil
 	})
 
+	// Opponent inference.
+	add(srv, "get_profile", "What is known and assumed about a seat's list: the stored assumed list (with the minimum counts the whole log proves) and seen_so_far, the most copies of each card Nic had seen at once by the current head. Use it to propose a list for sample_hidden.", func(ctx context.Context, in ProfileArg) (any, error) {
+		g, err := s.M.Current()
+		if err != nil {
+			return nil, err
+		}
+		seat, err := s.otherSeat(in.Seat)
+		if err != nil {
+			return nil, err
+		}
+		return g.Profile(seat)
+	})
+	add(srv, "sample_hidden", "Give the opponent's hidden cards (hand, deck order, prizes) plausible identities at the head of the current branch, to test a line against what they might hold. Cards Nic can see keep their identities, and cards he saw that are now hidden stay out of the prizes. Rewind first, then sample; to try several hands, rewind to the same event again for each. Review mode only. Returns the sampled hand and prizes.", func(ctx context.Context, in Sample) (any, error) {
+		g, err := s.M.Current()
+		if err != nil {
+			return nil, err
+		}
+		seat, err := s.otherSeat(in.Seat)
+		if err != nil {
+			return nil, err
+		}
+		list, warnings, err := s.M.ParseDeck(ctx, in.Deck, "deck")
+		if err != nil {
+			return nil, err
+		}
+		res, err := g.SampleHidden(seat, actor, list, in.Seed)
+		if err != nil {
+			return nil, err
+		}
+		res.Warnings = append(warnings, res.Warnings...)
+		return res, nil
+	})
+
 	// Coaching.
 	add(srv, "annotate", "Attach a coaching note to an event; it shows on the timeline and as a toast.", func(ctx context.Context, in Annotate) (any, error) {
 		g, err := s.M.Current()
@@ -653,6 +719,18 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return "noted", nil
 	})
+}
+
+// otherSeat parses a seat argument, defaulting to the seat opposite Nic.
+func (s *Server) otherSeat(arg string) (state.Seat, error) {
+	if arg == "" {
+		return s.HumanSeat.Other(), nil
+	}
+	seat := state.Seat(strings.ToLower(arg))
+	if !seat.Valid() {
+		return "", fmt.Errorf("unknown seat %q", arg)
+	}
+	return seat, nil
 }
 
 func viewName(v string) string {

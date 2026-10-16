@@ -1,4 +1,5 @@
 <script>
+  import { openDeckList } from './lib/actions.js';
   import { app } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
   import Side from './components/Side.svelte';
@@ -48,6 +49,9 @@
       {#if snap.warnings?.length}
         <span class="warn" title={snap.warnings.join('\n')}>⚠ {snap.warnings.length}</span>
       {/if}
+    {/if}
+    {#if snap}
+      <button class="decklist" onclick={() => openDeckList(app.human)} title="Every card in your deck and where each copy is">Deck list</button>
     {/if}
     <button class="panel-toggle" onclick={() => (app.panelOpen = !app.panelOpen)}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
   </header>
@@ -136,8 +140,8 @@
     letter-spacing: 0.04em;
   }
   .body { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; }
-  .body.panel { grid-template-columns: 1fr 320px; }
-  main { overflow: auto; display: flex; flex-direction: column; justify-content: center; }
+  .body.panel { grid-template-columns: 1fr clamp(320px, 18vw, 480px); }
+  main { overflow: auto; display: flex; flex-direction: column; justify-content: center; font-size: var(--fs); }
   aside {
     background: var(--panel);
     border-left: 1px solid var(--line);
@@ -149,7 +153,7 @@
     top: 0;
   }
   aside h2 { font-size: 13px; margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
-  .seat-name { text-align: center; color: var(--muted); font-size: 12px; padding: 2px; }
+  .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
   .landing { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .muted { color: var(--muted); }
   .caption {

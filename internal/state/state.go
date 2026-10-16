@@ -129,6 +129,12 @@ func (s *State) KnownTo(iid IID, seat Seat) bool {
 	return s.Known[iid]&seatBit(seat) != 0
 }
 
+// KnownBy reports whether seat knows hidden card iid's identity. Cards in
+// public zones are known to everyone regardless.
+func (s *State) KnownBy(iid IID, seat Seat) bool {
+	return s.Known[iid]&seatBit(seat) != 0
+}
+
 // Stack returns the stack at l, which may be nil if the slot is empty.
 func (s *State) Stack(l Loc) (*Stack, error) {
 	side, ok := s.Sides[l.Seat]

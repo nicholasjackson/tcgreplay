@@ -134,7 +134,9 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "max-age=86400")
+	// Revalidate: what is served for a card (e.g. borrowed Energy art) can
+	// change between builds, and the server is local.
+	w.Header().Set("Cache-Control", "no-cache")
 	json.NewEncoder(w).Encode(CardInfo{
 		ID: c.ID, Name: c.Name, Category: c.Category, Stage: c.Stage,
 		TrainerType: c.TrainerType, EnergyType: c.EnergyType, HP: c.HP,

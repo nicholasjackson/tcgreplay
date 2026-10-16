@@ -137,11 +137,11 @@ func buildHandlers(a, b string) []handler {
 			return r.draw(r.seat(m[1]), 1, nil)
 		}),
 		h(`{P} drew (\d+) cards\.`, func(r *replay, m []string, n, _ *Node) error {
-			return r.draw(r.seat(m[1]), count(m[2]), n.Bullets())
+			return r.drawShown(r.seat(m[1]), count(m[2]), n.Bullets())
 		}),
 		h(`(\d+) drawn cards\.`, noop),
 		h(`{P} drew (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
-			return r.draw(r.seat(m[1]), 1, []string{m[2]})
+			return r.drawShown(r.seat(m[1]), 1, []string{m[2]})
 		}),
 
 		// Trainers, attachments and evolution.

@@ -156,6 +156,8 @@ type DB interface {
 	// Resolve maps a set code as printed in TCG Live exports (e.g. "SVI")
 	// and a collector number to a TCGdex card id.
 	Resolve(ctx context.Context, setCode, number string) (string, error)
+	// ByName picks a TCGdex card id for a card known only by name.
+	ByName(ctx context.Context, name string) (string, error)
 }
 
 // Client is a TCGdex client with a disk cache.
@@ -170,6 +172,7 @@ type Client struct {
 	mem      map[string]*Card
 	setIndex map[string]string // upper set code -> set id
 	indexed  bool
+	byName   map[string]string // nameKey -> card id
 }
 
 // NewClient returns a client caching under dir.
@@ -249,6 +252,7 @@ func (c *Client) Card(ctx context.Context, id string) (*Card, error) {
 	if err != nil {
 		return nil, err
 	}
+	energyArt(&card)
 	c.mu.Lock()
 	c.mem[id] = &card
 	c.mu.Unlock()
@@ -271,10 +275,33 @@ func (c *Client) Cached(id string) *Card {
 	if json.Unmarshal(b, &cc) != nil {
 		return nil
 	}
+	energyArt(&cc)
 	c.mu.Lock()
 	c.mem[id] = &cc
 	c.mu.Unlock()
 	return &cc
+}
+
+// basicEnergyArt is Crown Zenith's Basic Energy art. TCGdex has no images
+// for the Scarlet & Violet and Mega Evolution Energy prints that decks
+// use, and every other print with art is a gold hyper rare.
+var basicEnergyArt = map[string]string{
+	"Grass": "152", "Fire": "153", "Water": "154", "Lightning": "155",
+	"Psychic": "156", "Fighting": "157", "Darkness": "158", "Metal": "159",
+}
+
+// energyArt gives a Basic Energy card without an image the art of the
+// same type. Only the picture is borrowed; the card keeps its identity.
+func energyArt(c *Card) {
+	if c.Image != "" || c.Category != "Energy" || c.EnergyType != "Normal" {
+		return
+	}
+	for t, n := range basicEnergyArt {
+		if strings.Contains(c.Name, t) {
+			c.Image = "https://assets.tcgdex.net/en/swsh/swsh12.5/" + n
+			return
+		}
+	}
 }
 
 type setSummary struct {
@@ -282,8 +309,12 @@ type setSummary struct {
 }
 
 type setDetail struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	ReleaseDate string `json:"releaseDate"`
+	Serie       struct {
+		ID string `json:"id"`
+	} `json:"serie"`
 	Abbreviation struct {
 		Official string `json:"official"`
 	} `json:"abbreviation"`
@@ -292,6 +323,7 @@ type setDetail struct {
 		ID      string `json:"id"`
 		LocalID string `json:"localId"`
 		Name    string `json:"name"`
+		Image   string `json:"image"`
 	} `json:"cards"`
 }
 
@@ -410,4 +442,96 @@ func (c *Client) Resolve(ctx context.Context, setCode, number string) (string, e
 		}
 	}
 	return "", fmt.Errorf("no card %s %s in set %s: %w", setCode, number, setID, ErrNotFound)
+}
+
+// nameKey normalises a card name for lookup: case and apostrophe style
+// differ between TCG Live and TCGdex.
+func nameKey(name string) string {
+	name = strings.NewReplacer("’", "'", "‘", "'").Replace(name)
+	return strings.ToLower(strings.Join(strings.Fields(name), " "))
+}
+
+// ByName implements DB. A name has many prints; it picks the newest one
+// with art (what Standard play uses), preferring the regular print over
+// higher-numbered alternate arts. Pokémon TCG Pocket sets are skipped. "Basic Fire Energy", as logs name it,
+// also matches "Fire Energy".
+func (c *Client) ByName(ctx context.Context, name string) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.byName == nil {
+		if err := c.buildNameIndex(ctx); err != nil {
+			return "", err
+		}
+	}
+	key := nameKey(name)
+	if id, ok := c.byName[key]; ok {
+		return id, nil
+	}
+	if k, ok := strings.CutPrefix(key, "basic "); ok {
+		if id, ok := c.byName[k]; ok {
+			return id, nil
+		}
+	}
+	return "", fmt.Errorf("no card named %q: %w", name, ErrNotFound)
+}
+
+// buildNameIndex reads every set (cached after the first time) and keeps
+// the preferred print of each name. The caller holds c.mu.
+func (c *Client) buildNameIndex(ctx context.Context) error {
+	var sets []setSummary
+	if err := c.getJSON(ctx, "/sets", filepath.Join(c.CacheDir, "sets.json"), &sets); err != nil {
+		return err
+	}
+	type pick struct {
+		id, release string
+		art         bool
+		num         int
+	}
+	better := func(a, b pick) bool { // is a preferred to b?
+		if a.art != b.art {
+			return a.art
+		}
+		if a.release != b.release {
+			return a.release > b.release
+		}
+		return a.num < b.num
+	}
+	best := map[string]pick{}
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 8)
+	for _, s := range sets {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			d, err := c.set(ctx, id)
+			if err != nil {
+				return // offline or gone: its prints are simply not offered
+			}
+			if d.Serie.ID == "tcgp" {
+				return // Pokémon TCG Pocket, a different game
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			for _, card := range d.Cards {
+				num, err := strconv.Atoi(card.LocalID)
+				if err != nil {
+					num = 1 << 30 // lettered prints (TG05) after numbered ones
+				}
+				p := pick{card.ID, d.ReleaseDate, card.Image != "", num}
+				k := nameKey(card.Name)
+				if cur, ok := best[k]; !ok || better(p, cur) {
+					best[k] = p
+				}
+			}
+		}(s.ID)
+	}
+	wg.Wait()
+	c.byName = make(map[string]string, len(best))
+	for k, p := range best {
+		c.byName[k] = p.id
+	}
+	return nil
 }

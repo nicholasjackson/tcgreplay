@@ -2,8 +2,11 @@ package importer
 
 import (
 	"encoding/json"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/nicholasjackson/tcgreplay/internal/deck"
@@ -22,11 +25,16 @@ type oracle struct {
 	EndReason      string         `json:"end_reason"`
 }
 
-func loadCorpus(t *testing.T) ([]deck.Entry, []struct {
-	File     string `json:"file"`
-	Player   string `json:"player"`
-	Expected oracle `json:"expected"`
-}) {
+// corpusGame is one game in the corpus index. Observed spot-checks
+// minimum opponent counts the log proves.
+type corpusGame struct {
+	File     string         `json:"file"`
+	Player   string         `json:"player"`
+	Expected oracle         `json:"expected"`
+	Observed map[string]int `json:"observed,omitempty"`
+}
+
+func loadCorpus(t *testing.T) ([]deck.Entry, []corpusGame) {
 	t.Helper()
 	b, err := os.ReadFile(filepath.Join(corpus, "decks/mega-lucario-ex-v12.txt"))
 	if err != nil {
@@ -37,11 +45,7 @@ func loadCorpus(t *testing.T) ([]deck.Entry, []struct {
 		t.Fatal(err)
 	}
 	var idx struct {
-		Games []struct {
-			File     string `json:"file"`
-			Player   string `json:"player"`
-			Expected oracle `json:"expected"`
-		} `json:"games"`
+		Games []corpusGame `json:"games"`
 	}
 	b, err = os.ReadFile(filepath.Join(corpus, "index.json"))
 	if err != nil {
@@ -90,11 +94,178 @@ func TestCorpus(t *testing.T) {
 			for _, p := range st.Check() {
 				t.Errorf("invariant: %s", p)
 			}
+			copies := map[string]int{}
 			for iid, c := range st.Cards {
 				if c.Owner == MeSeat && c.Name == "" {
 					t.Errorf("%s has no identity", iid)
 				}
+				if c.Owner == OppSeat && c.Name != "" {
+					copies[c.Name]++
+				}
+			}
+			// No deck holds more than four of a card, so neither the
+			// reconstruction nor the proven minimums may.
+			for name, n := range copies {
+				if limited(name) && n > MaxCopies {
+					t.Errorf("reconstruction has %d %s", n, name)
+				}
+			}
+			for name, n := range rep.Observed {
+				if limited(name) && n > MaxCopies {
+					t.Errorf("observed %d %s", n, name)
+				}
+				if n > copies[name] {
+					t.Errorf("observed %d %s but the reconstruction has %d", n, name, copies[name])
+				}
+			}
+			for name, n := range g.Observed {
+				if rep.Observed[name] != n {
+					t.Errorf("observed %d %s, want %d", rep.Observed[name], name, n)
+				}
 			}
 		})
+	}
+}
+
+// TestOppDeck imports with an assumed opponent list that undercounts a
+// card the log proves: the list is raised to match and fills every card.
+func TestOppDeck(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	text, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-11_ledjo23_alakazam-donk.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	opp := []deck.Entry{{Name: "Abra", Count: 3}, {Name: "Basic Psychic Energy", Count: 57}}
+	res, err := Import(string(text), Options{MyDeck: entries, OppDeck: opp, Seed: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(res.Report.Warnings, "opponent list: raised Abra from 3 to the 4 seen") {
+		t.Errorf("warnings: %v", res.Report.Warnings)
+	}
+	if !slices.ContainsFunc(res.Report.Warnings, func(w string) bool { return strings.Contains(w, "conflicts with the log") }) {
+		t.Errorf("no fallback warning: %v", res.Report.Warnings)
+	}
+	if len(res.Report.Problems) > 0 {
+		t.Errorf("problems after falling back: %v", res.Report.Problems)
+	}
+	st, err := state.Fold(res.Events())
+	if err != nil {
+		t.Fatal(err)
+	}
+	abra, unnamed := 0, 0
+	for _, c := range st.Cards {
+		if c.Owner != OppSeat {
+			continue
+		}
+		switch c.Name {
+		case "Abra":
+			abra++
+		case "":
+			unnamed++
+		}
+	}
+	// Reconcile adds the other cards seen, so the list overfills the deck
+	// and every unnamed card gets an identity.
+	if abra != 4 || unnamed != 0 {
+		t.Errorf("%d Abra, %d unnamed", abra, unnamed)
+	}
+}
+
+// TestCorpusSeeds replays every log with many seeds: the arbitrary choices
+// a seed drives (which unseen card a draw takes) must never leave the
+// replay stuck, and what the log proves must not depend on them.
+func TestCorpusSeeds(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow")
+	}
+	entries, games := loadCorpus(t)
+	for _, g := range games {
+		t.Run(filepath.Base(g.File), func(t *testing.T) {
+			text, err := os.ReadFile(filepath.Join(corpus, g.File))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for seed := uint64(2); seed <= 25; seed++ {
+				res, err := Import(string(text), Options{MyDeck: entries, Seed: seed})
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, p := range res.Report.Problems {
+					t.Errorf("seed %d: line %d %q: %s", seed, p.Line, p.Text, p.Err)
+				}
+				for name, n := range g.Observed {
+					if got := res.Report.Observed[name]; got != n {
+						t.Errorf("seed %d: observed %d %s, want %d", seed, got, name, n)
+					}
+				}
+			}
+		})
+	}
+}
+
+// TestOppDeckCounts holds the opponent to an assumed list that agrees with
+// the log: the reconstruction then has exactly the list's counts.
+func TestOppDeckCounts(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	text, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-11_carlos0oz_dragapult.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	l, err := deck.Parse(`4 Dreepy
+3 Drakloak
+2 Dragapult ex
+1 Budew
+2 Munkidori
+1 Fezandipiti ex
+2 Dunsparce
+2 Dudunsparce
+4 Lillie's Determination
+2 Crispin
+1 Rosa's Encouragement
+2 Boss's Orders
+4 Buddy-Buddy Poffin
+4 Poké Pad
+4 Crushing Hammer
+3 Ultra Ball
+2 Night Stretcher
+2 Rare Candy
+2 Switch
+1 Sparkling Crystal
+2 Risky Ruins
+4 Basic Fire Energy
+4 Basic Psychic Energy
+2 Basic Darkness Energy`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]int{}
+	for _, e := range l.Entries {
+		want[e.Name] += e.Count
+	}
+	for seed := uint64(1); seed <= 10; seed++ {
+		res, err := Import(string(text), Options{MyDeck: entries, OppDeck: l.Entries, Seed: seed})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range res.Report.Problems {
+			t.Errorf("seed %d: line %d %q: %s", seed, p.Line, p.Text, p.Err)
+		}
+		for _, w := range res.Report.Warnings {
+			t.Errorf("seed %d: warning: %s", seed, w)
+		}
+		st, err := state.Fold(res.Events())
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := map[string]int{}
+		for _, c := range st.Cards {
+			if c.Owner == OppSeat {
+				got[c.Name]++
+			}
+		}
+		if !maps.Equal(got, want) {
+			t.Errorf("seed %d: opponent deck %v, want %v", seed, got, want)
+		}
 	}
 }

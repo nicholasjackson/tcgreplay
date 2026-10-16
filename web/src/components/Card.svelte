@@ -11,11 +11,15 @@
     size = 'md',
     draggable = true,
     rotate = 0,
+    lift = true,
     onmenu = null,
     onclick = null,
   } = $props();
 
   const info = $derived(card && !card.hidden ? cardInfo(card.def) : null);
+  // Visible (e.g. in the reveal view) but never identified: the log never
+  // named it and no list has been assumed for it.
+  const unknown = $derived(card && !card.hidden && !card.name && !card.def);
   const lit = $derived(card && app.highlight.includes(card.iid));
   let broken = $state(false);
 
@@ -45,6 +49,7 @@
   <div
     class="card {size}"
     class:lit
+    class:lift
     class:back={card.hidden}
     style:--rot="{rotate}deg"
     draggable={draggable && !card.hidden}
@@ -55,10 +60,12 @@
     onkeydown={(ev) => ev.key === 'Enter' && click(ev)}
     role="button"
     tabindex="-1"
-    title={card.hidden ? card.iid : `${card.name} (${card.iid})`}
+    title={card.hidden ? card.iid : unknown ? `Unknown card (${card.iid}): never revealed` : `${card.name} (${card.iid})`}
   >
     {#if card.hidden}
       <div class="back-art"><span></span></div>
+    {:else if unknown}
+      <div class="back-art unknown"><span>?</span></div>
     {:else if info?.category === 'Energy' && (!info.image || broken)}
       <div class="token" data-type={energyType(info.name)} title={info.name}>{energyType(info.name).slice(0, 1)}</div>
     {:else if info?.image && !broken}
@@ -84,7 +91,7 @@
     border-radius: calc(var(--w) * 0.05);
     position: relative;
     flex: none;
-    transform: rotate(var(--rot));
+    transform: rotate(var(--rot)) scale(var(--hs, 1));
     transition: transform 0.25s ease, box-shadow 0.25s ease, outline-color 0.25s;
     box-shadow: 0 2px 6px #0007;
     cursor: grab;
@@ -95,6 +102,18 @@
   .card.sm { --w: calc(var(--cw) * 0.62); }
   .card.xs { --w: calc(var(--cw) * 0.42); }
   .card.lg { --w: calc(var(--cw) * 1.25); }
+  /* Rolling over a face-up card enlarges it to about two card widths,
+     after a short pause so sweeping the mouse across the mat stays calm.
+     Clicking still opens the full card view. */
+  .card.lift:not(.back):hover {
+    --hs: 1.8;
+    z-index: 40;
+    box-shadow: 0 10px 30px #000b;
+    transition-delay: 0.15s;
+  }
+  .card.lift.lg:not(.back):hover { --hs: 1.55; }
+  .card.lift.sm:not(.back):hover { --hs: 2.8; }
+  .card.lift.xs:not(.back):hover { --hs: 4; }
   .card.lit {
     outline-color: var(--accent);
     box-shadow: 0 0 18px 4px var(--accent-glow);
@@ -115,6 +134,17 @@
       linear-gradient(#c8312b 0 47%, #232a33 47% 53%, #2a5bd7 53%);
     border: calc(var(--w) * 0.05) solid #1d3f9e;
     box-sizing: border-box;
+  }
+  .back-art.unknown {
+    filter: grayscale(0.85) brightness(0.7);
+    display: grid;
+    place-items: center;
+  }
+  .back-art.unknown span {
+    font: 800 calc(var(--w) * 0.45) / 1 system-ui;
+    color: #fff;
+    text-shadow: 0 2px 6px #000;
+    filter: none;
   }
   .text-card {
     width: 100%;
@@ -162,8 +192,8 @@
     left: 2px;
     background: #7a3fd0;
     color: white;
-    font: 700 10px/1 system-ui;
-    padding: 2px 4px;
+    font: 700 max(10px, calc(var(--w) * 0.11))/1 system-ui;
+    padding: 0.2em 0.4em;
     border-radius: 3px;
     text-transform: uppercase;
   }

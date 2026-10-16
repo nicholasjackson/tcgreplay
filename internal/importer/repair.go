@@ -69,14 +69,15 @@ type swapRec struct {
 }
 
 // repairAmong swaps one of hs (blindly placed cards that are known to be
-// something else) with a hidden card that can be name, returning the card
+// something else, or unknown cards that cannot be name because every copy
+// is already bound) with a hidden card that can be name, returning the card
 // now standing where the swapped one was.
 func (r *replay) repairAmong(seat state.Seat, hs []state.IID, name string) (state.IID, bool) {
 	if name == "" {
 		return "", false
 	}
 	for _, h := range slices.Clone(hs) {
-		if r.bound[h] == name || r.bound[h] == "" {
+		if r.bound[h] == name {
 			continue
 		}
 		since := r.blindSince(h)
@@ -85,6 +86,38 @@ func (r *replay) repairAmong(seat state.Seat, hs []state.IID, name string) (stat
 		}
 		for _, d := range r.hiddenCards(seat) {
 			if d == h || slices.Contains(hs, d) || !r.bindable(d, name) || r.lastPublic[d] >= since {
+				continue
+			}
+			if r.bound[h] == "" && r.bound[d] != name {
+				continue // h could be bound itself if a fresh copy were allowed
+			}
+			if err := r.swap(h, d, since); err != nil {
+				continue
+			}
+			return d, true
+		}
+	}
+	return "", false
+}
+
+// reclaim is repairAmong in the other direction: zone needs a name whose
+// every copy is already bound, and one of them reached the hand by blind
+// draws. Swapping it with an unseen card of zone means the draw took that
+// card instead, leaving the copy in zone. It returns the copy.
+func (r *replay) reclaim(seat state.Seat, z state.Zone, name string, exclude []state.IID) (state.IID, bool) {
+	if name == "" || z == state.Hand {
+		return "", false
+	}
+	for _, d := range r.st.Sides[seat].Hand {
+		if r.bound[d] != name {
+			continue
+		}
+		since := r.blindSince(d)
+		if since == 0 {
+			continue
+		}
+		for _, h := range r.zoneCards(seat, z) {
+			if r.bound[h] == name || slices.Contains(exclude, h) || r.lastPublic[h] >= since {
 				continue
 			}
 			if err := r.swap(h, d, since); err != nil {

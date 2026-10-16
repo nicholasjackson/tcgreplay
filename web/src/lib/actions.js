@@ -314,10 +314,16 @@ export function deckMenu(seat) {
     });
     items.push({ label: 'Search…', run: () => openSearch(seat) });
   }
+  items.push({ label: 'Deck list…', run: () => openDeckList(seat) });
   items.push({ label: 'Shuffle', run: () => act('shuffle', { whose: seat, ...sa }) });
   return { title: `${seat} deck`, items };
 }
 
+// openDeckList shows every card a seat owns, with where each copy is.
+export async function openDeckList(seat) {
+  const rows = await act('deck_list', { whose: seat, ...seatArgs(seat) });
+  if (rows !== undefined) app.modal = { kind: 'decklist', seat, rows: rows === true ? [] : rows };
+}
 export async function openSearch(seat, filter = '') {
   const cards = await act('search_deck', { whose: seat, filter, ...seatArgs(seat) });
   if (cards !== undefined) app.modal = { kind: 'search', seat, filter, cards: cards === true ? [] : cards };

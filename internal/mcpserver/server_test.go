@@ -151,4 +151,17 @@ func TestImportLogTool(t *testing.T) {
 	if out, isErr := call(t, cs, "get_state", map[string]any{"view": "reveal"}); isErr {
 		t.Fatal(out)
 	}
+
+	// Sample the opponent's hidden cards from a proposed list.
+	out, isErr = call(t, cs, "get_profile", nil)
+	if isErr || !strings.Contains(out, `"seen_so_far"`) {
+		t.Fatalf("get_profile: %s", out)
+	}
+	if out, isErr := call(t, cs, "sample_hidden", map[string]any{"deck": "Pokémon: 4\n4 Abra\n\nEnergy: 56\n56 Basic Psychic Energy\n\nTotal Cards: 60", "seed": 3}); isErr || !strings.Contains(out, `"hand"`) {
+		t.Fatalf("sample_hidden: %s", out)
+	}
+	out, isErr = call(t, cs, "get_profile", nil)
+	if isErr || !strings.Contains(out, `"Basic Psychic Energy"`) {
+		t.Fatalf("profile not stored: %s", out)
+	}
 }

@@ -286,13 +286,21 @@ The deck profile lives in the `setup` or `assume` event, so it is part of the ga
 
 ## Status (2026-10-16)
 
-Phases 0–2 are built. Phase 3's importer is built: all 10 corpus logs in `testdata/logs` replay with no problems, and the `import_log` MCP tool saves a log as a review-mode game (it remembers the last decklist in `<data>/last-deck.txt`). Deck inference isn't started.
+Phases 0–2 are built. Phase 3's importer is built: all 10 corpus logs in `testdata/logs` replay with no problems, and the `import_log` MCP tool saves a log as a review-mode game (it remembers the last decklist in `<data>/last-deck.txt`). Deck inference has started with the parts that need no outside data (`internal/infer`):
 
-**Runtime.** `tcgreplay` is a stdio shim relaying to one shared daemon (`tcgreplay -daemon`, socket `<data>/mcp.sock`), which owns the games and the UI on :7777. After `make install`, restart the desktop app; the first shim from the new build replaces the old daemon. `-no-daemon` runs everything in-process. Logs: `~/.local/share/tcgreplay/tcgreplay.log`.
+- **Proven minimums.** `Report.Observed` is the most copies of each opponent card Nic could see at once (public zones, plus cards revealed to him in hand). It is counted by name, never by card instance, so it is a sound lower bound; the old count of bound instances overcounted (6 Crushing Hammer, 3 Dudunsparce). Named opponent draws (searches) are now revealed to Nic in the event log. Corpus spot checks live in `testdata/index.json` under `observed`.
+- **Four-copy cap.** The replay never binds a fifth copy of a card (Basic Energy aside); past four it reuses a copy already seen by swapping it in from the deck.
+- **Profiles.** The setup event's profile holds the opponent, the proven minimums and, when a list is given, the reconciled list (counts raised to what was seen, cards tagged `observed` or `reference`). `get_profile` returns it with `seen_so_far`, the minimums at the current head.
+- **Sampling.** `sample_hidden(deck?, seed?)` gives the opponent's hidden cards (hand, deck order, prizes) identities at the head, as an assume event with basis `sampled`. Cards Nic can see keep their identities; a card can only be a prize as often as the list allows after the copies Nic saw outside the prizes since the deal. A list given once is stored and reused on any branch. Review mode only. Workflow: `rewind(e)` → `sample_hidden` → play; repeat per sampled hand.
+
+- **Complete opponent decks.** `import_log` takes `opp_deck`, a likely list Claude builds; the replay holds the opponent to its counts (falling back with a warning if the log contradicts it) and deals every unnamed card from what is left, so both sides are 60 cards. `set_opponent_deck` rebuilds an imported game with a list, from the same log and seed (saved as `<id>.import.json`); it will not replace a game with branches. Opponent cards get art by name lookup (newest non-Pocket print).
+- **Skills.** `.claude/skills/tcg-import-game` (read the log, build the list, import, triage) and `tcg-opponent-deck` (archetype, floors from the log, duplicates and normal Supporter/Energy totals for the guessed slots). Candidates next: turn-by-turn review, line testing with `sample_hidden`.
+
+**Runtime.** `tcgreplay` is a stdio shim relaying to one shared daemon (`tcgreplay -daemon`, socket `<data>/mcp.sock`), which owns the games and the UI on :7777. After `make install`, restart the desktop app; the first shim from the new build replaces the old daemon. `-no-daemon` runs everything in-process. Logs: `~/.local/share/tcgreplay/tcgreplay.log`. **Dev mode:** `make dev` builds and runs this checkout's daemon in the foreground with its own data (`.dev/`) and UI (:7778), beside the installed one; Claude Code in the repo reaches it as the `tcgreplay-dev` server in `.mcp.json`. `make dev-ui` adds Vite hot reload against it. After a rebuild, rerun `make dev`: shims reconnect to the new daemon and replay the MCP handshake, so the client stays connected (a call in flight at that moment fails with a retry message).
 
 **Debugging the importer.** `TRACE=<log path> go test ./internal/importer -run Trace -v` prints each line with a board summary. Handlers must never mutate the parsed log: it is shared across the search's replay attempts, and mutating it silently breaks the backtracking.
 
-**Next.** Phase 3 deck inference, starting with what needs no outside data: minimum counts from the log (`Report.Observed`) and sampled opponent hands for rewound positions. Still open: whether reference lists come from Limitless TCG (check its terms or API first) or from lists Nic pastes in.
+**Next.** Try the sampling workflow on a real review with a list Claude proposes. Then the reference-data half of Phase 3: archetype match and consensus lists. Still open: whether reference lists come from Limitless TCG (check its terms or API first) or from lists Nic pastes in. Trimming a reconciled list back to 60 needs inclusion rates, so it waits for reference data; today Reconcile only warns when the total is off.
 
 ## Build plan
 
@@ -330,7 +338,8 @@ Six phases, each usable on its own. Tomorrow's session covers Phase 0 and as muc
 
 - [x] Log parser with nesting, target resolution and card-name mapping
 - [x] Placeholder cards, `assume` events with provenance
-- [ ] Constraint extraction, archetype match, consensus list, hand sampling
+- [x] Constraint extraction (proven minimums, four-copy cap, prize exclusion) and hand sampling
+- [ ] Archetype match and consensus list from reference data
 
 * **Done when:** the 15 October LeDjo23 log imports with invariants passing and every assumption flagged.
 

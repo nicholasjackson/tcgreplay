@@ -164,4 +164,7 @@ type Assumption struct {
 // AssumePayload fills hidden card identities, with provenance.
 type AssumePayload struct {
 	Cards map[IID]Assumption `json:"cards"`
+	// Profile, if set, replaces the assumed opponent list the cards were
+	// drawn from.
+	Profile json.RawMessage `json:"profile,omitempty"`
 }

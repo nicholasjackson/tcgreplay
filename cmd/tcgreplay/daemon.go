@@ -10,6 +10,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -45,6 +47,32 @@ func socketPath(c config) string {
 }
 
 func infoPath(c config) string { return filepath.Join(c.dataDir, "daemon.json") }
+
+// takeoverPath marks a daemon taking over with -replace. While the process
+// it names lives, other daemons (e.g. one a shim starts the moment the old
+// daemon exits) stand aside instead of grabbing the lock.
+func takeoverPath(c config) string { return filepath.Join(c.dataDir, "takeover") }
+
+// clearTakeover removes the takeover mark if it is ours: the daemon being
+// replaced must not remove its successor's.
+func clearTakeover(c config) {
+	if b, err := os.ReadFile(takeoverPath(c)); err == nil && strings.TrimSpace(string(b)) == strconv.Itoa(os.Getpid()) {
+		os.Remove(takeoverPath(c))
+	}
+}
+
+// takingOver returns the pid of a live daemon taking over, or 0.
+func takingOver(c config) int {
+	b, err := os.ReadFile(takeoverPath(c))
+	if err != nil {
+		return 0
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(b)))
+	if err != nil || pid == os.Getpid() || syscall.Kill(pid, 0) != nil {
+		return 0
+	}
+	return pid
+}
 func lockPath(c config) string { return filepath.Join(c.dataDir, "daemon.lock") }
 
 // binaryID identifies the executable on disk, so a reinstall (go install)
@@ -71,8 +99,10 @@ func readInfo(c config) (daemonInfo, error) {
 }
 
 // runDaemon serves MCP sessions on a Unix socket, one per shim connection,
-// all sharing one game manager and the playmat UI.
-func runDaemon(ctx context.Context, c config) error {
+// all sharing one game manager and the playmat UI. With replace, a daemon
+// already running on the data dir is stopped first (for make dev, where a
+// shim may have started one in the background); otherwise this one exits.
+func runDaemon(ctx context.Context, c config, replace bool) error {
 	if err := os.MkdirAll(c.dataDir, 0o755); err != nil {
 		return err
 	}
@@ -83,9 +113,37 @@ func runDaemon(ctx context.Context, c config) error {
 		return err
 	}
 	defer lock.Close()
+	if !replace {
+		if pid := takingOver(c); pid != 0 {
+			log.Printf("daemon pid %d is taking over; exiting", pid)
+			return nil
+		}
+	}
 	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		log.Printf("daemon already running (%v); exiting", err)
-		return nil
+		if !replace {
+			log.Printf("daemon already running (%v); exiting", err)
+			return nil
+		}
+		// Stop whoever holds the lock until we get it. The takeover mark
+		// keeps daemons that shims start meanwhile out of the way.
+		if err := os.WriteFile(takeoverPath(c), []byte(strconv.Itoa(os.Getpid())), 0o644); err != nil {
+			return err
+		}
+		defer clearTakeover(c) // also on failure
+		stopped := 0
+		deadline := time.Now().Add(10 * time.Second)
+		for syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB) != nil {
+			if time.Now().After(deadline) || ctx.Err() != nil {
+				return fmt.Errorf("could not take over from daemon pid %d", stopped)
+			}
+			if info, err := readInfo(c); err == nil && info.PID != stopped {
+				log.Printf("replacing daemon pid %d", info.PID)
+				stopDaemon(ctx, c, info.PID)
+				stopped = info.PID
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+		clearTakeover(c)
 	}
 
 	sock := socketPath(c)
@@ -103,6 +161,9 @@ func runDaemon(ctx context.Context, c config) error {
 
 	m, srv := newServer(c)
 	log.Printf("tcgreplay %s daemon (pid %d): socket %s, data %s, claude plays %s", version, os.Getpid(), sock, c.dataDir, c.seat)
+	if err := m.Resume(); err != nil {
+		log.Printf("could not reopen the last game: %v", err)
+	}
 	if c.uiAddr != "" {
 		go keepUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)
 	}
@@ -120,6 +181,10 @@ func runDaemon(ctx context.Context, c config) error {
 			return err
 		}
 		go func() {
+			// Drop the connection when the daemon stops, so shims notice
+			// and move to the next daemon.
+			stop := context.AfterFunc(ctx, func() { conn.Close() })
+			defer stop()
 			ss, err := srv.Connect(ctx, &mcp.IOTransport{Reader: conn, Writer: conn}, nil)
 			if err != nil {
 				log.Printf("mcp session: %v", err)

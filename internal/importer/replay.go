@@ -65,13 +65,15 @@ type replay struct {
 	nextID  int
 	bound   map[state.IID]string
 	limit   map[string]int // the owner's decklist counts
-	used    map[string]int
-	rep     *Report
-	rng     *rand.Rand
-	nodes   []handler
-	trace   io.Writer
-	flat    []*Node // every headline and subline, for lookahead
-	pos     int     // index in flat of the line being replayed
+	// oppLimit is an assumed opponent list's counts; nil allows MaxCopies.
+	oppLimit map[string]int
+	used     map[seatName]int
+	rep      *Report
+	rng      *rand.Rand
+	nodes    []handler
+	trace    io.Writer
+	flat     []*Node // every headline and subline, for lookahead
+	pos      int     // index in flat of the line being replayed
 	// mulligans lists each player's mulligan reveals, so a redrawn hand can
 	// be drawn as what the next reveal shows.
 	mulligans map[string][][]string
@@ -116,6 +118,21 @@ type handler struct {
 	keepKO bool
 }
 
+// seatName counts one seat's bound copies of a card name.
+type seatName struct {
+	seat state.Seat
+	name string
+}
+
+// MaxCopies is the most copies of a card, by name, a deck may hold. Basic
+// Energy is unlimited.
+const MaxCopies = 4
+
+// limited reports whether name is subject to MaxCopies.
+func limited(name string) bool {
+	return !(strings.HasPrefix(name, "Basic ") && strings.HasSuffix(name, " Energy"))
+}
+
 func (r *replay) seat(name string) state.Seat { return r.seats[name] }
 
 // emit applies an event to the replay state and records it in the current
@@ -149,10 +166,17 @@ func (r *replay) bindable(iid state.IID, name string) bool {
 	if b := r.bound[iid]; b != "" {
 		return b == name
 	}
-	if r.st.Cards[iid].Owner == MeSeat && r.limit != nil {
-		return r.used[name] < r.limit[name]
+	owner := r.st.Cards[iid].Owner
+	if owner == MeSeat && r.limit != nil {
+		return r.used[seatName{owner, name}] < r.limit[name]
 	}
-	return true
+	// The opponent's list is unknown, but no deck holds more than
+	// MaxCopies (or, with an assumed list, its count): past that, a named
+	// card must be a copy already seen.
+	if r.oppLimit != nil {
+		return r.used[seatName{owner, name}] < r.oppLimit[name]
+	}
+	return !limited(name) || r.used[seatName{owner, name}] < MaxCopies
 }
 
 func (r *replay) bind(iid state.IID, name string) error {
@@ -166,16 +190,20 @@ func (r *replay) bind(iid state.IID, name string) error {
 		return nil
 	}
 	if !r.bindable(iid, name) {
-		return fmt.Errorf("the decklist has only %d %s", r.limit[name], name)
+		if r.st.Cards[iid].Owner == MeSeat {
+			return fmt.Errorf("the decklist has only %d %s", r.limit[name], name)
+		}
+		if r.oppLimit != nil {
+			return fmt.Errorf("the assumed list has only %d %s", r.oppLimit[name], name)
+		}
+		return fmt.Errorf("%s already has %d %s", r.players[r.st.Cards[iid].Owner], MaxCopies, name)
 	}
 	r.bound[iid] = name
 	if r.boundAt != nil && r.pos < len(r.flat) {
 		r.boundAt[iid] = r.flat[r.pos].No
 	}
 	r.st.Cards[iid].Name = name
-	if r.st.Cards[iid].Owner == MeSeat {
-		r.used[name]++
-	}
+	r.used[seatName{r.st.Cards[iid].Owner, name}]++
 	return nil
 }
 
@@ -234,6 +262,11 @@ func (r *replay) pick(seat state.Seat, zones []state.Zone, name string, exclude 
 		for _, z := range zones {
 			hs := slices.DeleteFunc(slices.Clone(r.zoneCards(seat, z)), func(x state.IID) bool { return slices.Contains(exclude, x) })
 			if d, ok := r.repairAmong(seat, hs, name); ok {
+				return d, nil
+			}
+		}
+		for _, z := range zones {
+			if d, ok := r.reclaim(seat, z, name, exclude); ok {
 				return d, nil
 			}
 		}
@@ -370,6 +403,31 @@ func (r *replay) shuffle(seat state.Seat) error {
 	order := slices.Clone(r.st.Sides[seat].Deck)
 	r.rng.Shuffle(len(order), func(i, j int) { order[i], order[j] = order[j], order[i] })
 	return r.emit(seat, state.EvShuffle, state.ShufflePayload{Seat: seat, Order: order})
+}
+
+// drawShown draws like draw, for a line that names the cards: the log's
+// owner saw them, so the opponent's named cards are revealed.
+func (r *replay) drawShown(seat state.Seat, n int, names []string) error {
+	before := len(r.st.Sides[seat].Hand)
+	if err := r.draw(seat, n, names); err != nil {
+		return err
+	}
+	if seat != OppSeat || len(names) == 0 {
+		return nil
+	}
+	// Only the cards the line names were seen: draw takes those first. An
+	// unnamed card may still be bound from an earlier sighting, but nobody
+	// saw it this time.
+	var shown []state.IID
+	for i, iid := range r.st.Sides[seat].Hand[before:] {
+		if i < len(names) && names[i] != "" {
+			shown = append(shown, iid)
+		}
+	}
+	if len(shown) == 0 {
+		return nil
+	}
+	return r.emit(seat, state.EvReveal, state.RevealPayload{IIDs: shown, To: []state.Seat{MeSeat}})
 }
 
 // draw moves cards from deck to hand, binding names when given. Deck order

@@ -71,6 +71,10 @@ func (m *Manager) setCurrent(g *Game) {
 		m.current.Close()
 	}
 	m.current = g
+	// Remembered so a restarted daemon reopens it (Resume).
+	if os.MkdirAll(m.Dir, 0o755) == nil {
+		os.WriteFile(filepath.Join(m.Dir, "current.txt"), []byte(g.ID), 0o644)
+	}
 	hooks := slices.Clone(m.onLoad)
 	m.mu.Unlock()
 	for _, f := range hooks {
@@ -124,6 +128,26 @@ func (m *Manager) rng() *rand.Rand {
 		return m.Rand()
 	}
 	return nil
+}
+
+// Resume reopens the game that was current when the process last ran, if
+// it still exists.
+func (m *Manager) Resume() error {
+	b, err := os.ReadFile(filepath.Join(m.Dir, "current.txt"))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	id := strings.TrimSpace(string(b))
+	if p, err := m.path(id); err != nil {
+		return nil
+	} else if _, err := os.Stat(p); err != nil {
+		return nil
+	}
+	_, err = m.Load(id)
+	return err
 }
 
 // Load opens a stored game and makes it current.

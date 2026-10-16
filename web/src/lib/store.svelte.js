@@ -20,6 +20,7 @@ export const app = $state({
   modal: null, // {kind, ...}
   zoom: null, // card view
   dragging: null,
+  deckListShow: 'all', // deck list filter: all, unplayed or undrawn
   lastLog: 0, // highest log id seen, to mark new lines
 });
 
@@ -44,7 +45,8 @@ export function cardInfo(def) {
   if (app.cards[def]) return app.cards[def];
   if (!requested.has(def)) {
     requested.add(def);
-    fetch(`/api/card?def=${encodeURIComponent(def)}`)
+    // no-cache also skips responses cached under an older max-age.
+    fetch(`/api/card?def=${encodeURIComponent(def)}`, { cache: 'no-cache' })
       .then((r) => (r.ok ? r.json() : null))
       .then((c) => {
         if (c) app.cards[def] = c;

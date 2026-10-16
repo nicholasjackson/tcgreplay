@@ -1,5 +1,10 @@
 :root {
-  --cw: clamp(48px, min(6.2vw, 7.6vh), 92px); /* card width, fits the mat in one screen */
+  /* Card width: as large as fits the mat in one screen. Measured, the mat
+     is about 11 card widths tall plus 55px, under a 43px header, and about
+     10 card widths wide beside the timeline. Everything on the board
+     scales from it, text included (--fs). */
+  --cw: clamp(48px, min((100vh - 115px) / 11.1, (100vw - 360px) / 10), 240px);
+  --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
   --bg: #17321f;
   --felt: radial-gradient(ellipse at center, #22492d 0%, #17321f 70%, #10241a 100%);
   --panel: #1c2421;
@@ -59,3 +64,9 @@ button:disabled { opacity: 0.45; cursor: default; }
 button.primary { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 700; }
 select { font: inherit; background: var(--input); color: var(--text); border: 1px solid var(--line); border-radius: 4px; }
 code { background: #0005; padding: 1px 5px; border-radius: 4px; }
+
+/* A card enlarged on hover sits above the cards around it. */
+:where(.slot, .main, .att, .pile, .prize, .entry, .stadium):has(> * .card.lift:hover, > .card.lift:hover) {
+  position: relative;
+  z-index: 30;
+}

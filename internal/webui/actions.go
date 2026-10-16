@@ -40,6 +40,7 @@ type args struct {
 	Filter    string   `json:"filter,omitempty"`
 	Mode      string   `json:"mode,omitempty"`
 	Branch    string   `json:"branch,omitempty"`
+	Event     int      `json:"event,omitempty"`
 	Game      string   `json:"game,omitempty"`
 	Text      string   `json:"text,omitempty"`
 	UntilTurn int      `json:"until_turn,omitempty"`
@@ -146,8 +147,24 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 		return nil, nil, nil
 	case "checkout":
 		return nil, nil, g.Checkout(a.Branch)
+	case "rewind":
+		base := a.Name
+		if base == "" {
+			base = fmt.Sprintf("at-%d", a.Event)
+		}
+		name, err := g.JumpTo(a.Event, base)
+		return name, nil, err
 	case "search_deck":
 		v, err := g.SearchDeck(seatOf(a.Whose, seat), a.Filter, "ui:search_deck", string(human))
+		return v, nil, err
+	case "deck_list":
+		viewer := s.Human
+		c.mu.Lock()
+		if c.reveal {
+			viewer = ""
+		}
+		c.mu.Unlock()
+		v, err := g.DeckList(seatOf(a.Whose, seat), viewer, "ui:deck_list", string(human))
 		return v, nil, err
 	case "look_top":
 		v, err := g.LookTop(seatOf(a.Whose, seat), max(a.N, 1), "ui:look_top", string(human))

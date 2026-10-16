@@ -255,6 +255,66 @@ func (g *Game) SearchDeck(whose state.Seat, filter, tool, actor string) ([]DeckC
 	return out, nil
 }
 
+// DeckListRow is one card of a deck list with where its copies are.
+type DeckListRow struct {
+	DeckCard
+	Count int `json:"count"`
+	// Where counts copies by place: deck, prizes, hand, active, bench,
+	// discard, lost, stadium, or hidden when the viewer cannot tell which
+	// hidden place (deck or prizes; for an opponent, also hand).
+	Where map[string]int `json:"where"`
+}
+
+// DeckList lists all of owner's cards by name, sorted like a decklist,
+// with where each copy is as far as viewer can tell. viewer "" is the
+// reveal view (review mode only), which places every copy exactly.
+func (g *Game) DeckList(owner, viewer state.Seat, tool, actor string) ([]DeckListRow, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if _, ok := g.st.Sides[owner]; !ok {
+		return nil, fmt.Errorf("unknown seat %q", owner)
+	}
+	if viewer == "" && g.mode != ModeReview {
+		return nil, fmt.Errorf("the reveal view is only available in review mode")
+	}
+	g.audit(tool, viewer, actor)
+	rows := map[string]*DeckListRow{}
+	for _, cl := range g.st.Locations() {
+		c := g.st.Cards[cl.IID]
+		if c.Owner != owner {
+			continue
+		}
+		where := string(cl.Loc.Zone)
+		known := viewer == "" || cl.Loc.Zone.IsPublic() || g.st.KnownBy(cl.IID, viewer) || (cl.Loc.Zone == state.Hand && owner == viewer)
+		if !known {
+			where = "hidden"
+		}
+		r := rows[c.Name]
+		if r == nil {
+			r = &DeckListRow{DeckCard: g.deckCard(cl.IID), Where: map[string]int{}}
+			rows[c.Name] = r
+		}
+		r.Count++
+		r.Where[where]++
+	}
+	out := make([]DeckListRow, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, *r)
+	}
+	order := map[string]int{"Pokemon": 0, "Trainer": 1, "Energy": 2}
+	slices.SortFunc(out, func(a, b DeckListRow) int {
+		// Unknown cards (never named, no list assumed) go last.
+		unknown := func(r DeckListRow) int {
+			if r.Name == "" {
+				return 1
+			}
+			return 0
+		}
+		return cmp.Or(cmp.Compare(unknown(a), unknown(b)), cmp.Compare(order[a.Category], order[b.Category]), cmp.Compare(a.Name, b.Name))
+	})
+	return out, nil
+}
+
 // LookTop returns the top n cards of whose deck, top first.
 func (g *Game) LookTop(whose state.Seat, n int, tool, actor string) ([]DeckCard, error) {
 	g.mu.Lock()
@@ -393,6 +453,35 @@ func (g *Game) Rewind(eventID int, name string) (string, error) {
 		return "", err
 	}
 	return name, nil
+}
+
+// JumpTo shows the position right after eventID, for jumping around the
+// timeline. A branch named base (or base-2, base-3, ...) already at that
+// event is reused; otherwise the first free name of those is created. The
+// branch left behind keeps its head.
+func (g *Game) JumpTo(eventID int, base string) (string, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.log.Event(eventID) == nil {
+		return "", fmt.Errorf("no event %d", eventID)
+	}
+	branches := g.log.Branches()
+	for i := 1; ; i++ {
+		name := base
+		if i > 1 {
+			name = fmt.Sprintf("%s-%d", base, i)
+		}
+		head, taken := branches[name]
+		if taken && head != eventID {
+			continue
+		}
+		if !taken {
+			if err := g.log.Branch(name, eventID); err != nil {
+				return "", err
+			}
+		}
+		return name, g.checkoutLocked(name)
+	}
 }
 
 // Checkout switches to an existing branch.

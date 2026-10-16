@@ -42,8 +42,8 @@ type Card struct {
 	Name  string `json:"name,omitempty"`
 	Owner Seat   `json:"owner"`
 	// Basis records where an assumed identity came from: observed,
-	// decklist, reference, filler or manual. Empty for cards from a known
-	// decklist.
+	// decklist, reference, filler, sampled or manual. Empty for cards from
+	// a known decklist.
 	Basis string `json:"basis,omitempty"`
 }
 

@@ -2,6 +2,8 @@ package game
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,20 +17,22 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/store"
 )
 
-// ImportRequest describes a TCG Live battle log to import.
+// ImportRequest describes a TCG Live battle log to import. It is saved
+// beside the game (<id>.import.json) so the game can be rebuilt, e.g. with
+// an assumed opponent list.
 type ImportRequest struct {
-	ID string
+	ID string `json:"id"`
 	// Log is the battle log text as copied from TCG Live.
-	Log string
+	Log string `json:"log"`
 	// Deck is the log owner's decklist in TCG Live export format. If
 	// empty, the deck from the previous import is used.
-	Deck string
+	Deck string `json:"deck"`
 	// OppDeck optionally assumes the opponent's list for unrevealed cards.
-	OppDeck string
+	OppDeck string `json:"opp_deck,omitempty"`
 	// Me is the log owner's player name; detected if empty.
-	Me string
+	Me string `json:"me,omitempty"`
 	// Seed makes the reconstruction reproducible; 0 picks one at random.
-	Seed uint64
+	Seed uint64 `json:"seed"`
 }
 
 // ImportResult is the outcome of an import.
@@ -53,21 +57,9 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 		req.Deck = string(b)
 	}
 	parse := func(text, who string) ([]deck.Entry, error) {
-		if strings.TrimSpace(text) == "" {
-			return nil, nil
-		}
-		l, err := deck.Parse(text)
-		if err != nil {
-			return nil, fmt.Errorf("%s decklist: %w", who, err)
-		}
-		if m.DB != nil {
-			if err := l.Resolve(ctx, m.DB); err != nil {
-				for _, e := range strings.Split(err.Error(), "\n") {
-					warnings = append(warnings, fmt.Sprintf("%s: %s", who, e))
-				}
-			}
-		}
-		return l.Entries, nil
+		entries, w, err := m.ParseDeck(ctx, text, who)
+		warnings = append(warnings, w...)
+		return entries, err
 	}
 	mine, err := parse(req.Deck, "deck")
 	if err != nil {
@@ -82,7 +74,17 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 			warnings = append(warnings, fmt.Sprintf("could not remember the decklist: %v", err))
 		}
 	}
-	res, err := importer.Import(req.Log, importer.Options{Me: req.Me, MyDeck: mine, OppDeck: theirs, Seed: req.Seed})
+	opts := importer.Options{Me: req.Me, MyDeck: mine, OppDeck: theirs, Seed: req.Seed}
+	if m.DB != nil {
+		opts.DefOf = func(name string) string {
+			if id, ok := deck.BasicEnergyDef(name); ok {
+				return id
+			}
+			id, _ := m.DB.ByName(ctx, name)
+			return id
+		}
+	}
+	res, err := importer.Import(req.Log, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +127,98 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 	if err != nil {
 		return fail(fmt.Errorf("imported events do not fold: %w", err))
 	}
+	req.Seed = res.Seed
+	if b, err := json.Marshal(req); err == nil {
+		if err := os.WriteFile(strings.TrimSuffix(p, ".jsonl")+".import.json", b, 0o644); err != nil {
+			warnings = append(warnings, fmt.Sprintf("could not save the import for rebuilding: %v", err))
+		}
+	}
 	warnings = append(warnings, res.Report.Warnings...)
 	warnings = append(warnings, g.st.Check()...)
 	m.setCurrent(g)
 	return &ImportResult{Game: g, Report: res.Report, Warnings: warnings}, nil
+}
+
+// ParseDeck parses a TCG Live export and resolves card definitions where
+// possible; unresolved cards come back as warnings. Empty text is no list.
+func (m *Manager) ParseDeck(ctx context.Context, text, who string) ([]deck.Entry, []string, error) {
+	if strings.TrimSpace(text) == "" {
+		return nil, nil, nil
+	}
+	l, err := deck.Parse(text)
+	if err != nil {
+		return nil, nil, fmt.Errorf("%s decklist: %w", who, err)
+	}
+	var warnings []string
+	if m.DB != nil {
+		if err := l.Resolve(ctx, m.DB); err != nil {
+			for _, e := range strings.Split(err.Error(), "\n") {
+				warnings = append(warnings, fmt.Sprintf("%s: %s", who, e))
+			}
+		}
+	}
+	return l.Entries, warnings, nil
+}
+
+// SetOpponentDeck rebuilds an imported game with an assumed opponent list:
+// the same log and seed, so the owner's side and everything the log shows
+// come out the same, and every card the log never names is dealt at random
+// from what the list has left. The game is replaced, so it refuses when
+// branches other than main exist; pass newID to build a separate game.
+func (m *Manager) SetOpponentDeck(ctx context.Context, id, oppDeck, newID string) (*ImportResult, error) {
+	p, err := m.path(id)
+	if err != nil {
+		return nil, err
+	}
+	b, err := os.ReadFile(strings.TrimSuffix(p, ".jsonl") + ".import.json")
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("game %s has no saved import to rebuild; import the log again with opp_deck", id)
+	}
+	if err != nil {
+		return nil, err
+	}
+	var req ImportRequest
+	if err := json.Unmarshal(b, &req); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(oppDeck) == "" {
+		return nil, errors.New("no opponent list given")
+	}
+	req.OppDeck = oppDeck
+	if newID != "" && newID != id {
+		req.ID = newID
+		return m.Import(ctx, req)
+	}
+
+	// Replace in place: the old game's branches would not survive.
+	g, err := m.Load(id)
+	if err != nil {
+		return nil, err
+	}
+	var extra []string
+	for _, br := range g.Branches() {
+		if br.Name != "main" {
+			extra = append(extra, br.Name)
+		}
+	}
+	if len(extra) > 0 {
+		return nil, fmt.Errorf("game %s has branches %s that a rebuild would lose; pass new_id to build a separate game", id, strings.Join(extra, ", "))
+	}
+	m.mu.Lock()
+	if m.current == g {
+		m.current = nil
+	}
+	m.mu.Unlock()
+	g.Close()
+	old := p + ".old"
+	if err := os.Rename(p, old); err != nil {
+		return nil, err
+	}
+	res, err := m.Import(ctx, req)
+	if err != nil {
+		os.Rename(old, p) // keep the game we had
+		return nil, err
+	}
+	os.Remove(old)
+	return res, nil
 }

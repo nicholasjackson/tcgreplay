@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/nicholasjackson/tcgreplay/internal/deck"
+	"github.com/nicholasjackson/tcgreplay/internal/infer"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 )
 
@@ -26,14 +27,23 @@ type Options struct {
 	OppDeck []deck.Entry
 	// Seed makes the reconstruction reproducible; 0 picks one at random.
 	Seed uint64
+	// DefOf, if set, names a card definition for a card known only by name
+	// (the opponent's), so it shows with its art. "" if unknown.
+	DefOf func(name string) string
 	// Trace, if set, receives each line and a board summary after it.
 	Trace io.Writer
+
+	// oppLimit caps the opponent's copies of each card at OppDeck's
+	// counts while replaying; nil allows MaxCopies.
+	oppLimit map[string]int
 }
 
 // Result is a replayed game ready to be written as an event log.
 type Result struct {
 	Steps  []Step
 	Report Report
+	// Seed is the seed used, so the same reconstruction can be rebuilt.
+	Seed uint64
 }
 
 // Events returns every event in order.
@@ -45,10 +55,8 @@ func (res *Result) Events() []state.Event {
 	return out
 }
 
-// Import replays a TCG Live battle log. Where the log cannot tell
-// identical cards apart, the replay records a choice point; if the first
-// reconstruction hits problems, Import searches alternative choices and
-// keeps the reconstruction with the fewest problems.
+// Import replays a TCG Live battle log (see search). Given an assumed
+// opponent list, it fills every opponent card the log never names from it.
 func Import(text string, opts Options) (*Result, error) {
 	secs, err := Parse(text)
 	if err != nil {
@@ -67,11 +75,56 @@ func Import(text string, opts Options) (*Result, error) {
 	}
 	trace := opts.Trace
 	opts.Trace = nil
-	type attempt struct {
-		res       *Result
-		choices   []choice
-		decisions map[string]int
+
+	// With an assumed list, the replay holds the opponent to its counts, so
+	// a card seen again is taken to be a copy already seen rather than a
+	// new one. A list the log contradicts cannot replay cleanly that way;
+	// then the replay runs as without one and the list fills what is left.
+	if len(opts.OppDeck) > 0 {
+		opts.oppLimit = map[string]int{}
+		for _, e := range opts.OppDeck {
+			opts.oppLimit[e.Name] += e.Count
+		}
 	}
+	best, err := search(secs, me, opp, opts, seed)
+	if err != nil {
+		return nil, err
+	}
+	var fallback string
+	if opts.oppLimit != nil && len(best.res.Report.Problems) > 0 {
+		p := best.res.Report.Problems[0]
+		fallback = fmt.Sprintf("the assumed list conflicts with the log (line %d: %s), so it was not held to its counts", p.Line, p.Err)
+		opts.oppLimit = nil
+		if best, err = search(secs, me, opp, opts, seed); err != nil {
+			return nil, err
+		}
+	}
+	res := best.res
+	if trace != nil {
+		opts.Trace = trace
+		if res, _, err = replayOnce(secs, me, opp, opts, seed, best.decisions); err != nil {
+			return nil, err
+		}
+	}
+	if fallback != "" {
+		res.Report.Warnings = append(res.Report.Warnings, fallback)
+	}
+	res.Seed = seed
+	return res, nil
+}
+
+// attempt is one replay and the choices it made.
+type attempt struct {
+	res       *Result
+	choices   []choice
+	decisions map[string]int
+}
+
+// search replays the log; where the log cannot tell identical cards
+// apart, the replay records a choice point, and while the reconstruction
+// has problems, search tries alternative choices and keeps the
+// reconstruction with the fewest.
+func search(secs []*Section, me, opp string, opts Options, seed uint64) (*attempt, error) {
 	run := func(d map[string]int) (*attempt, error) {
 		res, r, err := replayOnce(secs, me, opp, opts, seed, d)
 		if err != nil {
@@ -118,12 +171,7 @@ func Import(text string, opts Options) (*Result, error) {
 			break
 		}
 	}
-	if trace != nil {
-		opts.Trace = trace
-		res, _, err := replayOnce(secs, me, opp, opts, seed, best.decisions)
-		return res, err
-	}
-	return best.res, nil
+	return best, nil
 }
 
 // choice is a point where the replay picked between indistinguishable
@@ -144,7 +192,8 @@ func replayOnce(secs []*Section, me, opp string, opts Options, seed uint64, deci
 		nextID:         1,
 		bound:          map[state.IID]string{},
 		limit:          map[string]int{},
-		used:           map[string]int{},
+		oppLimit:       opts.oppLimit,
+		used:           map[seatName]int{},
 		rng:            rng,
 		trace:          opts.Trace,
 		boundAt:        map[state.IID]int{},
@@ -263,11 +312,6 @@ func replayOnce(secs []*Section, me, opp string, opts Options, seed uint64, deci
 	for _, n := range r.rep.Turns {
 		r.rep.TotalTurns += n
 	}
-	for iid, name := range r.bound {
-		if r.st.Cards[iid].Owner == OppSeat {
-			r.rep.Observed[name]++
-		}
-	}
 
 	if r.trace != nil {
 		for iid, name := range r.bound {
@@ -304,7 +348,7 @@ type snapshot struct {
 	events  int
 	nextID  int
 	bound   map[state.IID]string
-	used    map[string]int
+	used    map[seatName]int
 	prize   map[state.Seat][]state.IID
 	retreat map[state.Seat]bool
 	// repair bookkeeping
@@ -423,8 +467,10 @@ func (r *replay) line(n, parent *Node, isHead bool) {
 
 // finish assigns identities to every unbound card and rewrites the setup
 // event: the owner's unseen cards come from the decklist; the opponent's
-// stay hidden unless OppDeck assumes them.
+// stay hidden unless OppDeck assumes them. It also works out what the log
+// proves about the opponent's list.
 func (r *replay) finish(res *Result, opts Options) error {
+	rep := &res.Report
 	defs := map[string]string{}
 	for _, e := range opts.MyDeck {
 		defs[e.Name] = e.Def
@@ -432,6 +478,17 @@ func (r *replay) finish(res *Result, opts Options) error {
 	oppDefs := map[string]string{}
 	for _, e := range opts.OppDeck {
 		oppDefs[e.Name] = e.Def
+	}
+	oppDef := func(name string) string {
+		if d, ok := oppDefs[name]; ok && d != "" {
+			return d
+		}
+		d := ""
+		if opts.DefOf != nil {
+			d = opts.DefOf(name)
+		}
+		oppDefs[name] = d
+		return d
 	}
 
 	remaining := map[string]int{}
@@ -452,33 +509,12 @@ func (r *replay) finish(res *Result, opts Options) error {
 	}
 	r.rng.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
 
-	var oppPool []string
-	if len(opts.OppDeck) > 0 {
-		left := map[string]int{}
-		for _, e := range opts.OppDeck {
-			left[e.Name] += e.Count
-		}
-		for name, n := range r.rep.Observed {
-			if left[name] < n {
-				r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("the log shows %d %s, the assumed list has %d", n, name, left[name]))
-			}
-			left[name] -= n
-		}
-		for _, e := range opts.OppDeck {
-			for range max(left[e.Name], 0) {
-				oppPool = append(oppPool, e.Name)
-			}
-			left[e.Name] = min(left[e.Name], 0)
-		}
-		r.rng.Shuffle(len(oppPool), func(i, j int) { oppPool[i], oppPool[j] = oppPool[j], oppPool[i] })
-	}
-
 	setupEv := &res.Steps[0].Events[0]
 	var setup state.SetupPayload
 	if err := json.Unmarshal(setupEv.Payload, &setup); err != nil {
 		return err
 	}
-	assume := state.AssumePayload{Cards: map[state.IID]state.Assumption{}}
+	var unbound []state.IID // the opponent's cards the log never names
 	for i := range setup.Cards {
 		c := &setup.Cards[i]
 		name := r.bound[c.IID]
@@ -487,25 +523,68 @@ func (r *replay) finish(res *Result, opts Options) error {
 			c.Name, c.Def = name, defs[name]
 		case c.Owner == MeSeat:
 			if len(pool) == 0 {
-				r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("no decklist card left for %s", c.IID))
+				rep.Warnings = append(rep.Warnings, fmt.Sprintf("no decklist card left for %s", c.IID))
 				continue
 			}
 			c.Name, c.Def, c.Basis = pool[0], defs[pool[0]], "decklist"
 			pool = pool[1:]
 		case name != "":
-			c.Name, c.Def, c.Basis = name, oppDefs[name], "observed"
-		case len(oppPool) > 0:
-			assume.Cards[c.IID] = state.Assumption{Def: oppDefs[oppPool[0]], Name: oppPool[0], Basis: "reference"}
-			oppPool = oppPool[1:]
+			c.Name, c.Def, c.Basis = name, oppDef(name), "observed"
+		default:
+			unbound = append(unbound, c.IID)
 		}
 	}
-	profile, _ := json.Marshal(map[string]any{"observed": r.rep.Observed, "opponent": r.rep.Opponent})
-	setup.Profile = profile
 	b, err := json.Marshal(setup)
 	if err != nil {
 		return err
 	}
-	setupEv.Payload = b
+	setupEv.Payload = b // Gather needs the names
+
+	// What the log proves: the most copies of each card Nic saw at once.
+	_, ev, err := infer.Gather(res.Events(), OppSeat, MeSeat)
+	if err != nil {
+		return err
+	}
+	rep.Observed = ev.Min
+	profile := infer.Profile{Opponent: rep.Opponent, Observed: ev.Min}
+	assume := state.AssumePayload{Cards: map[state.IID]state.Assumption{}}
+	if len(opts.OppDeck) > 0 {
+		var warnings []string
+		profile, warnings = infer.Reconcile(opts.OppDeck, ev.Min)
+		profile.Opponent = rep.Opponent
+		for _, w := range warnings {
+			rep.Warnings = append(rep.Warnings, "opponent list: "+w)
+		}
+		// Unnamed cards are what the list has left after the named ones.
+		left := map[string]int{}
+		for _, c := range profile.Cards {
+			left[c.Name] += c.Count
+		}
+		for iid, name := range r.bound {
+			if r.st.Cards[iid].Owner == OppSeat {
+				left[name]--
+			}
+		}
+		var oppPool []string
+		for _, c := range profile.Cards {
+			for range max(left[c.Name], 0) {
+				oppPool = append(oppPool, c.Name)
+			}
+		}
+		r.rng.Shuffle(len(oppPool), func(i, j int) { oppPool[i], oppPool[j] = oppPool[j], oppPool[i] })
+		for i, iid := range unbound {
+			if i == len(oppPool) {
+				break
+			}
+			assume.Cards[iid] = state.Assumption{Def: oppDef(oppPool[i]), Name: oppPool[i], Basis: "reference"}
+		}
+	}
+	if setup.Profile, err = json.Marshal(profile); err != nil {
+		return err
+	}
+	if setupEv.Payload, err = json.Marshal(setup); err != nil {
+		return err
+	}
 	if len(assume.Cards) > 0 {
 		b, _ := json.Marshal(assume)
 		res.Steps = slices.Insert(res.Steps, 1, Step{Label: "Assume opponent list", Kind: "assume", Events: []state.Event{{

@@ -1,6 +1,7 @@
 <script>
   // Every event on the current branch, grouped by turn, with annotations.
   import { app } from '../lib/store.svelte.js';
+  import { act } from '../lib/ws.js';
 
   let list = $state();
   const log = $derived(app.snap?.log || []);
@@ -13,6 +14,31 @@
     }
     return out;
   });
+  // startOf is where a turn's review begins: the turn has started and the
+  // opening draw is in hand, before the player's first choice. For setup,
+  // the end of setup.
+  function startOf(t) {
+    const lines = t.lines;
+    if (t.turn === 0) return lines.at(-1).id;
+    let i = lines.findIndex((l) => /^turn \d+ start/.test(l.text));
+    if (i < 0) return lines[0].id;
+    const through = (action) => {
+      while (i + 1 < lines.length && lines[i + 1].action === action) i++;
+    };
+    through(lines[i].action);
+    // Imported games log the opening draw as its own action.
+    if (lines[i + 1]?.text.includes(' drew ')) {
+      i++;
+      through(lines[i].action);
+    }
+    return lines[i].id;
+  }
+  // jump rewinds to just after an event on a branch of its own; the branch
+  // left behind keeps its head (switch back in the branch picker).
+  function jump(event, name) {
+    act('rewind', { event, name });
+  }
+
   let seen = 0;
   let fresh = $state(0);
 
@@ -28,9 +54,18 @@
 
 <div class="timeline" bind:this={list}>
   {#each turns as t (t.turn)}
-    <h3>{t.turn === 0 ? 'Setup' : `Turn ${t.turn}`}</h3>
+    <h3>
+      <button
+        class="turn"
+        onclick={() => jump(startOf(t), t.turn === 0 ? 'setup' : `turn-${t.turn}`)}
+        title="Rewind to the start of this turn"
+      >
+        {t.turn === 0 ? 'Setup' : `Turn ${t.turn}`} <span class="rw">↺</span>
+      </button>
+    </h3>
     {#each t.lines as l (l.id)}
       <div class="line seat-{l.seat}" class:fresh={fresh && l.id > fresh}>
+        <button class="here" onclick={() => jump(l.id)} title="Rewind to just after #{l.id}">↺</button>
         <span class="id">#{l.id}</span>
         {#if l.label}<span class="label">{l.label}</span>{/if}
         <span class="text">{l.text}</span>
@@ -63,11 +98,32 @@
     letter-spacing: 0.08em;
     color: var(--muted);
   }
+  h3 .turn {
+    all: unset;
+    cursor: pointer;
+    text-transform: inherit;
+    letter-spacing: inherit;
+  }
+  h3 .turn:hover { color: var(--accent); }
+  .rw { opacity: 0; transition: opacity 0.15s; }
+  h3 .turn:hover .rw { opacity: 1; }
   .line {
+    position: relative;
     padding: 3px 6px;
     border-left: 3px solid transparent;
     border-radius: 3px;
   }
+  .line:hover { background: var(--hover); }
+  .here {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    padding: 0 6px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .line:hover .here { opacity: 1; }
   .line.seat-p1 { border-left-color: var(--p1); }
   .line.seat-p2 { border-left-color: var(--p2); }
   .line.fresh { background: var(--fresh); }
