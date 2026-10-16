@@ -129,6 +129,13 @@ type (
 		NameP2 string `json:"name_p2,omitempty"`
 		ID     string `json:"id,omitempty" jsonschema:"game id; generated if empty"`
 	}
+	ImportLog struct {
+		Log     string `json:"log" jsonschema:"the battle log text copied from Pokémon TCG Live"`
+		Deck    string `json:"deck,omitempty" jsonschema:"the log owner's decklist in TCG Live export format; omit to reuse the deck from the previous import"`
+		OppDeck string `json:"opp_deck,omitempty" jsonschema:"optional assumed opponent decklist; fills cards the log never reveals, tagged as reference"`
+		Me      string `json:"me,omitempty" jsonschema:"the log owner's player name; detected from the log if omitted"`
+		ID      string `json:"id,omitempty" jsonschema:"game id; generated from the date and opponent if empty"`
+	}
 	GameID struct {
 		ID string `json:"id"`
 	}
@@ -281,6 +288,18 @@ func (s *Server) register(srv *mcp.Server) {
 			res.Warnings = append(res.Warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
 		}
 		return map[string]any{"game": g.ID, "result": compact(res)}, nil
+	})
+	add(srv, "import_log", "Import a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact; the opponent's hidden cards stay unknown unless opp_deck is given. Returns the game summary, any log lines that could not be reconstructed (problems) and warnings. Use rewind or the UI timeline to step through it.", func(ctx context.Context, in ImportLog) (any, error) {
+		res, err := s.M.Import(ctx, game.ImportRequest{ID: in.ID, Log: in.Log, Deck: in.Deck, OppDeck: in.OppDeck, Me: in.Me})
+		if err != nil {
+			return nil, err
+		}
+		g := res.Game
+		warnings := res.Warnings
+		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
+			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
+		}
+		return map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings}, nil
 	})
 	add(srv, "list_games", "List stored games, newest first.", func(ctx context.Context, _ Empty) (any, error) {
 		return s.M.List()

@@ -112,3 +112,43 @@ func TestMCPRoundTrip(t *testing.T) {
 		t.Fatal(out)
 	}
 }
+
+func TestImportLogTool(t *testing.T) {
+	cs, _ := connect(t)
+	deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	logText, err := os.ReadFile("../../testdata/logs/2026-10-11_ledjo23_alakazam-donk.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out, isErr := call(t, cs, "import_log", map[string]any{"log": string(logText)}); !isErr {
+		t.Fatalf("import without any deck should fail: %s", out)
+	}
+	out, isErr := call(t, cs, "import_log", map[string]any{"log": string(logText), "deck": string(deck), "id": "imp-1"})
+	if isErr {
+		t.Fatal(out)
+	}
+	var res struct {
+		Game   string `json:"game"`
+		Mode   string `json:"mode"`
+		Report struct {
+			Opponent string `json:"opponent"`
+			Problems []any  `json:"problems"`
+		} `json:"report"`
+	}
+	if err := json.Unmarshal([]byte(out), &res); err != nil {
+		t.Fatal(err)
+	}
+	if res.Game != "imp-1" || res.Mode != "review" || res.Report.Opponent == "" || len(res.Report.Problems) > 0 {
+		t.Fatalf("unexpected import result: %s", out)
+	}
+	// The deck is remembered for the next import.
+	if out, isErr := call(t, cs, "import_log", map[string]any{"log": string(logText), "id": "imp-2"}); isErr {
+		t.Fatalf("import reusing the previous deck: %s", out)
+	}
+	if out, isErr := call(t, cs, "get_state", map[string]any{"view": "reveal"}); isErr {
+		t.Fatal(out)
+	}
+}
