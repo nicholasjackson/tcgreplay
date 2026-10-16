@@ -89,7 +89,7 @@ func (g *Game) PlaceActive(seat state.Seat, actor state.Actor, iid state.IID) (*
 // Bench puts a Pokémon from hand onto the bench. slot < 0 picks the first
 // empty slot.
 func (g *Game) Bench(seat state.Seat, actor state.Actor, iid state.IID, slot int) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: "Bench " + g.nameOf(iid), source: iid}, func(t *tx) error {
+	return g.run(seat, actor, actionSpec{label: "Bench " + g.nameOf(iid), source: iid, joinIf: "bench"}, func(t *tx) error {
 		if err := inHand(t.st, seat, iid); err != nil {
 			return err
 		}
@@ -194,14 +194,14 @@ func (g *Game) Draw(seat state.Seat, actor state.Actor, n int) (*Result, error) 
 	if n < 1 {
 		return nil, fmt.Errorf("draw at least one card")
 	}
-	return g.run(seat, actor, actionSpec{label: fmt.Sprintf("Draw %d", n), kind: "draw"}, func(t *tx) error {
+	return g.run(seat, actor, actionSpec{label: fmt.Sprintf("Draw %d", n), kind: "draw", crossSeat: true}, func(t *tx) error {
 		return t.draw(seat, n)
 	})
 }
 
 // Evolve puts an evolution card from hand onto the Pokémon at target.
 func (g *Game) Evolve(seat state.Seat, actor state.Actor, iid state.IID, target state.Loc) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: "Evolve into " + g.nameOf(iid), kind: "evolve", source: iid}, func(t *tx) error {
+	return g.run(seat, actor, actionSpec{label: "Evolve into " + g.nameOf(iid), kind: "evolve", source: iid, joinIf: "evolv"}, func(t *tx) error {
 		if err := inHand(t.st, seat, iid); err != nil {
 			return err
 		}
@@ -238,7 +238,7 @@ func (g *Game) Evolve(seat state.Seat, actor state.Actor, iid state.IID, target 
 // Attach attaches an Energy or Tool from hand. role may be empty to infer it
 // from the card.
 func (g *Game) Attach(seat state.Seat, actor state.Actor, iid state.IID, target state.Loc, role string) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: "Attach " + g.nameOf(iid), kind: "attach", source: iid}, func(t *tx) error {
+	return g.run(seat, actor, actionSpec{label: "Attach " + g.nameOf(iid), kind: "attach", source: iid, joinIf: "attach"}, func(t *tx) error {
 		if err := inHand(t.st, seat, iid); err != nil {
 			return err
 		}
@@ -274,6 +274,9 @@ func (g *Game) PlayTrainer(seat state.Seat, actor state.Actor, iid state.IID) (*
 			return err
 		}
 		c := t.g.card(t.st, iid)
+		if c != nil {
+			t.effect = &c.Effect
+		}
 		if c != nil && c.Category != "Trainer" {
 			return fmt.Errorf("%s is a %s card, not a Trainer", c.Name, c.Category)
 		}
@@ -293,8 +296,8 @@ func (g *Game) PlayTrainer(seat state.Seat, actor state.Actor, iid state.IID) (*
 	})
 }
 
-// UseAbility opens a compound action for an Ability of the Pokémon at slot.
-// It emits no events itself.
+// UseAbility opens a compound action for an Ability of the Pokémon at slot,
+// recording that it was used.
 func (g *Game) UseAbility(seat state.Seat, actor state.Actor, slot state.Loc, name string) (*Result, error) {
 	g.mu.Lock()
 	st, err := g.st.Stack(slot)
@@ -311,18 +314,21 @@ func (g *Game) UseAbility(seat state.Seat, actor state.Actor, slot state.Loc, na
 			t.warn = append(t.warn, "using an Ability of the opponent's Pokémon")
 		}
 		if c := t.g.card(t.st, top); c != nil {
-			if !slices.ContainsFunc(c.Abilities, func(a cards.Ability) bool { return strings.EqualFold(a.Name, name) }) {
+			i := slices.IndexFunc(c.Abilities, func(a cards.Ability) bool { return strings.EqualFold(a.Name, name) })
+			if i < 0 {
 				t.warn = append(t.warn, fmt.Sprintf("%s has no Ability named %q", c.Name, name))
+			} else {
+				t.effect = &c.Abilities[i].Effect
 			}
 		}
-		return nil
+		return t.emit(seat, state.EvDeclare, state.DeclarePayload{Kind: "ability", Name: name, At: slot})
 	})
 }
 
 // Retreat discards Energy from the Active Pokémon and swaps it with a
 // benched Pokémon.
 func (g *Game) Retreat(seat state.Seat, actor state.Actor, to int, energy []state.IID) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: "Retreat", kind: "retreat"}, func(t *tx) error {
+	return g.run(seat, actor, actionSpec{label: "Retreat", kind: "retreat", joinIf: "retreat"}, func(t *tx) error {
 		active := loc(seat, state.Active)
 		st, err := t.st.Stack(active)
 		if err != nil {
@@ -379,7 +385,7 @@ func (g *Game) Switch(seat state.Seat, actor state.Actor, to int) (*Result, erro
 	if promote {
 		label = "Promote"
 	}
-	return g.run(seat, actor, actionSpec{label: label, kind: "switch", anyTurn: promote}, func(t *tx) error {
+	return g.run(seat, actor, actionSpec{label: label, kind: "switch", anyTurn: promote, crossSeat: true}, func(t *tx) error {
 		return t.switchActive(seat, to)
 	})
 }
@@ -401,9 +407,15 @@ func (g *Game) Attack(seat state.Seat, actor state.Actor, name string, target st
 			t.warn = append(t.warn, "the player going first cannot attack on their first turn")
 		}
 		if c := t.g.card(t.st, attacker); c != nil {
-			if !slices.ContainsFunc(c.Attacks, func(a cards.Attack) bool { return strings.EqualFold(a.Name, name) }) {
+			i := slices.IndexFunc(c.Attacks, func(a cards.Attack) bool { return strings.EqualFold(a.Name, name) })
+			if i < 0 {
 				t.warn = append(t.warn, fmt.Sprintf("%s has no attack named %q", c.Name, name))
+			} else {
+				t.effect = &c.Attacks[i].Effect
 			}
+		}
+		if err := t.emit(seat, state.EvDeclare, state.DeclarePayload{Kind: "attack", Name: name, At: loc(seat, state.Active)}); err != nil {
+			return err
 		}
 		if damage == 0 {
 			return nil
@@ -496,7 +508,7 @@ func (g *Game) TakePrize(seat state.Seat, actor state.Actor, slot int) (*Result,
 
 // Shuffle shuffles whose deck.
 func (g *Game) Shuffle(seat state.Seat, actor state.Actor, whose state.Seat) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: "Shuffle " + string(whose) + " deck", kind: "shuffle"}, func(t *tx) error {
+	return g.run(seat, actor, actionSpec{label: "Shuffle " + string(whose) + " deck", kind: "shuffle", crossSeat: true}, func(t *tx) error {
 		return t.shuffle(whose)
 	})
 }
@@ -522,7 +534,7 @@ func (g *Game) CoinFlip(seat state.Seat, actor state.Actor, n int) (*Result, err
 
 // Move is the escape hatch: any card to any zone.
 func (g *Game) Move(seat state.Seat, actor state.Actor, iid state.IID, to state.Loc, face, as string) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: "Move " + g.nameOf(iid), kind: "move", source: iid}, func(t *tx) error {
+	return g.run(seat, actor, actionSpec{label: "Move " + g.nameOf(iid), kind: "move", source: iid, crossSeat: true}, func(t *tx) error {
 		c, ok := t.st.Cards[iid]
 		if !ok {
 			return fmt.Errorf("no card %s", iid)

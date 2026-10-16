@@ -58,7 +58,10 @@ type Game struct {
 	rng  *rand.Rand
 	mode Mode
 	// open is the compound action following verbs join, if any.
-	open      *store.Action
+	open *store.Action
+	// openText is the effect text of the open action's card (nil if
+	// unknown), which decides whether verbs with joinIf join it.
+	openText  *string
 	listeners []func(Update)
 }
 
@@ -157,6 +160,8 @@ type tx struct {
 	events []state.Event
 	data   any
 	warn   []string
+	// effect is an opener's effect text, when its card is known.
+	effect *string
 }
 
 func (t *tx) emit(seat state.Seat, typ state.EventType, payload any) error {
@@ -229,6 +234,13 @@ type actionSpec struct {
 	anyTurn bool
 	// system marks game-management events that never join a compound action.
 	system bool
+	// joinIf, if set, joins an open action only when its card's effect text
+	// mentions this word: an Energy attached by hand after Lunar Cycle is the
+	// turn's attachment, not part of the Ability.
+	joinIf string
+	// crossSeat joins an open action of the other seat, for effects on the
+	// opponent's side: the switch of Boss's Orders, the draws of Iono.
+	crossSeat bool
 }
 
 // run executes a verb atomically: either every event applies and is
@@ -248,18 +260,20 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 	if seat != "" && !seat.Valid() {
 		return nil, fmt.Errorf("unknown seat %q", seat)
 	}
-	if !spec.anyTurn {
+	joined := !spec.system && !spec.opener && g.open != nil &&
+		(g.open.Seat == seat || spec.crossSeat) && g.joins(spec.joinIf)
+	// The opponent's part of an effect (Iono's draws) happens on the turn of
+	// the player whose action it joins.
+	if !spec.anyTurn && !(joined && g.open.Seat != seat) {
 		if err := g.checkTurn(seat); err != nil {
 			return nil, err
 		}
 	}
 	var action store.Action
-	joined := false
 	switch {
-	case spec.system:
-	case g.open != nil && !spec.opener && g.open.Seat == seat:
-		action, joined = *g.open, true
-	default:
+	case joined:
+		action = *g.open
+	case !spec.system:
 		action = store.Action{
 			ID: g.log.NextActionID(), Label: spec.label, Kind: spec.kind,
 			Seat: seat, Actor: actor, Source: spec.source,
@@ -270,7 +284,7 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 		return nil, err
 	}
 	if spec.opener && !spec.system {
-		g.open = &action
+		g.open, g.openText = &action, t.effect
 	} else if !joined && !spec.system && g.open != nil {
 		// A standalone verb from either seat closes any open action.
 		g.open = nil
@@ -299,6 +313,15 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 	}
 	res.Warnings = append(res.Warnings, g.turnWarnings()...)
 	return res, nil
+}
+
+// joins reports whether a verb with joinIf word joins the open action. If
+// the open action's text is unknown it joins, as every verb used to.
+func (g *Game) joins(word string) bool {
+	if word == "" || g.openText == nil {
+		return true
+	}
+	return strings.Contains(strings.ToLower(*g.openText), word)
 }
 
 func (g *Game) notify(res *Result) {

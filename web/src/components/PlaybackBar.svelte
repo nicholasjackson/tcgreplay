@@ -30,7 +30,7 @@
       <span class="pos">{r.index + 1} / {r.steps.length}{#if current} · T{current.board.turn}{/if}</span>
       <button onclick={goLive} title="Back to the latest position">Live ⏭</button>
     {:else}
-      <span class="msg">{held} new {held === 1 ? 'move' : 'moves'} from Claude</span>
+      <span class="msg">{held} new {held === 1 ? 'move' : 'moves'} from {app.assistant}</span>
       <button class="primary" onclick={() => startReplay(app.held.from)}>▶ Play</button>
       <button onclick={goLive} title="Show the result without playing">Skip to end</button>
     {/if}

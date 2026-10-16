@@ -36,6 +36,7 @@ export function connect() {
 function onState(msg) {
   app.human = msg.human;
   app.claude = msg.claude;
+  app.assistant = msg.assistant || 'Assistant';
   app.reveal = !!msg.reveal;
   app.games = msg.games || [];
   if (msg.error) toast(msg.error, 'error');

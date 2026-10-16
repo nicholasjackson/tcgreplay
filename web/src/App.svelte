@@ -25,7 +25,7 @@
   }
   function nameOf(seat) {
     const n = app.board?.sides[seat]?.name;
-    return n || (seat === app.human ? 'You' : 'Claude');
+    return n || (seat === app.human ? 'You' : app.assistant);
   }
 </script>
 
@@ -74,7 +74,7 @@
       {:else}
         <div class="landing">
           <h1>No game loaded</h1>
-          <p>Ask Claude to start one with <code>new_game</code>, or load a stored game.</p>
+          <p>Ask {app.assistant} to start one with <code>new_game</code>, or load a stored game.</p>
           {#each app.games as g (g.id)}
             <button onclick={() => act('load_game', { game: g.id })}>{g.id}</button>
           {/each}

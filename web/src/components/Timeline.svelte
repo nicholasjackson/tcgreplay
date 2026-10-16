@@ -70,35 +70,39 @@
 
 <div class="timeline" bind:this={list}>
   {#each turns as t (t.turn)}
-    <h3>
-      <button
-        class="turn"
-        onclick={() => jump(startOf(t), t.turn === 0 ? 'setup' : `turn-${t.turn}`)}
-        title="Rewind to the start of this turn"
-      >
-        {t.turn === 0 ? 'Setup' : `Turn ${t.turn}`} <span class="rw">↺</span>
-      </button>
-      <button class="play" onclick={() => playFrom(t.lines[0].id)} title="Play from the start of this turn">▶</button>
-    </h3>
-    {#each t.lines as l (l.id)}
-      <div
-        class="line seat-{l.seat}"
-        class:fresh={fresh && l.id > fresh}
-        class:ahead={ahead(l.id)}
-        class:now={step && l.id >= step.first && l.id <= step.last}
-      >
-        <span class="acts">
-          <button onclick={() => playFrom(l.id)} title="Play from here">▶</button>
-          <button onclick={() => jump(l.id)} title="Rewind to just after #{l.id}">↺</button>
-        </span>
-        <span class="id">#{l.id}</span>
-        {#if l.label}<span class="label">{l.label}</span>{/if}
-        <span class="text">{l.text}</span>
-        {#each l.annotations || [] as a}
-          <div class="note">✎ {a}</div>
-        {/each}
-      </div>
-    {/each}
+    <!-- One section per turn, so each heading sticks only while its turn is
+         in view and the next heading pushes it out instead of piling on. -->
+    <section>
+      <h3>
+        <button
+          class="turn"
+          onclick={() => jump(startOf(t), t.turn === 0 ? 'setup' : `turn-${t.turn}`)}
+          title="Rewind to the start of this turn"
+        >
+          {t.turn === 0 ? 'Setup' : `Turn ${t.turn}`} <span class="rw">↺</span>
+        </button>
+        <button class="play" onclick={() => playFrom(t.lines[0].id)} title="Play from the start of this turn">▶</button>
+      </h3>
+      {#each t.lines as l (l.id)}
+        <div
+          class="line seat-{l.seat}"
+          class:fresh={fresh && l.id > fresh}
+          class:ahead={ahead(l.id)}
+          class:now={step && l.id >= step.first && l.id <= step.last}
+        >
+          <span class="acts">
+            <button onclick={() => playFrom(l.id)} title="Play from here">▶</button>
+            <button onclick={() => jump(l.id)} title="Rewind to just after #{l.id}">↺</button>
+          </span>
+          <span class="id">#{l.id}</span>
+          {#if l.label}<span class="label">{l.label}</span>{/if}
+          <span class="text">{l.text}</span>
+          {#each l.annotations || [] as a}
+            <div class="note">✎ {a}</div>
+          {/each}
+        </div>
+      {/each}
+    </section>
   {:else}
     <p class="empty">No events yet.</p>
   {/each}
@@ -120,6 +124,7 @@
     background: var(--panel);
     margin: 10px 0 4px;
     padding: 4px 0;
+    border-bottom: 1px solid var(--line);
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.08em;

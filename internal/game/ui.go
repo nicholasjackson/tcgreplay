@@ -137,6 +137,8 @@ func touched(e *state.Event, before *state.State) []state.IID {
 		return top(p.Target)
 	case *state.RevealPayload:
 		return p.IIDs
+	case *state.DeclarePayload:
+		return top(p.At)
 	}
 	return nil
 }

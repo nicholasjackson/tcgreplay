@@ -30,6 +30,7 @@ const (
 	EvReveal    EventType = "reveal"
 	EvTurn      EventType = "turn"
 	EvAssume    EventType = "assume"
+	EvDeclare   EventType = "declare"
 )
 
 // Event is one primitive change to the state. Parent links make the log a
@@ -71,6 +72,8 @@ func (e *Event) Decode() (any, error) {
 		p = &TurnPayload{}
 	case EvAssume:
 		p = &AssumePayload{}
+	case EvDeclare:
+		p = &DeclarePayload{}
 	default:
 		return nil, fmt.Errorf("event %d: unknown type %q", e.ID, e.Type)
 	}
@@ -167,4 +170,13 @@ type AssumePayload struct {
 	// Profile, if set, replaces the assumed opponent list the cards were
 	// drawn from.
 	Profile json.RawMessage `json:"profile,omitempty"`
+}
+
+// DeclarePayload records that a Pokémon used an Ability or attack, so the
+// log shows it even when its effects are moved by hand or there are none.
+// It changes nothing on the board.
+type DeclarePayload struct {
+	Kind string `json:"kind"` // ability or attack
+	Name string `json:"name"`
+	At   Loc    `json:"at"`
 }

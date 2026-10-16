@@ -117,7 +117,9 @@ func (h *hub) stateMessage(reveal bool, frames []int) ([]byte, bool) {
 		"type":   "state",
 		"human":  h.s.Human,
 		"claude": h.s.Human.Other(),
-		"reveal": reveal,
+		// assistant names whoever plays that seat over MCP.
+		"assistant": h.s.M.Assistant(),
+		"reveal":    reveal,
 	}
 	g, err := h.s.M.Current()
 	if err != nil {

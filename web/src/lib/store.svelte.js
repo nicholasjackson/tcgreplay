@@ -4,6 +4,8 @@ export const app = $state({
   connected: false,
   human: 'p1',
   claude: 'p2',
+  // Name of the assistant playing the claude seat over MCP (Claude, Codex, Gemini).
+  assistant: 'Assistant',
   reveal: false,
   // Latest snapshot from the server (game, branch, mode, board, log, ...).
   snap: null,

@@ -25,7 +25,7 @@
         {:else if card.def}
           <p class="meta">Loading card text…</p>
         {:else if !card.name}
-          <p class="meta">Unknown card: the battle log never revealed it. Ask Claude to assume an opponent list (sample_hidden) to give it a plausible identity.</p>
+          <p class="meta">Unknown card: the battle log never revealed it. Ask {app.assistant} to assume an opponent list (sample_hidden) to give it a plausible identity.</p>
         {:else}
           <p class="meta">No card definition (hidden or unresolved).</p>
         {/if}

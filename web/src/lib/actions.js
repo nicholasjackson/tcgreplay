@@ -347,13 +347,13 @@ function firstEmptyBench(seat) {
   return i < 0 ? 0 : i;
 }
 
-// endTurn ends the human's turn and copies the prompt for Claude.
+// endTurn ends the human's turn and copies the prompt for the assistant.
 export async function endTurn(seat = app.human) {
   const data = await act('end_turn', seatArgs(seat));
   if (!data?.prompt) return;
   try {
     await navigator.clipboard.writeText(data.prompt);
-    toast('Turn ended. Prompt copied: paste it to Claude.', 'info');
+    toast(`Turn ended. Prompt copied: paste it to ${app.assistant}.`, 'info');
   } catch {
     app.modal = { kind: 'prompt', text: data.prompt };
   }

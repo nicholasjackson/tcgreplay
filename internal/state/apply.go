@@ -49,6 +49,8 @@ func (s *State) Apply(e *Event) error {
 		err = s.applyTurn(e.Seat, p)
 	case *AssumePayload:
 		err = s.applyAssume(p)
+	case *DeclarePayload:
+		// Recorded for the log only.
 	}
 	if err != nil {
 		return fmt.Errorf("event %d (%s): %w", e.ID, e.Type, err)

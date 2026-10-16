@@ -19,10 +19,10 @@ type fakeDB map[string]*cards.Card
 
 func newFakeDB() fakeDB {
 	return fakeDB{
-		"tst-1":   {ID: "tst-1", Name: "Riolu", Category: "Pokemon", Stage: "Basic", HP: 70, Types: []string{"Fighting"}, Retreat: 1, Attacks: []cards.Attack{{Name: "Punch", Damage: "10"}}},
+		"tst-1":   {ID: "tst-1", Name: "Riolu", Category: "Pokemon", Stage: "Basic", HP: 70, Types: []string{"Fighting"}, Retreat: 1, Attacks: []cards.Attack{{Name: "Punch", Damage: "10"}}, Abilities: []cards.Ability{{Name: "Focus", Effect: "Once during your turn, you may draw 2 cards."}}},
 		"tst-2":   {ID: "tst-2", Name: "Lucario", Category: "Pokemon", Stage: "Stage1", EvolveFrom: "Riolu", HP: 130, Types: []string{"Fighting"}, Retreat: 2, Attacks: []cards.Attack{{Name: "Aura Sphere", Damage: "130"}}},
-		"tst-3":   {ID: "tst-3", Name: "Ultra Ball", Category: "Trainer", TrainerType: "Item"},
-		"tst-4":   {ID: "tst-4", Name: "Iono", Category: "Trainer", TrainerType: "Supporter"},
+		"tst-3":   {ID: "tst-3", Name: "Ultra Ball", Category: "Trainer", TrainerType: "Item", Effect: "You can use this card only if you discard 2 other cards from your hand. Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck."},
+		"tst-4":   {ID: "tst-4", Name: "Iono", Category: "Trainer", TrainerType: "Supporter", Effect: "Each player shuffles their hand and puts it on the bottom of their deck. Then, each player draws a card for each of their remaining Prize cards."},
 		"tst-5":   {ID: "tst-5", Name: "Arena", Category: "Trainer", TrainerType: "Stadium"},
 		"tst-6":   {ID: "tst-6", Name: "Band", Category: "Trainer", TrainerType: "Tool"},
 		"sve-006": {ID: "sve-006", Name: "Fighting Energy", Category: "Energy", EnergyType: "Normal"},
@@ -202,13 +202,13 @@ func TestFullGameRewindAndReload(t *testing.T) {
 		}
 	}
 	step(g.Move(state.P1, hu, found[0].IID, state.Loc{Zone: state.Hand}, "", ""))
-	r = step(g.Bench(state.P1, hu, found[0].IID, -1))
-	if r.ActionID != aid {
-		t.Fatalf("bench did not join %s", aid)
-	}
 	step(g.Shuffle(state.P1, hu, state.P1))
 	if g.EndAction() != aid {
 		t.Fatal("expected open action")
+	}
+	// Benching the Pokémon found is a play of its own.
+	if r = step(g.Bench(state.P1, hu, found[0].IID, -1)); r.ActionID == aid {
+		t.Fatalf("bench joined %s, whose card does not bench", aid)
 	}
 	midHead := g.Head()
 
@@ -399,5 +399,89 @@ func TestToolHP(t *testing.T) {
 		if got := toolHP(tc.effect, tc.p); got != tc.want {
 			t.Errorf("toolHP(%q, %s) = %d, want %d", tc.effect, tc.p.Name, got, tc.want)
 		}
+	}
+}
+
+// Abilities and attacks are recorded even when nothing else happens, and
+// the moves that resolve an Ability join its action.
+func TestAbilityAndAttackAreLogged(t *testing.T) {
+	_, g := newTestGame(t)
+	hu := state.ActorHuman
+	must(t)(g.PlaceActive(state.P1, hu, g.State().Sides[state.P1].Hand[0]))
+	must(t)(g.PlaceActive(state.P2, state.ActorClaude, g.State().Sides[state.P2].Hand[0]))
+	must(t)(g.StartGame(state.P1, hu))
+	active := state.Loc{Seat: state.P1, Zone: state.Active}
+	r := must(t)(g.UseAbility(state.P1, hu, active, "Lunar Cycle"))
+	if len(r.Events) != 1 {
+		t.Fatalf("ability events %v", r.Events)
+	}
+	d := must(t)(g.Draw(state.P1, hu, 1))
+	if d.ActionID != r.ActionID {
+		t.Fatalf("draw did not join the ability: %s vs %s", d.ActionID, r.ActionID)
+	}
+	must(t)(g.EndTurn(state.P1, hu))
+	must(t)(g.Attack(state.P2, state.ActorClaude, "Growl", state.Loc{Seat: state.P1, Zone: state.Active}, 0))
+	lines, err := g.Log(0, "", "test", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var text []string
+	for _, l := range lines {
+		text = append(text, l.Text)
+	}
+	all := strings.Join(text, "\n")
+	for _, want := range []string{"p1 used ability Lunar Cycle from p1:active (", "p2 used attack Growl from p2:active ("} {
+		if !strings.Contains(all, want) {
+			t.Errorf("log lacks %q:\n%s", want, all)
+		}
+	}
+}
+
+// Verbs join an open action only when its card's text calls for them: the
+// turn's Energy attachment after an Ability stands alone, while the
+// opponent's draws from Iono join it.
+func TestJoiningFollowsCardText(t *testing.T) {
+	_, g := newTestGame(t)
+	hu := state.ActorHuman
+	toHand := func(seat state.Seat, iid state.IID) {
+		t.Helper()
+		if l, _ := g.State().Find(iid); l.Zone != state.Hand {
+			must(t)(g.Move(seat, hu, iid, state.Loc{Zone: state.Hand}, "", ""))
+		}
+	}
+	toHand(state.P1, "p1-1")
+	toHand(state.P2, "p2-1")
+	must(t)(g.PlaceActive(state.P1, hu, "p1-1"))
+	must(t)(g.PlaceActive(state.P2, hu, "p2-1"))
+	must(t)(g.StartGame(state.P1, hu))
+	find := func(def string) state.IID {
+		s := g.State()
+		for _, iid := range s.Sides[state.P1].Deck {
+			if s.Cards[iid].Def == def {
+				return iid
+			}
+		}
+		t.Fatalf("no %s in deck", def)
+		return ""
+	}
+	energy, iono := find("sve-006"), find("tst-4")
+	toHand(state.P1, energy)
+	toHand(state.P1, iono)
+	g.EndAction()
+
+	active := state.Loc{Seat: state.P1, Zone: state.Active}
+	ab := must(t)(g.UseAbility(state.P1, hu, active, "Focus"))
+	if d := must(t)(g.Draw(state.P1, hu, 2)); d.ActionID != ab.ActionID {
+		t.Fatalf("the Ability's draw did not join it")
+	}
+	if a := must(t)(g.Attach(state.P1, hu, energy, active, "")); a.ActionID == ab.ActionID {
+		t.Fatalf("the Energy attachment joined an Ability that does not attach")
+	}
+	if r := g.turnWarnings(); len(r) > 0 {
+		t.Fatalf("unexpected turn warnings %v", r)
+	}
+	tr := must(t)(g.PlayTrainer(state.P1, hu, iono))
+	if d := must(t)(g.Draw(state.P2, hu, 1)); d.ActionID != tr.ActionID {
+		t.Fatalf("the opponent's Iono draw did not join it")
 	}
 }

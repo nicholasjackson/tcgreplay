@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -22,7 +23,7 @@ func connect(t *testing.T) (*mcp.ClientSession, *game.Manager) {
 	if _, err := srv.Connect(ctx, st, nil); err != nil {
 		t.Fatal(err)
 	}
-	cs, err := mcp.NewClient(&mcp.Implementation{Name: "test"}, nil).Connect(ctx, ct, nil)
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "codex-mcp-client"}, nil).Connect(ctx, ct, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,6 +50,13 @@ func TestMCPRoundTrip(t *testing.T) {
 	cs, m := connect(t)
 	if out, _ := call(t, cs, "ping", nil); out != "pong" {
 		t.Fatalf("ping: %q", out)
+	}
+	// The client's name labels the assistant's seat on the playmat.
+	for i := 0; m.Assistant() != "Codex"; i++ {
+		if i == 100 {
+			t.Fatalf("assistant %q, want Codex", m.Assistant())
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 	deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
 	if err != nil {
@@ -163,5 +171,16 @@ func TestImportLogTool(t *testing.T) {
 	out, isErr = call(t, cs, "get_profile", nil)
 	if isErr || !strings.Contains(out, `"Basic Psychic Energy"`) {
 		t.Fatalf("profile not stored: %s", out)
+	}
+}
+
+func TestAssistantName(t *testing.T) {
+	for in, want := range map[string]string{
+		"claude-code": "Claude", "claude-ai": "Claude", "codex-mcp-client": "Codex",
+		"gemini-cli-mcp-client": "Gemini", "cursor-vscode": "cursor-vscode",
+	} {
+		if got := AssistantName(in); got != want {
+			t.Errorf("%s: %s, want %s", in, got, want)
+		}
 	}
 }

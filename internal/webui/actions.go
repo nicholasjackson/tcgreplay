@@ -183,7 +183,7 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 	case "end_action":
 		return g.EndAction(), nil, nil
 	case "annotate":
-		return nil, nil, errors.New("annotations come from Claude")
+		return nil, nil, errors.New("annotations come from the assistant")
 	}
 
 	var r *game.Result

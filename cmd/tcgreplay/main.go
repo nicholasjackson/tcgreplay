@@ -1,5 +1,8 @@
-// Command tcgreplay is a local virtual Pokémon TCG playmat driven by Claude
-// over MCP (stdio).
+// Command tcgreplay is a local virtual Pokémon TCG playmat driven by an AI
+// assistant (Claude, Codex, Gemini) over MCP (stdio).
+//
+// "tcgreplay install -client claude|codex|gemini" installs the bundled
+// skills and registers the server with that assistant.
 //
 // The Claude desktop app may launch several copies, and restarts them at
 // will, so by default this process is only a thin stdio shim: it relays MCP
@@ -41,6 +44,13 @@ func (c config) args() []string {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "install" {
+		if err := runInstall(os.Args[2:], os.Stdout); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	var c config
 	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for game files")
 	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")

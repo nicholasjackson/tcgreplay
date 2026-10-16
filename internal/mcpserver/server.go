@@ -19,7 +19,7 @@ type Server struct {
 	M *game.Manager
 	// ClaudeSeat is the seat Claude plays in play mode.
 	ClaudeSeat state.Seat
-	// HumanSeat is Nic's seat, used by the coach view.
+	// HumanSeat is the player's seat, used by the coach view.
 	HumanSeat state.Seat
 	Version   string
 }
@@ -36,6 +36,11 @@ func (s *Server) MCP() *mcp.Server {
 	}
 	srv := mcp.NewServer(&mcp.Implementation{Name: "tcgreplay", Version: s.Version}, &mcp.ServerOptions{
 		Instructions: instructions,
+		InitializedHandler: func(_ context.Context, req *mcp.InitializedRequest) {
+			if p := req.Session.InitializeParams(); p != nil && p.ClientInfo != nil {
+				s.M.SetAssistant(AssistantName(p.ClientInfo.Name))
+			}
+		},
 	})
 	s.register(srv)
 	return srv
@@ -46,9 +51,21 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 - Reference cards by iid (e.g. "p2-12"), never by name. get_state lists iids.
 - Locations: "active", "bench:N" (0-based), "hand", "deck", "deck:top", "deck:bottom", "discard", "lost", "prizes:N", "stadium". Prefix a seat to target the other side: "p1:active".
 - In play mode you act as your own seat and only on your turn (promoting after a knockout is allowed any time). In review mode either seat may act at any time (pass seat; it defaults to the seat whose turn it is), though only the turn in progress can be ended.
-- play_trainer, use_ability and attack open a compound action: following verbs join it until end_action, another opener, or end_turn.
+- play_trainer, use_ability and attack open a compound action: following verbs join it until end_action, another opener, or end_turn. attach, bench, evolve and retreat join only if the card's text mentions doing so; otherwise they stand alone and close it. Effects on the opponent's side (the switch of Boss's Orders, Iono's draws) join it when you pass the opponent's seat.
 - Every write returns the events and a delta, so you rarely need to re-read the board. Warnings are advisory, never blocking.
 - Quote card text from card_text, not memory.`
+
+// AssistantName turns an MCP client's name ("claude-code",
+// "codex-mcp-client", "gemini-cli-mcp-client") into a name for the playmat.
+func AssistantName(client string) string {
+	c := strings.ToLower(client)
+	for _, known := range []string{"Claude", "Codex", "Gemini"} {
+		if strings.Contains(c, strings.ToLower(known)) {
+			return known
+		}
+	}
+	return client
+}
 
 // out renders v as indented JSON text.
 func out(v any) (*mcp.CallToolResult, any, error) {
@@ -138,7 +155,7 @@ type (
 	}
 	Sample struct {
 		Deck string `json:"deck,omitempty" jsonschema:"assumed list for the seat in TCG Live export format; it is reconciled with what the log proves and stored for later samples on any branch. Omit to reuse the last list given"`
-		Seat string `json:"seat,omitempty" jsonschema:"whose hidden cards to sample; defaults to Nic's opponent"`
+		Seat string `json:"seat,omitempty" jsonschema:"whose hidden cards to sample; defaults to the player's opponent"`
 		Seed uint64 `json:"seed,omitempty" jsonschema:"makes the sample reproducible; omit for a fresh one"`
 	}
 	OppDeck struct {
@@ -150,7 +167,7 @@ type (
 		N int `json:"n,omitempty" jsonschema:"moves to undo, default 1"`
 	}
 	ProfileArg struct {
-		Seat string `json:"seat,omitempty" jsonschema:"whose list; defaults to Nic's opponent"`
+		Seat string `json:"seat,omitempty" jsonschema:"whose list; defaults to the player's opponent"`
 	}
 	GameID struct {
 		ID string `json:"id"`
@@ -159,7 +176,7 @@ type (
 		Mode string `json:"mode" jsonschema:"play or review"`
 	}
 	GetState struct {
-		View string `json:"view,omitempty" jsonschema:"seat (your seat in play mode; any seat in review mode), coach (Nic's seat: his hand plus the public board) or reveal (everything, review mode only). Default seat"`
+		View string `json:"view,omitempty" jsonschema:"seat (your seat in play mode; any seat in review mode), coach (the player's seat: their hand plus the public board) or reveal (everything, review mode only). Default seat"`
 		Seat string `json:"seat,omitempty" jsonschema:"for the seat view in review mode"`
 	}
 	GetLog struct {
@@ -317,7 +334,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings}, nil
 	})
-	add(srv, "set_opponent_deck", "Rebuild an imported game with an assumed opponent list: same log and seed, so Nic's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game unless new_id is given; refuses to replace a game with branches.", func(ctx context.Context, in OppDeck) (any, error) {
+	add(srv, "set_opponent_deck", "Rebuild an imported game with an assumed opponent list: same log and seed, so the player's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game unless new_id is given; refuses to replace a game with branches.", func(ctx context.Context, in OppDeck) (any, error) {
 		id := in.ID
 		if id == "" {
 			g, err := s.M.Current()
@@ -690,7 +707,7 @@ func (s *Server) register(srv *mcp.Server) {
 	})
 
 	// Opponent inference.
-	add(srv, "get_profile", "What is known and assumed about a seat's list: the stored assumed list (with the minimum counts the whole log proves) and seen_so_far, the most copies of each card Nic had seen at once by the current head. Use it to propose a list for sample_hidden.", func(ctx context.Context, in ProfileArg) (any, error) {
+	add(srv, "get_profile", "What is known and assumed about a seat's list: the stored assumed list (with the minimum counts the whole log proves) and seen_so_far, the most copies of each card the player had seen at once by the current head. Use it to propose a list for sample_hidden.", func(ctx context.Context, in ProfileArg) (any, error) {
 		g, err := s.M.Current()
 		if err != nil {
 			return nil, err
@@ -701,7 +718,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return g.Profile(seat)
 	})
-	add(srv, "sample_hidden", "Give the opponent's hidden cards (hand, deck order, prizes) plausible identities at the head of the current branch, to test a line against what they might hold. Cards Nic can see keep their identities, and cards he saw that are now hidden stay out of the prizes. Rewind first, then sample; to try several hands, rewind to the same event again for each. Review mode only. Returns the sampled hand and prizes.", func(ctx context.Context, in Sample) (any, error) {
+	add(srv, "sample_hidden", "Give the opponent's hidden cards (hand, deck order, prizes) plausible identities at the head of the current branch, to test a line against what they might hold. Cards the player can see keep their identities, and cards they saw that are now hidden stay out of the prizes. Rewind first, then sample; to try several hands, rewind to the same event again for each. Review mode only. Returns the sampled hand and prizes.", func(ctx context.Context, in Sample) (any, error) {
 		g, err := s.M.Current()
 		if err != nil {
 			return nil, err
@@ -735,7 +752,7 @@ func (s *Server) register(srv *mcp.Server) {
 	})
 }
 
-// otherSeat parses a seat argument, defaulting to the seat opposite Nic.
+// otherSeat parses a seat argument, defaulting to the seat opposite the player.
 func (s *Server) otherSeat(arg string) (state.Seat, error) {
 	if arg == "" {
 		return s.HumanSeat.Other(), nil

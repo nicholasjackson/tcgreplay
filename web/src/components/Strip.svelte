@@ -35,7 +35,7 @@
   // In review mode the controls act for whoever's turn it is.
   const review = $derived(snap?.mode === 'review');
   const actor = $derived(review && b.current ? b.current : app.human);
-  const nameOf = (seat) => b.sides?.[seat]?.name || (seat === app.human ? 'You' : 'Claude');
+  const nameOf = (seat) => b.sides?.[seat]?.name || (seat === app.human ? 'You' : app.assistant);
   function whoseTurn() {
     if (setup) return 'Setup';
     const who = b.current === app.human ? 'Your turn' : `${nameOf(b.current)}'s turn`;
@@ -66,7 +66,7 @@
       {#if setup}
         <button onclick={() => act('mulligan')}>Mulligan</button>
         <button class="primary" onclick={() => act('start_game', { first: app.human })}>I go first</button>
-        <button onclick={() => act('start_game', { first: app.claude })}>Claude goes first</button>
+        <button onclick={() => act('start_game', { first: app.claude })}>{app.assistant} goes first</button>
       {:else}
         {#if snap?.open_action}
           <button onclick={() => act('end_action')} title="Close the open compound action">End action {snap.open_action}</button>

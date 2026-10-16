@@ -185,7 +185,7 @@
         <p class="empty">No matching cards.</p>
       {/each}
     {:else if m.kind === 'prompt'}
-      <header><h2>Paste this to Claude</h2><button onclick={close}>Close</button></header>
+      <header><h2>Paste this to {app.assistant}</h2><button onclick={close}>Close</button></header>
       <textarea readonly rows="3" onfocus={(ev) => ev.target.select()}>{m.text}</textarea>
     {/if}
   </div>

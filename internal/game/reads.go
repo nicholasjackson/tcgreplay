@@ -77,6 +77,8 @@ func describe(e *state.Event, before, after *state.State, viewer state.Seat) str
 		return fmt.Sprintf("%s swapped %s with %s", who, stackName(before, p.A), stackName(before, p.B))
 	case *state.ShufflePayload:
 		return fmt.Sprintf("%s shuffled %s's deck", who, p.Seat)
+	case *state.DeclarePayload:
+		return fmt.Sprintf("%s used %s %s from %s", who, p.Kind, p.Name, stackName(before, p.At))
 	case *state.CoinPayload:
 		return fmt.Sprintf("%s flipped: %s", who, strings.Join(p.Results, ", "))
 	case *state.DamagePayload:

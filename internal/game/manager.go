@@ -26,14 +26,43 @@ type Manager struct {
 	// Rand, if set, seeds every new game (for tests).
 	Rand func() *rand.Rand
 
-	mu      sync.Mutex
-	current *Game
-	onLoad  []func(*Game)
+	mu        sync.Mutex
+	current   *Game
+	onLoad    []func(*Game)
+	assistant string
 }
 
 // NewManager stores games under dir.
 func NewManager(dir string, db cards.DB) *Manager {
 	return &Manager{Dir: dir, DB: db}
+}
+
+// SetAssistant records which assistant is connected over MCP (Claude,
+// Codex, Gemini), for the playmat's labels. It is kept in the data dir so
+// the label survives restarts.
+func (m *Manager) SetAssistant(name string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if name == "" || name == m.assistant {
+		return
+	}
+	m.assistant = name
+	_ = os.WriteFile(filepath.Join(m.Dir, "assistant.txt"), []byte(name+"\n"), 0o644)
+}
+
+// Assistant is the connected assistant's display name, or "Assistant" if
+// none has connected yet.
+func (m *Manager) Assistant() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.assistant == "" {
+		b, _ := os.ReadFile(filepath.Join(m.Dir, "assistant.txt"))
+		m.assistant = strings.TrimSpace(string(b))
+	}
+	if m.assistant == "" {
+		return "Assistant"
+	}
+	return m.assistant
 }
 
 // DefaultDataDir returns $XDG_DATA_HOME/tcgreplay or ~/.local/share/tcgreplay.
