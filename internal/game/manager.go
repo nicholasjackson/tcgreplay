@@ -26,9 +26,9 @@ type Manager struct {
 	// Rand, if set, seeds every new game (for tests).
 	Rand func() *rand.Rand
 
-	mu        sync.Mutex
-	current   *Game
-	onLoad    []func(*Game)
+	mu      sync.Mutex
+	current *Game
+	onLoad  []func(*Game)
 }
 
 // NewManager stores games under dir.

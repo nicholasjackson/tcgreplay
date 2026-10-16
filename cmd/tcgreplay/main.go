@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
+	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
 
 var version = "dev"
@@ -27,6 +29,7 @@ func main() {
 	cacheDir := flag.String("cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")
 	seat := flag.String("seat", "p2", "seat Claude plays")
 	offline := flag.Bool("offline", false, "use only cached card data")
+	uiAddr := flag.String("ui-addr", "127.0.0.1:7777", "address for the playmat UI; empty disables it")
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
 
@@ -55,7 +58,27 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	log.Printf("tcgreplay %s starting: data %s, cache %s, claude plays %s", version, *dataDir, *cacheDir, claude)
+	if *uiAddr != "" {
+		startUI(ctx, m, claude.Other(), *uiAddr)
+	}
 	if err := srv.Run(ctx, &mcp.StdioTransport{}); err != nil && ctx.Err() == nil {
 		log.Fatal(err)
 	}
+}
+
+// startUI serves the playmat in the background. A failure to listen (e.g.
+// another instance holds the port) is logged, not fatal: MCP still works.
+func startUI(ctx context.Context, m *game.Manager, human state.Seat, addr string) {
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Printf("playmat UI disabled: %v", err)
+		return
+	}
+	log.Printf("playmat UI at http://%s/ (human plays %s)", ln.Addr(), human)
+	ui := webui.New(m, human)
+	go func() {
+		if err := ui.Run(ctx, ln); err != nil {
+			log.Printf("playmat UI stopped: %v", err)
+		}
+	}()
 }

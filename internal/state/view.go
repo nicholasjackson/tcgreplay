@@ -40,17 +40,17 @@ type PrizeView struct {
 
 // SideView is one seat's half of the mat.
 type SideView struct {
-	Name      string       `json:"name,omitempty"`
-	DeckCount int          `json:"deck_count"`
-	Deck      []CardView   `json:"deck,omitempty"` // reveal view only, top first
-	Prizes    []PrizeView  `json:"prizes"`
-	PrizesLeft int         `json:"prizes_left"`
-	HandCount int          `json:"hand_count"`
-	Hand      []CardView   `json:"hand"`
-	Discard   []CardView   `json:"discard"`
-	Lost      []CardView   `json:"lost,omitempty"`
-	Active    *StackView   `json:"active,omitempty"`
-	Bench     []*StackView `json:"bench"`
+	Name       string       `json:"name,omitempty"`
+	DeckCount  int          `json:"deck_count"`
+	Deck       []CardView   `json:"deck,omitempty"` // reveal view only, top first
+	Prizes     []PrizeView  `json:"prizes"`
+	PrizesLeft int          `json:"prizes_left"`
+	HandCount  int          `json:"hand_count"`
+	Hand       []CardView   `json:"hand"`
+	Discard    []CardView   `json:"discard"`
+	Lost       []CardView   `json:"lost,omitempty"`
+	Active     *StackView   `json:"active,omitempty"`
+	Bench      []*StackView `json:"bench"`
 }
 
 // BoardView is a projection of the whole state.

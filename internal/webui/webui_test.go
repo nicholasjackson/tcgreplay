@@ -1,0 +1,287 @@
+package webui
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/coder/websocket"
+
+	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/game"
+	"github.com/nicholasjackson/tcgreplay/internal/state"
+)
+
+// fakeDB serves a tiny card pool with set code TST (copied from the game
+// package tests).
+type fakeDB map[string]*cards.Card
+
+func newFakeDB() fakeDB {
+	return fakeDB{
+		"tst-1":   {ID: "tst-1", Name: "Riolu", Category: "Pokemon", Stage: "Basic", HP: 70, Image: "https://assets.tcgdex.net/en/x/tst/1"},
+		"tst-2":   {ID: "tst-2", Name: "Lucario", Category: "Pokemon", Stage: "Stage1", EvolveFrom: "Riolu", HP: 130},
+		"tst-3":   {ID: "tst-3", Name: "Ultra Ball", Category: "Trainer", TrainerType: "Item"},
+		"sve-006": {ID: "sve-006", Name: "Fighting Energy", Category: "Energy", EnergyType: "Normal"},
+	}
+}
+
+func (f fakeDB) Card(_ context.Context, id string) (*cards.Card, error) {
+	if c, ok := f[id]; ok {
+		return c, nil
+	}
+	return nil, fmt.Errorf("%s: %w", id, cards.ErrNotFound)
+}
+func (f fakeDB) Cached(id string) *cards.Card { return f[id] }
+func (f fakeDB) Resolve(_ context.Context, set, num string) (string, error) {
+	if set != "TST" {
+		return "", cards.ErrNotFound
+	}
+	return "tst-" + num, nil
+}
+
+const testDeck = `Pokémon: 8
+4 Riolu TST 1
+4 Lucario TST 2
+Trainer: 4
+4 Ultra Ball TST 3
+Energy: 48
+48 Basic {F} Energy SVE 6`
+
+type stateMsg struct {
+	Type     string           `json:"type"`
+	Reveal   bool             `json:"reveal"`
+	Snapshot *game.UISnapshot `json:"snapshot"`
+	Games    []game.GameInfo  `json:"games"`
+}
+
+type resultMsg struct {
+	Type  string `json:"type"`
+	ID    int    `json:"id"`
+	OK    bool   `json:"ok"`
+	Error string `json:"error"`
+}
+
+func setup(t *testing.T) (*httptest.Server, *game.Manager) {
+	t.Helper()
+	m := game.NewManager(t.TempDir(), newFakeDB())
+	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-1", DeckP1: testDeck, DeckP2: testDeck}); err != nil {
+		t.Fatal(err)
+	}
+	s := New(m, state.P1)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	s.StartHub(ctx)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+	return ts, m
+}
+
+func dial(t *testing.T, ts *httptest.Server) *websocket.Conn {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(ts.URL, "http")+"/ws", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { c.CloseNow() })
+	return c
+}
+
+// next reads messages until one of type typ arrives.
+func next(t *testing.T, c *websocket.Conn, typ string, out any) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	for {
+		_, b, err := c.Read(ctx)
+		if err != nil {
+			t.Fatalf("waiting for %s: %v", typ, err)
+		}
+		var head struct{ Type string }
+		json.Unmarshal(b, &head)
+		if head.Type == typ {
+			if err := json.Unmarshal(b, out); err != nil {
+				t.Fatal(err)
+			}
+			return
+		}
+	}
+}
+
+func send(t *testing.T, c *websocket.Conn, id int, verb string, args map[string]any) resultMsg {
+	t.Helper()
+	b, _ := json.Marshal(map[string]any{"id": id, "verb": verb, "args": args})
+	if err := c.Write(context.Background(), websocket.MessageText, b); err != nil {
+		t.Fatal(err)
+	}
+	var r resultMsg
+	next(t, c, "result", &r)
+	if r.ID != id {
+		t.Fatalf("result id %d, want %d", r.ID, id)
+	}
+	return r
+}
+
+func TestWebsocketLoadAndAct(t *testing.T) {
+	ts, m := setup(t)
+	c := dial(t, ts)
+
+	var st stateMsg
+	next(t, c, "state", &st)
+	if st.Snapshot == nil || st.Snapshot.Game != "ui-1" {
+		t.Fatalf("no initial snapshot: %+v", st)
+	}
+	if n := len(st.Snapshot.Board.Sides[state.P1].Hand); n != 7 {
+		t.Fatalf("human sees %d cards in hand", n)
+	}
+	if n := len(st.Snapshot.Board.Sides[state.P2].Hand); n != 0 {
+		t.Fatalf("human sees %d of Claude's hand", n)
+	}
+
+	// Get a Riolu into hand, then make it active.
+	g, _ := m.Current()
+	if l, _ := g.State().Find("p1-1"); l.Zone != state.Hand {
+		if r := send(t, c, 1, "move", map[string]any{"iid": "p1-1", "to": "hand"}); !r.OK {
+			t.Fatal(r.Error)
+		}
+	}
+	if r := send(t, c, 2, "place_active", map[string]any{"iid": "p1-1"}); !r.OK {
+		t.Fatal(r.Error)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		next(t, c, "state", &st)
+		if a := st.Snapshot.Board.Sides[state.P1].Active; a != nil && a.Pokemon[0].IID == "p1-1" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("no state push with the new active")
+		}
+	}
+
+	// Errors come back as results, not dropped connections.
+	if r := send(t, c, 3, "bench", map[string]any{"iid": "p1-1"}); r.OK || r.Error == "" {
+		t.Fatalf("expected an error, got %+v", r)
+	}
+	// Acting for Claude's seat is refused in play mode; reveal too.
+	if r := send(t, c, 4, "draw", map[string]any{"seat": "p2"}); r.OK {
+		t.Fatal("acting as p2 allowed in play mode")
+	}
+	if r := send(t, c, 5, "set_reveal", map[string]any{"reveal": true}); r.OK {
+		t.Fatal("reveal allowed in play mode")
+	}
+
+	// Claude's moves arrive with per-event frames for animation.
+	if _, err := g.Draw(state.P2, state.ActorClaude, 2); err != nil {
+		t.Fatal(err)
+	}
+	for {
+		next(t, c, "state", &st)
+		if len(st.Snapshot.Frames) > 0 {
+			break
+		}
+	}
+	if n := len(st.Snapshot.Frames); n != 2 || st.Snapshot.Frames[0].Actor != state.ActorClaude {
+		t.Fatalf("frames: %d", n)
+	}
+	if strings.Contains(st.Snapshot.Frames[0].Text, "Riolu") || strings.Contains(st.Snapshot.Frames[0].Text, "Energy") {
+		t.Fatalf("frame leaks Claude's draw: %s", st.Snapshot.Frames[0].Text)
+	}
+
+	// Review mode allows the reveal view.
+	if r := send(t, c, 6, "set_mode", map[string]any{"mode": "review"}); !r.OK {
+		t.Fatal(r.Error)
+	}
+	if r := send(t, c, 7, "set_reveal", map[string]any{"reveal": true}); !r.OK {
+		t.Fatal(r.Error)
+	}
+	for {
+		next(t, c, "state", &st)
+		if st.Reveal {
+			break
+		}
+	}
+	if n := len(st.Snapshot.Board.Sides[state.P2].Hand); n != 9 {
+		t.Fatalf("reveal view shows %d of p2's hand", n)
+	}
+}
+
+func TestEndTurnCopiesPrompt(t *testing.T) {
+	ts, m := setup(t)
+	g, _ := m.Current()
+	for _, seat := range state.Seats {
+		iid := state.IID(string(seat) + "-1")
+		if l, _ := g.State().Find(iid); l.Zone != state.Hand {
+			g.Move(seat, state.ActorSystem, iid, state.Loc{Zone: state.Hand}, "", "")
+		}
+		if _, err := g.PlaceActive(seat, state.ActorSystem, iid); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := g.StartGame(state.P1, state.ActorHuman); err != nil {
+		t.Fatal(err)
+	}
+	c := dial(t, ts)
+	var st stateMsg
+	next(t, c, "state", &st)
+	b, _ := json.Marshal(map[string]any{"id": 1, "verb": "end_turn"})
+	c.Write(context.Background(), websocket.MessageText, b)
+	var r struct {
+		resultMsg
+		Data struct{ Prompt string } `json:"data"`
+	}
+	next(t, c, "result", &r)
+	if !r.OK || !strings.Contains(r.Data.Prompt, "get_log since") || !strings.Contains(r.Data.Prompt, "turn 2") {
+		t.Fatalf("prompt: %+v", r)
+	}
+}
+
+func TestRejectsForeignHostAndOrigin(t *testing.T) {
+	ts, _ := setup(t)
+	req, _ := http.NewRequest("GET", ts.URL+"/", nil)
+	req.Host = "evil.example"
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("foreign host got %d", resp.StatusCode)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, _, err = websocket.Dial(ctx, "ws"+strings.TrimPrefix(ts.URL, "http")+"/ws", &websocket.DialOptions{
+		HTTPHeader: http.Header{"Origin": []string{"https://evil.example"}},
+	})
+	if err == nil {
+		t.Fatal("foreign origin accepted")
+	}
+
+	resp, err = http.Get(ts.URL + "/api/card?def=tst-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != 200 || !strings.Contains(string(body), `"name":"Riolu"`) {
+		t.Fatalf("card api: %d %s", resp.StatusCode, body)
+	}
+
+	resp, err = http.Get(ts.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ = io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != 200 || !strings.Contains(string(body), "<title>tcgreplay</title>") {
+		t.Fatalf("index: %d", resp.StatusCode)
+	}
+}

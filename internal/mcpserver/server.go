@@ -385,7 +385,9 @@ func (s *Server) register(srv *mcp.Server) {
 		return s.verb(in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.Mulligan(seat, actor) })
 	})
 	add(srv, "place_active", "Put a Basic Pokémon from hand into your empty Active Spot.", func(ctx context.Context, in IIDArg) (any, error) {
-		return s.verb(in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.PlaceActive(seat, actor, iid(in.IID)) })
+		return s.verb(in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
+			return g.PlaceActive(seat, actor, iid(in.IID))
+		})
 	})
 	add(srv, "start_game", "Deal prizes to both seats and start turn 1; the first player draws.", func(ctx context.Context, in StartGame) (any, error) {
 		g, err := s.M.Current()
@@ -427,7 +429,9 @@ func (s *Server) register(srv *mcp.Server) {
 		})
 	})
 	add(srv, "play_trainer", "Play an Item, Supporter or Stadium from hand (Tools use attach). Opens a compound action; follow with the verbs that resolve it, then end_action.", func(ctx context.Context, in IIDArg) (any, error) {
-		return s.verb(in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.PlayTrainer(seat, actor, iid(in.IID)) })
+		return s.verb(in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
+			return g.PlayTrainer(seat, actor, iid(in.IID))
+		})
 	})
 	add(srv, "use_ability", "Declare an Ability. Opens a compound action; follow with the verbs that resolve it, then end_action.", func(ctx context.Context, in Ability) (any, error) {
 		return s.verb(in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {

@@ -67,20 +67,20 @@ type Effect struct {
 
 // State is the board at one point in a game's history.
 type State struct {
-	Phase      string           `json:"phase"`
-	BenchSize  int              `json:"bench_size"`
-	PrizeCount int              `json:"prize_count"`
-	Turn       int              `json:"turn"`
-	Current    Seat             `json:"current,omitempty"`
-	TurnOpen   bool             `json:"turn_open"`
-	First      Seat             `json:"first,omitempty"`
-	Cards      map[IID]*Card    `json:"cards"`
-	Sides      map[Seat]*Side   `json:"sides"`
-	Stadium    IID              `json:"stadium,omitempty"`
-	Effects    []Effect         `json:"effects,omitempty"`
-	Coins      []string         `json:"coins,omitempty"` // results of the latest flip
-	Known      map[IID]uint8    `json:"known,omitempty"` // bitmask of seats that know a hidden card
-	Head       int              `json:"head"`
+	Phase      string         `json:"phase"`
+	BenchSize  int            `json:"bench_size"`
+	PrizeCount int            `json:"prize_count"`
+	Turn       int            `json:"turn"`
+	Current    Seat           `json:"current,omitempty"`
+	TurnOpen   bool           `json:"turn_open"`
+	First      Seat           `json:"first,omitempty"`
+	Cards      map[IID]*Card  `json:"cards"`
+	Sides      map[Seat]*Side `json:"sides"`
+	Stadium    IID            `json:"stadium,omitempty"`
+	Effects    []Effect       `json:"effects,omitempty"`
+	Coins      []string       `json:"coins,omitempty"` // results of the latest flip
+	Known      map[IID]uint8  `json:"known,omitempty"` // bitmask of seats that know a hidden card
+	Head       int            `json:"head"`
 }
 
 // New returns an empty state.
