@@ -284,42 +284,52 @@ The deck profile lives in the `setup` or `assume` event, so it is part of the ga
 
 **Attempts** are recorded per concept, counting successes and failures, so stats show a rate ("handles Powerful Hand pressure in 7 of 10") rather than a list of failures. Failed concepts resurface; passed ones fade.
 
+## Status (2026-10-16)
+
+Phases 0–2 are built. Phase 3's importer is built: all 10 corpus logs in `testdata/logs` replay with no problems, and the `import_log` MCP tool saves a log as a review-mode game (it remembers the last decklist in `<data>/last-deck.txt`). Deck inference isn't started.
+
+**Runtime.** `tcgreplay` is a stdio shim relaying to one shared daemon (`tcgreplay -daemon`, socket `<data>/mcp.sock`), which owns the games and the UI on :7777. After `make install`, restart the desktop app; the first shim from the new build replaces the old daemon. `-no-daemon` runs everything in-process. Logs: `~/.local/share/tcgreplay/tcgreplay.log`.
+
+**Debugging the importer.** `TRACE=<log path> go test ./internal/importer -run Trace -v` prints each line with a board summary. Handlers must never mutate the parsed log: it is shared across the search's replay attempts, and mutating it silently breaks the backtracking.
+
+**Next.** Phase 3 deck inference, starting with what needs no outside data: minimum counts from the log (`Report.Observed`) and sampled opponent hands for rewound positions. Still open: whether reference lists come from Limitless TCG (check its terms or API first) or from lists Nic pastes in.
+
 ## Build plan
 
 Six phases, each usable on its own. Tomorrow's session covers Phase 0 and as much of Phase 1 as time allows; Phase 1 alone lets us play and rewind games through chat.
 
 **Phase 0: Scaffold**
 
-- [ ] Go module, repo layout (`cmd/`, `internal/state`, `internal/mcp`, `internal/cards`, `web/`)
-- [ ] Choose an MCP library: the official Go SDK or an established community one
-- [ ] Register the binary as a local MCP server in the desktop app; a `ping` tool round-trips
+- [x] Go module, repo layout (`cmd/`, `internal/state`, `internal/mcp`, `internal/cards`, `web/`)
+- [x] Choose an MCP library: the official Go SDK or an established community one
+- [x] Register the binary as a local MCP server in the desktop app; a `ping` tool round-trips
 
 **Phase 1: State, events and MCP (no UI)**
 
-- [ ] Card instances, zones and stacks
-- [ ] Event envelope, primitive events, actions; append-only JSONL with schema header
-- [ ] Fold to state; `rewind`, `branch`, `checkout`
-- [ ] Server-side shuffle, coin flip, prize setup
-- [ ] Deck import from TCG Live export text
-- [ ] TCGdex lookup and local cache; `card_text`
-- [ ] Verbs, compound actions, `move` escape hatch, per-seat views, turn lock
-- [ ] Invariant checks
+- [x] Card instances, zones and stacks
+- [x] Event envelope, primitive events, actions; append-only JSONL with schema header
+- [x] Fold to state; `rewind`, `branch`, `checkout`
+- [x] Server-side shuffle, coin flip, prize setup
+- [x] Deck import from TCG Live export text
+- [x] TCGdex lookup and local cache; `card_text`
+- [x] Verbs, compound actions, `move` escape hatch, per-seat views, turn lock
+- [x] Invariant checks
 
 * **Done when:** a full game can be played through chat, and rewinding to any event reproduces that state exactly.
 
 **Phase 2: Playmat UI**
 
-- [ ] Svelte app embedded with `go:embed`, websocket with reconnect and load-on-connect
-- [ ] Mirrored layout, drag and drop, context menus, damage, conditions, effect badges
-- [ ] Deck actions, card zoom, seat and reveal views
-- [ ] Animated actions, End turn button with clipboard prompt, soft warnings
+- [x] Svelte app embedded with `go:embed`, websocket with reconnect and load-on-connect
+- [x] Mirrored layout, drag and drop, context menus, damage, conditions, effect badges
+- [x] Deck actions, card zoom, seat and reveal views
+- [x] Animated actions, End turn button with clipboard prompt, soft warnings
 
 * **Done when:** Nic plays his seat in the browser while Claude plays through MCP, with no divergence.
 
 **Phase 3: Importer and deck inference**
 
-- [ ] Log parser with nesting, target resolution and card-name mapping
-- [ ] Placeholder cards, `assume` events with provenance
+- [x] Log parser with nesting, target resolution and card-name mapping
+- [x] Placeholder cards, `assume` events with provenance
 - [ ] Constraint extraction, archetype match, consensus list, hand sampling
 
 * **Done when:** the 15 October LeDjo23 log imports with invariants passing and every assumption flagged.
