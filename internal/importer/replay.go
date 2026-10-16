@@ -89,6 +89,9 @@ type replay struct {
 	swaps      []swapRec
 	choices    []choice
 	choiceSeq  int
+	// consumed is a headline whose handler already used its sublines. The
+	// parse tree is shared by every replay attempt, so it is never mutated.
+	consumed *Node
 	// boundAt records the log line that revealed each card, for tracing.
 	boundAt map[state.IID]int
 
@@ -292,6 +295,24 @@ func (r *replay) stackNamed(seat state.Seat, name, zone string) (state.Loc, erro
 		where = " in the " + zone
 	}
 	return state.Loc{}, fmt.Errorf("%s has no %s in play%s", r.players[seat], name, where)
+}
+
+// stackIs reports whether names lists exactly the Pokémon cards in the stack
+// at l, in any order.
+func (r *replay) stackIs(l state.Loc, names []string) bool {
+	st, err := r.st.Stack(l)
+	if err != nil || len(names) == 0 || len(names) != len(st.Pokemon) {
+		return false
+	}
+	left := slices.Clone(names)
+	for _, iid := range st.Pokemon {
+		i := slices.Index(left, r.bound[iid])
+		if i < 0 {
+			return false
+		}
+		left = slices.Delete(left, i, i+1)
+	}
+	return true
 }
 
 // target resolves a Pokémon named by a damage line. The client sometimes

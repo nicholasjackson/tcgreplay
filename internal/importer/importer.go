@@ -353,7 +353,7 @@ func (r *replay) headline(n *Node) {
 		r.line(n, nil, true)
 	}
 	for _, c := range n.Children {
-		if c.Depth == 1 {
+		if c.Depth == 1 && r.consumed != n {
 			r.line(c, n, false)
 		}
 	}

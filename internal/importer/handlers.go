@@ -35,7 +35,7 @@ func buildHandlers(a, b string) []handler {
 					names = b
 				}
 			}
-			n.Children = nil // the "- 7 drawn cards." subline is consumed here
+			r.consumed = n // the "- 7 drawn cards." subline is consumed here
 			if mull := r.mulligans[m[1]]; len(names) == 0 && len(mull) > 0 {
 				names = mull[0] // the first mulligan reveals this hand
 			}
@@ -149,7 +149,8 @@ func buildHandlers(a, b string) []handler {
 			seat := r.seat(m[1])
 			// "played Abra." is an in-play Pokémon's effect, not a card
 			// leaving the hand.
-			if _, err := r.stackNamed(seat, m[2], ""); err == nil {
+			if l, err := r.stackNamed(seat, m[2], ""); err == nil {
+				r.lastRef = &l
 				return nil
 			}
 			iid, err := r.take(seat, []state.Zone{state.Hand}, m[2])
@@ -216,10 +217,19 @@ func buildHandlers(a, b string) []handler {
 			if err != nil {
 				return err
 			}
+			// Devolving can strip several stages (Strange Timepiece returns
+			// every Evolution card), but the log names only the top one, so
+			// peel cards off until the named stage is on top.
 			st, _ := r.st.Stack(l)
 			top := st.Top()
-			if err := r.move(r.seat(m[1]), top, state.Loc{Seat: seat, Zone: state.Hand}, "", ""); err != nil {
-				return err
+			for {
+				st, _ = r.st.Stack(l)
+				if len(st.Pokemon) < 2 || (st.Top() != top && r.bound[st.Top()] == m[4]) {
+					break
+				}
+				if err := r.move(r.seat(m[1]), st.Top(), state.Loc{Seat: seat, Zone: state.Hand}, "", ""); err != nil {
+					return err
+				}
 			}
 			r.lastDevolved = top
 			return nil
@@ -307,9 +317,22 @@ func buildHandlers(a, b string) []handler {
 		}),
 		h(`{P}'s (.+) healed (\d+) damage\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[1])
-			l, err := r.stackNamed(seat, m[2], "")
-			if err != nil {
-				return err
+			// Only a copy carrying at least that much damage can heal it,
+			// which settles identical copies the log can't tell apart.
+			var hurt []state.Loc
+			for _, l := range r.st.StackLocs(seat) {
+				if st, _ := r.st.Stack(l); r.bound[st.Top()] == m[2] && st.Damage >= count(m[3]) {
+					hurt = append(hurt, l)
+				}
+			}
+			l := state.Loc{}
+			if len(hurt) == 1 {
+				l = hurt[0]
+			} else {
+				var err error
+				if l, err = r.stackNamed(seat, m[2], ""); err != nil {
+					return err
+				}
 			}
 			r.lastRef = &l
 			return r.addDamage(seat, l, -count(m[3]))
@@ -439,8 +462,25 @@ func buildHandlers(a, b string) []handler {
 			return r.shuffle(r.seat(m[1]))
 		}),
 		h(`{P} shuffled their hand\.`, noop),
-		h(`{P} shuffled (a|\d+) cards? into their deck\.`, func(r *replay, m []string, n, _ *Node) error {
+		h(`{P} shuffled (a|\d+) cards? into their deck\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
+			if parent != nil && shuffleFromDiscardRe.MatchString(parent.Text) {
+				if err := r.zoneTo(seat, state.Discard, count(m[2]), n.Bullets(), state.Loc{Seat: seat, Zone: state.Deck}); err != nil {
+					return err
+				}
+				return r.shuffle(seat)
+			}
+			// An in-play Pokémon shuffling itself away (Dudunsparce's Run
+			// Away Draw) lists its evolution chain; take the whole stack.
+			if l := r.lastRef; l != nil && l.Seat == seat && r.stackIs(*l, n.Bullets()) {
+				st, _ := r.st.Stack(*l)
+				for _, iid := range st.Cards() {
+					if err := r.move(seat, iid, state.Loc{Seat: seat, Zone: state.Deck}, "", ""); err != nil {
+						return err
+					}
+				}
+				return r.shuffle(seat)
+			}
 			if err := r.handTo(seat, count(m[2]), n.Bullets(), state.Loc{Seat: seat, Zone: state.Deck}); err != nil {
 				return err
 			}
@@ -613,14 +653,23 @@ func (r *replay) bindGroup(iids []state.IID, names []string) error {
 }
 
 // handTo moves n cards from hand to dest, binding names when listed.
+// shuffleFromDiscardRe matches cards whose "shuffled N cards into their
+// deck" subline takes from the discard pile rather than the hand.
+var shuffleFromDiscardRe = regexp.MustCompile(` played (Sacred Ash|Super Rod|Pal Pad|Energy Recycler)\.$`)
+
 func (r *replay) handTo(seat state.Seat, n int, names []string, dest state.Loc) error {
+	return r.zoneTo(seat, state.Hand, n, names, dest)
+}
+
+// zoneTo moves n cards from seat's zone to dest, binding names when given.
+func (r *replay) zoneTo(seat state.Seat, from state.Zone, n int, names []string, dest state.Loc) error {
 	var moved []state.IID
 	for i := 0; i < n; i++ {
 		name := ""
 		if i < len(names) {
 			name = names[i]
 		}
-		iid, err := r.pick(seat, []state.Zone{state.Hand}, name, moved)
+		iid, err := r.pick(seat, []state.Zone{from}, name, moved)
 		if err != nil {
 			return err
 		}
