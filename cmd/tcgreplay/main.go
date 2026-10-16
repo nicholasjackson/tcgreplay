@@ -1,5 +1,11 @@
 // Command tcgreplay is a local virtual Pokémon TCG playmat driven by Claude
 // over MCP (stdio).
+//
+// The Claude desktop app may launch several copies, and restarts them at
+// will, so by default this process is only a thin stdio shim: it relays MCP
+// to a long-running daemon (starting one if needed) that owns the games and
+// the playmat UI. Every client therefore sees the same game, and the UI
+// survives app restarts. Run with -no-daemon to serve everything in-process.
 package main
 
 import (
@@ -24,12 +30,25 @@ import (
 
 var version = "dev"
 
+type config struct {
+	dataDir, cacheDir, seat, uiAddr string
+	offline                         bool
+}
+
+// args renders the config as flags for spawning the daemon.
+func (c config) args() []string {
+	return []string{"-data", c.dataDir, "-cache", c.cacheDir, "-seat", c.seat, "-ui-addr", c.uiAddr, fmt.Sprintf("-offline=%t", c.offline)}
+}
+
 func main() {
-	dataDir := flag.String("data", game.DefaultDataDir(), "directory for game files")
-	cacheDir := flag.String("cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")
-	seat := flag.String("seat", "p2", "seat Claude plays")
-	offline := flag.Bool("offline", false, "use only cached card data")
-	uiAddr := flag.String("ui-addr", "127.0.0.1:7777", "address for the playmat UI; empty disables it")
+	var c config
+	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for game files")
+	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")
+	flag.StringVar(&c.seat, "seat", "p2", "seat Claude plays")
+	flag.BoolVar(&c.offline, "offline", false, "use only cached card data")
+	flag.StringVar(&c.uiAddr, "ui-addr", "127.0.0.1:7777", "address for the playmat UI; empty disables it")
+	noDaemon := flag.Bool("no-daemon", false, "serve MCP over stdio in-process instead of relaying to the daemon")
+	daemon := flag.Bool("daemon", false, "run the shared daemon (normally started by the shim)")
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
 
@@ -39,31 +58,48 @@ func main() {
 	}
 	// stdout carries the MCP protocol, so logs go to stderr and a file.
 	log.SetOutput(os.Stderr)
-	if err := os.MkdirAll(*dataDir, 0o755); err == nil {
-		if f, err := os.OpenFile(filepath.Join(*dataDir, "tcgreplay.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644); err == nil {
+	if err := os.MkdirAll(c.dataDir, 0o755); err == nil {
+		if f, err := os.OpenFile(filepath.Join(c.dataDir, "tcgreplay.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644); err == nil {
 			log.SetOutput(f)
 			defer f.Close()
 		}
 	}
-
-	claude := state.Seat(*seat)
-	if !claude.Valid() {
-		log.Fatalf("bad seat %q", *seat)
+	if !state.Seat(c.seat).Valid() {
+		log.Fatalf("bad seat %q", c.seat)
 	}
-	db := cards.NewClient(*cacheDir)
-	db.Offline = *offline
-	m := game.NewManager(*dataDir, db)
-	srv := (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version}).MCP()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	log.Printf("tcgreplay %s starting: data %s, cache %s, claude plays %s", version, *dataDir, *cacheDir, claude)
-	if *uiAddr != "" {
-		startUI(ctx, m, claude.Other(), *uiAddr)
+	var err error
+	switch {
+	case *daemon:
+		err = runDaemon(ctx, c)
+	case *noDaemon:
+		err = runInProcess(ctx, c)
+	default:
+		err = runShim(ctx, c)
 	}
-	if err := srv.Run(ctx, &mcp.StdioTransport{}); err != nil && ctx.Err() == nil {
+	if err != nil && ctx.Err() == nil {
 		log.Fatal(err)
 	}
+}
+
+// newServer builds the game manager and MCP server.
+func newServer(c config) (*game.Manager, *mcp.Server) {
+	db := cards.NewClient(c.cacheDir)
+	db.Offline = c.offline
+	m := game.NewManager(c.dataDir, db)
+	claude := state.Seat(c.seat)
+	return m, (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version}).MCP()
+}
+
+func runInProcess(ctx context.Context, c config) error {
+	m, srv := newServer(c)
+	log.Printf("tcgreplay %s in-process: data %s, cache %s, claude plays %s", version, c.dataDir, c.cacheDir, c.seat)
+	if c.uiAddr != "" {
+		startUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)
+	}
+	return srv.Run(ctx, &mcp.StdioTransport{})
 }
 
 // startUI serves the playmat in the background. A failure to listen (e.g.

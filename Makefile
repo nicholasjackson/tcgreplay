@@ -6,8 +6,8 @@ BIN := bin/tcgreplay
 build: web
 	go build -o $(BIN) ./cmd/tcgreplay
 
-# install puts the binary where the Claude desktop app runs it from.
-# Quit the desktop app first; it runs the installed copy.
+# install puts the binary where the Claude desktop app runs it from. Then
+# restart the app: its next launch replaces the daemon from the old build.
 install: web
 	go install ./cmd/tcgreplay
 

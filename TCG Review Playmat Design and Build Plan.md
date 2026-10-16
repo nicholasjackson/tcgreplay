@@ -349,6 +349,6 @@ Six phases, each usable on its own. Tomorrow's session covers Phase 0 and as muc
 - [ ] **Rules accuracy.** Without an engine, Claude adjudicates rules and can be wrong. Mitigations: quote card text from the cache, log warnings, Nic challenges anything that looks off.
 - [ ] **Log format stability.** TCG Live log wording may change between client versions; keep the parser table-driven and test against a growing corpus of real logs.
 - [ ] **Reference data terms.** Confirm TCGdex and Limitless TCG terms allow automated use and local caching of text and images.
-- [ ] **Process lifecycle.** If stdio restarts disrupt the UI, switch to the daemon plus stdio shim.
+- [x] **Process lifecycle.** The app launched several server processes, so the UI could show a different game than Claude drove. Resolved 2026-10-16: the binary is now a stdio shim relaying to one shared daemon (Unix socket in the data dir), which owns games and the UI and is replaced automatically after a reinstall.
 - [ ] **Deck-building bucket.** Lone-Basic openings (as in the LeDjo23 game) point at list construction; decide whether opening-hand analysis is in scope here or a separate tool.
 - [ ] **Ledger integration.** Agree the game ID shared between this tool and the Notion ledger.
