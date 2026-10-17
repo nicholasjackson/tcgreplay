@@ -6,9 +6,10 @@
 //
 // The Claude desktop app may launch several copies, and restarts them at
 // will, so by default this process is only a thin stdio shim: it relays MCP
-// to a long-running daemon (starting one if needed) that owns the games and
-// the playmat UI. Every client therefore sees the same game, and the UI
-// survives app restarts. Run with -no-daemon to serve everything in-process.
+// to a long-running daemon (starting one if needed) that owns the current
+// game (in memory) and the playmat UI. Every client therefore sees the same
+// game, and the UI survives app restarts. Games last only as long as the
+// process. Run with -no-daemon to serve everything in-process.
 //
 // -hosted serves MCP over HTTP at /mcp and the playmat on one address, for
 // running in a container behind an HTTPS proxy (see -listen, -public-url).
@@ -57,7 +58,7 @@ func main() {
 		return
 	}
 	var c config
-	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for game files")
+	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for the playmat's log and daemon files")
 	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")
 	flag.StringVar(&c.seat, "seat", "p2", "seat Claude plays")
 	flag.BoolVar(&c.offline, "offline", false, "use only cached card data")
@@ -120,9 +121,6 @@ func newServer(c config, boardURL string) (*game.Manager, *mcp.Server) {
 func runInProcess(ctx context.Context, c config) error {
 	m, srv := newServer(c, "")
 	log.Printf("tcgreplay %s in-process: data %s, cache %s, claude plays %s", version, c.dataDir, c.cacheDir, c.seat)
-	if err := m.Resume(); err != nil {
-		log.Printf("could not reopen the last game: %v", err)
-	}
 	if c.uiAddr != "" {
 		startUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)
 	}

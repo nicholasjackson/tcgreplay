@@ -63,6 +63,9 @@ type Game struct {
 	// unknown), which decides whether verbs with joinIf join it.
 	openText  *string
 	listeners []func(Update)
+	// record is the game record it was imported from; nil for a game
+	// started with new_game.
+	record *Record
 }
 
 // Options configure a new game.
@@ -108,8 +111,16 @@ func (g *Game) refold() error {
 	return nil
 }
 
-// Close closes the log file.
-func (g *Game) Close() error { return g.log.Close() }
+// Record returns a copy of the game record the game was imported from,
+// and false for a game started from two decklists, which has none.
+func (g *Game) Record() (Record, bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.record == nil {
+		return Record{}, false
+	}
+	return *g.record, true
+}
 
 // Subscribe registers a listener for updates.
 func (g *Game) Subscribe(f func(Update)) {

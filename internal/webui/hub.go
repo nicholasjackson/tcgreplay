@@ -131,9 +131,7 @@ func (h *hub) stateMessage(reveal bool, frames []int) ([]byte, bool) {
 	}
 	g, err := h.s.M.Current()
 	if err != nil {
-		games, _ := h.s.M.List()
 		msg["snapshot"] = nil
-		msg["games"] = games
 		b, _ := json.Marshal(msg)
 		return b, false
 	}

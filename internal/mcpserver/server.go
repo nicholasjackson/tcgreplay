@@ -60,7 +60,7 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 - Quote card text from card_text, not memory.`
 
 // boardInstruction is added to the instructions when results carry a board link.
-const boardInstruction = "\n- Results of import_log, new_game, load_game and set_opponent_deck carry a board link: give it to the player so they can watch and act on the live board."
+const boardInstruction = "\n- Results of import_log, new_game and set_opponent_deck carry a board link: give it to the player so they can watch and act on the live board."
 
 // instructions returns the server instructions, with the board-link line
 // in hosted mode.
@@ -171,10 +171,10 @@ type (
 		ID     string `json:"id,omitempty" jsonschema:"game id; generated if empty"`
 	}
 	ImportLog struct {
-		Log     string `json:"log" jsonschema:"the battle log text copied from Pokémon TCG Live"`
-		Deck    string `json:"deck,omitempty" jsonschema:"the log owner's decklist in TCG Live export format; omit to reuse the deck from the previous import"`
-		OppDeck string `json:"opp_deck,omitempty" jsonschema:"optional assumed opponent decklist; fills cards the log never reveals, tagged as reference"`
-		Me      string `json:"me,omitempty" jsonschema:"the log owner's player name; detected from the log if omitted"`
+		Log     string `json:"log" jsonschema:"the battle log text copied from Pokémon TCG Live, or a game record returned earlier by import_log, set_opponent_deck or get_record (pass it unchanged) to restore that exact game"`
+		Deck    string `json:"deck,omitempty" jsonschema:"the log owner's decklist in TCG Live export format; omit to reuse the deck from the previous import; omit when log is a record"`
+		OppDeck string `json:"opp_deck,omitempty" jsonschema:"optional assumed opponent decklist; fills cards the log never reveals, tagged as reference; omit when log is a record"`
+		Me      string `json:"me,omitempty" jsonschema:"the log owner's player name; detected from the log if omitted; omit when log is a record"`
 		ID      string `json:"id,omitempty" jsonschema:"game id; generated from the date and opponent if empty"`
 	}
 	Sample struct {
@@ -183,18 +183,14 @@ type (
 		Seed uint64 `json:"seed,omitempty" jsonschema:"makes the sample reproducible; omit for a fresh one"`
 	}
 	OppDeck struct {
-		Deck  string `json:"deck" jsonschema:"the assumed opponent list in TCG Live export format, 60 cards; set codes optional"`
-		ID    string `json:"id,omitempty" jsonschema:"game to rebuild; defaults to the current game"`
-		NewID string `json:"new_id,omitempty" jsonschema:"build a separate game with this id instead of replacing; required when the game has branches"`
+		Deck            string `json:"deck" jsonschema:"the assumed opponent list in TCG Live export format, 60 cards; set codes optional"`
+		DiscardBranches bool   `json:"discard_branches,omitempty" jsonschema:"rebuild even though the game has branches, which are lost; only after the player agrees"`
 	}
 	Undo struct {
 		N int `json:"n,omitempty" jsonschema:"moves to undo, default 1"`
 	}
 	ProfileArg struct {
 		Seat string `json:"seat,omitempty" jsonschema:"whose list; defaults to the player's opponent"`
-	}
-	GameID struct {
-		ID string `json:"id"`
 	}
 	Mode struct {
 		Mode string `json:"mode" jsonschema:"play or review"`
@@ -346,7 +342,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return s.withBoard(map[string]any{"game": g.ID, "result": compact(res)}), nil
 	})
-	add(srv, "import_log", "Import a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact. Pass opp_deck, a likely 60-card list for the opponent's archetype, so both decks are complete: cards the log never names (prizes, hand, deck) are dealt at random from what the list has left. Without it they stay unknown; set_opponent_deck can add a list later. Returns the game summary, report.observed (the minimum count of each opponent card the log proves), problems and warnings.", func(ctx context.Context, in ImportLog) (any, error) {
+	add(srv, "import_log", "Import a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact. Pass opp_deck, a likely 60-card list for the opponent's archetype, so both decks are complete: cards the log never names (prizes, hand, deck) are dealt at random from what the list has left. Without it they stay unknown; set_opponent_deck can add a list later. Returns the game summary, report.observed (the minimum count of each opponent card the log proves), problems and warnings. Also restores a game from its record: pass the record as log, alone. The result's record holds the log, both lists, the player's name and the seed: give it to the player to keep; importing it later rebuilds the identical game (branches and notes are not kept).", func(ctx context.Context, in ImportLog) (any, error) {
 		res, err := s.M.Import(ctx, game.ImportRequest{ID: in.ID, Log: in.Log, Deck: in.Deck, OppDeck: in.OppDeck, Me: in.Me})
 		if err != nil {
 			return nil, err
@@ -356,18 +352,10 @@ func (s *Server) register(srv *mcp.Server) {
 		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
 			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
 		}
-		return s.withBoard(map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings}), nil
+		return s.withBoard(map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings, "record": res.Record}), nil
 	})
-	add(srv, "set_opponent_deck", "Rebuild an imported game with an assumed opponent list: same log and seed, so the player's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game unless new_id is given; refuses to replace a game with branches.", func(ctx context.Context, in OppDeck) (any, error) {
-		id := in.ID
-		if id == "" {
-			g, err := s.M.Current()
-			if err != nil {
-				return nil, err
-			}
-			id = g.ID
-		}
-		res, err := s.M.SetOpponentDeck(ctx, id, in.Deck, in.NewID)
+	add(srv, "set_opponent_deck", "Rebuild the current imported game with an assumed opponent list: same log and seed, so the player's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game; refuses when it has branches unless discard_branches is set (ask the player first: the branches are lost). Returns the updated record.", func(ctx context.Context, in OppDeck) (any, error) {
+		res, err := s.M.SetOpponentDeck(ctx, in.Deck, in.DiscardBranches)
 		if err != nil {
 			return nil, err
 		}
@@ -376,17 +364,14 @@ func (s *Server) register(srv *mcp.Server) {
 		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
 			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
 		}
-		return s.withBoard(map[string]any{"game": g.ID, "head": g.Head(), "observed": res.Report.Observed, "problems": res.Report.Problems, "warnings": warnings}), nil
+		return s.withBoard(map[string]any{"game": g.ID, "head": g.Head(), "observed": res.Report.Observed, "problems": res.Report.Problems, "warnings": warnings, "record": res.Record}), nil
 	})
-	add(srv, "list_games", "List stored games, newest first.", func(ctx context.Context, _ Empty) (any, error) {
-		return s.M.List()
-	})
-	add(srv, "load_game", "Load a stored game and make it current.", func(ctx context.Context, in GameID) (any, error) {
-		g, err := s.M.Load(in.ID)
+	add(srv, "get_record", "The current game's record: the battle log, the player's name, both decklists and the seed, as JSON the player can keep in a note and later pass to import_log to restore the identical game. Games started with new_game have none.", func(ctx context.Context, _ Empty) (any, error) {
+		rec, err := s.M.Record()
 		if err != nil {
 			return nil, err
 		}
-		return s.withBoard(map[string]any{"game": g.ID, "branch": g.Branch(), "head": g.Head(), "mode": g.Mode()}), nil
+		return rec, nil
 	})
 	add(srv, "set_mode", "Switch between play mode (you act only as your seat; no reveal view) and review mode (act for either seat; reveal view allowed).", func(ctx context.Context, in Mode) (any, error) {
 		g, err := s.M.Current()

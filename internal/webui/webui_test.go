@@ -70,7 +70,6 @@ type stateMsg struct {
 	Type     string           `json:"type"`
 	Reveal   bool             `json:"reveal"`
 	Snapshot *game.UISnapshot `json:"snapshot"`
-	Games    []game.GameInfo  `json:"games"`
 }
 
 type resultMsg struct {
@@ -149,6 +148,44 @@ func send(t *testing.T, c *websocket.Conn, id int, verb string, args map[string]
 		t.Fatalf("result id %d, want %d", r.ID, id)
 	}
 	return r
+}
+
+// TestNoGameOpen: with no game the state message has a null snapshot and
+// no list of stored games, and the old stored-game verbs are refused.
+func TestNoGameOpen(t *testing.T) {
+	m := game.NewManager(t.TempDir(), newFakeDB())
+	s := New(m, state.P1)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	s.StartHub(ctx)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+	c := dial(t, ts)
+
+	var msg map[string]any
+	next(t, c, "state", &msg)
+	if snap, ok := msg["snapshot"]; !ok || snap != nil {
+		t.Errorf("snapshot = %v (present %v), want null", snap, ok)
+	}
+	if games, ok := msg["games"]; ok {
+		t.Errorf("state message has games: %v", games)
+	}
+	for i, verb := range []string{"load_game", "list_games"} {
+		r := send(t, c, i+1, verb, map[string]any{"game": "old"})
+		if r.OK || !strings.Contains(r.Error, "no game open") {
+			t.Errorf("%s with no game: %+v, want a no game open error", verb, r)
+		}
+	}
+
+	// With a game open they are unknown verbs.
+	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-1", DeckP1: testDeck, DeckP2: testDeck}); err != nil {
+		t.Fatal(err)
+	}
+	for i, verb := range []string{"load_game", "list_games"} {
+		if r := send(t, c, i+10, verb, map[string]any{"game": "ui-1"}); r.OK || !strings.Contains(r.Error, "unknown verb") {
+			t.Errorf("%s with a game open: %+v, want an unknown verb error", verb, r)
+		}
+	}
 }
 
 func TestWebsocketLoadAndAct(t *testing.T) {

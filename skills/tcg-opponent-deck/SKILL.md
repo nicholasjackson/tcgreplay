@@ -54,7 +54,7 @@ Energy: 10
 ## 4. Apply it
 
 - **When importing:** pass the list as `opp_deck` to `import_log`. You can read the log yourself first to choose it.
-- **For a game already imported:** `set_opponent_deck(deck)`. It rebuilds the game from the same log and seed, so the player's side is unchanged. If the game has branches it refuses to replace it: pass `new_id` (e.g. `<id>-deck`) to build a separate game instead, and tell the player the new id.
+- **For a game already imported:** `set_opponent_deck(deck)`. It rebuilds the open game from its record (same log and seed), so the player's side is unchanged, and returns the updated record to offer the player. The rebuild replaces the game, so if the game has branches it refuses: they would be lost. Ask the player; only if they agree, call it again with `discard_branches: true`.
 - Read the warnings. "Raised X from 2 to the 3 seen" or "added X, seen but not in the list" mean the list contradicted the log and was corrected. Fix your list if that reveals a misread archetype. A total other than 60 means it needs trimming.
 
 ## 5. Report

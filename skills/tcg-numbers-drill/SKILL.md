@@ -1,6 +1,6 @@
 ---
 name: tcg-numbers-drill
-description: Quick damage and HP arithmetic drills for Pokémon TCG built from real cards in the player's own games on the tcgreplay playmat, checked against card text. Use when the player asks for a numbers drill, damage maths practice, quick quiz on their deck or the meta's threat cards, or to learn their numbers cold.
+description: Quick damage and HP arithmetic drills for Pokémon TCG built from real cards in the game open on the tcgreplay playmat, checked against card text. Use when the player asks for a numbers drill, damage maths practice, quick quiz on their deck or the meta's threat cards, or to learn their numbers cold.
 ---
 
 # Numbers drill
@@ -9,7 +9,7 @@ Knockouts are decided by numbers the player should know without calculating: the
 
 ## Build the questions
 
-- Use cards from the player's own games: their deck (`get_profile` for their seat, or the decklist from the import) and opponents they met (`list_games`, `get_profile`). Prefer cards that decided games: attackers that took knockouts, Tools that changed HP, Stadiums that changed numbers.
+- Use cards from the game open on the playmat: the player's deck (`get_profile` for their seat) and the opponent's (`get_profile`). If no game is open, ask the player to import one (a battle log, or a game record they saved) and stop. Prefer cards that decided the game: attackers that took knockouts, Tools that changed HP, Stadiums that changed numbers.
 - Read every card with `card_text` first. Never ask or answer from memory.
 - Three kinds of question, mixed:
   - **Recall:** "Mega Lucario ex's Mega Brave with Maximum Belt into a Pokémon ex?" One number.

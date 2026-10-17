@@ -43,7 +43,6 @@ type args struct {
 	Event     int      `json:"event,omitempty"`
 	From      int      `json:"from,omitempty"`
 	Until     int      `json:"until,omitempty"`
-	Game      string   `json:"game,omitempty"`
 	Text      string   `json:"text,omitempty"`
 	UntilTurn int      `json:"until_turn,omitempty"`
 	Reveal    bool     `json:"reveal,omitempty"`
@@ -100,19 +99,6 @@ func (s *Server) dispatch(ctx context.Context, c *client, req request) response 
 
 func (s *Server) do(ctx context.Context, c *client, req request, res *response) (any, *game.Result, error) {
 	a := req.Args
-	// Verbs that do not need a game.
-	switch req.Verb {
-	case "list_games":
-		games, err := s.M.List()
-		return games, nil, err
-	case "load_game":
-		g, err := s.M.Load(a.Game)
-		if err != nil {
-			return nil, nil, err
-		}
-		return g.ID, nil, nil
-	}
-
 	g, err := s.M.Current()
 	if err != nil {
 		return nil, nil, err
