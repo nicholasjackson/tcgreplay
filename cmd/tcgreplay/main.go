@@ -9,6 +9,9 @@
 // to a long-running daemon (starting one if needed) that owns the games and
 // the playmat UI. Every client therefore sees the same game, and the UI
 // survives app restarts. Run with -no-daemon to serve everything in-process.
+//
+// -hosted serves MCP over HTTP at /mcp and the playmat on one address, for
+// running in a container behind an HTTPS proxy (see -listen, -public-url).
 package main
 
 import (
@@ -36,6 +39,8 @@ var version = "dev"
 type config struct {
 	dataDir, cacheDir, seat, uiAddr string
 	offline                         bool
+	// publicURL and listen are for hosted mode only.
+	publicURL, listen string
 }
 
 // args renders the config as flags for spawning the daemon.
@@ -62,6 +67,9 @@ func main() {
 	replace := flag.Bool("replace", false, "with -daemon, stop a daemon already running on the data dir instead of exiting")
 	logStderr := flag.Bool("log-stderr", false, "log to stderr instead of the data dir's log file (for running the daemon in a terminal)")
 	showVersion := flag.Bool("version", false, "print the version and exit")
+	hosted := flag.Bool("hosted", false, "serve MCP over HTTP at /mcp and the playmat on one address, for a container")
+	flag.StringVar(&c.listen, "listen", "", "with -hosted, the address to listen on (default :$PORT, else :8080)")
+	flag.StringVar(&c.publicURL, "public-url", os.Getenv("TCGREPLAY_PUBLIC_URL"), "with -hosted, the public address the playmat is reached at (default $TCGREPLAY_PUBLIC_URL)")
 	flag.Parse()
 
 	if *showVersion {
@@ -69,8 +77,9 @@ func main() {
 		return
 	}
 	// stdout carries the MCP protocol, so logs go to stderr and a file.
+	// Hosted mode logs only to stderr, which the container platform collects.
 	log.SetOutput(os.Stderr)
-	if err := os.MkdirAll(c.dataDir, 0o755); err == nil && !*logStderr {
+	if err := os.MkdirAll(c.dataDir, 0o755); err == nil && !*logStderr && !*hosted {
 		if f, err := os.OpenFile(filepath.Join(c.dataDir, "tcgreplay.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644); err == nil {
 			log.SetOutput(f)
 			defer f.Close()
@@ -84,6 +93,8 @@ func main() {
 	defer stop()
 	var err error
 	switch {
+	case *hosted:
+		err = runHosted(ctx, c)
 	case *daemon:
 		err = runDaemon(ctx, c, *replace)
 	case *noDaemon:
@@ -96,17 +107,18 @@ func main() {
 	}
 }
 
-// newServer builds the game manager and MCP server.
-func newServer(c config) (*game.Manager, *mcp.Server) {
+// newServer builds the game manager and MCP server. boardURL is the board
+// link added to game-opening results in hosted mode; the desktop passes "".
+func newServer(c config, boardURL string) (*game.Manager, *mcp.Server) {
 	db := cards.NewClient(c.cacheDir)
 	db.Offline = c.offline
 	m := game.NewManager(c.dataDir, db)
 	claude := state.Seat(c.seat)
-	return m, (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version}).MCP()
+	return m, (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version, BoardURL: boardURL}).MCP()
 }
 
 func runInProcess(ctx context.Context, c config) error {
-	m, srv := newServer(c)
+	m, srv := newServer(c, "")
 	log.Printf("tcgreplay %s in-process: data %s, cache %s, claude plays %s", version, c.dataDir, c.cacheDir, c.seat)
 	if err := m.Resume(); err != nil {
 		log.Printf("could not reopen the last game: %v", err)

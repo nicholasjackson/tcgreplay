@@ -1,0 +1,43 @@
+# DigitalOcean App Platform definition for the hosted playmat.
+#
+# Create the app once:        doctl apps create --spec .do/app.yaml
+# Apply later edits to this:  doctl apps update <app-id> --spec .do/app.yaml
+# Deploying code needs only a push to main: App Platform builds the
+# Dockerfile and deploys it. Pushes to other branches do not deploy.
+#
+# Trial limits: no login, one shared game for everyone, and games and the
+# card cache are lost on every deploy or restart.
+name: tcgreplay
+region: lon
+services:
+  - name: playmat
+    github:
+      repo: nicholasjackson/tcgreplay
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: Dockerfile
+    source_dir: /
+    # Plain HTTP; App Platform (and Cloudflare in front) provide HTTPS.
+    http_port: 8080
+    # Single instance: games live in this one container's memory and disk.
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    health_check:
+      http_path: /
+    envs:
+      # The address board links use and the board's allowed origin.
+      # ${APP_URL} is the app's primary domain as an https URL.
+      - key: TCGREPLAY_PUBLIC_URL
+        value: ${APP_URL}
+        scope: RUN_TIME
+ingress:
+  rules:
+    - component:
+        name: playmat
+      match:
+        path:
+          prefix: /
+domains:
+  # PLACEHOLDER: replace with the owner's domain before creating the app.
+  - domain: playmat.example.com
+    type: PRIMARY

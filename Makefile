@@ -1,7 +1,7 @@
 # Build the playmat UI into the Go package, then the binary.
 BIN := bin/tcgreplay
 
-.PHONY: build install web test dev dev-ui clean
+.PHONY: build install web test dev dev-ui docker-build docker-run clean
 
 # Dev mode runs this checkout's build beside the installed one, with its
 # own data dir and UI port, so real games and the desktop app's daemon are
@@ -41,6 +41,17 @@ dev: build
 # /api to the dev daemon (run make dev first).
 dev-ui: web/node_modules
 	cd web && TCGREPLAY_ADDR=$(DEV_UI) npm run dev
+
+# docker-build builds the hosted playmat's container image; docker-run
+# starts it on port 8080, with board links at PUBLIC_URL.
+IMAGE ?= tcgreplay
+PUBLIC_URL ?= http://localhost:8080
+
+docker-build:
+	docker build -t $(IMAGE) .
+
+docker-run:
+	docker run --rm -p 8080:8080 -e TCGREPLAY_PUBLIC_URL=$(PUBLIC_URL) $(IMAGE)
 
 clean:
 	rm -rf bin internal/webui/dist/app

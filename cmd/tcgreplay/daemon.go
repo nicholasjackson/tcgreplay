@@ -159,7 +159,7 @@ func runDaemon(ctx context.Context, c config, replace bool) error {
 	}
 	defer os.Remove(infoPath(c))
 
-	m, srv := newServer(c)
+	m, srv := newServer(c, "")
 	log.Printf("tcgreplay %s daemon (pid %d): socket %s, data %s, claude plays %s", version, os.Getpid(), sock, c.dataDir, c.seat)
 	if err := m.Resume(); err != nil {
 		log.Printf("could not reopen the last game: %v", err)

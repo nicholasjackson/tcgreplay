@@ -18,6 +18,14 @@ import (
 // updates (e.g. setup) jump straight to the final board.
 const maxFrames = 40
 
+// pingInterval is how often each open board is pinged, well inside the
+// idle limits of proxies such as Cloudflare (about 100 s). A variable so
+// tests can shorten it, as is pingTimeout, how long a board has to answer.
+var (
+	pingInterval = 30 * time.Second
+	pingTimeout  = 10 * time.Second
+)
+
 // hub tracks connected clients and pushes snapshots after every change.
 type hub struct {
 	s       *Server
@@ -158,9 +166,11 @@ func (c *client) push(b []byte) {
 }
 
 func (h *hub) serveWS(w http.ResponseWriter, r *http.Request) {
-	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		OriginPatterns: []string{"localhost:*", "127.0.0.1:*", "[::1]:*"},
-	})
+	origins := []string{"localhost:*", "127.0.0.1:*", "[::1]:*"}
+	if p := h.s.Public; p != nil {
+		origins = append(origins, p.Host)
+	}
+	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: origins})
 	if err != nil {
 		return
 	}
@@ -180,10 +190,21 @@ func (h *hub) serveWS(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go func() {
+		ping := time.NewTicker(pingInterval)
+		defer ping.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
+			case <-ping.C:
+				// A board that does not answer is gone; it reconnects and reloads.
+				pctx, pcancel := context.WithTimeout(ctx, pingTimeout)
+				err := conn.Ping(pctx)
+				pcancel()
+				if err != nil {
+					cancel()
+					return
+				}
 			case b := <-c.send:
 				wctx, wcancel := context.WithTimeout(ctx, 10*time.Second)
 				err := conn.Write(wctx, websocket.MessageText, b)

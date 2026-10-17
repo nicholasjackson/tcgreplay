@@ -1,12 +1,17 @@
 package webui
 
 import (
+	"bufio"
 	"context"
+	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -77,17 +82,26 @@ type resultMsg struct {
 
 func setup(t *testing.T) (*httptest.Server, *game.Manager) {
 	t.Helper()
+	ts, m, _ := setupServer(t, nil)
+	return ts, m
+}
+
+// setupServer is setup with the playmat's public address (nil for the
+// desktop), also returning the server so tests can inspect its hub.
+func setupServer(t *testing.T, public *url.URL) (*httptest.Server, *game.Manager, *Server) {
+	t.Helper()
 	m := game.NewManager(t.TempDir(), newFakeDB())
 	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-1", DeckP1: testDeck, DeckP2: testDeck}); err != nil {
 		t.Fatal(err)
 	}
 	s := New(m, state.P1)
+	s.Public = public
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	s.StartHub(ctx)
 	ts := httptest.NewServer(s.Handler())
 	t.Cleanup(ts.Close)
-	return ts, m
+	return ts, m, s
 }
 
 func dial(t *testing.T, ts *httptest.Server) *websocket.Conn {
@@ -292,4 +306,195 @@ func TestRejectsForeignHostAndOrigin(t *testing.T) {
 	if resp.StatusCode != 200 || !strings.Contains(string(body), "<title>tcgreplay</title>") {
 		t.Fatalf("index: %d", resp.StatusCode)
 	}
+}
+
+func TestPublicAddress(t *testing.T) {
+	public, _ := url.Parse("https://playmat.example")
+	ts, _, _ := setupServer(t, public)
+
+	// The board loads for a host that is not loopback.
+	req, _ := http.NewRequest("GET", ts.URL+"/", nil)
+	req.Host = "playmat.example"
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != 200 || !strings.Contains(string(body), "<title>tcgreplay</title>") {
+		t.Fatalf("index on public host: %d", resp.StatusCode)
+	}
+
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
+	dialFrom := func(origin string) (*websocket.Conn, error) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		c, _, err := websocket.Dial(ctx, wsURL, &websocket.DialOptions{
+			HTTPHeader: http.Header{"Origin": []string{origin}},
+		})
+		if c != nil {
+			t.Cleanup(func() { c.CloseNow() })
+		}
+		return c, err
+	}
+
+	// A page on the public address may open the live connection.
+	c, err := dialFrom("https://playmat.example")
+	if err != nil {
+		t.Fatalf("public origin refused: %v", err)
+	}
+	var st stateMsg
+	next(t, c, "state", &st)
+	if st.Snapshot == nil || st.Snapshot.Game != "ui-1" {
+		t.Fatalf("no initial snapshot: %+v", st)
+	}
+
+	// Another site may not.
+	if _, err := dialFrom("https://evil.example"); err == nil {
+		t.Fatal("foreign origin accepted")
+	}
+}
+
+// rawWS is a bare websocket client that shows every frame the server sends,
+// pings included, and answers pings only when told to.
+type rawWS struct {
+	conn net.Conn
+	br   *bufio.Reader
+}
+
+func rawDial(t *testing.T, ts *httptest.Server) *rawWS {
+	t.Helper()
+	conn, err := net.Dial("tcp", ts.Listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { conn.Close() })
+	fmt.Fprintf(conn, "GET /ws HTTP/1.1\r\nHost: %s\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"+
+		"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n", ts.Listener.Addr())
+	br := bufio.NewReader(conn)
+	resp, err := http.ReadResponse(br, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != http.StatusSwitchingProtocols {
+		t.Fatalf("handshake: %d", resp.StatusCode)
+	}
+	return &rawWS{conn: conn, br: br}
+}
+
+// readFrame reads one (unmasked, server-sent) frame.
+func (r *rawWS) readFrame() (opcode byte, payload []byte, err error) {
+	var h [2]byte
+	if _, err := io.ReadFull(r.br, h[:]); err != nil {
+		return 0, nil, err
+	}
+	n := uint64(h[1] & 0x7f)
+	switch n {
+	case 126:
+		var b [2]byte
+		if _, err := io.ReadFull(r.br, b[:]); err != nil {
+			return 0, nil, err
+		}
+		n = uint64(binary.BigEndian.Uint16(b[:]))
+	case 127:
+		var b [8]byte
+		if _, err := io.ReadFull(r.br, b[:]); err != nil {
+			return 0, nil, err
+		}
+		n = binary.BigEndian.Uint64(b[:])
+	}
+	payload = make([]byte, n)
+	if _, err := io.ReadFull(r.br, payload); err != nil {
+		return 0, nil, err
+	}
+	return h[0] & 0x0f, payload, nil
+}
+
+// pong answers a ping, echoing its payload in a masked frame.
+func (r *rawWS) pong(payload []byte) error {
+	mask := [4]byte{1, 2, 3, 4}
+	f := []byte{0x8a, 0x80 | byte(len(payload))}
+	f = append(f, mask[:]...)
+	for i, b := range payload {
+		f = append(f, b^mask[i%4])
+	}
+	_, err := r.conn.Write(f)
+	return err
+}
+
+func clientCount(s *Server) int {
+	s.hub.mu.Lock()
+	defer s.hub.mu.Unlock()
+	return len(s.hub.clients)
+}
+
+func TestPing(t *testing.T) {
+	// pingInterval is read when a client connects; set it before any server
+	// goroutine exists and restore it after the servers are closed.
+	oldInterval, oldTimeout := pingInterval, pingTimeout
+	pingInterval, pingTimeout = 50*time.Millisecond, 200*time.Millisecond
+	t.Cleanup(func() { pingInterval, pingTimeout = oldInterval, oldTimeout })
+
+	t.Run("open board is pinged at the interval", func(t *testing.T) {
+		ts, _, s := setupServer(t, nil)
+		ws := rawDial(t, ts)
+		ws.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+		start := time.Now()
+		pings := 0
+		for pings < 5 {
+			op, payload, err := ws.readFrame()
+			if err != nil {
+				t.Fatalf("after %d pings: %v", pings, err)
+			}
+			if op != 0x9 {
+				continue
+			}
+			pings++
+			if err := ws.pong(payload); err != nil {
+				t.Fatal(err)
+			}
+		}
+		// Five pings at 50 ms take about 250 ms; at the 30 s default none
+		// would arrive. Each ping waits for the previous pong, so the board
+		// that answers is kept.
+		if d := time.Since(start); d < 200*time.Millisecond || d > 3*time.Second {
+			t.Fatalf("5 pings took %v at a 50ms interval", d)
+		}
+		if n := clientCount(s); n != 1 {
+			t.Fatalf("answering board dropped: %d clients", n)
+		}
+	})
+
+	t.Run("silent board is disconnected", func(t *testing.T) {
+		// The server waits pingTimeout (200 ms here) for a pong before
+		// giving up.
+		ts, _, s := setupServer(t, nil)
+		ws := rawDial(t, ts)
+		ws.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+		pinged := false
+		var err error
+		for {
+			var op byte
+			if op, _, err = ws.readFrame(); err != nil {
+				break
+			}
+			if op == 0x9 {
+				pinged = true // never answered
+			}
+		}
+		if !pinged {
+			t.Fatal("no ping before the connection ended")
+		}
+		var ne net.Error
+		if errors.As(err, &ne) && ne.Timeout() {
+			t.Fatal("silent board was not disconnected within 5s")
+		}
+		deadline := time.Now().Add(5 * time.Second)
+		for clientCount(s) != 0 {
+			if time.Now().After(deadline) {
+				t.Fatal("silent board still registered with the hub")
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	})
 }

@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -30,7 +31,11 @@ type Server struct {
 	M *game.Manager
 	// Human is the seat the UI plays; Claude plays the other.
 	Human state.Seat
-	hub   *hub
+	// Public is the address the playmat is reached at in hosted mode. When
+	// set, the loopback Host check is skipped and pages on this address may
+	// open the live connection. Nil (the desktop) keeps both loopback-only.
+	Public *url.URL
+	hub    *hub
 }
 
 // New returns a server for m with the UI playing human.
@@ -67,6 +72,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /ws", s.hub.serveWS)
 	mux.HandleFunc("GET /api/card", s.serveCard)
 	mux.Handle("GET /", http.FileServerFS(assets()))
+	if s.Public != nil {
+		return mux
+	}
 	return localOnly(mux)
 }
 
