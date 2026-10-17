@@ -1,0 +1,11 @@
+# Local build output, dependencies and tooling state stay out of the image
+# build. The tcg-* skills and the UI placeholder are embedded, so they stay in.
+.git
+bin
+.dev
+web/node_modules
+internal/webui/dist/app
+.spektacular
+skills/spek-*
+.claude
+.agents

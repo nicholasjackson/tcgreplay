@@ -22,6 +22,10 @@ type Server struct {
 	// HumanSeat is the player's seat, used by the coach view.
 	HumanSeat state.Seat
 	Version   string
+	// BoardURL is the board's address in hosted mode. When set, the results
+	// of the game-opening tools carry it as a "board" link and the server
+	// instructions ask the assistant to share it. Empty on the desktop.
+	BoardURL string
 }
 
 const actor = state.ActorClaude
@@ -35,7 +39,7 @@ func (s *Server) MCP() *mcp.Server {
 		s.HumanSeat = s.ClaudeSeat.Other()
 	}
 	srv := mcp.NewServer(&mcp.Implementation{Name: "tcgreplay", Version: s.Version}, &mcp.ServerOptions{
-		Instructions: instructions,
+		Instructions: s.instructions(),
 		InitializedHandler: func(_ context.Context, req *mcp.InitializedRequest) {
 			if p := req.Session.InitializeParams(); p != nil && p.ClientInfo != nil {
 				s.M.SetAssistant(AssistantName(p.ClientInfo.Name))
@@ -54,6 +58,26 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 - play_trainer, use_ability and attack open a compound action: following verbs join it until end_action, another opener, or end_turn. attach, bench, evolve and retreat join only if the card's text mentions doing so; otherwise they stand alone and close it. Effects on the opponent's side (the switch of Boss's Orders, Iono's draws) join it when you pass the opponent's seat.
 - Every write returns the events and a delta, so you rarely need to re-read the board. Warnings are advisory, never blocking.
 - Quote card text from card_text, not memory.`
+
+// boardInstruction is added to the instructions when results carry a board link.
+const boardInstruction = "\n- Results of import_log, new_game, load_game and set_opponent_deck carry a board link: give it to the player so they can watch and act on the live board."
+
+// instructions returns the server instructions, with the board-link line
+// in hosted mode.
+func (s *Server) instructions() string {
+	if s.BoardURL == "" {
+		return instructions
+	}
+	return instructions + boardInstruction
+}
+
+// withBoard adds the board link to a game-opening result in hosted mode.
+func (s *Server) withBoard(res map[string]any) map[string]any {
+	if s.BoardURL != "" {
+		res["board"] = s.BoardURL
+	}
+	return res
+}
 
 // AssistantName turns an MCP client's name ("claude-code",
 // "codex-mcp-client", "gemini-cli-mcp-client") into a name for the playmat.
@@ -320,7 +344,7 @@ func (s *Server) register(srv *mcp.Server) {
 		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
 			res.Warnings = append(res.Warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
 		}
-		return map[string]any{"game": g.ID, "result": compact(res)}, nil
+		return s.withBoard(map[string]any{"game": g.ID, "result": compact(res)}), nil
 	})
 	add(srv, "import_log", "Import a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact. Pass opp_deck, a likely 60-card list for the opponent's archetype, so both decks are complete: cards the log never names (prizes, hand, deck) are dealt at random from what the list has left. Without it they stay unknown; set_opponent_deck can add a list later. Returns the game summary, report.observed (the minimum count of each opponent card the log proves), problems and warnings.", func(ctx context.Context, in ImportLog) (any, error) {
 		res, err := s.M.Import(ctx, game.ImportRequest{ID: in.ID, Log: in.Log, Deck: in.Deck, OppDeck: in.OppDeck, Me: in.Me})
@@ -332,7 +356,7 @@ func (s *Server) register(srv *mcp.Server) {
 		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
 			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
 		}
-		return map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings}, nil
+		return s.withBoard(map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings}), nil
 	})
 	add(srv, "set_opponent_deck", "Rebuild an imported game with an assumed opponent list: same log and seed, so the player's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game unless new_id is given; refuses to replace a game with branches.", func(ctx context.Context, in OppDeck) (any, error) {
 		id := in.ID
@@ -352,7 +376,7 @@ func (s *Server) register(srv *mcp.Server) {
 		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
 			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
 		}
-		return map[string]any{"game": g.ID, "head": g.Head(), "observed": res.Report.Observed, "problems": res.Report.Problems, "warnings": warnings}, nil
+		return s.withBoard(map[string]any{"game": g.ID, "head": g.Head(), "observed": res.Report.Observed, "problems": res.Report.Problems, "warnings": warnings}), nil
 	})
 	add(srv, "list_games", "List stored games, newest first.", func(ctx context.Context, _ Empty) (any, error) {
 		return s.M.List()
@@ -362,7 +386,7 @@ func (s *Server) register(srv *mcp.Server) {
 		if err != nil {
 			return nil, err
 		}
-		return map[string]any{"game": g.ID, "branch": g.Branch(), "head": g.Head(), "mode": g.Mode()}, nil
+		return s.withBoard(map[string]any{"game": g.ID, "branch": g.Branch(), "head": g.Head(), "mode": g.Mode()}), nil
 	})
 	add(srv, "set_mode", "Switch between play mode (you act only as your seat; no reveal view) and review mode (act for either seat; reveal view allowed).", func(ctx context.Context, in Mode) (any, error) {
 		g, err := s.M.Current()

@@ -3,6 +3,8 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -14,21 +16,60 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 )
 
-func connect(t *testing.T) (*mcp.ClientSession, *game.Manager) {
+// transport is one way a client reaches the server: in-memory, as the
+// desktop's stdio and daemon paths do, or Streamable HTTP, as the hosted
+// connector does.
+type transport struct {
+	name string
+	dial func(t *testing.T, srv *mcp.Server) mcp.Transport
+}
+
+var transports = []transport{
+	{"inmemory", func(t *testing.T, srv *mcp.Server) mcp.Transport {
+		st, ct := mcp.NewInMemoryTransports()
+		if _, err := srv.Connect(context.Background(), st, nil); err != nil {
+			t.Fatal(err)
+		}
+		return ct
+	}},
+	{"http", func(t *testing.T, srv *mcp.Server) mcp.Transport {
+		ts := httptest.NewServer(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, nil))
+		t.Cleanup(ts.Close)
+		return &mcp.StreamableClientTransport{Endpoint: ts.URL}
+	}},
+}
+
+// connect starts a server on a fresh manager and connects a client to it
+// through tr.
+func connect(t *testing.T, tr transport) (*mcp.ClientSession, *game.Manager) {
 	t.Helper()
-	ctx := context.Background()
+	return connectServer(t, tr, &Server{Version: "test"})
+}
+
+// connectServer is connect for a caller-configured server; it gives s a
+// fresh manager.
+func connectServer(t *testing.T, tr transport, s *Server) (*mcp.ClientSession, *game.Manager) {
+	t.Helper()
 	m := game.NewManager(t.TempDir(), nil)
-	srv := (&Server{M: m, Version: "test"}).MCP()
-	st, ct := mcp.NewInMemoryTransports()
-	if _, err := srv.Connect(ctx, st, nil); err != nil {
-		t.Fatal(err)
-	}
-	cs, err := mcp.NewClient(&mcp.Implementation{Name: "codex-mcp-client"}, nil).Connect(ctx, ct, nil)
+	s.M = m
+	srv := s.MCP()
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "codex-mcp-client"}, nil).Connect(context.Background(), tr.dial(t, srv), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { cs.Close() })
 	return cs, m
+}
+
+// forEachTransport runs f as a subtest named after each transport, so a
+// failure says which connection it came through.
+func forEachTransport(t *testing.T, f func(t *testing.T, cs *mcp.ClientSession, m *game.Manager)) {
+	for _, tr := range transports {
+		t.Run(tr.name, func(t *testing.T) {
+			cs, m := connect(t, tr)
+			f(t, cs, m)
+		})
+	}
 }
 
 func call(t *testing.T, cs *mcp.ClientSession, name string, args map[string]any) (string, bool) {
@@ -46,8 +87,9 @@ func call(t *testing.T, cs *mcp.ClientSession, name string, args map[string]any)
 	return b.String(), res.IsError
 }
 
-func TestMCPRoundTrip(t *testing.T) {
-	cs, m := connect(t)
+func TestMCPRoundTrip(t *testing.T) { forEachTransport(t, testMCPRoundTrip) }
+
+func testMCPRoundTrip(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
 	if out, _ := call(t, cs, "ping", nil); out != "pong" {
 		t.Fatalf("ping: %q", out)
 	}
@@ -121,8 +163,9 @@ func TestMCPRoundTrip(t *testing.T) {
 	}
 }
 
-func TestImportLogTool(t *testing.T) {
-	cs, _ := connect(t)
+func TestImportLogTool(t *testing.T) { forEachTransport(t, testImportLogTool) }
+
+func testImportLogTool(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
 	deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
 	if err != nil {
 		t.Fatal(err)
@@ -183,4 +226,78 @@ func TestAssistantName(t *testing.T) {
 			t.Errorf("%s: %s, want %s", in, got, want)
 		}
 	}
+}
+
+// A failure is reported under its transport's subtest name, so the names are
+// part of the contract.
+func TestTransportsNamed(t *testing.T) {
+	want := []string{"inmemory", "http"}
+	if len(transports) != len(want) {
+		t.Fatalf("%d transports, want %d", len(transports), len(want))
+	}
+	for i, w := range want {
+		if transports[i].name != w {
+			t.Errorf("transports[%d] = %q, want %q", i, transports[i].name, w)
+		}
+	}
+}
+
+// boardResults runs the four game-opening tools and returns each result's
+// decoded JSON object, keyed by tool name.
+func boardResults(t *testing.T, cs *mcp.ClientSession) map[string]map[string]any {
+	t.Helper()
+	deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	logText, err := os.ReadFile("../../testdata/logs/2026-10-11_ledjo23_alakazam-donk.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	run := func(tool string, args map[string]any) map[string]any {
+		out, isErr := call(t, cs, tool, args)
+		if isErr {
+			t.Fatalf("%s: %s", tool, out)
+		}
+		var res map[string]any
+		if err := json.Unmarshal([]byte(out), &res); err != nil {
+			t.Fatalf("%s: %v: %s", tool, err, out)
+		}
+		return res
+	}
+	res := map[string]map[string]any{}
+	res["new_game"] = run("new_game", map[string]any{"deck_p1": string(deck), "deck_p2": string(deck), "id": "board-new"})
+	res["import_log"] = run("import_log", map[string]any{"log": string(logText), "deck": string(deck), "id": "board-imp"})
+	res["load_game"] = run("load_game", map[string]any{"id": "board-imp"})
+	res["set_opponent_deck"] = run("set_opponent_deck", map[string]any{"id": "board-imp", "deck": string(deck)})
+	return res
+}
+
+func TestBoardLinks(t *testing.T) {
+	for _, tr := range transports {
+		t.Run(tr.name, func(t *testing.T) {
+			cs, _ := connectServer(t, tr, &Server{Version: "test", BoardURL: "https://playmat.example/"})
+			for tool, res := range boardResults(t, cs) {
+				if got := res["board"]; got != "https://playmat.example/" {
+					t.Errorf("%s board = %v, want https://playmat.example/", tool, got)
+				}
+			}
+			if ins := cs.InitializeResult().Instructions; !strings.Contains(ins, "board link") {
+				t.Errorf("instructions do not mention the board link: %q", ins)
+			}
+		})
+	}
+}
+
+func TestNoBoardLinksOnDesktop(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
+		for tool, res := range boardResults(t, cs) {
+			if _, ok := res["board"]; ok {
+				t.Errorf("%s result has a board key: %v", tool, res["board"])
+			}
+		}
+		if ins := cs.InitializeResult().Instructions; ins != instructions {
+			t.Errorf("instructions changed without a board address: %q", ins)
+		}
+	})
 }
