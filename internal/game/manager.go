@@ -7,7 +7,6 @@ import (
 	"math/rand/v2"
 	"os"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -19,7 +18,9 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/store"
 )
 
-// Manager owns the game files and the currently loaded game.
+// Manager owns the current game for this session, in memory only: it never
+// reads or writes game files, so every session starts with no game open.
+// The data directory holds only the assistant label.
 type Manager struct {
 	Dir string
 	DB  cards.DB
@@ -30,9 +31,13 @@ type Manager struct {
 	current   *Game
 	onLoad    []func(*Game)
 	assistant string
+	// lastDeck is the owner's decklist from the last successful import,
+	// reused when an import gives none.
+	lastDeck string
 }
 
-// NewManager stores games under dir.
+// NewManager returns a manager with no game open; dir holds the assistant
+// label.
 func NewManager(dir string, db cards.DB) *Manager {
 	return &Manager{Dir: dir, DB: db}
 }
@@ -89,21 +94,29 @@ func (m *Manager) Current() (*Game, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.current == nil {
-		return nil, errors.New("no game loaded: call new_game or load_game")
+		return nil, errors.New("no game open: import a battle log or a saved game record with import_log, or start one with new_game")
 	}
 	return m.current, nil
 }
 
+// Record returns the current game's record: an error if no game is open
+// or the game has none.
+func (m *Manager) Record() (Record, error) {
+	g, err := m.Current()
+	if err != nil {
+		return Record{}, err
+	}
+	rec, ok := g.Record()
+	if !ok {
+		return Record{}, fmt.Errorf("game %s was started with new_game, not imported from a battle log, so it has no record", g.ID)
+	}
+	return rec, nil
+}
+
 func (m *Manager) setCurrent(g *Game) {
 	m.mu.Lock()
-	if m.current != nil && m.current != g {
-		m.current.Close()
-	}
+	// The previous game, if any, is simply dropped.
 	m.current = g
-	// Remembered so a restarted daemon reopens it (Resume).
-	if os.MkdirAll(m.Dir, 0o755) == nil {
-		os.WriteFile(filepath.Join(m.Dir, "current.txt"), []byte(g.ID), 0o644)
-	}
 	hooks := slices.Clone(m.onLoad)
 	m.mu.Unlock()
 	for _, f := range hooks {
@@ -111,91 +124,11 @@ func (m *Manager) setCurrent(g *Game) {
 	}
 }
 
-func (m *Manager) gamesDir() string { return filepath.Join(m.Dir, "games") }
-
-var idRe = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
-
-func (m *Manager) path(id string) (string, error) {
-	if !idRe.MatchString(id) {
-		return "", fmt.Errorf("bad game id %q", id)
-	}
-	return filepath.Join(m.gamesDir(), id+".jsonl"), nil
-}
-
-// GameInfo summarises a stored game.
-type GameInfo struct {
-	ID       string    `json:"id"`
-	Modified time.Time `json:"modified"`
-}
-
-// List returns stored games, newest first.
-func (m *Manager) List() ([]GameInfo, error) {
-	entries, err := os.ReadDir(m.gamesDir())
-	if errors.Is(err, os.ErrNotExist) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	var out []GameInfo
-	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".jsonl") {
-			continue
-		}
-		info, err := e.Info()
-		if err != nil {
-			continue
-		}
-		out = append(out, GameInfo{ID: strings.TrimSuffix(e.Name(), ".jsonl"), Modified: info.ModTime()})
-	}
-	slices.SortFunc(out, func(a, b GameInfo) int { return b.Modified.Compare(a.Modified) })
-	return out, nil
-}
-
 func (m *Manager) rng() *rand.Rand {
 	if m.Rand != nil {
 		return m.Rand()
 	}
 	return nil
-}
-
-// Resume reopens the game that was current when the process last ran, if
-// it still exists.
-func (m *Manager) Resume() error {
-	b, err := os.ReadFile(filepath.Join(m.Dir, "current.txt"))
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	id := strings.TrimSpace(string(b))
-	if p, err := m.path(id); err != nil {
-		return nil
-	} else if _, err := os.Stat(p); err != nil {
-		return nil
-	}
-	_, err = m.Load(id)
-	return err
-}
-
-// Load opens a stored game and makes it current.
-func (m *Manager) Load(id string) (*Game, error) {
-	p, err := m.path(id)
-	if err != nil {
-		return nil, err
-	}
-	l, err := store.Open(p)
-	if err != nil {
-		return nil, err
-	}
-	g, err := Load(id, l, m.DB, m.rng())
-	if err != nil {
-		l.Close()
-		return nil, err
-	}
-	m.setCurrent(g)
-	return g, nil
 }
 
 // NewGameRequest describes a new game.
@@ -254,26 +187,16 @@ func (m *Manager) New(ctx context.Context, req NewGameRequest) (*Game, *Result, 
 	if req.ID == "" {
 		req.ID = "game-" + time.Now().Format("20060102-150405")
 	}
-	p, err := m.path(req.ID)
-	if err != nil {
-		return nil, nil, err
-	}
 	if req.Source == "" {
 		req.Source = "play"
 	}
-	l, err := store.Create(p, store.Header{Game: req.ID, Created: time.Now().UTC(), Source: req.Source})
-	if err != nil {
-		return nil, nil, err
-	}
+	l := store.NewMemory(store.Header{Game: req.ID, Created: time.Now().UTC(), Source: req.Source})
 	g, err := Load(req.ID, l, m.DB, m.rng())
 	if err != nil {
-		l.Close()
 		return nil, nil, err
 	}
 	res, err := g.Setup(cardList, Options{Names: req.Names})
 	if err != nil {
-		l.Close()
-		os.Remove(p)
 		return nil, nil, err
 	}
 	res.Warnings = append(warnings, res.Warnings...)

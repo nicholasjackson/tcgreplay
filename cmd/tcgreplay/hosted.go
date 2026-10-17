@@ -96,10 +96,7 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	m, srv, ui := newHosted(c, public)
-	if err := m.Resume(); err != nil {
-		log.Printf("could not reopen the last game: %v", err)
-	}
+	_, srv, ui := newHosted(c, public)
 	ui.StartHub(ctx)
 
 	ln, err := net.Listen("tcp", listen)

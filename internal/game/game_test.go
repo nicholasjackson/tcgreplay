@@ -100,7 +100,7 @@ func snapshot(t *testing.T, g *Game) string {
 	return string(b)
 }
 
-func TestFullGameRewindAndReload(t *testing.T) {
+func TestFullGameRewindAndBranch(t *testing.T) {
 	m, g := newTestGame(t)
 	st := g.State()
 	for _, seat := range state.Seats {
@@ -267,13 +267,13 @@ func TestFullGameRewindAndReload(t *testing.T) {
 		t.Fatal("main changed after branching")
 	}
 
-	// Reload from disk.
-	g2, err := m.Load("t1")
+	// The game stays current, in memory, with its branches.
+	g2, err := m.Current()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if g2.Head() != finalHead || snapshot(t, g2) != final {
-		t.Fatal("reloaded state differs")
+	if g2 != g || g2.Head() != finalHead || snapshot(t, g2) != final {
+		t.Fatal("current game differs")
 	}
 	if len(g2.Branches()) < 3 {
 		t.Fatalf("branches lost: %v", g2.Branches())

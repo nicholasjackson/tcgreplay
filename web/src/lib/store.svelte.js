@@ -11,7 +11,6 @@ export const app = $state({
   snap: null,
   // Board being displayed; differs from snap.board while animating frames.
   board: null,
-  games: [],
   // Card definitions by TCGdex id, fetched lazily.
   cards: {},
   highlight: [],

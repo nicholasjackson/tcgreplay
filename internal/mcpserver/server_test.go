@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -104,9 +105,17 @@ func testMCPRoundTrip(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// With no game open there is no record to give.
+	if out, isErr := call(t, cs, "get_record", nil); !isErr {
+		t.Fatalf("get_record with no game open: %s", out)
+	}
 	out, isErr := call(t, cs, "new_game", map[string]any{"deck_p1": string(deck), "deck_p2": string(deck), "id": "mcp-1"})
 	if isErr {
 		t.Fatal(out)
+	}
+	// A new_game game was not imported, so it has no record.
+	if out, isErr := call(t, cs, "get_record", nil); !isErr || !strings.Contains(out, "no record") {
+		t.Fatalf("get_record on a new_game game: error %v: %s", isErr, out)
 	}
 
 	out, isErr = call(t, cs, "get_state", nil)
@@ -195,6 +204,7 @@ func testImportLogTool(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
 	if res.Game != "imp-1" || res.Mode != "review" || res.Report.Opponent == "" || len(res.Report.Problems) > 0 {
 		t.Fatalf("unexpected import result: %s", out)
 	}
+	testRecordTools(t, cs, out, string(logText), string(deck))
 	// The deck is remembered for the next import.
 	if out, isErr := call(t, cs, "import_log", map[string]any{"log": string(logText), "id": "imp-2"}); isErr {
 		t.Fatalf("import reusing the previous deck: %s", out)
@@ -215,6 +225,221 @@ func testImportLogTool(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
 	if isErr || !strings.Contains(out, `"Basic Psychic Energy"`) {
 		t.Fatalf("profile not stored: %s", out)
 	}
+}
+
+// decodeRecord returns the "record" object of a tool result.
+func decodeRecord(t *testing.T, tool, out string) map[string]any {
+	t.Helper()
+	var res struct {
+		Record map[string]any `json:"record"`
+	}
+	if err := json.Unmarshal([]byte(out), &res); err != nil {
+		t.Fatalf("%s: %v: %s", tool, err, out)
+	}
+	if len(res.Record) == 0 {
+		t.Fatalf("%s result has no record: %s", tool, out)
+	}
+	return res.Record
+}
+
+// getRecord calls get_record and decodes the record it returns.
+func getRecord(t *testing.T, cs *mcp.ClientSession) map[string]any {
+	t.Helper()
+	out, isErr := call(t, cs, "get_record", nil)
+	if isErr {
+		t.Fatalf("get_record: %s", out)
+	}
+	var rec map[string]any
+	if err := json.Unmarshal([]byte(out), &rec); err != nil {
+		t.Fatalf("get_record: %v: %s", err, out)
+	}
+	return rec
+}
+
+// revealState returns get_state's reveal view of the current game, decoded,
+// without the game id: a game restored from its record is stored under an
+// id of its own, while everything else must be identical.
+func revealState(t *testing.T, cs *mcp.ClientSession) map[string]any {
+	t.Helper()
+	out, isErr := call(t, cs, "get_state", map[string]any{"view": "reveal"})
+	if isErr {
+		t.Fatalf("get_state: %s", out)
+	}
+	var st map[string]any
+	if err := json.Unmarshal([]byte(out), &st); err != nil {
+		t.Fatalf("get_state: %v: %s", err, out)
+	}
+	delete(st, "game")
+	return st
+}
+
+// testRecordTools checks the record the tools give the assistant, starting
+// from importOut, the result of importing logText with deck: import_log and
+// set_opponent_deck carry it, get_record repeats it, and importing it as
+// the log restores the identical game.
+func testRecordTools(t *testing.T, cs *mcp.ClientSession, importOut, logText, deck string) {
+	t.Helper()
+	rec := decodeRecord(t, "import_log", importOut)
+	if rec["log"] != logText {
+		t.Errorf("record log differs from the log imported")
+	}
+	if me, _ := rec["me"].(string); me == "" {
+		t.Errorf("record me = %v, want the player's name", rec["me"])
+	}
+	if rec["deck"] != deck {
+		t.Errorf("record deck = %v, want the deck imported", rec["deck"])
+	}
+	if seed, ok := rec["seed"].(string); !ok || seed == "" {
+		t.Errorf("record seed = %#v, want a non-empty JSON string", rec["seed"])
+	}
+	if check, _ := rec["check"].(string); !strings.HasPrefix(check, "sha256:") {
+		t.Errorf("record check = %v, want sha256:…", rec["check"])
+	}
+	if _, ok := rec["opp_deck"]; ok {
+		t.Errorf("record has opp_deck %v without one being given", rec["opp_deck"])
+	}
+	if got := getRecord(t, cs); !reflect.DeepEqual(got, rec) {
+		t.Errorf("get_record = %v\nwant import_log's record %v", got, rec)
+	}
+
+	opp := `Pokémon: 12
+4 Abra
+3 Kadabra
+3 Alakazam
+2 Duskull
+
+Trainer: 4
+4 Buddy-Buddy Poffin
+
+Energy: 44
+44 Basic Psychic Energy`
+	out, isErr := call(t, cs, "set_opponent_deck", map[string]any{"deck": opp})
+	if isErr {
+		t.Fatalf("set_opponent_deck: %s", out)
+	}
+	rebuilt := decodeRecord(t, "set_opponent_deck", out)
+	if rebuilt["opp_deck"] != opp {
+		t.Errorf("record opp_deck = %v, want the list passed", rebuilt["opp_deck"])
+	}
+	for _, k := range []string{"log", "me", "seed", "deck"} {
+		if rebuilt[k] != rec[k] {
+			t.Errorf("set_opponent_deck changed record %s: %v, was %v", k, rebuilt[k], rec[k])
+		}
+	}
+	if got := getRecord(t, cs); !reflect.DeepEqual(got, rebuilt) {
+		t.Errorf("get_record = %v\nwant set_opponent_deck's record %v", got, rebuilt)
+	}
+	before := revealState(t, cs)
+
+	// The record, passed as the log, restores the identical game.
+	text, err := json.Marshal(rebuilt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, isErr = call(t, cs, "import_log", map[string]any{"log": string(text)})
+	if isErr {
+		t.Fatalf("import_log of a record: %s", out)
+	}
+	if got := decodeRecord(t, "import_log", out); !reflect.DeepEqual(got, rebuilt) {
+		t.Errorf("restored record = %v\nwant %v", got, rebuilt)
+	}
+	if after := revealState(t, cs); !reflect.DeepEqual(after, before) {
+		a, _ := json.Marshal(after)
+		b, _ := json.Marshal(before)
+		t.Errorf("restored board differs:\n got %s\nwant %s", a, b)
+	}
+}
+
+// TestToolList: the stored-game tools are gone, get_record is offered, and
+// set_opponent_deck acts on the current game, taking discard_branches
+// rather than a game id.
+func TestToolList(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
+		schemas := map[string]any{}
+		for tool, err := range cs.Tools(context.Background(), nil) {
+			if err != nil {
+				t.Fatal(err)
+			}
+			schemas[tool.Name] = tool.InputSchema
+		}
+		if _, ok := schemas["get_record"]; !ok {
+			t.Error("no get_record tool")
+		}
+		for _, gone := range []string{"list_games", "load_game"} {
+			if _, ok := schemas[gone]; ok {
+				t.Errorf("%s is still offered", gone)
+			}
+		}
+		b, err := json.Marshal(schemas["set_opponent_deck"])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var schema struct {
+			Properties map[string]any `json:"properties"`
+		}
+		if err := json.Unmarshal(b, &schema); err != nil {
+			t.Fatal(err)
+		}
+		for _, want := range []string{"deck", "discard_branches"} {
+			if _, ok := schema.Properties[want]; !ok {
+				t.Errorf("set_opponent_deck has no %s argument: %s", want, b)
+			}
+		}
+		for _, gone := range []string{"id", "new_id"} {
+			if _, ok := schema.Properties[gone]; ok {
+				t.Errorf("set_opponent_deck still takes %s: %s", gone, b)
+			}
+		}
+	})
+}
+
+// TestSetOpponentDeckBranches: through the tool, a rebuild of a game with a
+// branch is refused, naming discard_branches, and goes ahead with it.
+func TestSetOpponentDeckBranches(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
+		deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+		if err != nil {
+			t.Skip("no test corpus")
+		}
+		logText, err := os.ReadFile("../../testdata/logs/2026-10-11_ledjo23_alakazam-donk.txt")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if out, isErr := call(t, cs, "import_log", map[string]any{"log": string(logText), "deck": string(deck), "id": "br"}); isErr {
+			t.Fatal(out)
+		}
+		g, err := m.Current()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := g.JumpTo(10, "look"); err != nil {
+			t.Fatal(err)
+		}
+		opp := "Pokémon: 4\n4 Abra\n\nEnergy: 56\n56 Basic Psychic Energy"
+		out, isErr := call(t, cs, "set_opponent_deck", map[string]any{"deck": opp})
+		if !isErr || !strings.Contains(out, "discard_branches") {
+			t.Fatalf("set_opponent_deck on a game with a branch: error %v: %s", isErr, out)
+		}
+		if cur, _ := m.Current(); cur != g {
+			t.Fatal("refused rebuild replaced the game")
+		}
+		out, isErr = call(t, cs, "set_opponent_deck", map[string]any{"deck": opp, "discard_branches": true})
+		if isErr {
+			t.Fatalf("set_opponent_deck with discard_branches: %s", out)
+		}
+		cur, err := m.Current()
+		if err != nil || cur == g || cur.ID != "br" {
+			t.Fatalf("game not rebuilt: %v", err)
+		}
+		for _, br := range cur.Branches() {
+			if br.Name != "main" {
+				t.Errorf("branch %s survived the rebuild", br.Name)
+			}
+		}
+		if rec := decodeRecord(t, "set_opponent_deck", out); rec["opp_deck"] != opp {
+			t.Errorf("record opp_deck = %v, want the list passed", rec["opp_deck"])
+		}
+	})
 }
 
 func TestAssistantName(t *testing.T) {
@@ -242,7 +467,7 @@ func TestTransportsNamed(t *testing.T) {
 	}
 }
 
-// boardResults runs the four game-opening tools and returns each result's
+// boardResults runs the three game-opening tools and returns each result's
 // decoded JSON object, keyed by tool name.
 func boardResults(t *testing.T, cs *mcp.ClientSession) map[string]map[string]any {
 	t.Helper()
@@ -268,8 +493,7 @@ func boardResults(t *testing.T, cs *mcp.ClientSession) map[string]map[string]any
 	res := map[string]map[string]any{}
 	res["new_game"] = run("new_game", map[string]any{"deck_p1": string(deck), "deck_p2": string(deck), "id": "board-new"})
 	res["import_log"] = run("import_log", map[string]any{"log": string(logText), "deck": string(deck), "id": "board-imp"})
-	res["load_game"] = run("load_game", map[string]any{"id": "board-imp"})
-	res["set_opponent_deck"] = run("set_opponent_deck", map[string]any{"id": "board-imp", "deck": string(deck)})
+	res["set_opponent_deck"] = run("set_opponent_deck", map[string]any{"deck": string(deck)})
 	return res
 }
 
@@ -280,6 +504,11 @@ func TestBoardLinks(t *testing.T) {
 			for tool, res := range boardResults(t, cs) {
 				if got := res["board"]; got != "https://playmat.example/" {
 					t.Errorf("%s board = %v, want https://playmat.example/", tool, got)
+				}
+				if tool == "import_log" || tool == "set_opponent_deck" {
+					if rec, ok := res["record"].(map[string]any); !ok || len(rec) == 0 {
+						t.Errorf("%s record = %v, want a non-empty object", tool, res["record"])
+					}
 				}
 			}
 			if ins := cs.InitializeResult().Instructions; !strings.Contains(ins, "board link") {

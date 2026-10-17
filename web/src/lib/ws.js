@@ -38,7 +38,6 @@ function onState(msg) {
   app.claude = msg.claude;
   app.assistant = msg.assistant || 'Assistant';
   app.reveal = !!msg.reveal;
-  app.games = msg.games || [];
   if (msg.error) toast(msg.error, 'error');
   showSnapshot(msg.snapshot);
 }
@@ -63,7 +62,7 @@ export function request(verb, args = {}) {
   return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
 }
 
-const READS = new Set(['deck_list', 'search_deck', 'look_top', 'list_games']);
+const READS = new Set(['deck_list', 'search_deck', 'look_top']);
 
 // act sends a verb, shows errors and warnings as toasts, and returns the
 // result's data (or undefined on error).

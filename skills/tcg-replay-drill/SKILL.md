@@ -1,6 +1,6 @@
 ---
 name: tcg-replay-drill
-description: Practise past mistakes as puzzles on the tcgreplay playmat. Finds recorded review findings in the player's games, rewinds to the decision point with the answer hidden, lets the player play the turn, then compares their line with the finding. Use when the player asks for a drill, a puzzle, practice, a training session, or to replay their losses or mistakes.
+description: Practise past mistakes as puzzles on the tcgreplay playmat. Finds recorded review findings in the game open on the playmat, rewinds to the decision point with the answer hidden, lets the player play the turn, then compares their line with the finding. Use when the player asks for a drill, a puzzle, practice, a training session, or to replay their losses or mistakes.
 ---
 
 # Replay drill
@@ -9,9 +9,10 @@ Past mistakes make the best puzzles: the position is real, the player has been t
 
 ## 1. Find a puzzle
 
-- `list_games`, then for each candidate `load_game` and `get_log` (view `reveal`) and look for annotations beginning `Finding (`. Those come from `tcg-review-game`; they name a category, the event, the better line and a principle.
+- Use the game open on the playmat. If no game is open, ask the player to import one (a battle log, or a game record they saved) and stop.
+- `get_log` (view `reveal`) and look for annotations beginning `Finding (`. Those come from `tcg-review-game`; they name a category, the event, the better line and a principle. Findings last only for the session: a game just restored from its record has none until it is reviewed again.
 - Prefer findings with `decision: poor` (real mistakes) over `dealt`. If the player names a category to practise ("sequencing"), pick findings with it. Avoid repeating a puzzle from the same session.
-- If there are no findings yet, say so and offer to review a game first.
+- If the open game has no findings yet, say so and offer to review it first with `tcg-review-game`.
 
 ## 2. Set it up without the answer
 

@@ -7,13 +7,14 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 )
 
-// TestImportCorpus writes every corpus log to a game file and checks it
-// reloads to the same state with no invariant violations.
+// TestImportCorpus imports every corpus log and checks it becomes the
+// current game with no invariant violations.
 func TestImportCorpus(t *testing.T) {
 	deckText, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
 	if err != nil {
@@ -41,12 +42,15 @@ func TestImportCorpus(t *testing.T) {
 				t.Errorf("mode %s, want review", res.Game.Mode())
 			}
 			want := snapshot(t, res.Game)
-			g, err := m.Load(res.Game.ID)
+			g, err := m.Current()
 			if err != nil {
 				t.Fatal(err)
 			}
+			if g != res.Game || g.ID != res.Game.ID {
+				t.Errorf("current game %s, want the import %s", g.ID, res.Game.ID)
+			}
 			if got := snapshot(t, g); got != want {
-				t.Error("reloaded state differs from imported state")
+				t.Error("current state differs from imported state")
 			}
 		})
 	}
@@ -92,8 +96,10 @@ func TestJumpTo(t *testing.T) {
 	}
 }
 
-// TestSetOpponentDeck rebuilds an import with an assumed opponent list: the
-// owner's side is unchanged and every opponent card has an identity.
+// TestSetOpponentDeck rebuilds the current import with an assumed opponent
+// list: the owner's side is unchanged and every opponent card has an
+// identity. It refuses with no game, with a game without a record, with a
+// blank list, and with branches unless they may be discarded.
 func TestSetOpponentDeck(t *testing.T) {
 	deckText, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
 	if err != nil {
@@ -122,7 +128,7 @@ Trainer: 4
 Energy: 44
 44 Basic Psychic Energy`
 
-	res, err = m.SetOpponentDeck(ctx, "g", opp, "")
+	res, err = m.SetOpponentDeck(ctx, opp, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,15 +155,65 @@ Energy: 44
 		}
 	}
 
-	// A game with branches is not replaced; a separate one can be built.
+	if res.Game.ID != "g" {
+		t.Errorf("rebuilt game id %s, want g", res.Game.ID)
+	}
+	if cur, err := m.Current(); err != nil || cur != res.Game {
+		t.Errorf("rebuilt game is not current (%v)", err)
+	}
+
+	// A blank list is refused and the game is kept.
+	if _, err := m.SetOpponentDeck(ctx, " \n", false); err == nil {
+		t.Error("rebuilt with a blank list")
+	}
+	if cur, _ := m.Current(); cur != res.Game {
+		t.Error("blank list replaced the game")
+	}
+
+	// A game with branches is not replaced unless they may be discarded.
 	if _, err := res.Game.JumpTo(10, "look"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := m.SetOpponentDeck(ctx, "g", opp, ""); err == nil {
-		t.Error("replaced a game with branches")
+	withBranch := res.Game
+	want := snapshot(t, withBranch)
+	_, err = m.SetOpponentDeck(ctx, opp, false)
+	if err == nil || !strings.Contains(err.Error(), "discard_branches") || !strings.Contains(err.Error(), "look") {
+		t.Errorf("rebuild of a game with branches: err %v, want one naming the branch and discard_branches", err)
 	}
-	if res, err := m.SetOpponentDeck(ctx, "g", opp, "g2"); err != nil || res.Game.ID != "g2" {
-		t.Errorf("new_id: %v", err)
+	if cur, _ := m.Current(); cur != withBranch || snapshot(t, cur) != want || len(cur.Branches()) < 2 {
+		t.Error("refused rebuild changed the current game")
+	}
+	res, err = m.SetOpponentDeck(ctx, opp, true)
+	if err != nil {
+		t.Fatalf("rebuild discarding branches: %v", err)
+	}
+	if res.Game == withBranch || res.Game.ID != "g" {
+		t.Errorf("discard_branches did not rebuild game g: %s", res.Game.ID)
+	}
+	for _, br := range res.Game.Branches() {
+		if br.Name != "main" {
+			t.Errorf("branch %s survived the rebuild", br.Name)
+		}
+	}
+	if cur, _ := m.Current(); cur != res.Game {
+		t.Error("rebuilt game is not current")
+	}
+
+	// A new_game game has no record to rebuild from.
+	ng, _, err := m.New(ctx, NewGameRequest{ID: "play", DeckP1: string(deckText), DeckP2: string(deckText)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := m.SetOpponentDeck(ctx, opp, true); err == nil || !strings.Contains(err.Error(), "cannot be rebuilt") {
+		t.Errorf("rebuild of a new_game game: err %v, want cannot be rebuilt", err)
+	}
+	if cur, _ := m.Current(); cur != ng {
+		t.Error("refused rebuild replaced the new_game game")
+	}
+
+	// No game open.
+	if _, err := NewManager(t.TempDir(), nil).SetOpponentDeck(ctx, opp, true); err == nil || !strings.Contains(err.Error(), "no game open") {
+		t.Errorf("rebuild with no game open: err %v, want no game open", err)
 	}
 }
 
@@ -408,13 +464,5 @@ func TestUndo(t *testing.T) {
 	}
 	if g.Branch() != "try" {
 		t.Errorf("on branch %s", g.Branch())
-	}
-	// Reloading keeps the branch where undo left it.
-	g2, err := m.Load("g")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if g2.Head() != 20 {
-		t.Errorf("reloaded head %d, want 20", g2.Head())
 	}
 }

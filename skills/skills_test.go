@@ -45,3 +45,25 @@ func TestSkillsFollowTheFormat(t *testing.T) {
 		}
 	}
 }
+
+// The bundled skills must not send the assistant to tools or arguments the
+// playmat no longer has: games are not stored, so none can be listed or
+// loaded, and set_opponent_deck cannot build a separate game.
+func TestSkillsUseCurrentTools(t *testing.T) {
+	dirs, err := fs.ReadDir(FS, ".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range dirs {
+		b, err := fs.ReadFile(FS, d.Name()+"/SKILL.md")
+		if err != nil {
+			t.Errorf("%s: %v", d.Name(), err)
+			continue
+		}
+		for _, word := range []string{"list_games", "load_game", "new_id"} {
+			if strings.Contains(string(b), word) {
+				t.Errorf("%s mentions the removed %q", d.Name(), word)
+			}
+		}
+	}
+}
