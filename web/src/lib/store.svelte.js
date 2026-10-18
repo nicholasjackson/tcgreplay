@@ -12,6 +12,8 @@ export const app = $state({
   // Name of the assistant playing the claude seat over MCP (Claude, Codex, Gemini).
   assistant: 'Assistant',
   reveal: false,
+  // Why there is no game, when the server says (an expired game); '' otherwise.
+  notice: '',
   // Latest snapshot from the server (game, branch, mode, board, log, ...).
   snap: null,
   // Board being displayed; differs from snap.board while animating frames.

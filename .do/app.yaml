@@ -5,9 +5,10 @@
 # Deploying code needs only a push to main: App Platform builds the
 # Dockerfile and deploys it. Pushes to other branches do not deploy.
 #
-# Users sign in with Google (see TCGREPLAY_GOOGLE_CLIENT_ID below). One
-# shared game for everyone; games, the card cache and every sign-in are
-# lost on every deploy or restart.
+# Users sign in with Google (see TCGREPLAY_GOOGLE_CLIENT_ID below). Each
+# Google account has its own game, held in memory; games left idle are
+# dropped (TCGREPLAY_IDLE_TIMEOUT). Games, the card cache and every
+# sign-in are lost on every deploy or restart.
 name: tcgreplay
 region: lon
 services:
@@ -20,7 +21,8 @@ services:
     source_dir: /
     # Plain HTTP; App Platform (and Cloudflare in front) provide HTTPS.
     http_port: 8080
-    # Single instance: games live in this one container's memory and disk.
+    # Must stay 1: each account's game (and every sign-in) lives in this
+    # instance's memory, so a second copy would not see them.
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
     # /healthz needs no sign-in; the board's root redirects to Google.
@@ -42,13 +44,21 @@ services:
       - key: TCGREPLAY_GOOGLE_CLIENT_SECRET
         scope: RUN_TIME
         type: SECRET
-      # Requests per minute per account, and signed-in accounts at once;
-      # 0 turns either off. Changing them needs only a restart.
+      # Requests per minute per account, and places (accounts served at
+      # once; a place is freed when an account's game goes idle or its last
+      # sign-in ends); 0 turns either off. Changing them needs only a
+      # restart.
       - key: TCGREPLAY_RATE_LIMIT
         value: "300"
         scope: RUN_TIME
       - key: TCGREPLAY_MAX_USERS
         value: "10"
+        scope: RUN_TIME
+      # How long an account's game may go without activity before it is
+      # dropped (Go duration, e.g. 2m or 1h); 0 never drops. Needs only a
+      # restart.
+      - key: TCGREPLAY_IDLE_TIMEOUT
+        value: "60m"
         scope: RUN_TIME
 ingress:
   rules:

@@ -23,9 +23,14 @@
   function checkout(ev) {
     act('checkout', { branch: ev.target.value });
   }
+  // ownName is the signed-in account's name (its email before the @) on
+  // the hosted playmat, or '' on the desktop, which has no account.
+  function ownName() {
+    return app.account ? app.account.split('@')[0] : '';
+  }
   function nameOf(seat) {
     const n = app.board?.sides[seat]?.name;
-    return n || (seat === app.human ? 'You' : app.assistant);
+    return n || (seat === app.human ? ownName() || 'You' : app.assistant);
   }
 </script>
 
@@ -78,7 +83,11 @@
       {:else}
         <div class="landing">
           <h1>No game open</h1>
-          <p>Ask {app.assistant} to import a battle log or a saved game record, or to start a new game.</p>
+          {#if app.notice}
+            <p class="notice">{app.notice}</p>
+          {:else}
+            <p>Ask {app.assistant} to import a battle log or a saved game record, or to start a new game.</p>
+          {/if}
           {#if !app.connected}<p class="muted">Connecting to tcgreplay…</p>{/if}
         </div>
       {/if}

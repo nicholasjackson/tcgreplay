@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,14 +24,97 @@ var (
 	capB = hostauthtest.Account{ID: "sub-2", Email: "two@example.com"}
 )
 
-// newCapped is the board harness with its sign-in service capped at
-// maxUsers signed-in accounts.
-func newCapped(t *testing.T, maxUsers int) *board {
+// fakePlaces is an in-test Places: it hands out up to max places (0 for
+// no cap) to distinct accounts, refuses a newcomer beyond that with
+// BusyError(max) while an account already holding one always gets in,
+// frees a place on Release, and records every call.
+type fakePlaces struct {
+	mu       sync.Mutex
+	max      int
+	held     map[string]bool
+	admits   []string
+	releases []string
+	// err, if set, is what Admit returns for every account instead.
+	err error
+}
+
+func newFakePlaces(max int) *fakePlaces {
+	return &fakePlaces{max: max, held: map[string]bool{}}
+}
+
+func (p *fakePlaces) Admit(acct Account) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.admits = append(p.admits, acct.ID)
+	if p.err != nil {
+		return p.err
+	}
+	if !p.held[acct.ID] && p.max > 0 && len(p.held) >= p.max {
+		return BusyError(p.max)
+	}
+	p.held[acct.ID] = true
+	return nil
+}
+
+func (p *fakePlaces) Release(id string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.releases = append(p.releases, id)
+	delete(p.held, id)
+}
+
+// holds reports whether the account holds a place.
+func (p *fakePlaces) holds(id string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.held[id]
+}
+
+// released returns the ids Release was called with, in order.
+func (p *fakePlaces) released() []string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return slices.Clone(p.releases)
+}
+
+// admitted returns the ids Admit was called with, in order.
+func (p *fakePlaces) admitted() []string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return slices.Clone(p.admits)
+}
+
+// capped is the board harness with its sign-in service capped by a fake
+// Places.
+type capped struct {
+	*board
+	places *fakePlaces
+}
+
+// newCapped is the board harness with its sign-in service's places kept
+// by a fakePlaces of max places.
+func newCapped(t *testing.T, max int) *capped {
 	t.Helper()
-	b := newBoard(t)
-	b.cfg.MaxUsers = maxUsers
-	b.restart(t)
-	return b
+	c := &capped{board: newBoard(t)}
+	c.restartPlaces(t, max)
+	return c
+}
+
+// restartPlaces restarts the sign-in service with fresh places, as a
+// redeploy does in hosted mode, where the places live in memory too.
+func (c *capped) restartPlaces(t *testing.T, max int) {
+	t.Helper()
+	c.places = newFakePlaces(max)
+	c.cfg.Places = c.places
+	c.restart(t)
+}
+
+// checkReleased fails unless Release has been called exactly with want.
+func (c *capped) checkReleased(t *testing.T, when string, want ...string) {
+	t.Helper()
+	if got := c.places.released(); !slices.Equal(got, want) {
+		t.Errorf("%s: Release calls %q, want %q", when, got, want)
+	}
 }
 
 // captureHostLog redirects the standard logger for the rest of the test.
@@ -126,11 +211,12 @@ func (b *board) logout(t *testing.T, id string) {
 	}
 }
 
-// TestCapRefusesNewAccountBothFlows shows that at a cap of 1, with A
-// signed in, B is shown the busy page whichever way it signs in: through
-// the board's /auth/login and through a connector's /authorize, where its
-// browser is not sent back to the client with a code. Neither sets a
-// session cookie, B holds no place, and each refusal is logged.
+// TestCapRefusesNewAccountBothFlows shows that with the places provider
+// full (a cap of 1, A holding it), B is shown the busy page whichever way
+// it signs in: through the board's /auth/login and through a connector's
+// /authorize, where its browser is not sent back to the client with a
+// code. The provider is asked in both flows, neither sets a session
+// cookie, B holds no live sign-in, and each refusal is logged.
 func TestCapRefusesNewAccountBothFlows(t *testing.T) {
 	logs := captureHostLog(t)
 	b := newCapped(t, 1)
@@ -158,18 +244,25 @@ func TestCapRefusesNewAccountBothFlows(t *testing.T) {
 		t.Error("connector sign-in for B over the cap reached the client's callback")
 	}
 
+	if got, want := b.places.admitted(), []string{capA.ID, capB.ID, capB.ID, capB.ID}; !slices.Equal(got, want) {
+		t.Errorf("Admit calls %q, want %q (once per Google sign-in, both flows)", got, want)
+	}
+	if b.places.holds(capB.ID) {
+		t.Error("refused account holds a place")
+	}
 	if got := b.liveCount(capB.ID); got != 0 {
 		t.Errorf("refused account holds %d live sign-ins, want 0", got)
 	}
 	if got := b.accountCount(); got != 1 {
 		t.Errorf("%d accounts signed in, want 1", got)
 	}
+	b.checkReleased(t, "after the refusals")
 }
 
 // TestCapLetsSignedInAccountBackIn shows that at the cap, the account
-// already signed in can sign in again in other browsers, through the
-// board and through a connector all the way to tokens, without taking
-// another place.
+// already holding a place can sign in again in other browsers, through
+// the board and through a connector all the way to tokens, and that none
+// of it releases its place.
 func TestCapLetsSignedInAccountBackIn(t *testing.T) {
 	b := newCapped(t, 1)
 	b.boardOK(t, capA)
@@ -192,12 +285,17 @@ func TestCapLetsSignedInAccountBackIn(t *testing.T) {
 	if got := b.liveCount(capA.ID); got != 6 {
 		t.Errorf("A holds %d live sign-ins, want 6", got)
 	}
+	if !b.places.holds(capA.ID) {
+		t.Error("A holds no place after its repeat sign-ins")
+	}
+	b.checkReleased(t, "after A's repeat sign-ins")
 }
 
-// TestCapPlaceFreedAtLastSignOut shows a place is held until the
+// TestCapPlaceFreedAtLastSignOut shows a place is released only when the
 // account's last sign-in ends: with A signed in to the board in two
-// browsers, B stays busy after the first sign-out and gets in after the
-// second, after which A is the one kept out.
+// browsers, Release is not called at the first sign-out, so B stays busy,
+// and is called once, for A, at the second, after which B gets in and A
+// is the one kept out, in both flows.
 func TestCapPlaceFreedAtLastSignOut(t *testing.T) {
 	b := newCapped(t, 1)
 	one := b.boardOK(t, capA)
@@ -208,10 +306,12 @@ func TestCapPlaceFreedAtLastSignOut(t *testing.T) {
 	b.checkBusy(t, "B before A signs out", resp, body, br, 1)
 
 	b.logout(t, one)
+	b.checkReleased(t, "after A's first sign-out")
 	resp, body, br = b.boardAs(t)
 	b.checkBusy(t, "B after A's first sign-out", resp, body, br, 1)
 
 	b.logout(t, two)
+	b.checkReleased(t, "after A's last sign-out", capA.ID)
 	if got := b.accountCount(); got != 0 {
 		t.Fatalf("%d accounts signed in after A's last sign-out, want 0", got)
 	}
@@ -225,11 +325,11 @@ func TestCapPlaceFreedAtLastSignOut(t *testing.T) {
 	b.checkBusy(t, "A's connector after B took the place", resp, body, br, 1)
 }
 
-// TestCapRefreshTokenHoldsPlace shows a connector's refresh token holds
-// its account's place: after A signs a connector in and then signs out of
-// the board, B is still busy, and stays busy after A's connector
-// refreshes, since rotating the token keeps the count. A restart frees
-// every place, letting B in.
+// TestCapRefreshTokenHoldsPlace shows a connector's refresh token holds a
+// live sign-in: after A signs a connector in and then signs out of the
+// board, Release is not called and B is still busy, and a refresh, which
+// rotates the token, does not release either. A restart, with fresh
+// places, lets B in.
 func TestCapRefreshTokenHoldsPlace(t *testing.T) {
 	b := newCapped(t, 1)
 	clientID, _ := b.registerClient(t, "none", hostauthtest.LoopbackCallback)
@@ -248,6 +348,7 @@ func TestCapRefreshTokenHoldsPlace(t *testing.T) {
 	if got := b.liveCount(capA.ID); got != 1 {
 		t.Fatalf("A holds %d live sign-ins after signing out of the board, want 1 (the refresh token)", got)
 	}
+	b.checkReleased(t, "with A's refresh token live")
 	b.g.SetAccount(capB)
 	resp, body, bb := b.boardAs(t)
 	b.checkBusy(t, "B with A's refresh token live", resp, body, bb, 1)
@@ -259,59 +360,135 @@ func TestCapRefreshTokenHoldsPlace(t *testing.T) {
 	if got := b.liveCount(capA.ID); got != 1 {
 		t.Errorf("A holds %d live sign-ins after a refresh, want 1", got)
 	}
+	b.checkReleased(t, "after A's refresh")
 	resp, body, bb = b.boardAs(t)
 	b.checkBusy(t, "B after A's refresh", resp, body, bb, 1)
 
-	b.restart(t)
+	b.restartPlaces(t, 1)
 	b.boardOK(t, capB)
 }
 
-// TestCapStore shows the store's cap directly: at a cap of 3 the first
-// three accounts get in, a fourth is refused with errFull and recorded
-// nowhere, an account already in gets more sessions, and ending the last
-// session of one account lets the fourth in.
-func TestCapStore(t *testing.T) {
+// TestCapCodeHoldsPlace shows a connector code not yet exchanged holds a
+// live sign-in: at a cap of 1, A gets a code and signs out of the board
+// before its client exchanges it; Release is not called and B is still
+// busy, and the exchange does not release either. A code left to expire
+// ends A's last sign-in, so Release is called and B gets in.
+func TestCapCodeHoldsPlace(t *testing.T) {
+	b := newCapped(t, 1)
+	id, _ := b.registerClient(t, "none", hostauthtest.LoopbackCallback)
+
+	resp, _, br := b.connectorAs(t, id)
+	loc, err := resp.Location()
+	if resp.StatusCode != http.StatusFound || err != nil || loc.Query().Get("code") == "" {
+		t.Fatalf("A's authorize: %d %v, want a redirect with a code", resp.StatusCode, err)
+	}
+	code := loc.Query().Get("code")
+	b.logout(t, b.sessionCookieIn(br))
+	b.checkReleased(t, "while A's code is pending")
+
+	b.g.SetAccount(capB)
+	resp, body, brB := b.boardAs(t)
+	b.checkBusy(t, "B while A's code is pending", resp, body, brB, 1)
+
+	tr, m := b.token(t, exchange(id, code, hostauthtest.LoopbackCallback, testVerifier), "", "")
+	if tr.StatusCode != http.StatusOK {
+		t.Fatalf("A's exchange: %d %v", tr.StatusCode, m)
+	}
+	if n := b.accountCount(); n != 1 {
+		t.Fatalf("%d accounts signed in after A's exchange, want 1", n)
+	}
+	b.checkReleased(t, "after A's exchange")
+	resp, body, brB = b.boardAs(t)
+	b.checkBusy(t, "B after A's exchange", resp, body, brB, 1)
+
+	// A fresh service: A gets a code it never exchanges, then signs out.
+	b.restartPlaces(t, 1)
+	b.g.SetAccount(capA)
+	id, _ = b.registerClient(t, "none", hostauthtest.LoopbackCallback)
+	_, _, br = b.connectorAs(t, id)
+	b.logout(t, b.sessionCookieIn(br))
+	b.checkReleased(t, "with A's unexchanged code live")
+	b.clock.Advance(codeLifetime + time.Minute)
+	b.g.SetAccount(capB)
+	b.boardOK(t, capB)
+	b.checkReleased(t, "after A's code expired", capA.ID)
+}
+
+// TestStoreReleaseAtLastSignIn shows the store tells onRelease when, and
+// only when, an account's live sign-ins (board sessions, pending codes and
+// refresh tokens) reach zero, once per time: not while a second session,
+// a code or a refresh token remains, and not for another account. It no
+// longer refuses anyone itself: 50 accounts get sessions.
+func TestStoreReleaseAtLastSignIn(t *testing.T) {
 	s := newStore()
-	now := time.Now()
-	ids := map[string]string{}
-	for i := 1; i <= 3; i++ {
-		acct := Account{ID: fmt.Sprintf("sub-%d", i), Email: fmt.Sprintf("%d@example.com", i)}
-		id, err := s.addSession(now, acct, 3)
-		if err != nil {
-			t.Fatalf("account %d under the cap: %v", i, err)
+	var released []string
+	s.onRelease = func(id string) { released = append(released, id) }
+	check := func(when string, want ...string) {
+		t.Helper()
+		if !slices.Equal(released, want) {
+			t.Errorf("%s: released %q, want %q", when, released, want)
 		}
-		ids[acct.ID] = id
 	}
-	fourth := Account{ID: "sub-4", Email: "4@example.com"}
-	if id, err := s.addSession(now, fourth, 3); !errors.Is(err, errFull) || id != "" {
-		t.Fatalf("fourth account at a cap of 3: %q %v, want errFull", id, err)
+	now := time.Now()
+	one := Account{ID: "sub-1", Email: "1@example.com"}
+	two := Account{ID: "sub-2", Email: "2@example.com"}
+
+	first := s.addSession(now, one)
+	second := s.addSession(now, one)
+	other := s.addSession(now, two)
+	s.addCode(now, &authCode{clientID: "c", account: one})
+	s.endSession(first)
+	s.endSession(second)
+	check("with sub-1's code live")
+	s.mu.Lock()
+	s.sweep(now.Add(codeLifetime + time.Second))
+	s.mu.Unlock()
+	check("after sub-1's code expired", one.ID)
+
+	// A code taken for exchange passes its hold to the tokens issued.
+	code := s.addCode(now, &authCode{clientID: "c", account: two})
+	s.endSession(other)
+	c := s.takeCode(code)
+	if c == nil {
+		t.Fatal("takeCode found no code")
 	}
-	if len(s.accounts) != 3 || len(s.sessions) != 3 {
-		t.Errorf("after a refusal: %d accounts, %d sessions, want 3 and 3", len(s.accounts), len(s.sessions))
+	_, refresh := s.issueTokens(now, "c", two)
+	check("with sub-2's refresh token live", one.ID)
+	acct, ok := s.takeRefresh("c", refresh)
+	if !ok || acct.ID != two.ID {
+		t.Fatalf("takeRefresh: %v %v", acct, ok)
 	}
-	again, err := s.addSession(now, Account{ID: "sub-1", Email: "1@example.com"}, 3)
-	if err != nil {
-		t.Fatalf("signed-in account at the cap: %v", err)
+	s.issueTokens(now, "c", two)
+	check("after sub-2's refresh", one.ID)
+
+	// A code that fails its exchange gives its hold back.
+	three := Account{ID: "sub-3"}
+	code = s.addCode(now, &authCode{clientID: "c", account: three})
+	s.takeCode(code)
+	s.release(three.ID)
+	check("after sub-3's failed exchange", one.ID, three.ID)
+
+	for i := 0; i < 50; i++ {
+		if id := s.addSession(now, Account{ID: fmt.Sprintf("many-%d", i)}); id == "" {
+			t.Fatalf("account %d got no session", i+1)
+		}
 	}
-	s.endSession(ids["sub-1"])
-	if _, err := s.addSession(now, fourth, 3); !errors.Is(err, errFull) {
-		t.Errorf("fourth account with sub-1 still holding a session: %v, want errFull", err)
-	}
-	s.endSession(again)
-	if _, err := s.addSession(now, fourth, 3); err != nil {
-		t.Errorf("fourth account after sub-1's last session ended: %v", err)
+	if got := len(s.accounts); got != 51 {
+		t.Errorf("%d accounts hold live sign-ins, want 51", got)
 	}
 }
 
-// TestCapSignInError shows signIn's refusal over the cap wraps ErrBusy,
-// says the server is busy, names the cap and tells the user to try again
-// later, and sets no cookie.
+// TestCapSignInError shows signIn asks Places first and passes its
+// refusal on: over the cap it wraps ErrBusy, says the server is busy,
+// names the cap and tells the user to try again later, and sets no
+// cookie or session.
 func TestCapSignInError(t *testing.T) {
+	places := newFakePlaces(2)
 	a, err := New(Config{
 		Public:         &url.URL{Scheme: "https", Host: "playmat.example"},
 		GoogleClientID: "client-id",
 		GoogleSecret:   "client-secret",
-		MaxUsers:       2,
+		Places:         places,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -334,12 +511,54 @@ func TestCapSignInError(t *testing.T) {
 	if c := rec.Header().Values("Set-Cookie"); len(c) != 0 {
 		t.Errorf("refused sign-in set cookies %v", c)
 	}
+	if n := len(a.st.sessions); n != 2 {
+		t.Errorf("%d sessions after a refusal, want 2", n)
+	}
 }
 
-// TestCapZeroIsOff shows a cap of 0 refuses no one: 50 accounts sign in,
-// in the store and through signIn, and through the board flow over HTTP.
-func TestCapZeroIsOff(t *testing.T) {
-	s := newStore()
+// TestBusyError shows BusyError matches ErrBusy and carries the one
+// wording, naming the cap.
+func TestBusyError(t *testing.T) {
+	err := BusyError(7)
+	if !errors.Is(err, ErrBusy) {
+		t.Fatalf("BusyError(7) does not match ErrBusy: %v", err)
+	}
+	if errors.Is(err, ErrRateLimited) {
+		t.Errorf("BusyError(7) matches ErrRateLimited")
+	}
+	const want = "the server is busy: it already has the most signed-in users it serves at once (7); try again later"
+	if err.Error() != want {
+		t.Errorf("BusyError(7) = %q, want %q", err, want)
+	}
+	if !errors.Is(fmt.Errorf("wrapped: %w", err), ErrBusy) {
+		t.Error("a wrapped BusyError does not match ErrBusy")
+	}
+}
+
+// TestCapPlacesOtherError shows a refusal from Places that is not the
+// busy error ends the Google sign-in on a 503 error page, not the busy
+// page, with no session cookie.
+func TestCapPlacesOtherError(t *testing.T) {
+	b := newCapped(t, 0)
+	b.places.err = errors.New("places unavailable")
+	resp, body, br := b.boardAs(t)
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("status %d, want 503", resp.StatusCode)
+	}
+	if strings.Contains(body, "tcgreplay is busy") {
+		t.Errorf("a non-busy refusal shows the busy page: %q", body)
+	}
+	if !strings.Contains(body, "Sign-in could not be completed") {
+		t.Errorf("error page does not say the sign-in could not be completed: %q", body)
+	}
+	if id := b.sessionCookieIn(br); id != "" {
+		t.Error("refused sign-in set a session cookie")
+	}
+}
+
+// TestCapNilPlacesIsOff shows no Places means no cap: 50 accounts sign in
+// through signIn, and 5 through the board flow over HTTP.
+func TestCapNilPlacesIsOff(t *testing.T) {
 	a, err := New(Config{
 		Public:         &url.URL{Scheme: "https", Host: "playmat.example"},
 		GoogleClientID: "client-id",
@@ -348,64 +567,24 @@ func TestCapZeroIsOff(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if a.st.onRelease != nil {
+		t.Error("no Places but the store has a release hook")
+	}
 	for i := 0; i < 50; i++ {
-		acct := Account{ID: fmt.Sprintf("sub-%d", i)}
-		if _, err := s.addSession(time.Now(), acct, 0); err != nil {
-			t.Fatalf("store: account %d refused with no cap: %v", i+1, err)
-		}
-		if err := a.signIn(httptest.NewRecorder(), acct); err != nil {
+		if err := a.signIn(httptest.NewRecorder(), Account{ID: fmt.Sprintf("sub-%d", i)}); err != nil {
 			t.Fatalf("signIn: account %d refused with no cap: %v", i+1, err)
 		}
 	}
 
-	b := newCapped(t, 0)
+	b := newBoard(t)
 	for i := 0; i < 5; i++ {
 		acct := hostauthtest.Account{ID: fmt.Sprintf("sub-%d", i), Email: fmt.Sprintf("%d@example.com", i)}
 		b.g.SetAccount(acct)
+		id := b.boardOK(t, acct)
+		b.logout(t, id) // no Places to tell: must not panic
 		b.boardOK(t, acct)
 	}
 	if got := b.accountCount(); got != 5 {
 		t.Errorf("%d accounts signed in with no cap, want 5", got)
 	}
-}
-
-// TestCapCodeHoldsPlace shows a connector code not yet exchanged keeps its
-// account's place: at a cap of 1, A gets a code and signs out of the board
-// before its client exchanges it; B is still busy, and the exchange does
-// not let a second account in. A code left to expire gives the place back.
-func TestCapCodeHoldsPlace(t *testing.T) {
-	b := newCapped(t, 1)
-	id, _ := b.registerClient(t, "none", hostauthtest.LoopbackCallback)
-
-	resp, _, br := b.connectorAs(t, id)
-	loc, err := resp.Location()
-	if resp.StatusCode != http.StatusFound || err != nil || loc.Query().Get("code") == "" {
-		t.Fatalf("A's authorize: %d %v, want a redirect with a code", resp.StatusCode, err)
-	}
-	code := loc.Query().Get("code")
-	b.logout(t, b.sessionCookieIn(br))
-
-	b.g.SetAccount(capB)
-	resp, body, brB := b.boardAs(t)
-	b.checkBusy(t, "B while A's code is pending", resp, body, brB, 1)
-
-	tr, m := b.token(t, exchange(id, code, hostauthtest.LoopbackCallback, testVerifier), "", "")
-	if tr.StatusCode != http.StatusOK {
-		t.Fatalf("A's exchange: %d %v", tr.StatusCode, m)
-	}
-	if n := b.accountCount(); n != 1 {
-		t.Fatalf("%d accounts signed in after A's exchange, want 1", n)
-	}
-	resp, body, brB = b.boardAs(t)
-	b.checkBusy(t, "B after A's exchange", resp, body, brB, 1)
-
-	// A fresh service: A gets a code it never exchanges, then signs out.
-	b.restart(t)
-	b.g.SetAccount(capA)
-	id, _ = b.registerClient(t, "none", hostauthtest.LoopbackCallback)
-	_, _, br = b.connectorAs(t, id)
-	b.logout(t, b.sessionCookieIn(br))
-	b.clock.Advance(codeLifetime + time.Minute)
-	b.g.SetAccount(capB)
-	b.boardOK(t, capB)
 }

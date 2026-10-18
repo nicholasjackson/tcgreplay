@@ -47,6 +47,7 @@ func New(m *game.Manager, human state.Seat) *Server {
 	s := &Server{M: m, Human: human}
 	s.hub = newHub(s)
 	m.OnLoad(s.hub.watch)
+	m.OnClear(s.hub.clear)
 	if g, err := m.Current(); err == nil {
 		s.hub.watch(g)
 	}

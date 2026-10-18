@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"sync"
 	"time"
 )
@@ -26,6 +25,10 @@ type store struct {
 	access   map[string]*accessToken  // by key(token)
 	refresh  map[string]*refreshToken // by key(token)
 	buckets  map[string]*bucket       // by Account.ID
+	// onRelease, if set, is told when an account's last live sign-in
+	// ends. It is called with mu held, so it must not call back into the
+	// store.
+	onRelease func(id string)
 }
 
 func newStore() *store {
@@ -139,20 +142,14 @@ func (s *store) takePending(now time.Time, state string) *pendingLogin {
 }
 
 // addSession starts a board session for acct and returns its cookie value.
-// With maxUsers above 0, an account that holds no live sign-in is refused
-// with errFull once that many accounts do; an account already signed in
-// always gets in.
-func (s *store) addSession(now time.Time, acct Account, maxUsers int) (string, error) {
+func (s *store) addSession(now time.Time, acct Account) string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.sweep(now)
-	if st := s.accounts[acct.ID]; maxUsers > 0 && (st == nil || st.live <= 0) && len(s.accounts) >= maxUsers {
-		return "", errFull
-	}
 	id := newToken()
 	s.sessions[key(id)] = &session{account: acct, done: make(chan struct{})}
 	s.holdLocked(acct)
-	return id, nil
+	return id
 }
 
 // session returns the board session for a cookie value, or nil.
@@ -177,9 +174,6 @@ func (s *store) endSession(id string) {
 	s.releaseLocked(ss.account.ID)
 }
 
-// errFull is the store's refusal of a new account at the user cap.
-var errFull = errors.New("user cap reached")
-
 // holdLocked counts one more live sign-in for acct. The caller holds mu.
 func (s *store) holdLocked(acct Account) {
 	st := s.accounts[acct.ID]
@@ -192,7 +186,7 @@ func (s *store) holdLocked(acct Account) {
 }
 
 // releaseLocked counts one fewer live sign-in for the account, forgetting
-// it at zero. The caller holds mu.
+// it at zero and telling onRelease. The caller holds mu.
 func (s *store) releaseLocked(id string) {
 	st := s.accounts[id]
 	if st == nil {
@@ -201,6 +195,9 @@ func (s *store) releaseLocked(id string) {
 	st.live--
 	if st.live <= 0 {
 		delete(s.accounts, id)
+		if s.onRelease != nil {
+			s.onRelease(id)
+		}
 	}
 }
 

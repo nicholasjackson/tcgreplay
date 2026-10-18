@@ -57,7 +57,11 @@ func newHub(s *Server) *hub {
 func (h *hub) watch(g *game.Game) {
 	h.mu.Lock()
 	first := !h.watched[g]
-	h.watched[g] = true
+	if first {
+		// Only the current game is watched: forget earlier ones so they
+		// can be freed.
+		h.watched = map[*game.Game]bool{g: true}
+	}
 	h.pending = nil
 	h.mu.Unlock()
 	if first {
@@ -68,6 +72,16 @@ func (h *hub) watch(g *game.Game) {
 			h.wake()
 		})
 	}
+	h.wake()
+}
+
+// clear refreshes every board after the manager dropped its game without
+// a new one (it expired), and forgets the old game.
+func (h *hub) clear() {
+	h.mu.Lock()
+	h.watched = map[*game.Game]bool{}
+	h.pending = nil
+	h.mu.Unlock()
 	h.wake()
 }
 
@@ -132,6 +146,9 @@ func (h *hub) stateMessage(reveal bool, frames []int) ([]byte, bool) {
 	g, err := h.s.M.Current()
 	if err != nil {
 		msg["snapshot"] = nil
+		if n := h.s.M.Notice(); n != "" {
+			msg["notice"] = n
+		}
 		b, _ := json.Marshal(msg)
 		return b, false
 	}

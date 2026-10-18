@@ -47,6 +47,7 @@ function onState(msg) {
   app.claude = msg.claude;
   app.assistant = msg.assistant || 'Assistant';
   app.reveal = !!msg.reveal;
+  app.notice = msg.notice || '';
   if (msg.error) toast(msg.error, 'error');
   showSnapshot(msg.snapshot);
 }

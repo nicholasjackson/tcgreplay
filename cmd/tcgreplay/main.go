@@ -13,8 +13,9 @@
 //
 // -hosted serves MCP over HTTP at /mcp and the playmat on one address, for
 // running in a container behind an HTTPS proxy (see -listen, -public-url).
-// Hosted mode requires Google sign-in for both; the desktop modes never
-// ask for it.
+// Hosted mode requires Google sign-in for both, keeps one game per
+// signed-in account and drops games left idle (-idle-timeout); the desktop
+// modes never ask for sign-in and keep one game.
 package main
 
 import (
@@ -27,6 +28,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -47,9 +49,16 @@ type config struct {
 	// googleClientID is the Google OAuth client users sign in with (its
 	// secret is read from the environment only).
 	googleClientID string
-	// rateLimit is requests a minute per account; maxUsers is signed-in
-	// accounts at once. 0 turns either off.
+	// rateLimit is requests a minute per account; maxUsers is places:
+	// signed-in accounts served at once. 0 turns either off.
 	rateLimit, maxUsers int
+	// idleTimeout is how long an account's game may go without activity
+	// before it is dropped; 0 never drops. idleErr is an invalid
+	// TCGREPLAY_IDLE_TIMEOUT, reported when hosted mode starts.
+	idleTimeout time.Duration
+	idleErr     error
+	// now, if set, is the per-account registry's clock (tests).
+	now func() time.Time
 }
 
 // args renders the config as flags for spawning the daemon.
@@ -81,8 +90,16 @@ func main() {
 	flag.StringVar(&c.publicURL, "public-url", os.Getenv("TCGREPLAY_PUBLIC_URL"), "with -hosted, the public address the playmat is reached at (default $TCGREPLAY_PUBLIC_URL)")
 	flag.StringVar(&c.googleClientID, "google-client-id", os.Getenv("TCGREPLAY_GOOGLE_CLIENT_ID"), "with -hosted, the Google OAuth client users sign in with (default $TCGREPLAY_GOOGLE_CLIENT_ID; the secret is read from $TCGREPLAY_GOOGLE_CLIENT_SECRET)")
 	flag.IntVar(&c.rateLimit, "rate-limit", envInt("TCGREPLAY_RATE_LIMIT", 300), "with -hosted, requests a minute one account may make; 0 for no limit (default $TCGREPLAY_RATE_LIMIT, else 300)")
-	flag.IntVar(&c.maxUsers, "max-users", envInt("TCGREPLAY_MAX_USERS", 10), "with -hosted, Google accounts signed in at once; 0 for no cap (default $TCGREPLAY_MAX_USERS, else 10)")
+	flag.IntVar(&c.maxUsers, "max-users", envInt("TCGREPLAY_MAX_USERS", 10), "with -hosted, signed-in Google accounts served at once (a place is freed when an account's game goes idle or its last sign-in ends); 0 for no cap (default $TCGREPLAY_MAX_USERS, else 10)")
+	idle, idleErr := envDuration("TCGREPLAY_IDLE_TIMEOUT", 60*time.Minute)
+	flag.DurationVar(&c.idleTimeout, "idle-timeout", idle, "with -hosted, how long an account's game may go without activity before it is dropped, e.g. 2m or 1h; 0 never drops (default $TCGREPLAY_IDLE_TIMEOUT, else 60m)")
 	flag.Parse()
+	c.idleErr = idleErr
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "idle-timeout" {
+			c.idleErr = nil // the flag overrides the environment
+		}
+	})
 
 	if *showVersion {
 		fmt.Println(version)
@@ -122,11 +139,16 @@ func main() {
 // newServer builds the game manager and MCP server. boardURL is the board
 // link added to game-opening results in hosted mode; the desktop passes "".
 func newServer(c config, boardURL string) (*game.Manager, *mcp.Server) {
-	db := cards.NewClient(c.cacheDir)
-	db.Offline = c.offline
-	m := game.NewManager(c.dataDir, db)
+	m := game.NewManager(c.dataDir, newCardDB(c))
 	claude := state.Seat(c.seat)
 	return m, (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version, BoardURL: boardURL}).MCP()
+}
+
+// newCardDB returns the TCGdex card database for the config's cache.
+func newCardDB(c config) *cards.Client {
+	db := cards.NewClient(c.cacheDir)
+	db.Offline = c.offline
+	return db
 }
 
 func runInProcess(ctx context.Context, c config) error {
