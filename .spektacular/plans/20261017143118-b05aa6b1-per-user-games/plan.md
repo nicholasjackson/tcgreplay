@@ -272,7 +272,7 @@ Adds the hosted board's front door. Each signed-in browser is sent to its own ac
 - [x] Opening the board without a link, or with one's own link, shows one's own board.
 - [x] Loading the board page and making a board move count as activity; an open, idle live connection does not.
 
-#### - [ ] Task: Turn on per-account games in hosted mode
+#### - [x] Task: Turn on per-account games in hosted mode
 **Id:** a11748d2-002f-48ff-8242-29c4ae5a77cc
 **Repo:** tcgreplay
 **Depends on:**
@@ -285,13 +285,13 @@ Wires the registry into hosted mode. The connector looks up each caller's game t
 *Technical detail:* [context.md#task-turn-on-per-account-games-in-hosted-mode](./context.md#task-turn-on-per-account-games-in-hosted-mode)
 
 **Acceptance criteria**:
-- [ ] Two accounts each import a different game and each sees only their own, through Claude and on the board; a move by one leaves the other's game unchanged.
-- [ ] A move in one of an account's connector sessions is seen by its other session and on its open board; an import in one replaces the game for all of them.
-- [ ] Another account opening a board link sees "not your game"; a signed-out visitor is sent to sign in; neither sees any cards.
-- [ ] An account's open board shows its moves within 2 seconds and receives nothing when another account acts.
-- [ ] The upstream hosted tests (tool parity, board latency, board moves reaching Claude, sign-in, limits) pass, and the desktop modes start and behave as before.
+- [x] Two accounts each import a different game and each sees only their own, through Claude and on the board; a move by one leaves the other's game unchanged.
+- [x] A move in one of an account's connector sessions is seen by its other session and on its open board; an import in one replaces the game for all of them.
+- [x] Another account opening a board link sees "not your game"; a signed-out visitor is sent to sign in; neither sees any cards.
+- [x] An account's open board shows its moves within 2 seconds and receives nothing when another account acts.
+- [x] The upstream hosted tests (tool parity, board latency, board moves reaching Claude, sign-in, limits) pass, and the desktop modes start and behave as before.
 
-#### - [ ] Task: Show the player's own name on the hosted board
+#### - [x] Task: Show the player's own name on the hosted board
 **Id:** 419fc203-010e-47ae-92df-9f8ffb6f60a3
 **Repo:** tcgreplay
 **Depends on:** none
@@ -302,9 +302,9 @@ Makes the hosted board label the player's side with the signed-in person's name 
 *Technical detail:* [context.md#task-show-the-players-own-name-on-the-hosted-board](./context.md#task-show-the-players-own-name-on-the-hosted-board)
 
 **Acceptance criteria**:
-- [ ] On the hosted board, the player's side shows the game's name for that seat, or else the signed-in account's name.
-- [ ] One account's name never appears on another account's board.
-- [ ] The desktop board's labels are unchanged.
+- [x] On the hosted board, the player's side shows the game's name for that seat, or else the signed-in account's name.
+- [x] One account's name never appears on another account's board.
+- [x] The desktop board's labels are unchanged.
 
 ### Milestone 2: Idle games are cleared and free their place for someone else
 
@@ -312,7 +312,7 @@ Makes the hosted board label the player's side with the signed-in person's name 
 
 **Validation point**: The registry and hosted tests with an injected clock and a 2-minute idle time pass: expiry is reported to Claude and on the board, an open tab does not keep a game, a game used every minute for 5 minutes survives, and an expired game frees a place under a cap of 1. The idle setting's defaults and errors are tested, and the full suite passes. On the deployed app with the idle time at 2 minutes, an idle game expires and is restored by importing its record.
 
-#### - [ ] Task: Let a game expire with a notice
+#### - [x] Task: Let a game expire with a notice
 **Id:** e509cf51-cff4-4442-9848-605bd943317f
 **Repo:** tcgreplay
 **Depends on:** none
@@ -323,12 +323,12 @@ Teaches the game manager to drop its current game because it expired, freeing it
 *Technical detail:* [context.md#task-let-a-game-expire-with-a-notice](./context.md#task-let-a-game-expire-with-a-notice)
 
 **Acceptance criteria**:
-- [ ] After a game expires, tools and board actions that need it report that it expired and ask for its saved record to be imported again.
-- [ ] An open board switches to the expiry notice without a reload, and a newly loaded board shows it.
-- [ ] Importing or starting a game clears the notice and works as usual.
-- [ ] A manager whose game never expired behaves exactly as before.
+- [x] After a game expires, tools and board actions that need it report that it expired and ask for its saved record to be imported again.
+- [x] An open board switches to the expiry notice without a reload, and a newly loaded board shows it.
+- [x] Importing or starting a game clears the notice and works as usual.
+- [x] A manager whose game never expired behaves exactly as before.
 
-#### - [ ] Task: Drop games left idle
+#### - [x] Task: Drop games left idle
 **Id:** 50487526-2103-4092-9293-1ebf3bb5e899
 **Repo:** tcgreplay
 **Depends on:**
@@ -341,13 +341,13 @@ Adds the operator's idle-time setting and the sweep that uses it. A game with no
 *Technical detail:* [context.md#task-drop-games-left-idle](./context.md#task-drop-games-left-idle)
 
 **Acceptance criteria**:
-- [ ] With the idle time at 2 minutes, after 2 minutes without activity the account's next tool call or board load reports that the game expired and asks for its record.
-- [ ] A board tab left open with no activity does not stop the game expiring.
-- [ ] A game acted on every minute for 5 minutes is still there with its moves intact.
-- [ ] The idle time is a setting with a 60-minute default; 0 turns the drop off; an invalid value stops start-up with a clear message.
-- [ ] Accounts left without a game and without activity for a day are removed from memory.
+- [x] With the idle time at 2 minutes, after 2 minutes without activity the account's next tool call or board load reports that the game expired and asks for its record.
+- [x] A board tab left open with no activity does not stop the game expiring.
+- [x] A game acted on every minute for 5 minutes is still there with its moves intact.
+- [x] The idle time is a setting with a 60-minute default; 0 turns the drop off; an invalid value stops start-up with a clear message.
+- [x] Accounts left without a game and without activity for a day are removed from memory.
 
-#### - [ ] Task: Free a place when a game expires
+#### - [x] Task: Free a place when a game expires
 **Id:** e213638b-5365-43ee-8ca3-ff258aba4813
 **Repo:** tcgreplay
 **Depends on:**
@@ -359,13 +359,13 @@ Moves the signed-in user limit's counting into the per-account registry, so a pl
 *Technical detail:* [context.md#task-free-a-place-when-a-game-expires](./context.md#task-free-a-place-when-a-game-expires)
 
 **Acceptance criteria**:
-- [ ] With the server at its user limit, once one account's game expires a new account can sign in and start a game.
-- [ ] An account that signed in and never acted gives up its place after the idle time.
-- [ ] An account whose place was freed gets it back on its next action, or is told the server is busy when it is full.
-- [ ] Accounts already holding a place can always sign in again, and the last sign-in ending still frees a place.
-- [ ] The limit is still one setting, defaulting to 10, with 0 meaning no limit.
+- [x] With the server at its user limit, once one account's game expires a new account can sign in and start a game.
+- [x] An account that signed in and never acted gives up its place after the idle time.
+- [x] An account whose place was freed gets it back on its next action, or is told the server is busy when it is full.
+- [x] Accounts already holding a place can always sign in again, and the last sign-in ending still frees a place.
+- [x] The limit is still one setting, defaulting to 10, with 0 meaning no limit.
 
-#### - [ ] Task: Document per-account games and the idle drop
+#### - [x] Task: Document per-account games and the idle drop
 **Id:** f0451c41-419d-4282-a812-454641e29d47
 **Repo:** tcgreplay
 **Depends on:**
@@ -378,11 +378,11 @@ Describes per-account games in the project's design document beside the hosted m
 *Technical detail:* [context.md#task-document-per-account-games-and-the-idle-drop](./context.md#task-document-per-account-games-and-the-idle-drop)
 
 **Acceptance criteria**:
-- [ ] The design document explains per-account games, board links, the idle drop, freeing places and the single-instance requirement.
-- [ ] The idle setting is listed with its default and meaning, and the app definition declares it.
-- [ ] The document states that the desktop keeps one game with no accounts.
+- [x] The design document explains per-account games, board links, the idle drop, freeing places and the single-instance requirement.
+- [x] The idle setting is listed with its default and meaning, and the app definition declares it.
+- [x] The document states that the desktop keeps one game with no accounts.
 
-#### - [ ] Task: Apply the updated app definition to the deployed app
+#### - [x] Task: Apply the updated app definition to the deployed app
 **Id:** 60da0ec5-dc89-462a-9c89-97ec24e80605
 **Repo:** tcgreplay
 **Depends on:**
@@ -454,3 +454,109 @@ The owner applies the updated app definition to the running App Platform app, so
 - `internal/hostauth/hostauth.go`
 
 **Discoveries**: coder/websocket closes the connection when a read's context times out, so "receives nothing within N ms" tests must read in a background goroutine into a channel (`liveConn` in board_test.go). Server goroutines read the injected clock while tests advance it, so the board tests use a mutex-guarded clock (`lockedClock`).
+
+### 2026-10-18 — Task: Turn on per-account games in hosted mode
+
+**What was done**: Hosted mode now builds a `usergames.Registry` in `newHosted`. Each account gets its own manager, sharing one card DB through a new `newCardDB` helper, and its own board server with the public URL set and `Limit = reg.BoardLimit(a.BoardLimit)`. The MCP server has no single manager: it keeps `BoardURL` (for its instructions line) and uses `Resolve: reg.ResolveMCP`. `hostedHandler` mounts `a.RequireSession(reg.Board())`, and the single hosted board and its hub start are gone. New two-account end-to-end tests cover isolation, shared sessions, owner-only and signed-out links, scoped live updates and own names. The upstream tests were adapted to the per-account board link.
+
+**Deviations**: `newHosted` now returns `(*usergames.Registry, *mcp.Server)`. The test helper `hostedServer.m` became `reg` plus `manager(acct)`. Per-account hubs run on the entry's own context, not the server's, and end when an entry is removed (later tasks).
+
+**Files changed**:
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `cmd/tcgreplay/hosted_users_test.go`
+
+**Discoveries**: An imported game's board snapshot is larger than coder/websocket's default 32 KB read limit, so test clients reading it need `SetReadLimit(-1)`. There is a race in `cmd/tcgreplay/shim_test.go` `TestRelaySurvivesDaemonRestart` under `-race` in full-package runs. It is already on clean HEAD and is unrelated to this change; `make test` does not use `-race`. Every account's manager shares the hosted data dir's `assistant.txt`, which holds only the assistant's name, as the plan's Out of Scope accepts.
+
+### 2026-10-18 — Task: Show the player's own name on the hosted board
+
+**What was done**: The board's `nameOf` still uses the game's name for a seat first. When the game names no player, the human seat now falls back to the signed-in account's name (the email before the `@`, from `/auth/session`) before "You". The desktop has no `/auth/session` (a 404), so `app.account` stays null there and the label stays "You". `TestHostedSessionOwnAccount` was added to prove that each board's account source is its own.
+
+**Deviations**: None. The client-side fallback has no automated test, because the repo has no front-end tests. It was checked by reading the code and by the build; the hand checks go in the test plan.
+
+**Files changed**:
+- `web/src/App.svelte`
+- `cmd/tcgreplay/hosted_users_test.go`
+
+**Discoveries**: The worktree's `web/node_modules` and `internal/webui/dist/app` are git-ignored, so building the board (`cd web && npm ci && npm run build`) embeds the real app in Go tests instead of the placeholder, and the Go suite passes either way.
+
+### 2026-10-18 — Task: Let a game expire with a notice
+
+**What was done**: `game.Manager` gained `Expire(notice)`, `Notice()`, `OnClear` and `ErrExpired`. Expiring drops the current game and runs the clear hooks. Until a new game or import replaces it (`setCurrent` clears the notice), `Current` fails with an error whose text is the notice, so every tool and board verb reports it. The board's hub subscribes to `OnClear` and refreshes open boards; the state message carries `notice` when there is no game, and the board's landing shows it instead of the default text.
+
+**Deviations**: `Current`'s error after expiry is a small `expiredError` type whose text is the notice alone and which matches `ErrExpired` through `Is`, rather than `fmt.Errorf("%w: %s")`, so users see just the notice. The hub's `watched` map now keeps only the current game: it is reset when a new game is watched and on clear. Before, it kept every game ever loaded, which would have defeated "frees its memory".
+
+**Files changed**:
+- `internal/game/manager.go`
+- `internal/game/manager_test.go`
+- `internal/webui/server.go`
+- `internal/webui/hub.go`
+- `internal/webui/webui_test.go`
+- `internal/mcpserver/server_test.go`
+- `web/src/lib/store.svelte.js`
+- `web/src/lib/ws.js`
+- `web/src/App.svelte`
+
+**Discoveries**: The webui hub held a reference to every game it had ever watched (its `watched` map was never pruned), so replaced games were never freed, even on the desktop. That is fixed here as part of freeing an expired game's memory.
+
+### 2026-10-18 — Task: Drop games left idle
+
+**What was done**: The registry gained `Config.Idle` and a per-entry place flag (`holds`, set by activity). Every `Use`, `Get` and `Sweep` first checks whether an entry has passed its idle time. If it has, the entry gives up its place and, if it has a game, the manager expires it with a notice naming the idle time and asking for the saved record to be imported again. `Sweep` also removes entries that hold no place and have seen no activity for 24 hours, which closes their boards. `Run` sweeps every quarter of the idle time, clamped to 1–30 s. Hosted mode reads `-idle-timeout` / `TCGREPLAY_IDLE_TIMEOUT` (default 60 m, `0` never). An invalid or negative value stops start-up with a clear message. Hosted mode runs the sweep and logs the setting at start-up.
+
+**Deviations**: The expiry check and `Manager.Expire` run while the registry's lock is held, rather than after releasing it as context.md suggested. Releasing first would let a sweep drop a game that an action had just started. This is safe because neither managers nor board hubs ever call back into the registry; the lock order is documented on `Registry`. The plan's `TCGREPLAY_IDLE_TIMEOUT` error is recorded at flag-parse time (`config.idleErr`) and reported only by hosted mode, so the desktop never fails on it, and an explicit flag overrides it. `config.now` was added so tests can inject the registry's clock. `Sweep` is exported so hosted tests can run a sweep on demand.
+
+**Files changed**:
+- `internal/usergames/usergames.go`
+- `internal/usergames/idle_test.go`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_idle_test.go`
+
+**Discoveries**: None beyond the lock-order note above.
+
+### 2026-10-18 — Task: Free a place when a game expires
+
+**What was done**: The user cap moved out of `hostauth` and into the per-account registry. `hostauth.Config.MaxUsers` was replaced by `Config.Places` (a `Places` interface with `Admit`/`Release`). `signIn` asks `Places.Admit` at every Google callback, in both flows, and shows the unchanged busy page for a `BusyError`. The store tells `Places.Release` when an account's last live sign-in ends. `BusyError(max)` keeps the wording in one place. The registry owns `MaxUsers`. `Use` and `Admit` take a place if there is room, sweeping first so that places freed by idle games count, and otherwise refuse with the busy error without recording activity. `Release` removes the entry. Hosted mode builds the registry before the sign-in service and passes it as the places provider. The `-max-users` setting, its default of 10 and `0` = off are unchanged; only the help text was reworded.
+
+**Deviations**: The cap's counting lived in `store.addSession` and `Auth.signIn` (not an `admit` in `limit.go`), so that is where it was removed. `Release` is called with the sign-in store's lock held rather than after unlocking it. This is safe because the registry never calls into `hostauth`, and the lock order is documented on `Registry`. `newHosted` now takes Google's endpoint and returns the sign-in service too (`(*Registry, *mcp.Server, *hostauth.Auth, error)`), and `hostedAuth` takes the places provider. An `Admit` error that is not a busy error shows a 503 sign-in error page. `TestCapStore` and `TestCapZeroIsOff` were replaced by equivalent tests against a fake `Places`, because the store-level counting they tested is gone.
+
+**Files changed**:
+- `internal/hostauth/hostauth.go`
+- `internal/hostauth/limit.go`
+- `internal/hostauth/google.go`
+- `internal/hostauth/store.go`
+- `internal/hostauth/cap_test.go`
+- `internal/usergames/usergames.go`
+- `internal/usergames/places_test.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `cmd/tcgreplay/hosted_places_test.go`
+
+**Discoveries**: A connector's refresh token holds a live sign-in until restart (google-login's design), so an account that connected claude.ai frees its place by idle expiry, never by its last sign-in ending. Release-on-sign-out effectively applies to board-only accounts.
+
+### 2026-10-18 — Task: Document per-account games and the idle drop
+
+**What was done**: The design document gained a "Per-account games" paragraph covering: one game per account, shared by that account's conversations, tabs and devices; owner-only `/?board=<handle>` links; the idle drop and what counts as activity; places under `TCGREPLAY_MAX_USERS`; the single-instance requirement; and the desktop keeping one game with no accounts. The "Trial limits" and sign-in "Limits" text no longer describe one shared game or a cap on signed-in accounts. The settings table lists `TCGREPLAY_IDLE_TIMEOUT` and the reworded `TCGREPLAY_MAX_USERS`. `.do/app.yaml` declares `TCGREPLAY_IDLE_TIMEOUT: "60m"` (RUN_TIME), explains why `instance_count` must stay 1, and updates its header and cap comments. The `main.go` package comment mentions per-account games and the idle drop. A test checks the app definition's idle setting and single instance.
+
+**Deviations**: None.
+
+**Files changed**:
+- `TCG Review Playmat Design and Build Plan.md`
+- `.do/app.yaml`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted_test.go`
+
+**Discoveries**: None.
+
+### 2026-10-18 — Task: Apply the updated app definition to the deployed app
+
+**What was done**: The owner (human task) added `TCGREPLAY_IDLE_TIMEOUT=60m` in the DigitalOcean App Platform console, as an App-Level environment variable beside the other `TCGREPLAY_*` variables, with scope Run time and not encrypted. It was added before the merge, which is harmless because the running binary ignores it, and the new binary defaults to 60m in any case.
+
+**Deviations**: The plan expected `doctl apps update <app-id> --spec .do/app.yaml`. The app was created by hand in the console, not from `.do/app.yaml`, so the variable was added there instead. Applying the spec would have replaced the console app's definition and meant re-entering the encrypted Google client ID and secret. The variable is app-level rather than on the `playmat` component as `.do/app.yaml` declares it; both reach the one service. Both acceptance criteria are left unticked. The owner has not yet confirmed the single-container setting. The start-up log line (`idle games dropped after 1h0m0s`) and the change-and-restart check (`2m` → `idle games dropped after 2m0s`, no rebuild) can only be made once the merge has deployed. Both checks are in the implementation test plan.
+
+**Files changed**:
+- none (deployed app configuration only)
+
+**Discoveries**: The deployed app's definition lives in the console, not in `.do/app.yaml`, so future setting changes are made there by hand. `.do/app.yaml` documents the intended settings.

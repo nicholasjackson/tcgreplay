@@ -102,3 +102,7 @@
 - Worktree created and child started: per-user-games (start).
 - Live issue: TCGREPLAY_PUBLIC_URL was unset on console-created app -> issuer/redirect localhost:8080. Fixed by user in console; verified healthz ok, /mcp 401 w/ correct resource_metadata, register 201, redirect_uri https://tcgreplay.demo.gs/auth/google/callback. Pending: user browser sign-in, claude.ai connector, health check -> /healthz.
 - Hotfix written on main (uncommitted): per-state login cookie + 401 for signed-out subresources; make test passes. Commit+push was blocked by the permission classifier (production deploy) — waiting on user.
+- User committed+pushed the sign-in hotfix themselves (72b303c "Update oauth"). Then sign-in failed with invalid_client: user had pasted full client JSON as TCGREPLAY_GOOGLE_CLIENT_SECRET; fixed to just the secret. Board sign-in now WORKS (user confirmed). Pending: claude.ai connector check; health check -> /healthz; per-user-games child running.
+- Possible knowledge: classifier blocks git push to main (prod deploy) and long deploy polling loops; user pushes themselves.
+- per-user-games QUESTION (human task apply app definition): user set TCGREPLAY_IDLE_TIMEOUT=60m at app level before merge. 1-container check not confirmed. Child told to tick, wrap up, commit. User must push main (classifier blocks my push).
+- per-user-games DONE, merged (754a841, merge bc7242b) cleanly with hotfix; make test passes on merged main. Epic done: 4/4 implemented. main NOT pushed (user pushes). Run complete.
