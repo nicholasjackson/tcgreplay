@@ -466,3 +466,101 @@ func TestUndo(t *testing.T) {
 		t.Errorf("on branch %s", g.Branch())
 	}
 }
+
+// TestDrawsLikeMain shows a branch set to repeat main's draws draws the
+// card the real game drew at the same point, even after a shuffle, and
+// draws from the top with a warning when that card is not in the deck.
+func TestDrawsLikeMain(t *testing.T) {
+	deckText, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Skip("no test corpus")
+	}
+	text, err := os.ReadFile("../../testdata/logs/2026-10-11_carlos0oz_dragapult.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := NewManager(t.TempDir(), nil)
+	res, err := m.Import(context.Background(), ImportRequest{Log: string(text), Deck: string(deckText), Seed: 1, ID: "g"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := res.Game
+	if err := g.SetDrawsLikeMain(true); err == nil {
+		t.Error("main was set to repeat its own draws")
+	}
+	// Main's draw for p1 at the start of its second turn.
+	path, err := g.log.PathTo(g.Head())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var draw state.Event
+	turns := 0
+	for i, e := range path {
+		if e.Type == state.EvTurn && e.Seat == state.P1 && i+1 < len(path) && isDraw(path[i+1], state.P1) {
+			if turns++; turns == 2 {
+				draw = path[i+1]
+				break
+			}
+		}
+	}
+	if draw.ID == 0 {
+		t.Fatal("no second turn-start draw for p1")
+	}
+	p, _ := draw.Decode()
+	want := p.(*state.MovePayload).IID
+
+	drawn := func(r *Result) state.IID {
+		t.Helper()
+		for _, id := range r.Events {
+			if e := *g.log.Event(id); isDraw(e, state.P1) {
+				p, _ := e.Decode()
+				return p.(*state.MovePayload).IID
+			}
+		}
+		t.Fatal("no draw")
+		return ""
+	}
+	for i := 0; i < 5; i++ {
+		if _, err := g.Rewind(draw.Parent, fmt.Sprintf("like-%d", i)); err != nil {
+			t.Fatal(err)
+		}
+		if err := g.SetDrawsLikeMain(true); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := g.Shuffle(state.P1, state.ActorHuman, state.P1); err != nil {
+			t.Fatal(err)
+		}
+		r, err := g.Draw(state.P1, state.ActorHuman, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := drawn(r); got != want {
+			t.Errorf("branch %d drew %s, want main's %s", i, got, want)
+		}
+	}
+	if b := g.Branches(); !slices.ContainsFunc(b, func(x BranchInfo) bool { return x.Name == "like-0" && x.DrawsLikeMain }) {
+		t.Errorf("branches %+v do not show like-0 repeating main's draws", b)
+	}
+
+	// With main's card gone from the deck, the top card is drawn instead.
+	if _, err := g.Rewind(draw.Parent, "gone"); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.SetDrawsLikeMain(true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := g.Move(state.P1, state.ActorHuman, want, state.Loc{Seat: state.P1, Zone: state.Discard}, "", ""); err != nil {
+		t.Fatal(err)
+	}
+	top := g.State().Sides[state.P1].Deck[0]
+	r, err := g.Draw(state.P1, state.ActorHuman, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := drawn(r); got != top {
+		t.Errorf("drew %s, want the top card %s", got, top)
+	}
+	if !slices.ContainsFunc(r.Warnings, func(w string) bool { return strings.Contains(w, "not in p1's deck") }) {
+		t.Errorf("no warning that main's card is gone; warnings %q", r.Warnings)
+	}
+}

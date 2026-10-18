@@ -337,3 +337,68 @@ func TestToolCredits(t *testing.T) {
 		}
 	}
 }
+
+// TestSingleDamageCounters reads a lone counter written as "a damage
+// counter", whether a player put it or an effect placed it between turns
+// (Freezing Shroud at Pokémon Checkup).
+func TestSingleDamageCounters(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	b, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-11_ledjo23_alakazam-donk.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra := "NicJackson drew Hariyama.\n" +
+		"1 damage counter was placed on NicJackson's Solrock for the effect of Freezing Shroud.\n" +
+		"LeDjo23 put a damage counter on NicJackson's Solrock.\n"
+	text := strings.Replace(string(b), "NicJackson drew Hariyama.\n", extra, 1)
+	res, err := Import(text, Options{MyDeck: entries, Seed: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Report.Problems {
+		if strings.Contains(p.Text, "damage counter") {
+			t.Errorf("line %d not imported: %q: %s", p.Line, p.Text, p.Err)
+		}
+	}
+	// Itchy Pollen left 20; the two lines add 10 each.
+	st := state.New()
+	evs := res.Events()
+	var got []int
+	for i := range evs {
+		e := &evs[i]
+		if err := st.Apply(e); err != nil {
+			t.Fatal(err)
+		}
+		if p, _ := e.Decode(); e.Type == state.EvDamage && p.(*state.DamagePayload).Target.Seat == MeSeat {
+			got = append(got, p.(*state.DamagePayload).Value)
+		}
+	}
+	if len(got) < 3 || got[1] != 30 || got[2] != 40 {
+		t.Errorf("Solrock's damage went %v, want 20, 30, 40 before the knockout", got)
+	}
+}
+
+// TestMoveFromUndamagedWarns warns when the log moves counters off a
+// Pokémon the board shows without them: lines that put them there were
+// missed.
+func TestMoveFromUndamagedWarns(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	b, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-11_ledjo23_alakazam-donk.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra := "NicJackson drew Hariyama.\n" +
+		"LeDjo23 moved 3 damage counters from LeDjo23's Budew to NicJackson's Solrock.\n"
+	text := strings.Replace(string(b), "NicJackson drew Hariyama.\n", extra, 1)
+	res, err := Import(text, Options{MyDeck: entries, Seed: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, w := range res.Report.Warnings {
+		found = found || strings.Contains(w, "moved 30 damage from Budew, which had only 0")
+	}
+	if !found {
+		t.Errorf("no warning about moving damage off an undamaged Budew; warnings %q", res.Report.Warnings)
+	}
+}

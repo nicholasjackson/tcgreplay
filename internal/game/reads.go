@@ -410,6 +410,8 @@ type BranchInfo struct {
 	Current bool   `json:"current"`
 	Turn    int    `json:"turn"`
 	Last    string `json:"last,omitempty"`
+	// DrawsLikeMain is set on a branch whose draws repeat main's.
+	DrawsLikeMain bool `json:"draws_like_main,omitempty"`
 }
 
 // Branches lists branches.
@@ -418,7 +420,7 @@ func (g *Game) Branches() []BranchInfo {
 	defer g.mu.Unlock()
 	var out []BranchInfo
 	for name, head := range g.log.Branches() {
-		bi := BranchInfo{Name: name, Head: head, Current: name == g.log.Current()}
+		bi := BranchInfo{Name: name, Head: head, Current: name == g.log.Current(), DrawsLikeMain: g.likeMain[name]}
 		if e := g.log.Event(head); e != nil {
 			bi.Turn = e.Turn
 			if a := g.log.Action(e.Action); a != nil {
@@ -525,6 +527,28 @@ func (g *Game) Undo(n int) (int, error) {
 		return 0, err
 	}
 	return head, nil
+}
+
+// SetDrawsLikeMain makes the current branch's draws repeat main's, or
+// draw from the top again. Each draw then takes the card main drew at the
+// same point, matched by game turn and order within the turn, while that
+// card is in the deck, so a what-if line keeps the real game's draws
+// across shuffles.
+func (g *Game) SetDrawsLikeMain(on bool) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	branch := g.log.Current()
+	if branch == store.MainBranch {
+		if on {
+			return errors.New("main is the real game; make a branch with rewind to repeat its draws")
+		}
+		return nil
+	}
+	if g.likeMain == nil {
+		g.likeMain = map[string]bool{}
+	}
+	g.likeMain[branch] = on
+	return nil
 }
 
 // Checkout switches to an existing branch.

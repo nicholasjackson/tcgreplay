@@ -383,9 +383,12 @@ type (
 	Rewind struct {
 		EventID int    `json:"event_id" jsonschema:"the new branch's head: state as it was right after this event"`
 		Name    string `json:"name,omitempty" jsonschema:"branch name; generated if empty"`
+		// DrawsLikeMain pins the branch's draws to the real game's.
+		DrawsLikeMain bool `json:"draws_like_main,omitempty" jsonschema:"repeat main's draws on this branch: each draw takes the card main drew at the same point (same game turn, same order in the turn) while it is in the deck, even after a shuffle"`
 	}
 	Checkout struct {
-		Branch string `json:"branch"`
+		Branch        string `json:"branch"`
+		DrawsLikeMain *bool  `json:"draws_like_main,omitempty" jsonschema:"set whether this branch repeats main's draws; unchanged if omitted"`
 	}
 	Annotate struct {
 		EventID int    `json:"event_id"`
@@ -750,7 +753,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return g.Branches(), nil
 	})
-	add(s, srv, "rewind", "Create a new branch whose head is event_id and check it out. Nothing is deleted; the old branch keeps its head.", func(ctx context.Context, in Rewind) (any, error) {
+	add(s, srv, "rewind", "Create a new branch whose head is event_id and check it out. Nothing is deleted; the old branch keeps its head. Pass draws_like_main to replay the real game's draws on the branch.", func(ctx context.Context, in Rewind) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -758,6 +761,12 @@ func (s *Server) register(srv *mcp.Server) {
 		name, err := g.Rewind(in.EventID, in.Name)
 		if err != nil {
 			return nil, err
+		}
+		if in.DrawsLikeMain {
+			if err := g.SetDrawsLikeMain(true); err != nil {
+				return nil, err
+			}
+			return fmt.Sprintf("on branch %s at event %d; draws repeat main's", name, in.EventID), nil
 		}
 		return fmt.Sprintf("on branch %s at event %d", name, in.EventID), nil
 	})
@@ -779,6 +788,11 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		if err := g.Checkout(in.Branch); err != nil {
 			return nil, err
+		}
+		if in.DrawsLikeMain != nil {
+			if err := g.SetDrawsLikeMain(*in.DrawsLikeMain); err != nil {
+				return nil, err
+			}
 		}
 		return fmt.Sprintf("on branch %s at event %d", in.Branch, g.Head()), nil
 	})

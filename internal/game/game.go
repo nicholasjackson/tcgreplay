@@ -66,6 +66,9 @@ type Game struct {
 	// record is the game record it was imported from; nil for a game
 	// started with new_game.
 	record *Record
+	// likeMain holds the branches whose draws repeat main's: each draw
+	// takes the card main drew at the same point, while it is in the deck.
+	likeMain map[string]bool
 }
 
 // Options configure a new game.
@@ -219,13 +222,76 @@ func (t *tx) draw(seat state.Seat, n int) error {
 			t.warn = append(t.warn, fmt.Sprintf("%s's deck is empty; drew %d of %d", seat, i, n))
 			return nil
 		}
+		iid := deck[0]
+		if pinned := t.mainDraw(seat); pinned != "" {
+			iid = pinned
+		}
 		if err := t.emit(seat, state.EvMove, state.MovePayload{
-			IID: deck[0], From: &state.Loc{Seat: seat, Zone: state.Deck, Pos: new(state.Top)}, To: state.Loc{Seat: seat, Zone: state.Hand},
+			IID: iid, From: &state.Loc{Seat: seat, Zone: state.Deck, Pos: new(state.Top)}, To: state.Loc{Seat: seat, Zone: state.Hand},
 		}); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// mainDraw is the card main drew at this point, for a branch whose draws
+// repeat main's: draws match by game turn and by order within the turn.
+// It is "" when the branch draws from the top, or when main's card is not
+// in the deck here (which is warned about).
+func (t *tx) mainDraw(seat state.Seat) state.IID {
+	branch := t.g.log.Current()
+	if !t.g.likeMain[branch] {
+		return ""
+	}
+	turn := t.st.Turn
+	path, err := t.g.log.PathTo(t.g.log.Head())
+	if err != nil {
+		return ""
+	}
+	n := 0
+	for _, e := range append(path, t.events...) {
+		if e.Turn == turn && isDraw(e, seat) {
+			n++
+		}
+	}
+	main, err := t.g.log.PathTo(t.g.log.Branches()[store.MainBranch])
+	if err != nil {
+		return ""
+	}
+	k := 0
+	for _, e := range main {
+		if e.Turn != turn || !isDraw(e, seat) {
+			continue
+		}
+		if k < n {
+			k++
+			continue
+		}
+		p, _ := e.Decode()
+		iid := p.(*state.MovePayload).IID
+		if slices.Contains(t.st.Sides[seat].Deck, iid) {
+			return iid
+		}
+		t.warn = append(t.warn, fmt.Sprintf("main drew %s here, but it is not in %s's deck on this branch; drew the top card", t.st.Name(iid), seat))
+		return ""
+	}
+	t.warn = append(t.warn, fmt.Sprintf("main drew no more cards for %s in turn %d; drew the top card", seat, turn))
+	return ""
+}
+
+// isDraw reports whether e draws the top card of seat's deck into hand.
+func isDraw(e state.Event, seat state.Seat) bool {
+	if e.Type != state.EvMove {
+		return false
+	}
+	p, err := e.Decode()
+	if err != nil {
+		return false
+	}
+	m := p.(*state.MovePayload)
+	return m.From != nil && m.From.Seat == seat && m.From.Zone == state.Deck && m.From.Pos != nil && *m.From.Pos == state.Top &&
+		m.To.Seat == seat && m.To.Zone == state.Hand
 }
 
 func (t *tx) shuffle(seat state.Seat) error {

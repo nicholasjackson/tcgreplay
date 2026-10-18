@@ -287,7 +287,7 @@ func buildHandlers(a, b string) []handler {
 			return nil
 		}),
 		h(`{P}'s (.+?) used (.+?)\.`, noop),
-		h(`{P} put (\d+) damage counters? on {P}'s (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
+		h(`{P} put (an?|\d+) damage counters? on {P}'s (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
 			actor := r.seat(m[1])
 			l, err := r.target(actor, r.seat(m[3]), m[4])
 			if err != nil {
@@ -297,15 +297,34 @@ func buildHandlers(a, b string) []handler {
 		}),
 		h(`{P} moved (a|\d+) damage counters? from {P}'s (.+) to {P}'s (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
 			actor := r.seat(m[1])
-			from, err := r.target(state.Seat(""), r.seat(m[3]), m[4])
-			if err != nil {
-				return err
+			amount := 10 * count(m[2])
+			// Only a copy carrying that much damage can give it up, which
+			// settles identical copies the log can't tell apart.
+			var hurt []state.Loc
+			for _, l := range r.st.StackLocs(r.seat(m[3])) {
+				if st, _ := r.st.Stack(l); r.bound[st.Top()] == m[4] && st.Damage >= amount {
+					hurt = append(hurt, l)
+				}
+			}
+			var from state.Loc
+			if len(hurt) == 1 {
+				from = hurt[0]
+			} else {
+				var err error
+				if from, err = r.target(state.Seat(""), r.seat(m[3]), m[4]); err != nil {
+					return err
+				}
 			}
 			to, err := r.target(actor, r.seat(m[5]), m[6])
 			if err != nil {
 				return err
 			}
-			amount := 10 * count(m[2])
+			// The log moved counters the board never put there, so lines
+			// that placed them earlier were missed; the totals still come out
+			// right once they are moved off.
+			if st, err := r.st.Stack(from); err == nil && st.Damage < amount {
+				r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("line %d: moved %d damage from %s, which had only %d; earlier damage on it was not imported", n.No, amount, m[4], st.Damage))
+			}
 			if err := r.addDamage(actor, from, -amount); err != nil {
 				return err
 			}
@@ -341,7 +360,17 @@ func buildHandlers(a, b string) []handler {
 			r.lastRef = &l
 			return r.addDamage(seat, l, -count(m[3]))
 		}),
-		h(`(\d+) damage counters? (?:was|were) placed on {P}'s (.+) for the Special Condition (\w+)\.`, func(r *replay, m []string, n, _ *Node) error {
+		h(`(an?|\d+) damage counters? (?:was|were) placed on {P}'s (.+) for the Special Condition (\w+)\.`, func(r *replay, m []string, n, _ *Node) error {
+			seat := r.seat(m[2])
+			l, err := r.stackNamed(seat, m[3], "")
+			if err != nil {
+				return err
+			}
+			return r.addDamage(seat, l, 10*count(m[1]))
+		}),
+		// Counters an Ability or effect places between turns, such as
+		// Freezing Shroud at Pokémon Checkup.
+		h(`(an?|\d+) damage counters? (?:was|were) placed on {P}'s (.+?) (?:for|by|because of|due to) .+\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[2])
 			l, err := r.stackNamed(seat, m[3], "")
 			if err != nil {
