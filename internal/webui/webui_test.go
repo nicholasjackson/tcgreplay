@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -534,4 +535,86 @@ func TestPing(t *testing.T) {
 			time.Sleep(10 * time.Millisecond)
 		}
 	})
+}
+
+// limitKey marks the request context the limit test's server sees.
+type limitKey struct{}
+
+// TestLimitHook: with Limit set, every board action asks it first with the
+// live connection's request context; a refusal comes back as the action's
+// error, word for word, and the action does not run. Allowed, the action
+// runs as before.
+func TestLimitHook(t *testing.T) {
+	m := game.NewManager(t.TempDir(), newFakeDB())
+	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-1", DeckP1: testDeck, DeckP2: testDeck}); err != nil {
+		t.Fatal(err)
+	}
+	s := New(m, state.P1)
+	const refusal = "too many requests: this account is limited to 5 requests a minute; try again in 12s"
+	var refuse atomic.Bool
+	var calls, sawCtx atomic.Int32
+	s.Limit = func(ctx context.Context) error {
+		calls.Add(1)
+		if ctx.Value(limitKey{}) == "live" {
+			sawCtx.Add(1)
+		}
+		if refuse.Load() {
+			return errors.New(refusal)
+		}
+		return nil
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	s.StartHub(ctx)
+	h := s.Handler()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), limitKey{}, "live")))
+	}))
+	t.Cleanup(ts.Close)
+	c := dial(t, ts)
+	var st stateMsg
+	next(t, c, "state", &st)
+
+	g, _ := m.Current()
+	before, _ := g.State().Find("p1-1")
+	if before.Zone == state.Discard {
+		t.Fatalf("p1-1 already in the discard")
+	}
+
+	refuse.Store(true)
+	r := send(t, c, 1, "move", map[string]any{"iid": "p1-1", "to": "discard"})
+	if r.OK || r.Error != refusal {
+		t.Fatalf("refused move: %+v, want error %q", r, refusal)
+	}
+	if after, _ := g.State().Find("p1-1"); fmt.Sprint(after) != fmt.Sprint(before) {
+		t.Fatalf("refused move changed the board: p1-1 %v, was %v", after, before)
+	}
+
+	refuse.Store(false)
+	if r := send(t, c, 2, "move", map[string]any{"iid": "p1-1", "to": "discard"}); !r.OK {
+		t.Fatalf("allowed move: %+v", r)
+	}
+	if after, _ := g.State().Find("p1-1"); after.Zone != state.Discard {
+		t.Fatalf("allowed move left p1-1 at %+v", after)
+	}
+	if n, ctxN := calls.Load(), sawCtx.Load(); n != 2 || ctxN != 2 {
+		t.Errorf("Limit called %d times (%d with the request context), want 2 and 2", n, ctxN)
+	}
+}
+
+// TestNoLimitOnDesktop: the desktop board has no Limit, and many actions
+// in a row are never refused.
+func TestNoLimitOnDesktop(t *testing.T) {
+	ts, _, s := setupServer(t, nil)
+	if s.Limit != nil {
+		t.Fatal("desktop board has a Limit")
+	}
+	c := dial(t, ts)
+	var st stateMsg
+	next(t, c, "state", &st)
+	for i := 1; i <= 400; i++ {
+		if r := send(t, c, i, "set_mode", map[string]any{"mode": "review"}); !r.OK {
+			t.Fatalf("action %d refused on the desktop: %+v", i, r)
+		}
+	}
 }

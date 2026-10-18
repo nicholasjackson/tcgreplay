@@ -2,6 +2,11 @@
 // either a copy of what it pushed or purely local presentation state.
 export const app = $state({
   connected: false,
+  // Signed-in account's email on the hosted playmat; null on the desktop.
+  account: null,
+  // Set while a sign-out is on its way, so the closing live connection
+  // does not send the user straight back through sign-in.
+  signingOut: false,
   human: 'p1',
   claude: 'p2',
   // Name of the assistant playing the claude seat over MCP (Claude, Codex, Gemini).

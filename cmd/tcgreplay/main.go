@@ -13,6 +13,8 @@
 //
 // -hosted serves MCP over HTTP at /mcp and the playmat on one address, for
 // running in a container behind an HTTPS proxy (see -listen, -public-url).
+// Hosted mode requires Google sign-in for both; the desktop modes never
+// ask for it.
 package main
 
 import (
@@ -40,8 +42,14 @@ var version = "dev"
 type config struct {
 	dataDir, cacheDir, seat, uiAddr string
 	offline                         bool
-	// publicURL and listen are for hosted mode only.
+	// The rest are for hosted mode only.
 	publicURL, listen string
+	// googleClientID is the Google OAuth client users sign in with (its
+	// secret is read from the environment only).
+	googleClientID string
+	// rateLimit is requests a minute per account; maxUsers is signed-in
+	// accounts at once. 0 turns either off.
+	rateLimit, maxUsers int
 }
 
 // args renders the config as flags for spawning the daemon.
@@ -71,6 +79,9 @@ func main() {
 	hosted := flag.Bool("hosted", false, "serve MCP over HTTP at /mcp and the playmat on one address, for a container")
 	flag.StringVar(&c.listen, "listen", "", "with -hosted, the address to listen on (default :$PORT, else :8080)")
 	flag.StringVar(&c.publicURL, "public-url", os.Getenv("TCGREPLAY_PUBLIC_URL"), "with -hosted, the public address the playmat is reached at (default $TCGREPLAY_PUBLIC_URL)")
+	flag.StringVar(&c.googleClientID, "google-client-id", os.Getenv("TCGREPLAY_GOOGLE_CLIENT_ID"), "with -hosted, the Google OAuth client users sign in with (default $TCGREPLAY_GOOGLE_CLIENT_ID; the secret is read from $TCGREPLAY_GOOGLE_CLIENT_SECRET)")
+	flag.IntVar(&c.rateLimit, "rate-limit", envInt("TCGREPLAY_RATE_LIMIT", 300), "with -hosted, requests a minute one account may make; 0 for no limit (default $TCGREPLAY_RATE_LIMIT, else 300)")
+	flag.IntVar(&c.maxUsers, "max-users", envInt("TCGREPLAY_MAX_USERS", 10), "with -hosted, Google accounts signed in at once; 0 for no cap (default $TCGREPLAY_MAX_USERS, else 10)")
 	flag.Parse()
 
 	if *showVersion {

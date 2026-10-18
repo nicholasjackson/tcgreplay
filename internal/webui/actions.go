@@ -81,6 +81,12 @@ func slotOr(p *int, def int) int {
 // dispatch runs one request for client c.
 func (s *Server) dispatch(ctx context.Context, c *client, req request) response {
 	res := response{Type: "result", ID: req.ID}
+	if s.Limit != nil {
+		if err := s.Limit(ctx); err != nil {
+			res.Error = err.Error()
+			return res
+		}
+	}
 	data, gr, err := s.do(ctx, c, req, &res)
 	if err != nil {
 		res.Error = err.Error()

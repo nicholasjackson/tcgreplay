@@ -1,6 +1,7 @@
 // Websocket client: one connection, auto-reconnect, request/response by id.
 import { app, toast } from './store.svelte.js';
 import { goLive, showSnapshot } from './playback.svelte.js';
+import { loadSession, signIn } from './session.js';
 
 let sock = null;
 let nextId = 1;
@@ -14,10 +15,18 @@ export function connect() {
     app.connected = true;
     backoff = 500;
   };
-  sock.onclose = () => {
+  sock.onclose = async () => {
     app.connected = false;
     for (const [, p] of pending) p.reject(new Error('disconnected'));
     pending.clear();
+    if (app.signingOut) return;
+    // On the hosted playmat a refused or closed connection may mean the
+    // sign-in has ended (signed out elsewhere, or a restart): sign in
+    // again and come back here rather than retrying for ever.
+    if ((await loadSession()) === 'signed-out') {
+      signIn();
+      return;
+    }
     setTimeout(connect, backoff);
     backoff = Math.min(backoff * 2, 5000);
   };

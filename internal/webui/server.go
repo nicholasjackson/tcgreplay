@@ -35,7 +35,11 @@ type Server struct {
 	// set, the loopback Host check is skipped and pages on this address may
 	// open the live connection. Nil (the desktop) keeps both loopback-only.
 	Public *url.URL
-	hub    *hub
+	// Limit, when set (hosted mode), is called before each board action
+	// with the live connection's request context; an error refuses the
+	// action with its message. Nil (the desktop) never refuses.
+	Limit func(ctx context.Context) error
+	hub   *hub
 }
 
 // New returns a server for m with the UI playing human.

@@ -1,7 +1,9 @@
 # The hosted playmat: builds the board UI, embeds it in a static binary and
 # runs `tcgreplay -hosted` on a minimal non-root image. MCP is served at
 # /mcp and the board on every other path, on port 8080 (or $PORT).
-# Settings: TCGREPLAY_PUBLIC_URL (the address users reach it at), PORT.
+# Settings: TCGREPLAY_PUBLIC_URL (the address users reach it at), PORT,
+# TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET (required:
+# users sign in with Google), TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS.
 
 # Build the board UI into the Go package (see web/vite.config.js).
 FROM node:22 AS web
