@@ -43,7 +43,10 @@ dev-ui: web/node_modules
 	cd web && TCGREPLAY_ADDR=$(DEV_UI) npm run dev
 
 # docker-build builds the hosted playmat's container image; docker-run
-# starts it on port 8080, with board links at PUBLIC_URL.
+# starts it on port 8080, with board links at PUBLIC_URL. Hosted mode needs
+# a Google sign-in client: export TCGREPLAY_GOOGLE_CLIENT_ID and
+# TCGREPLAY_GOOGLE_CLIENT_SECRET first (redirect URI
+# $(PUBLIC_URL)/auth/google/callback).
 IMAGE ?= tcgreplay
 PUBLIC_URL ?= http://localhost:8080
 
@@ -51,7 +54,9 @@ docker-build:
 	docker build -t $(IMAGE) .
 
 docker-run:
-	docker run --rm -p 8080:8080 -e TCGREPLAY_PUBLIC_URL=$(PUBLIC_URL) $(IMAGE)
+	docker run --rm -p 8080:8080 -e TCGREPLAY_PUBLIC_URL=$(PUBLIC_URL) \
+		-e TCGREPLAY_GOOGLE_CLIENT_ID -e TCGREPLAY_GOOGLE_CLIENT_SECRET \
+		-e TCGREPLAY_RATE_LIMIT -e TCGREPLAY_MAX_USERS $(IMAGE)
 
 clean:
 	rm -rf bin internal/webui/dist/app

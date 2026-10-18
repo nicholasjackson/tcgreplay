@@ -55,6 +55,10 @@
       <button class="decklist" onclick={() => openDeckList(app.human)} title="Every card in your deck and where each copy is">Deck list</button>
     {/if}
     <button class="panel-toggle" onclick={() => (app.panelOpen = !app.panelOpen)}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
+    {#if app.account}
+      <span class="account" title="Signed in with Google">{app.account}</span>
+      <form class="signout" method="POST" action="/auth/logout" onsubmit={() => (app.signingOut = true)}><button type="submit">Sign out</button></form>
+    {/if}
   </header>
 
   {#if app.reveal}
@@ -130,6 +134,8 @@
   .reveal-toggle { color: var(--reveal); font-weight: 700; }
   .warn { color: #ffb300; cursor: help; }
   .panel-toggle { margin-left: auto; }
+  .account { color: var(--muted); }
+  .signout { margin: 0; }
   .reveal-banner {
     background: var(--reveal);
     color: #fff;
