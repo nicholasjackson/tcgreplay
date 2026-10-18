@@ -27,9 +27,13 @@ type Manager struct {
 	// Rand, if set, seeds every new game (for tests).
 	Rand func() *rand.Rand
 
-	mu        sync.Mutex
-	current   *Game
-	onLoad    []func(*Game)
+	mu      sync.Mutex
+	current *Game
+	onLoad  []func(*Game)
+	onClear []func()
+	// notice, when set, says why there is no game (it expired); it is
+	// cleared when a game becomes current.
+	notice    string
 	assistant string
 	// lastDeck is the owner's decklist from the last successful import,
 	// reused when an import gives none.
@@ -89,10 +93,58 @@ func (m *Manager) OnLoad(f func(*Game)) {
 	m.onLoad = append(m.onLoad, f)
 }
 
+// ErrExpired is wrapped by Current's error after the game expired (see
+// Expire).
+var ErrExpired = errors.New("game expired")
+
+// expiredError is Current's error after Expire: its text is the notice,
+// and it matches ErrExpired.
+type expiredError struct{ notice string }
+
+func (e expiredError) Error() string        { return e.notice }
+func (e expiredError) Is(target error) bool { return target == ErrExpired }
+
+// OnClear registers a callback run whenever the current game is dropped
+// without a new one (Expire).
+func (m *Manager) OnClear(f func()) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.onClear = append(m.onClear, f)
+}
+
+// Expire drops the current game, if any, freeing it, and makes Current
+// report notice (an error matching ErrExpired) until a new game or import
+// replaces it. Listeners registered with OnClear are told. Only hosted
+// mode calls it, when a game has been idle too long.
+func (m *Manager) Expire(notice string) {
+	m.mu.Lock()
+	m.current = nil
+	m.notice = notice
+	hooks := slices.Clone(m.onClear)
+	m.mu.Unlock()
+	for _, f := range hooks {
+		f()
+	}
+}
+
+// Notice returns why there is no game (the expiry notice), or "" while a
+// game is open or none has expired.
+func (m *Manager) Notice() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.current != nil {
+		return ""
+	}
+	return m.notice
+}
+
 // Current returns the loaded game or an error.
 func (m *Manager) Current() (*Game, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.current == nil && m.notice != "" {
+		return nil, expiredError{m.notice}
+	}
 	if m.current == nil {
 		return nil, errors.New("no game open: import a battle log or a saved game record with import_log, or start one with new_game")
 	}
@@ -117,6 +169,7 @@ func (m *Manager) setCurrent(g *Game) {
 	m.mu.Lock()
 	// The previous game, if any, is simply dropped.
 	m.current = g
+	m.notice = ""
 	hooks := slices.Clone(m.onLoad)
 	m.mu.Unlock()
 	for _, f := range hooks {

@@ -618,3 +618,144 @@ func TestNoLimitOnDesktop(t *testing.T) {
 		}
 	}
 }
+
+// rawState reads state messages until one satisfies ok, failing after a
+// few seconds; it returns the message as a map so tests can tell an absent
+// key from an empty one.
+func rawState(t *testing.T, c *websocket.Conn, ok func(map[string]any) bool) map[string]any {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		var msg map[string]any
+		next(t, c, "state", &msg)
+		if ok(msg) {
+			return msg
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("no matching state message; last %v", msg)
+		}
+	}
+}
+
+func noSnapshot(msg map[string]any) bool {
+	snap, present := msg["snapshot"]
+	return present && snap == nil
+}
+
+func hasSnapshot(msg map[string]any) bool { return msg["snapshot"] != nil }
+
+// watchedCount is how many games the hub holds.
+func watchedCount(s *Server) int {
+	s.hub.mu.Lock()
+	defer s.hub.mu.Unlock()
+	return len(s.hub.watched)
+}
+
+// TestExpiryNotice: when the game expires an open board switches to the
+// notice without a reload, a newly loaded board shows it first, board
+// actions report it, the hub lets the old game go, and a new game clears
+// the notice.
+func TestExpiryNotice(t *testing.T) {
+	const notice = "ui-1 expired: import its saved record again"
+	ts, m, s := setupServer(t, nil)
+	c := dial(t, ts)
+	if msg := rawState(t, c, hasSnapshot); msg["notice"] != nil {
+		t.Errorf("state with a game open has notice %v", msg["notice"])
+	}
+	if n := watchedCount(s); n != 1 {
+		t.Fatalf("hub watches %d games before expiry, want 1", n)
+	}
+
+	m.Expire(notice)
+
+	// The open board switches to the notice.
+	msg := rawState(t, c, noSnapshot)
+	if msg["notice"] != notice {
+		t.Errorf("open board notice = %v, want %q", msg["notice"], notice)
+	}
+	if n := watchedCount(s); n != 0 {
+		t.Errorf("hub still watches %d games after expiry, want 0", n)
+	}
+
+	// A newly loaded board shows it in its first state.
+	c2 := dial(t, ts)
+	var first map[string]any
+	next(t, c2, "state", &first)
+	if !noSnapshot(first) || first["notice"] != notice {
+		t.Errorf("new board's first state: snapshot %v notice %v, want null and %q", first["snapshot"], first["notice"], notice)
+	}
+
+	// Board actions report the notice.
+	for i, verb := range []string{"draw", "move", "set_mode"} {
+		r := send(t, c2, i+1, verb, map[string]any{"iid": "p1-1", "to": "hand", "mode": "review"})
+		if r.OK || r.Error != notice {
+			t.Errorf("%s after expiry: %+v, want the error %q", verb, r, notice)
+		}
+	}
+
+	// Starting a game clears the notice and works as usual.
+	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-2", DeckP1: testDeck, DeckP2: testDeck}); err != nil {
+		t.Fatal(err)
+	}
+	for _, conn := range []*websocket.Conn{c, c2} {
+		msg := rawState(t, conn, hasSnapshot)
+		if n, present := msg["notice"]; present {
+			t.Errorf("state after a new game has notice %v", n)
+		}
+		snap, _ := msg["snapshot"].(map[string]any)
+		if snap["game"] != "ui-2" {
+			t.Errorf("snapshot game = %v, want ui-2", snap["game"])
+		}
+	}
+	if n := watchedCount(s); n != 1 {
+		t.Errorf("hub watches %d games after a new game, want 1", n)
+	}
+	if r := send(t, c, 10, "set_mode", map[string]any{"mode": "review"}); !r.OK {
+		t.Errorf("set_mode after a new game: %+v", r)
+	}
+}
+
+// TestNoNoticeWithoutExpiry: a board with no game that never expired has
+// no notice key, and board actions give the usual no game open error.
+func TestNoNoticeWithoutExpiry(t *testing.T) {
+	m := game.NewManager(t.TempDir(), newFakeDB())
+	s := New(m, state.P1)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	s.StartHub(ctx)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+	c := dial(t, ts)
+	var msg map[string]any
+	next(t, c, "state", &msg)
+	if !noSnapshot(msg) {
+		t.Errorf("snapshot = %v, want null", msg["snapshot"])
+	}
+	if n, present := msg["notice"]; present {
+		t.Errorf("state with no expiry has notice %v", n)
+	}
+	if r := send(t, c, 1, "draw", nil); r.OK || !strings.HasPrefix(r.Error, "no game open") {
+		t.Errorf("draw with no game: %+v, want the no game open error", r)
+	}
+}
+
+// TestHubWatchesOnlyCurrent: replacing the game leaves the hub holding only
+// the new one.
+func TestHubWatchesOnlyCurrent(t *testing.T) {
+	_, m, s := setupServer(t, nil)
+	for i := 2; i <= 4; i++ {
+		if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: fmt.Sprintf("ui-%d", i), DeckP1: testDeck, DeckP2: testDeck}); err != nil {
+			t.Fatal(err)
+		}
+		if n := watchedCount(s); n != 1 {
+			t.Errorf("hub watches %d games after game %d, want 1", n, i)
+		}
+	}
+	g, _ := m.Current()
+	s.hub.mu.Lock()
+	ok := s.hub.watched[g]
+	s.hub.mu.Unlock()
+	if !ok {
+		t.Error("hub does not watch the current game")
+	}
+}

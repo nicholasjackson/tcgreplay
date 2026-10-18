@@ -17,7 +17,9 @@ import (
 
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
+	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
+	"github.com/nicholasjackson/tcgreplay/internal/usergames"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
 
@@ -83,13 +85,29 @@ func envInt(key string, def int) int {
 	return n
 }
 
+// envDuration reads a duration setting (Go syntax, e.g. 2m or 1h; "0"
+// for none) from the environment, falling back to def when it is unset.
+// An invalid or negative value is an error.
+func envDuration(key string, def time.Duration) (time.Duration, error) {
+	v := os.Getenv(key)
+	if v == "" {
+		return def, nil
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil || d < 0 {
+		return def, fmt.Errorf("%s: invalid duration %q (use e.g. 2m, 60m or 1h; 0 to never drop)", key, v)
+	}
+	return d, nil
+}
+
 // hostedAuth builds the sign-in service from the settings: the Google
 // client ID (flag or TCGREPLAY_GOOGLE_CLIENT_ID), the secret (only from
 // TCGREPLAY_GOOGLE_CLIENT_SECRET, so it never shows in a process listing),
-// the limits and the public URL. Hosted mode must not run open, so missing
-// credentials are an error. google is Google's endpoints; the zero value
-// means the real Google.
-func hostedAuth(c config, public *url.URL, google oauth2.Endpoint) (*hostauth.Auth, error) {
+// the request limit and the public URL. places keeps the user cap (nil for
+// none). Hosted mode must not run open, so missing credentials are an
+// error. google is Google's endpoints; the zero value means the real
+// Google.
+func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostauth.Places) (*hostauth.Auth, error) {
 	secret := os.Getenv("TCGREPLAY_GOOGLE_CLIENT_SECRET")
 	if c.googleClientID == "" || secret == "" {
 		return nil, errors.New("hosted mode needs Google sign-in: set TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET")
@@ -99,17 +117,26 @@ func hostedAuth(c config, public *url.URL, google oauth2.Endpoint) (*hostauth.Au
 		GoogleClientID: c.googleClientID,
 		GoogleSecret:   secret,
 		RateLimit:      c.rateLimit,
-		MaxUsers:       c.maxUsers,
+		Places:         places,
 		Google:         google,
 	})
+}
+
+// idleText describes the idle setting for the start-up log.
+func idleText(d time.Duration) string {
+	if d <= 0 {
+		return "idle games never dropped"
+	}
+	return fmt.Sprintf("idle games dropped after %s", d)
 }
 
 // hostedHandler serves MCP over Streamable HTTP at /mcp, every session
 // sharing srv, and the playmat on every other path, with a's sign-in in
 // front: its own routes (metadata, client registration, authorize, token,
 // Google's callback, /healthz) are open, /mcp needs an access token and
-// the board needs a session.
-func hostedHandler(srv *mcp.Server, ui *webui.Server, a *hostauth.Auth) http.Handler {
+// the board needs a session. The board goes through reg's front door to
+// the signed-in account's own board.
+func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth) http.Handler {
 	mux := http.NewServeMux()
 	a.Routes(mux)
 	mux.Handle("/mcp", a.RequireToken(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
@@ -117,46 +144,75 @@ func hostedHandler(srv *mcp.Server, ui *webui.Server, a *hostauth.Auth) http.Han
 		// Hosted mode is public; the request's Host is the proxy's business.
 		DisableLocalhostProtection: true,
 	})))
-	mux.Handle("/", a.RequireSession(ui.Handler()))
+	mux.Handle("/", a.RequireSession(reg.Board()))
 	return mux
 }
 
-// newHosted builds the game manager, MCP server and board for hosted mode,
-// both servers taking their address from the one public URL: board links
-// point at its root and the board accepts live connections from it. Every
-// MCP request and board action counts against its account's request
-// limit.
-func newHosted(c config, public *url.URL, a *hostauth.Auth) (*game.Manager, *mcp.Server, *webui.Server) {
-	m, srv := newServer(c, public.String()+"/")
+// newHosted builds the per-account game registry, the sign-in service and
+// the MCP server for hosted mode. Each signed-in account gets its own game
+// manager (sharing one card database) and its own board server; every
+// tool call acts on the caller's game, and its board link names the
+// caller's own board on the public URL, from which the board also accepts
+// live connections. The registry keeps the user cap, so a place follows
+// activity. Every MCP request and board action counts against its
+// account's request limit, and tool calls, board actions and board page
+// loads count as the account's activity. google is as for hostedAuth.
+func newHosted(c config, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
+	db := newCardDB(c)
+	human := state.Seat(c.seat).Other()
+	var reg *usergames.Registry
+	var a *hostauth.Auth // set below, before any board is built
+	reg = usergames.New(usergames.Config{
+		NewManager: func() *game.Manager { return game.NewManager(c.dataDir, db) },
+		NewBoard: func(m *game.Manager) *webui.Server {
+			ui := webui.New(m, human)
+			ui.Public = public
+			ui.Limit = reg.BoardLimit(a.BoardLimit)
+			return ui
+		},
+		Public:   public,
+		Idle:     c.idleTimeout,
+		MaxUsers: c.maxUsers,
+		Now:      c.now,
+	})
+	a, err := hostedAuth(c, public, google, reg)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	// BoardURL keeps the instructions' board-link line; each result's link
+	// comes from Resolve.
+	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/", Resolve: reg.ResolveMCP}).MCP()
 	srv.AddReceivingMiddleware(a.MCPMiddleware())
-	ui := webui.New(m, state.Seat(c.seat).Other())
-	ui.Public = public
-	ui.Limit = a.BoardLimit
-	return m, srv, ui
+	return reg, srv, a, nil
 }
 
 // runHosted serves MCP and the playmat over one plain-HTTP listener until
 // ctx is done, for running in a container behind an HTTPS proxy.
 func runHosted(ctx context.Context, c config) error {
+	if c.idleErr != nil {
+		return fmt.Errorf("hosted mode: %v", c.idleErr)
+	}
+	if c.idleTimeout < 0 {
+		return fmt.Errorf("hosted mode: -idle-timeout %s: must not be negative", c.idleTimeout)
+	}
 	listen := hostedListen(c.listen)
 	public, err := hostedPublicURL(c.publicURL, listen)
 	if err != nil {
 		return err
 	}
-	a, err := hostedAuth(c, public, oauth2.Endpoint{})
+	reg, srv, a, err := newHosted(c, public, oauth2.Endpoint{})
 	if err != nil {
 		return err
 	}
-	_, srv, ui := newHosted(c, public, a)
-	ui.StartHub(ctx)
+	go reg.Run(ctx)
 
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, Google sign-in, %d requests a minute per account, %d users", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, c.rateLimit, c.maxUsers)
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, Google sign-in, %d requests a minute per account, %d users, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, c.rateLimit, c.maxUsers, idleText(c.idleTimeout))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
-	hs := &http.Server{Handler: hostedHandler(srv, ui, a), ReadHeaderTimeout: 10 * time.Second}
+	hs := &http.Server{Handler: hostedHandler(srv, reg, a), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)

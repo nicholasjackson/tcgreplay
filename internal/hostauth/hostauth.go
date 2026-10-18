@@ -30,9 +30,10 @@ type Config struct {
 	// RateLimit is the number of requests one account may make a minute;
 	// 0 means no limit.
 	RateLimit int
-	// MaxUsers is the number of distinct accounts that may be signed in at
-	// once; 0 means no cap.
-	MaxUsers int
+	// Places, if set, decides whether a newly signed-in account may take
+	// one of the server's places (the user cap), and is told when an
+	// account's last sign-in ends. Nil means no cap.
+	Places Places
 	// Google is Google's OAuth endpoints; the zero value means the real
 	// Google. Tests substitute a fake.
 	Google oauth2.Endpoint
@@ -40,6 +41,17 @@ type Config struct {
 	Now func() time.Time
 	// HTTPClient makes the calls to Google; nil means http.DefaultClient.
 	HTTPClient *http.Client
+}
+
+// Places is the server's user cap, kept by whoever tracks what each
+// account is doing (hosted mode's per-account game registry).
+type Places interface {
+	// Admit is asked at every Google sign-in, in both flows, whether acct
+	// may take a place: nil, or an error wrapping ErrBusy (see BusyError).
+	Admit(acct Account) error
+	// Release is told that the account's last live sign-in (board session,
+	// pending code or connector refresh token) has ended.
+	Release(id string)
 }
 
 // Account is the signed-in Google account a request acts for.
@@ -78,6 +90,9 @@ func New(cfg Config) (*Auth, error) {
 		now:    cfg.Now,
 		client: cfg.HTTPClient,
 		st:     newStore(),
+	}
+	if cfg.Places != nil {
+		a.st.onRelease = cfg.Places.Release
 	}
 	if a.now == nil {
 		a.now = time.Now
@@ -119,6 +134,13 @@ type accountKey struct{}
 // withAccount returns ctx carrying the signed-in account.
 func withAccount(ctx context.Context, acct Account) context.Context {
 	return context.WithValue(ctx, accountKey{}, acct)
+}
+
+// WithAccount returns ctx carrying acct as the signed-in account of a
+// board request, as RequireSession does. It is for wiring and tests that
+// serve board handlers without a real sign-in.
+func WithAccount(ctx context.Context, acct Account) context.Context {
+	return withAccount(ctx, acct)
 }
 
 // AccountFrom returns the signed-in account a board request acts for, if

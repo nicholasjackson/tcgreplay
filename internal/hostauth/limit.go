@@ -20,6 +20,20 @@ var ErrRateLimited = errors.New("too many requests")
 // signed-in accounts is reached.
 var ErrBusy = errors.New("the server is busy")
 
+// busyError is the refusal at a cap of max places; it matches ErrBusy.
+type busyError struct{ max int }
+
+func (e busyError) Error() string {
+	return fmt.Sprintf("%v: it already has the most signed-in users it serves at once (%d); try again later", ErrBusy, e.max)
+}
+
+func (e busyError) Is(target error) bool { return target == ErrBusy }
+
+// BusyError returns the refusal for a server at its cap of max places: it
+// wraps ErrBusy and its message names the cap, so the wording lives in one
+// place.
+func BusyError(max int) error { return busyError{max} }
+
 // limitLogEvery is how often one account's refusals are logged.
 const limitLogEvery = 10 * time.Second
 

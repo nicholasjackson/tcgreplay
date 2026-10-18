@@ -25,9 +25,11 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/nicholasjackson/tcgreplay/internal/game"
+	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth/hostauthtest"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
+	"github.com/nicholasjackson/tcgreplay/internal/usergames"
 )
 
 func TestHostedListen(t *testing.T) {
@@ -571,8 +573,8 @@ type hostedServer struct {
 	ts *httptest.Server
 	// g is the fake Google its users sign in with.
 	g *hostauthtest.FakeGoogle
-	// m is its game manager.
-	m *game.Manager
+	// reg is its per-account game registry.
+	reg *usergames.Registry
 	// public is the address it is configured to be reached at.
 	public string
 }
@@ -589,6 +591,11 @@ func (h *hostedServer) connect(t *testing.T) *mcp.ClientSession {
 	}
 	t.Cleanup(func() { cs.Close() })
 	return cs
+}
+
+// manager returns acct's own game manager.
+func (h *hostedServer) manager(acct hostauthtest.Account) *game.Manager {
+	return h.reg.Get(hostauth.Account{ID: acct.ID, Email: acct.Email}).M
 }
 
 // cookie signs a browser in to the board as g's current account and
@@ -631,8 +638,8 @@ func sendWith(t *testing.T, method, u string, cookie *http.Cookie, mod func(*htt
 }
 
 // startHosted wires hosted mode exactly as runHosted does, through
-// hostedPublicURL, hostedAuth and newHosted, for the given public address
-// with a fake Google, and serves it on a test server.
+// hostedPublicURL and newHosted (which builds hostedAuth), for the given
+// public address with a fake Google, and serves it on a test server.
 func startHosted(t *testing.T, public string) *hostedServer {
 	t.Helper()
 	return startHostedWith(t, public, nil)
@@ -652,17 +659,13 @@ func startHostedWith(t *testing.T, public string, mod func(*config)) *hostedServ
 	if mod != nil {
 		mod(&c)
 	}
-	a, err := hostedAuth(c, u, g.Endpoint())
+	reg, srv, a, err := newHosted(c, u, g.Endpoint())
 	if err != nil {
 		t.Fatal(err)
 	}
-	m, srv, ui := newHosted(c, u, a)
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	ui.StartHub(ctx)
-	ts := httptest.NewServer(hostedHandler(srv, ui, a))
+	ts := httptest.NewServer(hostedHandler(srv, reg, a))
 	t.Cleanup(ts.Close)
-	return &hostedServer{ts: ts, g: g, m: m, public: u.String()}
+	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String()}
 }
 
 // callTool calls a tool with arguments and returns its text, failing the
@@ -733,13 +736,14 @@ func hasCard(cards []state.CardView, iid state.IID) bool {
 }
 
 // TestHostedBoardLinks: game-opening results over the hosted connection
-// carry a board link at the configured public address, and a different
-// setting gives different links from the same build.
+// carry the signed-in account's own board link at the configured public
+// address, and a different setting gives different links from the same
+// build.
 func TestHostedBoardLinks(t *testing.T) {
 	deck, logText := readTestdata(t, testDeckPath), readTestdata(t, testLogPath)
 	for _, tt := range []struct{ public, want string }{
-		{testPublic, "https://playmat.example/"},
-		{"https://other.example", "https://other.example/"},
+		{testPublic, "https://playmat.example/?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
+		{"https://other.example", "https://other.example/?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
 	} {
 		t.Run(tt.public, func(t *testing.T) {
 			cs := startHosted(t, tt.public).connect(t)
@@ -1002,7 +1006,7 @@ func TestHostedAuthNeedsCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("TCGREPLAY_GOOGLE_CLIENT_SECRET", tt.secret)
-			a, err := hostedAuth(config{googleClientID: tt.id}, public, oauth2.Endpoint{})
+			a, err := hostedAuth(config{googleClientID: tt.id}, public, oauth2.Endpoint{}, nil)
 			if tt.ok {
 				if err != nil || a == nil {
 					t.Fatalf("hostedAuth with credentials: %v, %v", a, err)
@@ -1145,7 +1149,7 @@ func TestHostedAnonymousConnectorRefused(t *testing.T) {
 		})
 	}
 
-	if g, err := h.m.Current(); err == nil {
+	if g, err := h.manager(hostauthtest.DefaultAccount).Current(); err == nil {
 		t.Fatalf("an anonymous new_game opened game %s", g.ID)
 	}
 	// Signed in, the playmat still has no game open.
@@ -1203,31 +1207,8 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 		t.Error("app.yaml has no health_check with http_path: /healthz")
 	}
 
-	// fields returns the settings of the env entry for key.
-	fields := func(key string) map[string]string {
-		for i, l := range lines {
-			if strings.TrimSpace(l) != "- key: "+key {
-				continue
-			}
-			out := map[string]string{}
-			indent := len(l) - len(strings.TrimLeft(l, " ")) + 2
-			for _, next := range lines[i+1:] {
-				trimmed := strings.TrimSpace(next)
-				if trimmed == "" || strings.HasPrefix(trimmed, "#") {
-					continue
-				}
-				if len(next)-len(strings.TrimLeft(next, " ")) != indent || strings.HasPrefix(trimmed, "-") {
-					break
-				}
-				k, v, _ := strings.Cut(trimmed, ":")
-				out[k] = strings.TrimSpace(v)
-			}
-			return out
-		}
-		return nil
-	}
 	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET"} {
-		f := fields(key)
+		f := appEnvFields(lines, key)
 		if f == nil {
 			t.Errorf("app.yaml declares no %s", key)
 			continue
@@ -1238,6 +1219,63 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 		if v, ok := f["value"]; ok {
 			t.Errorf("%s has a value in app.yaml: %q", key, v)
 		}
+	}
+}
+
+// appEnvFields returns the settings of app.yaml's env entry for key, or nil
+// if the file declares none.
+func appEnvFields(lines []string, key string) map[string]string {
+	for i, l := range lines {
+		if strings.TrimSpace(l) != "- key: "+key {
+			continue
+		}
+		out := map[string]string{}
+		indent := len(l) - len(strings.TrimLeft(l, " ")) + 2
+		for _, next := range lines[i+1:] {
+			trimmed := strings.TrimSpace(next)
+			if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+				continue
+			}
+			if len(next)-len(strings.TrimLeft(next, " ")) != indent || strings.HasPrefix(trimmed, "-") {
+				break
+			}
+			k, v, _ := strings.Cut(trimmed, ":")
+			out[k] = strings.TrimSpace(v)
+		}
+		return out
+	}
+	return nil
+}
+
+// TestAppSpecIdleTimeoutAndSingleInstance: the App Platform definition sets
+// the idle drop to 60 minutes as a plain run-time setting (not a secret),
+// and runs exactly one instance, since every account's game lives in that
+// one process's memory.
+func TestAppSpecIdleTimeoutAndSingleInstance(t *testing.T) {
+	lines := strings.Split(readTestdata(t, "../../.do/app.yaml"), "\n")
+
+	f := appEnvFields(lines, "TCGREPLAY_IDLE_TIMEOUT")
+	if f == nil {
+		t.Fatal("app.yaml declares no TCGREPLAY_IDLE_TIMEOUT")
+	}
+	if f["value"] != `"60m"` {
+		t.Errorf("TCGREPLAY_IDLE_TIMEOUT has value %s, want \"60m\"", f["value"])
+	}
+	if f["scope"] != "RUN_TIME" {
+		t.Errorf("TCGREPLAY_IDLE_TIMEOUT has scope %q, want RUN_TIME", f["scope"])
+	}
+	if typ, ok := f["type"]; ok && typ == "SECRET" {
+		t.Error("TCGREPLAY_IDLE_TIMEOUT is declared a SECRET, want a plain setting")
+	}
+
+	var counts []string
+	for _, l := range lines {
+		if k, v, ok := strings.Cut(strings.TrimSpace(l), ":"); ok && k == "instance_count" {
+			counts = append(counts, strings.TrimSpace(v))
+		}
+	}
+	if len(counts) != 1 || counts[0] != "1" {
+		t.Errorf("app.yaml instance_count settings %q, want exactly one, set to 1", counts)
 	}
 }
 
@@ -1434,7 +1472,7 @@ func TestHostedRateLimit(t *testing.T) {
 		t.Fatalf("board move over the limit: %+v, want refused", r)
 	}
 	checkLimitMessage(t, "board move over the limit", r.Error, 5)
-	g, err := h.m.Current()
+	g, err := h.manager(hostauthtest.DefaultAccount).Current()
 	if err != nil {
 		t.Fatal(err)
 	}

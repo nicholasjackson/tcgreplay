@@ -3,11 +3,13 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -527,6 +529,135 @@ func TestNoBoardLinksOnDesktop(t *testing.T) {
 		}
 		if ins := cs.InitializeResult().Instructions; ins != instructions {
 			t.Errorf("instructions changed without a board address: %q", ins)
+		}
+	})
+}
+
+// TestResolvePerCall checks that with a resolver every tool call acts on the
+// manager and board link the resolver returns for it, and on nothing else:
+// the server's own M is nil and must never be touched.
+func TestResolvePerCall(t *testing.T) {
+	deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tr := range transports {
+		t.Run(tr.name, func(t *testing.T) {
+			a, b := game.NewManager(t.TempDir(), nil), game.NewManager(t.TempDir(), nil)
+			const linkA, linkB = "https://x/?board=A", "https://x/?board=B"
+
+			var mu sync.Mutex
+			target, calls := "A", 0
+			pick := func(to string) {
+				mu.Lock()
+				defer mu.Unlock()
+				target = to
+			}
+			resolved := func() int {
+				mu.Lock()
+				defer mu.Unlock()
+				return calls
+			}
+			s := &Server{Version: "test", Resolve: func(_ context.Context, _ *mcp.RequestExtra) (*game.Manager, string, error) {
+				mu.Lock()
+				defer mu.Unlock()
+				calls++
+				switch target {
+				case "A":
+					return a, linkA, nil
+				case "B":
+					return b, linkB, nil
+				}
+				return nil, "", errors.New("no account for this call")
+			}}
+			cs, err := mcp.NewClient(&mcp.Implementation{Name: "codex-mcp-client"}, nil).Connect(context.Background(), tr.dial(t, s.MCP()), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { cs.Close() })
+
+			// Every tool, even ping, goes through the resolver.
+			if out, isErr := call(t, cs, "ping", nil); isErr || out != "pong" {
+				t.Fatalf("ping: error %v: %s", isErr, out)
+			}
+			if n := resolved(); n != 1 {
+				t.Errorf("resolver called %d times for ping, want 1", n)
+			}
+
+			out, isErr := call(t, cs, "new_game", map[string]any{"deck_p1": string(deck), "deck_p2": string(deck), "id": "per-call"})
+			if isErr {
+				t.Fatal(out)
+			}
+			var res map[string]any
+			if err := json.Unmarshal([]byte(out), &res); err != nil {
+				t.Fatalf("new_game: %v: %s", err, out)
+			}
+			if res["board"] != linkA {
+				t.Errorf("new_game board = %v, want %s", res["board"], linkA)
+			}
+			if _, err := a.Current(); err != nil {
+				t.Errorf("A has no game after new_game resolved to A: %v", err)
+			}
+			if _, err := b.Current(); err == nil {
+				t.Error("B has a game after new_game resolved to A")
+			}
+			// The call's client labels the assistant on the manager it acted on.
+			if got := a.Assistant(); got != "Codex" {
+				t.Errorf("A assistant = %q, want Codex", got)
+			}
+			if got := b.Assistant(); got == "Codex" {
+				t.Error("B was labelled by a call that resolved to A")
+			}
+
+			pick("B")
+			if out, isErr := call(t, cs, "get_state", nil); !isErr {
+				t.Errorf("get_state resolved to B, which has no game, succeeded: %s", out)
+			}
+			if _, err := b.Current(); err == nil {
+				t.Error("B gained a game from get_state")
+			}
+
+			pick("A")
+			if out, isErr := call(t, cs, "get_state", nil); isErr {
+				t.Errorf("get_state resolved back to A failed: %s", out)
+			}
+
+			pick("none")
+			out, isErr = call(t, cs, "get_state", nil)
+			if !isErr || !strings.Contains(out, "no account for this call") {
+				t.Errorf("resolver error: error %v: %q, want a tool error with its message", isErr, out)
+			}
+		})
+	}
+}
+
+// TestExpiredGameTools: after the game expires, tools that need it report
+// the expiry notice, and importing or starting a game works again.
+func TestExpiredGameTools(t *testing.T) {
+	deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Skip("no test corpus")
+	}
+	const notice = "game per-call expired: import its saved record again with import_log"
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
+		if out, isErr := call(t, cs, "new_game", map[string]any{"deck_p1": string(deck), "deck_p2": string(deck), "id": "per-call"}); isErr {
+			t.Fatal(out)
+		}
+		m.Expire(notice)
+		for tool, args := range map[string]map[string]any{"get_state": nil, "get_log": nil, "draw": {"n": 1}} {
+			out, isErr := call(t, cs, tool, args)
+			if !isErr || !strings.Contains(out, notice) {
+				t.Errorf("%s after expiry: error %v: %q, want a tool error with the notice", tool, isErr, out)
+			}
+		}
+		if out, isErr := call(t, cs, "new_game", map[string]any{"deck_p1": string(deck), "deck_p2": string(deck), "id": "again"}); isErr {
+			t.Fatalf("new_game after expiry: %s", out)
+		}
+		if out, isErr := call(t, cs, "get_state", nil); isErr {
+			t.Errorf("get_state after a new game: %s", out)
+		}
+		if n := m.Notice(); n != "" {
+			t.Errorf("Notice() after new_game = %q, want empty", n)
 		}
 	})
 }

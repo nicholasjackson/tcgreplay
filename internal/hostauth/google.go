@@ -85,7 +85,12 @@ func (a *Auth) serveGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := a.signIn(w, acct); err != nil {
 		log.Printf("hostauth: refused sign-in for %s: %v", acct.Email, err)
-		busyPage(w, a.cfg.MaxUsers)
+		var b busyError
+		if errors.As(err, &b) {
+			busyPage(w, b.max)
+			return
+		}
+		errorPage(w, http.StatusServiceUnavailable, "Sign-in could not be completed right now. Please try again later.")
 		return
 	}
 	switch p.kind {
@@ -186,13 +191,15 @@ func audienceHas(aud json.RawMessage, id string) bool {
 // signIn starts a board session for acct in this browser. Every Google
 // sign-in does, whichever flow started it, so a browser that connected
 // claude.ai can open a board link without signing in again. It is also
-// where the user cap is applied, once for both flows: a new account over
-// the cap gets ErrBusy.
+// where the user cap is applied, once for both flows: the places provider
+// may refuse the account with an error wrapping ErrBusy.
 func (a *Auth) signIn(w http.ResponseWriter, acct Account) error {
-	id, err := a.st.addSession(a.now(), acct, a.cfg.MaxUsers)
-	if err != nil {
-		return fmt.Errorf("%w: it already has the most signed-in users it serves at once (%d); try again later", ErrBusy, a.cfg.MaxUsers)
+	if p := a.cfg.Places; p != nil {
+		if err := p.Admit(acct); err != nil {
+			return err
+		}
 	}
+	id := a.st.addSession(a.now(), acct)
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookie,
 		Value:    id,
