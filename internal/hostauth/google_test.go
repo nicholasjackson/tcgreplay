@@ -152,6 +152,21 @@ func (h *harness) checkRefused(t *testing.T, c *http.Client, resp *http.Response
 	}
 }
 
+// TestGoogleSignInSurvivesSecondStart shows a sign-in still completes when
+// the same browser starts another before coming back from Google, as a
+// second tab or a signed-out request for a page does.
+func TestGoogleSignInSurvivesSecondStart(t *testing.T) {
+	h := newHarness(t, nil)
+	c := h.browser(t)
+	first := h.begin(t, c)
+	h.begin(t, c)
+
+	resp, body := get(t, c, first.String())
+	if resp.StatusCode != http.StatusOK || body != "OK" || resp.Request.URL.RequestURI() != boardNext {
+		t.Fatalf("first sign-in ended at %s with status %d body %q, want the board page %s", resp.Request.URL, resp.StatusCode, body, boardNext)
+	}
+}
+
 // TestGoogleSignIn shows a browser sent to sign in reaches Google's account
 // chooser with a one-time state, nonce and PKCE challenge, that coming back
 // with a valid Google answer signs the account in and returns to the
@@ -216,7 +231,7 @@ func TestGoogleSignIn(t *testing.T) {
 	// The same state again, with its login cookie, is refused.
 	c2 := h.browser(t)
 	req, _ := http.NewRequest("GET", h.ts.URL+"/auth/google/callback?code=x&state="+url.QueryEscape(state), nil)
-	req.AddCookie(&http.Cookie{Name: loginCookie, Value: state})
+	req.AddCookie(&http.Cookie{Name: loginCookieName(state), Value: state})
 	resp2, err := c2.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -262,10 +277,12 @@ func TestGoogleCallbackRefused(t *testing.T) {
 		{
 			name: "login cookie is another sign-in's",
 			run: func(t *testing.T, h *harness) (*http.Client, *http.Response, string) {
+				// This browser started its own sign-in, but comes back
+				// with another browser's.
 				c := h.browser(t)
-				first := h.begin(t, c)
-				h.begin(t, c) // replaces the login cookie
-				resp, body := get(t, c, first.String())
+				h.begin(t, c)
+				theirs := h.begin(t, h.browser(t))
+				resp, body := get(t, c, theirs.String())
 				return c, resp, body
 			},
 		},
@@ -287,7 +304,7 @@ func TestGoogleCallbackRefused(t *testing.T) {
 				get(t, c, u) // uses the state up
 				other := h.browser(t)
 				req, _ := http.NewRequest("GET", h.ts.URL+"/auth/google/callback?code=x&state="+url.QueryEscape(state), nil)
-				req.AddCookie(&http.Cookie{Name: loginCookie, Value: state})
+				req.AddCookie(&http.Cookie{Name: loginCookieName(state), Value: state})
 				resp, err := other.Do(req)
 				if err != nil {
 					t.Fatal(err)
@@ -422,11 +439,15 @@ func TestCookieAttributes(t *testing.T) {
 			cookies := append(rec.Result().Cookies(), rec2.Result().Cookies()...)
 			want := map[string]string{loginCookie: "/auth/google/callback", sessionCookie: "/"}
 			for _, ck := range cookies {
-				path, ok := want[ck.Name]
+				name := ck.Name
+				if strings.HasPrefix(name, loginCookie+"_") {
+					name = loginCookie
+				}
+				path, ok := want[name]
 				if !ok {
 					continue
 				}
-				delete(want, ck.Name)
+				delete(want, name)
 				if ck.Secure != tt.secure {
 					t.Errorf("%s Secure = %v, want %v", ck.Name, ck.Secure, tt.secure)
 				}
@@ -482,7 +503,7 @@ func TestSignInsAreMemoryOnly(t *testing.T) {
 		t.Error("new instance knows the previous instance's session")
 	}
 	req := httptest.NewRequest("GET", "/auth/google/callback?code=x&state="+url.QueryEscape(state), nil)
-	req.AddCookie(&http.Cookie{Name: loginCookie, Value: state})
+	req.AddCookie(&http.Cookie{Name: loginCookieName(state), Value: state})
 	rec := httptest.NewRecorder()
 	a2.serveGoogleCallback(rec, req)
 	if rec.Code < 400 {

@@ -1,0 +1,4 @@
+web-mcp-docker DONE, merged (branch commit 65a1084). 8/9 tasks; human task "Create the App Platform app and its domain" deferred to owner post-merge.
+Hosted mode `tcgreplay -hosted` (MCP at /mcp, board elsewhere, one port); tool tests over HTTP; Dockerfile/.dockerignore/make docker-build/run; .do/app.yaml (spec validation unchecked); public origin + 30s pings; board links in import_log/new_game/load_game/set_opponent_deck; docs.
+Unchecked spec items: remote connector, push to deploy, connector connects, push deploys, import/play through connector, link opens right board, board stays connected, board follows Claude (real connector), card image, desktop regression manual check.
+Discoveries: coder/websocket pings need running Read (raw client for ping tests); move during setup in review mode needs explicit seat; docker here is podman-compatible (localhost/<name> tags).

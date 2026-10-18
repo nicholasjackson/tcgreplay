@@ -1,0 +1,4 @@
+google-login DONE, merged (eb81420), pushed. All 9 tasks ticked (human task: only "client exists and consent screen published" AC ticked; redeploy start + no Cloudflare challenge pending live checks).
+Google sign-in on board and connector (OAuth AS endpoints /.well-known/*, /register, /token), Sign out, per-account rate limit (TCGREPLAY_RATE_LIMIT, 300), user cap (TCGREPLAY_MAX_USERS, 10), /healthz, docs.
+Unticked spec items: Connector sign-in, Signed in until restart; ACs Connector flow, Any account, Restart.
+Discoveries: go-sdk v1.6.0 RequireBearerToken uses real time.Now; AuthorizationCodeHandler works vs httptest on 127.0.0.1; Google production consent needs home page + privacy link on authorised domains; existing race in TestRelaySurvivesDaemonRestart (cmd/tcgreplay/shim_test.go:120-128).

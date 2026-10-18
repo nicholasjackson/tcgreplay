@@ -154,6 +154,8 @@ func TestBoardSignedOutGoesThroughSignIn(t *testing.T) {
 			checkSentToSignIn(t, resp, path)
 			resp, _ = b.send(t, "HEAD", path, "not-a-session", nil)
 			checkSentToSignIn(t, resp, path)
+			resp, _ = b.send(t, "GET", path, "", func(r *http.Request) { r.Header.Set("Sec-Fetch-Mode", "navigate") })
+			checkSentToSignIn(t, resp, path)
 			b.signInBoard(t, path)
 		})
 	}
@@ -200,16 +202,22 @@ func TestBoardSignedOutRefused(t *testing.T) {
 	log.SetOutput(&logs)
 	t.Cleanup(func() { log.SetOutput(prev) })
 
-	for _, tt := range []struct{ method, path, cookie string }{
-		{"GET", "/ws", ""},
-		{"GET", "/ws", "not-a-session"},
-		{"GET", "/api/card?def=x", ""},
-		{"GET", "/api/card?def=x", "not-a-session"},
-		{"POST", "/", ""},
+	for _, tt := range []struct{ method, path, cookie, mode string }{
+		{"GET", "/ws", "", ""},
+		{"GET", "/ws", "not-a-session", ""},
+		{"GET", "/api/card?def=x", "", ""},
+		{"GET", "/api/card?def=x", "not-a-session", ""},
+		{"POST", "/", "", ""},
+		{"GET", "/favicon.ico", "", "no-cors"},
+		{"GET", "/assets/index.js", "not-a-session", "cors"},
 	} {
-		t.Run(tt.method+" "+tt.path+" "+tt.cookie, func(t *testing.T) {
+		t.Run(tt.method+" "+tt.path+" "+tt.cookie+" "+tt.mode, func(t *testing.T) {
 			logs.Reset()
-			resp, body := b.send(t, tt.method, tt.path, tt.cookie, nil)
+			resp, body := b.send(t, tt.method, tt.path, tt.cookie, func(r *http.Request) {
+				if tt.mode != "" {
+					r.Header.Set("Sec-Fetch-Mode", tt.mode)
+				}
+			})
 			if resp.StatusCode != http.StatusUnauthorized || !strings.Contains(body, "sign in required") {
 				t.Errorf("got %d %q, want 401 sign in required", resp.StatusCode, body)
 			}

@@ -16,7 +16,10 @@ import (
 
 const (
 	googleCallbackPath = "/auth/google/callback"
-	// loginCookie ties a sign-in in progress to the browser that started it.
+	// loginCookie, suffixed with the sign-in's state, ties a sign-in in
+	// progress to the browser that started it. Each sign-in has its own
+	// cookie, so starting another (a second tab, or a signed-out request
+	// for a page) does not undo one already at Google.
 	loginCookie = "tcgreplay_login"
 	// sessionCookie holds the board session.
 	sessionCookie = "tcgreplay_session"
@@ -27,6 +30,9 @@ const (
 // googleIssuers are the issuers Google's ID tokens carry.
 var googleIssuers = []string{"https://accounts.google.com", "accounts.google.com"}
 
+// loginCookieName is the name of the login cookie for the sign-in state.
+func loginCookieName(state string) string { return loginCookie + "_" + state }
+
 // startGoogle records p as a sign-in in progress, ties it to this browser
 // with the login cookie, and sends the browser to Google's account
 // chooser.
@@ -35,7 +41,7 @@ func (a *Auth) startGoogle(w http.ResponseWriter, r *http.Request, p *pendingLog
 	p.verifier = oauth2.GenerateVerifier()
 	state := a.st.addPending(a.now(), p)
 	http.SetCookie(w, &http.Cookie{
-		Name:     loginCookie,
+		Name:     loginCookieName(state),
 		Value:    state,
 		Path:     googleCallbackPath,
 		MaxAge:   int(pendingLifetime / time.Second),
@@ -58,14 +64,14 @@ func (a *Auth) startGoogle(w http.ResponseWriter, r *http.Request, p *pendingLog
 func (a *Auth) serveGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	state := q.Get("state")
-	c, err := r.Cookie(loginCookie)
+	c, err := r.Cookie(loginCookieName(state))
 	if state == "" || err != nil || c.Value != state {
 		log.Printf("hostauth: refused Google callback: state does not match this browser's sign-in")
 		errorPage(w, http.StatusBadRequest, "This sign-in link has expired or was opened in a different browser. Please start signing in again.")
 		return
 	}
 	// The login cookie has done its job either way.
-	http.SetCookie(w, &http.Cookie{Name: loginCookie, Path: googleCallbackPath, MaxAge: -1, HttpOnly: true, Secure: a.secure(), SameSite: http.SameSiteLaxMode})
+	http.SetCookie(w, &http.Cookie{Name: loginCookieName(state), Path: googleCallbackPath, MaxAge: -1, HttpOnly: true, Secure: a.secure(), SameSite: http.SameSiteLaxMode})
 	p := a.st.takePending(a.now(), state)
 	if p == nil {
 		log.Printf("hostauth: refused Google callback: no sign-in in progress for its state")

@@ -40,9 +40,18 @@ func liveRequest(r *http.Request) bool {
 	return r.URL.Path == "/ws" || strings.HasPrefix(r.URL.Path, "/api/")
 }
 
+// subresource reports whether the browser says a request is not for a
+// page, such as a favicon, script or image. It is refused rather than
+// sent to sign in, so it never starts a sign-in of its own.
+func subresource(r *http.Request) bool {
+	mode := r.Header.Get("Sec-Fetch-Mode")
+	return mode != "" && mode != "navigate"
+}
+
 // RequireSession guards the board. A signed-out request for a page is sent
 // through Google sign-in and back to the page; a signed-out live
-// connection or data request is refused with 401. A signed-in request
+// connection, data request or request the browser marks as not for a
+// page is refused with 401. A signed-in request
 // carries its account (see AccountFrom), and a live connection ends as
 // soon as its session does. Data requests count against the account's
 // request limit and get 429 over it.
@@ -50,7 +59,7 @@ func (a *Auth) RequireSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, s := a.sessionFor(r)
 		if s == nil {
-			if liveRequest(r) || (r.Method != http.MethodGet && r.Method != http.MethodHead) {
+			if liveRequest(r) || subresource(r) || (r.Method != http.MethodGet && r.Method != http.MethodHead) {
 				log.Printf("hostauth: refused %s %s: not signed in", r.Method, r.URL.Path)
 				w.Header().Set("Cache-Control", "no-store")
 				http.Error(w, "sign in required", http.StatusUnauthorized)

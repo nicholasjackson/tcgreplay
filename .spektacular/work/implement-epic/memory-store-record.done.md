@@ -1,0 +1,4 @@
+memory-store-record DONE, merged (branch commit b92d4bc). All 8 tasks. Versioned game record (internal/game/record.go) with SHA-256 check, repair of note-app damage; Import accepts record text; import_log/set_opponent_deck return record, new get_record tool; import skill offers/restores record; store file mode removed, list_games/load_game/Resume removed, set_opponent_deck uses discard_branches; board landing page has no stored games; drills use current game; design doc "Game records".
+Unchecked (manual): restart forgets, paste round trip in real Notion, drills with real assistant.
+Live impact once pushed: hosted stops reopening games, list_games/load_game gone, set_opponent_deck id/new_id gone.
+Discoveries: record checksum canonical struct frozen for v1 (tags record, format, compatibility); Write/Edit turn \uXXXX escapes into literal chars incl. BOM -> gofmt breaks (tags tooling, go, unicode).
