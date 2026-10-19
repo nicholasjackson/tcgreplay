@@ -904,8 +904,8 @@ func TestTokenResponse(t *testing.T) {
 
 // TestAccessTokenLifetime shows an access token is accepted for an hour by
 // the injected clock and refused after it, that a refresh token renews it
-// with a new pair however long after, and that a used refresh token, or one
-// presented by another client, is refused.
+// with a new pair for 30 days, and that a used or expired refresh token, or
+// one presented by another client, is refused.
 func TestAccessTokenLifetime(t *testing.T) {
 	c := newConnector(t)
 	tok := hostauthtest.Connect(t, c.ts.URL, c.ts.URL, c.g)
@@ -938,14 +938,17 @@ func TestAccessTokenLifetime(t *testing.T) {
 	resp, m = c.token(t, refreshForm(other.ClientID, refresh), "", "")
 	checkOAuthError(t, resp, m, http.StatusBadRequest, "invalid_grant")
 
-	// A refresh token lasts until a restart, however long that is.
-	c.clock.Advance(30 * 24 * time.Hour)
+	// A refresh token lasts 30 days, and each refresh starts them again.
+	c.clock.Advance(29 * 24 * time.Hour)
 	c.checkMCPRefused(t, access)
 	resp, m = c.token(t, refreshForm(tok.ClientID, refresh), "", "")
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("refresh a month later: %d %v, want 200", resp.StatusCode, m)
+		t.Fatalf("refresh 29 days later: %d %v, want 200", resp.StatusCode, m)
 	}
 	c.checkMCPAccepted(t, m["access_token"].(string))
+	c.clock.Advance(31 * 24 * time.Hour)
+	resp, m = c.token(t, refreshForm(tok.ClientID, m["refresh_token"].(string)), "", "")
+	checkOAuthError(t, resp, m, http.StatusBadRequest, "invalid_grant")
 }
 
 // TestRestartForgetsTokens shows that after the service restarts at the

@@ -210,6 +210,7 @@ func (a *Auth) signIn(w http.ResponseWriter, acct Account) error {
 		Name:     sessionCookie,
 		Value:    id,
 		Path:     "/",
+		MaxAge:   int(sessionLifetime / time.Second),
 		HttpOnly: true,
 		Secure:   a.secure(),
 		SameSite: http.SameSiteLaxMode,

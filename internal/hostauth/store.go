@@ -8,38 +8,54 @@ import (
 	"time"
 )
 
-// pendingLifetime is how long a Google sign-in may take. Board sessions
-// and refresh tokens last until the process ends.
-const pendingLifetime = 10 * time.Minute
+const (
+	// pendingLifetime is how long a Google sign-in may take.
+	pendingLifetime = 10 * time.Minute
+	// sessionLifetime is how long a board sign-in lasts.
+	sessionLifetime = 30 * 24 * time.Hour
+	// refreshLifetime is how long a connector refresh token lasts.
+	refreshLifetime = 30 * 24 * time.Hour
+)
 
-// store is everything the sign-in service knows, in memory only. Token-like
+// store is everything the sign-in service knows, in memory only. Client
+// IDs, tokens and board cookies are sealed (see sealer), so a value from
+// before a restart is taken up again when it is next used. Token-like
 // values are kept under the hash of the value, so a map key never is a
 // usable token. Expired entries are swept on every write.
 type store struct {
 	mu       sync.Mutex
+	seal     *sealer
+	now      func() time.Time
 	pending  map[string]*pendingLogin // by key(state)
-	sessions map[string]*session      // by key(cookie value)
+	sessions map[string]*session      // by session ID
 	accounts map[string]*accountState // by Account.ID
 	clients  map[string]*client       // by client ID
 	codes    map[string]*authCode     // by key(code)
-	access   map[string]*accessToken  // by key(token)
-	refresh  map[string]*refreshToken // by key(token)
-	buckets  map[string]*bucket       // by Account.ID
+	refresh  map[string]*refreshToken // by refresh token ID
+	// ended and used hold, until they expire, the board sessions signed
+	// out and the refresh tokens already exchanged, which must not be
+	// taken up again.
+	ended   map[string]time.Time
+	used    map[string]time.Time
+	buckets map[string]*bucket // by Account.ID
 	// onRelease, if set, is told when an account's last live sign-in
 	// ends. It is called with mu held, so it must not call back into the
 	// store.
 	onRelease func(id string)
 }
 
-func newStore() *store {
+func newStore(seal *sealer, now func() time.Time) *store {
 	return &store{
+		seal:     seal,
+		now:      now,
 		pending:  map[string]*pendingLogin{},
 		sessions: map[string]*session{},
 		accounts: map[string]*accountState{},
 		clients:  map[string]*client{},
 		codes:    map[string]*authCode{},
-		access:   map[string]*accessToken{},
 		refresh:  map[string]*refreshToken{},
+		ended:    map[string]time.Time{},
+		used:     map[string]time.Time{},
 		buckets:  map[string]*bucket{},
 	}
 }
@@ -70,6 +86,7 @@ type pendingLogin struct {
 // session is a browser's board sign-in.
 type session struct {
 	account Account
+	expires time.Time
 	// done is closed when the session ends, so live connections opened
 	// under it can stop.
 	done chan struct{}
@@ -104,9 +121,24 @@ func (s *store) sweep(now time.Time) {
 			s.releaseLocked(c.account.ID)
 		}
 	}
-	for k, t := range s.access {
+	for id, ss := range s.sessions {
+		if now.After(ss.expires) {
+			delete(s.sessions, id)
+			close(ss.done)
+			s.releaseLocked(ss.account.ID)
+		}
+	}
+	for id, t := range s.refresh {
 		if now.After(t.expires) {
-			delete(s.access, k)
+			delete(s.refresh, id)
+			s.releaseLocked(t.account.ID)
+		}
+	}
+	for _, m := range []map[string]time.Time{s.ended, s.used} {
+		for id, exp := range m {
+			if now.After(exp) {
+				delete(m, id)
+			}
 		}
 	}
 	// A bucket untouched for a minute is full again: forget it.
@@ -147,29 +179,53 @@ func (s *store) addSession(now time.Time, acct Account) string {
 	defer s.mu.Unlock()
 	s.sweep(now)
 	id := newToken()
-	s.sessions[key(id)] = &session{account: acct, done: make(chan struct{})}
+	exp := now.Add(sessionLifetime)
+	s.sessions[id] = &session{account: acct, expires: exp, done: make(chan struct{})}
 	s.holdLocked(acct)
-	return id
+	return s.seal.seal(sealSession, grantClaims{ID: id, Sub: acct.ID, Email: acct.Email, Exp: exp.Unix()})
 }
 
-// session returns the board session for a cookie value, or nil.
-func (s *store) session(id string) *session {
+// session returns the board session for a cookie value, or nil. A cookie
+// from before a restart starts its session again.
+func (s *store) session(cookie string) *session {
+	var g grantClaims
+	if !s.seal.open(sealSession, cookie, &g) || g.ID == "" {
+		return nil
+	}
+	exp := time.Unix(g.Exp, 0)
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.sessions[key(id)]
+	if s.now().After(exp) {
+		return nil
+	}
+	if ss := s.sessions[g.ID]; ss != nil {
+		return ss
+	}
+	if _, out := s.ended[g.ID]; out {
+		return nil
+	}
+	ss := &session{account: g.account(), expires: exp, done: make(chan struct{})}
+	s.sessions[g.ID] = ss
+	s.holdLocked(ss.account)
+	return ss
 }
 
-// endSession ends a board session: its live connections stop and its
-// account holds one fewer sign-in.
-func (s *store) endSession(id string) {
+// endSession ends the board session of a cookie value: its live
+// connections stop, its account holds one fewer sign-in, and the cookie is
+// not taken up again while this instance runs.
+func (s *store) endSession(cookie string) {
+	var g grantClaims
+	if !s.seal.open(sealSession, cookie, &g) || g.ID == "" {
+		return
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	k := key(id)
-	ss := s.sessions[k]
+	s.ended[g.ID] = time.Unix(g.Exp, 0)
+	ss := s.sessions[g.ID]
 	if ss == nil {
 		return
 	}
-	delete(s.sessions, k)
+	delete(s.sessions, g.ID)
 	close(ss.done)
 	s.releaseLocked(ss.account.ID)
 }
@@ -219,22 +275,33 @@ type authCode struct {
 
 // accessToken is a connector access token.
 type accessToken struct {
-	clientID string
-	account  Account
-	expires  time.Time
+	account Account
+	expires time.Time
 }
 
 // refreshToken is a connector refresh token; it lasts until it is used or
-// the process ends, and holds a live sign-in for its account.
+// expires, and holds a live sign-in for its account.
 type refreshToken struct {
-	clientID string
-	account  Account
+	account Account
+	expires time.Time
+}
+
+// newClient returns a client with a sealed ID, so it is still known after
+// a restart.
+func (s *store) newClient(now time.Time, redirects []string, method, secretKey string) *client {
+	c := &client{secretKey: secretKey, redirects: redirects, authMethod: method, created: now}
+	c.id = s.seal.seal(sealClient, clientClaims{Redirects: redirects, Method: method, SecretKey: secretKey, Created: now.Unix()})
+	return c
 }
 
 // addClient registers c, forgetting the oldest client when full.
 func (s *store) addClient(c *client) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.addClientLocked(c)
+}
+
+func (s *store) addClientLocked(c *client) {
 	if len(s.clients) >= maxClients {
 		var oldest *client
 		for _, o := range s.clients {
@@ -247,11 +314,21 @@ func (s *store) addClient(c *client) {
 	s.clients[c.id] = c
 }
 
-// client returns the registered client with id, or nil.
+// client returns the registered client with id, or nil. A client
+// registered before a restart is known again from its ID.
 func (s *store) client(id string) *client {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.clients[id]
+	if c := s.clients[id]; c != nil {
+		return c
+	}
+	var cc clientClaims
+	if !s.seal.open(sealClient, id, &cc) {
+		return nil
+	}
+	c := &client{id: id, secretKey: cc.SecretKey, redirects: cc.Redirects, authMethod: cc.Method, created: time.Unix(cc.Created, 0)}
+	s.addClientLocked(c)
+	return c
 }
 
 // addCode records a one-time code and returns it. Until it is exchanged
@@ -281,19 +358,31 @@ func (s *store) takeCode(code string) *authCode {
 	return c
 }
 
-// takeRefresh removes the refresh token if it was issued to clientID and
-// returns its account. Its live sign-in passes, without a gap, to the
-// tokens issued next (issueTokens).
+// takeRefresh uses up the refresh token if it was issued to clientID and
+// has not expired, and returns its account. Its live sign-in passes,
+// without a gap, to the tokens issued next (issueTokens); a token from
+// before a restart takes up a live sign-in for them.
 func (s *store) takeRefresh(clientID, token string) (Account, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	k := key(token)
-	t := s.refresh[k]
-	if t == nil || t.clientID != clientID {
+	var g grantClaims
+	if !s.seal.open(sealRefresh, token, &g) || g.ID == "" || g.Client != clientKey(clientID) {
 		return Account{}, false
 	}
-	delete(s.refresh, k)
-	return t.account, true
+	exp := time.Unix(g.Exp, 0)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.now().After(exp) {
+		return Account{}, false
+	}
+	if _, done := s.used[g.ID]; done {
+		return Account{}, false
+	}
+	s.used[g.ID] = exp
+	if t := s.refresh[g.ID]; t != nil {
+		delete(s.refresh, g.ID)
+		return t.account, true
+	}
+	s.holdLocked(g.account())
+	return g.account(), true
 }
 
 // release gives back a live sign-in taken from a code that was not
@@ -311,15 +400,20 @@ func (s *store) issueTokens(now time.Time, clientID string, acct Account) (acces
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.sweep(now)
-	access, refresh = newToken(), newToken()
-	s.access[key(access)] = &accessToken{clientID: clientID, account: acct, expires: now.Add(accessLifetime)}
-	s.refresh[key(refresh)] = &refreshToken{clientID: clientID, account: acct}
+	ck := clientKey(clientID)
+	access = s.seal.seal(sealAccess, grantClaims{Client: ck, Sub: acct.ID, Email: acct.Email, Exp: now.Add(accessLifetime).Unix()})
+	id, exp := newToken(), now.Add(refreshLifetime)
+	s.refresh[id] = &refreshToken{account: acct, expires: exp}
+	refresh = s.seal.seal(sealRefresh, grantClaims{ID: id, Client: ck, Sub: acct.ID, Email: acct.Email, Exp: exp.Unix()})
 	return access, refresh
 }
 
-// accessToken returns the access token's record, or nil.
+// accessToken returns the access token's record, or nil. Access tokens
+// are sealed and never stored, so one from before a restart still works.
 func (s *store) accessToken(token string) *accessToken {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.access[key(token)]
+	var g grantClaims
+	if !s.seal.open(sealAccess, token, &g) {
+		return nil
+	}
+	return &accessToken{account: g.account(), expires: time.Unix(g.Exp, 0)}
 }

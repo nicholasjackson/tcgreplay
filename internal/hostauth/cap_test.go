@@ -420,7 +420,11 @@ func TestCapCodeHoldsPlace(t *testing.T) {
 // a code or a refresh token remains, and not for another account. It no
 // longer refuses anyone itself: 50 accounts get sessions.
 func TestStoreReleaseAtLastSignIn(t *testing.T) {
-	s := newStore()
+	seal, err := newSealer("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := newStore(seal, time.Now)
 	var released []string
 	s.onRelease = func(id string) { released = append(released, id) }
 	check := func(when string, want ...string) {

@@ -103,7 +103,9 @@ func envDuration(key string, def time.Duration) (time.Duration, error) {
 // hostedAuth builds the sign-in service from the settings: the Google
 // client ID (flag or TCGREPLAY_GOOGLE_CLIENT_ID), the secret (only from
 // TCGREPLAY_GOOGLE_CLIENT_SECRET, so it never shows in a process listing),
-// the request limit and the public URL. places keeps the user cap (nil for
+// the signing key that keeps sign-ins across restarts (only from
+// TCGREPLAY_SIGNING_KEY, for the same reason), the request limit and the
+// public URL. places keeps the user cap (nil for
 // none). Hosted mode must not run open, so missing credentials are an
 // error. google is Google's endpoints; the zero value means the real
 // Google.
@@ -116,10 +118,20 @@ func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostau
 		Public:         public,
 		GoogleClientID: c.googleClientID,
 		GoogleSecret:   secret,
+		SigningKey:     os.Getenv("TCGREPLAY_SIGNING_KEY"),
 		RateLimit:      c.rateLimit,
 		Places:         places,
 		Google:         google,
 	})
+}
+
+// signInText describes, for the start-up log, whether sign-ins outlast a
+// restart.
+func signInText() string {
+	if os.Getenv("TCGREPLAY_SIGNING_KEY") == "" {
+		return "Google sign-in (ends on restart: no TCGREPLAY_SIGNING_KEY)"
+	}
+	return "Google sign-in (kept across restarts)"
 }
 
 // idleText describes the idle setting for the start-up log.
@@ -210,7 +222,7 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, Google sign-in, %d requests a minute per account, %d users, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, c.rateLimit, c.maxUsers, idleText(c.idleTimeout))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, %s, %d requests a minute per account, %d users, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
 	hs := &http.Server{Handler: hostedHandler(srv, reg, a), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})

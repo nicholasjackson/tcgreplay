@@ -23,8 +23,7 @@ const (
 	scope = "playmat"
 	// codeLifetime is how long an authorization code may be exchanged.
 	codeLifetime = 5 * time.Minute
-	// accessLifetime is how long an access token lasts; refresh tokens
-	// last until the process ends.
+	// accessLifetime is how long an access token lasts.
 	accessLifetime = time.Hour
 	// maxClients bounds registered clients; the oldest is forgotten first.
 	maxClients = 1000
@@ -189,16 +188,14 @@ func (a *Auth) serveRegister(w http.ResponseWriter, r *http.Request) {
 	meta.Scope = scope
 
 	now := a.now()
-	c := &client{
-		id:         newToken(),
-		redirects:  meta.RedirectURIs,
-		authMethod: meta.TokenEndpointAuthMethod,
-		created:    now,
+	var secret, secretKey string
+	if meta.TokenEndpointAuthMethod != "none" {
+		secret = newToken()
+		secretKey = key(secret)
 	}
+	c := a.st.newClient(now, meta.RedirectURIs, meta.TokenEndpointAuthMethod, secretKey)
 	res := registration{ClientRegistrationMetadata: meta, ClientID: c.id, ClientIDIssuedAt: now.Unix()}
-	if c.authMethod != "none" {
-		secret := newToken()
-		c.secretKey = key(secret)
+	if secret != "" {
 		res.ClientSecret = secret
 		var never int64
 		res.ClientSecretExpiresAt = &never

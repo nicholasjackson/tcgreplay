@@ -1,9 +1,11 @@
 // Package hostauth is sign-in for the hosted playmat: an OAuth
 // authorization server for MCP clients (claude.ai's custom connectors)
 // that hands the actual login to Google, and board sessions held in a
-// cookie. Everything it knows lives in process memory, so a restart or
-// redeploy signs everyone out. Every address it hands out is built from
-// the configured public URL, never from the incoming request.
+// cookie. What it knows lives in process memory, but the client IDs,
+// tokens and cookies it hands out are sealed with the signing key, so with
+// the same key a restart or redeploy keeps everyone signed in; without one
+// it signs everyone out. Every address it hands out is built from the
+// configured public URL, never from the incoming request.
 //
 // The desktop never builds an Auth: only hosted mode signs users in.
 package hostauth
@@ -27,6 +29,10 @@ type Config struct {
 	// GoogleClientID and GoogleSecret are the Google OAuth web client the
 	// playmat signs users in with.
 	GoogleClientID, GoogleSecret string
+	// SigningKey seals the sign-ins the playmat hands out so they outlast
+	// a restart; at least 32 characters. Empty means a key made up at
+	// start, so a restart signs everyone out.
+	SigningKey string
 	// RateLimit is the number of requests one account may make a minute;
 	// 0 means no limit.
 	RateLimit int
@@ -84,18 +90,22 @@ func New(cfg Config) (*Auth, error) {
 	if cfg.Google.AuthURL == "" {
 		cfg.Google = endpoints.Google
 	}
+	seal, err := newSealer(cfg.SigningKey)
+	if err != nil {
+		return nil, err
+	}
 	a := &Auth{
 		cfg:    cfg,
 		public: (&url.URL{Scheme: cfg.Public.Scheme, Host: cfg.Public.Host}).String(),
 		now:    cfg.Now,
 		client: cfg.HTTPClient,
-		st:     newStore(),
-	}
-	if cfg.Places != nil {
-		a.st.onRelease = cfg.Places.Release
 	}
 	if a.now == nil {
 		a.now = time.Now
+	}
+	a.st = newStore(seal, a.now)
+	if cfg.Places != nil {
+		a.st.onRelease = cfg.Places.Release
 	}
 	if a.client == nil {
 		a.client = http.DefaultClient

@@ -44,6 +44,12 @@ services:
       - key: TCGREPLAY_GOOGLE_CLIENT_SECRET
         scope: RUN_TIME
         type: SECRET
+      # Seals sign-ins so they survive a redeploy; at least 32 characters
+      # (e.g. openssl rand -base64 48). Without it a redeploy signs
+      # everyone out. Changing it signs everyone out once.
+      - key: TCGREPLAY_SIGNING_KEY
+        scope: RUN_TIME
+        type: SECRET
       # Requests per minute per account, and places (accounts served at
       # once; a place is freed when an account's game goes idle or its last
       # sign-in ends); 0 turns either off. Changing them needs only a
