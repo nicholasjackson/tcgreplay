@@ -38,6 +38,9 @@ export const app = $state({
   held: null,
   replay: null,
   replaySpeed: 1,
+  // Play the assistant's moves on the board as they arrive, rather than
+  // holding them for the playback bar. Remembered in this browser.
+  autoplay: true,
   acting: false, // a request of the viewer's own is in flight
   deckListShow: 'all', // deck list filter: all, unplayed or undrawn
   lastLog: 0, // highest log id seen, to mark new lines

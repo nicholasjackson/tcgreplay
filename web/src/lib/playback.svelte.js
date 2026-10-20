@@ -1,7 +1,8 @@
 // Playback. The server is authoritative and pushes snapshots; the board
 // shows the latest one, except:
 // - Moves made by Claude (or the system) on the branch being watched are
-//   held, so the board does not jump: the playback bar offers to play them.
+//   held, so the board does not jump. With autoplay on (the default) they
+//   play out on their own; with it off, the playback bar offers to play them.
 // - A replay steps through moves one action at a time, at a chosen speed,
 //   with highlights and captions; it can be paused, stepped and scrubbed.
 import { app } from './store.svelte.js';
@@ -29,6 +30,35 @@ export function setSpeed(s) {
   }
 }
 
+try {
+  if (localStorage.getItem('autoplay') === 'off') app.autoplay = false;
+} catch {
+  // storage unavailable: keep the default
+}
+
+// setAutoplay turns autoplay of the assistant's moves on or off; turned on,
+// it plays any moves already held.
+export function setAutoplay(on) {
+  app.autoplay = on;
+  try {
+    localStorage.setItem('autoplay', on ? 'on' : 'off');
+  } catch {
+    // storage unavailable: the choice lasts for this page only
+  }
+  autoplayHeld();
+}
+
+// autoStarting is set while an autoplay replay is being fetched, so moves
+// arriving meanwhile do not start a second one.
+let autoStarting = false;
+
+// autoplayHeld plays the held moves when autoplay is on.
+function autoplayHeld() {
+  if (!app.autoplay || !app.held || app.replay || autoStarting) return;
+  autoStarting = true;
+  startReplay(app.held.from, 0, true).finally(() => (autoStarting = false));
+}
+
 export function showSnapshot(snap) {
   const prev = app.snap;
   app.snap = snap;
@@ -49,9 +79,13 @@ export function showSnapshot(snap) {
     return;
   }
   const frames = snap.frames || [];
-  const theirs = frames.length ? frames.some((f) => f.actor !== 'human') : !app.acting;
+  // The system's moves that follow the viewer's own (the next turn's start
+  // and draw after End turn) are shown at once, like the viewer's moves.
+  const mine = (f) => f.actor === 'human' || (f.actor === 'system' && app.acting);
+  const theirs = frames.length ? frames.some((f) => !mine(f)) : !app.acting;
   if (sameBranch && snap.head > app.viewHead && theirs) {
     app.held = { from: app.viewHead, to: snap.head };
+    autoplayHeld();
     return;
   }
   app.board = snap.board;
@@ -66,8 +100,9 @@ export function heldMoves() {
 }
 
 // startReplay plays the current branch from just after event from to event
-// until (0 for the head).
-export async function startReplay(from, until = 0) {
+// until (0 for the head). auto marks an autoplay of held moves, which the
+// viewer can skip but not scrub.
+export async function startReplay(from, until = 0, auto = false) {
   stopTimer();
   let r;
   try {
@@ -76,8 +111,10 @@ export async function startReplay(from, until = 0) {
     return;
   }
   if (!r.ok || !r.data?.steps?.length) return;
+  // The viewer went live (or acted) while an autoplay was being fetched.
+  if (auto && !app.held) return;
   app.held = null;
-  app.replay = { ...r.data, index: -1, playing: false };
+  app.replay = { ...r.data, index: -1, playing: false, auto };
   show(-1);
   play();
 }
@@ -152,9 +189,10 @@ function tick() {
     r.playing = false;
     const last = r.steps.at(-1).last;
     if (app.snap && app.snap.head > last) {
-      // Moves arrived during the replay: offer them next.
+      // Moves arrived during the replay: play or offer them next.
       app.replay = null;
       app.held = { from: last, to: app.snap.head };
+      autoplayHeld();
       return;
     }
     // Played up to the latest move: rejoin the live board.

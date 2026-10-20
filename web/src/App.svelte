@@ -2,6 +2,7 @@
   import { openDeckList } from './lib/actions.js';
   import { app, setPanelAt } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
+  import { setAutoplay } from './lib/playback.svelte.js';
   import Side from './components/Side.svelte';
   import Hand from './components/Hand.svelte';
   import Strip from './components/Strip.svelte';
@@ -77,6 +78,9 @@
           {#if app.panelOpen}
             <button role="menuitem" onclick={() => menu(() => setPanelAt(bottom ? 'side' : 'bottom'))}>Move timeline {bottom ? 'beside' : 'below'} the board</button>
           {/if}
+          <label class="menu-check" title="Play the assistant's moves on the board as they arrive">
+            <input type="checkbox" checked={app.autoplay} onchange={(ev) => setAutoplay(ev.target.checked)} /> Autoplay {app.assistant}'s moves
+          </label>
           {#if app.account}
             <div class="sep"></div>
             <div class="account" title="Signed in with Google">{app.account}</div>
@@ -194,6 +198,8 @@
   .dropdown button { width: 100%; text-align: left; border-color: transparent; background: none; }
   .dropdown button:hover { background: var(--hover); }
   .dropdown form { margin: 0; }
+  .menu-check { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; border-radius: 6px; }
+  .menu-check:hover { background: var(--hover); }
   .sep { height: 1px; background: var(--line); margin: 4px 0; }
   .account { color: var(--muted); padding: 4px 10px; font-size: 12px; }
   .reveal-banner {
