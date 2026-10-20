@@ -1,8 +1,8 @@
 ---
-tags: [skills, testing, build, conventions]
+tags: [guides, testing, build, conventions]
 ---
 
-# Skill text and packaging
+# Guide text and packaging
 
-- Never write "Claude" or "Nic " in a `skills/tcg-*` skill. Skills serve any assistant and any player, and `skills/skills_test.go` fails on either word.
-- Never exclude `skills/tcg-*` from a build context (`.dockerignore` or other packaging). `skills/skills.go` embeds them with `//go:embed tcg-*`, so the binary will not build without them.
+- Never write "Claude" or "Nic " in an `internal/guides` guide. Guides serve any assistant and any player, and `internal/guides/guides_test.go` fails on either word.
+- Never exclude `internal/guides` from a build context (`.dockerignore` or other packaging). `internal/guides/guides.go` embeds the guides with `//go:embed *.md`, so the binary will not build without them.

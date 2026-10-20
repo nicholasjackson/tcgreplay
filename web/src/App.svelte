@@ -14,6 +14,12 @@
   const snap = $derived(app.snap);
   const review = $derived(snap?.mode === 'review');
   const bottom = $derived(app.panelOpen && app.panelAt === 'bottom');
+  // menuOpen shows the header's menu of less frequent actions.
+  let menuOpen = $state(false);
+  function menu(run) {
+    menuOpen = false;
+    run();
+  }
 
   function setMode(ev) {
     act('set_mode', { mode: ev.target.checked ? 'review' : 'play' });
@@ -34,6 +40,8 @@
     return n || (seat === app.human ? ownName() || 'You' : app.assistant);
   }
 </script>
+
+<svelte:window onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
 
 <div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom}>
   <header>
@@ -57,17 +65,26 @@
         <span class="warn" title={snap.warnings.join('\n')}>⚠ {snap.warnings.length}</span>
       {/if}
     {/if}
-    {#if snap}
-      <button class="decklist" onclick={() => openDeckList(app.human)} title="Every card in your deck and where each copy is">Deck list</button>
-    {/if}
-    <button class="panel-toggle" onclick={() => (app.panelOpen = !app.panelOpen)}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
-    {#if app.panelOpen}
-      <button onclick={() => setPanelAt(bottom ? 'side' : 'bottom')} title="Move the timeline beside or below the board">Timeline {bottom ? 'at side' : 'at bottom'}</button>
-    {/if}
-    {#if app.account}
-      <span class="account" title="Signed in with Google">{app.account}</span>
-      <form class="signout" method="POST" action="/auth/logout" onsubmit={() => (app.signingOut = true)}><button type="submit">Sign out</button></form>
-    {/if}
+    <div class="more">
+      <button class="burger" aria-label="Menu" aria-haspopup="menu" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>☰</button>
+      {#if menuOpen}
+        <div class="backdrop" onclick={() => (menuOpen = false)} role="presentation"></div>
+        <div class="dropdown" role="menu">
+          {#if snap}
+            <button role="menuitem" onclick={() => menu(() => openDeckList(app.human))} title="Every card in your deck and where each copy is">Deck list</button>
+          {/if}
+          <button role="menuitem" onclick={() => menu(() => (app.panelOpen = !app.panelOpen))}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
+          {#if app.panelOpen}
+            <button role="menuitem" onclick={() => menu(() => setPanelAt(bottom ? 'side' : 'bottom'))}>Move timeline {bottom ? 'beside' : 'below'} the board</button>
+          {/if}
+          {#if app.account}
+            <div class="sep"></div>
+            <div class="account" title="Signed in with Google">{app.account}</div>
+            <form method="POST" action="/auth/logout" onsubmit={() => (app.signingOut = true)}><button role="menuitem" type="submit">Sign out</button></form>
+          {/if}
+        </div>
+      {/if}
+    </div>
   </header>
 
   {#if app.reveal}
@@ -157,9 +174,28 @@
   .toggle { display: flex; gap: 4px; align-items: center; cursor: pointer; }
   .reveal-toggle { color: var(--reveal); font-weight: 700; }
   .warn { color: #ffb300; cursor: help; }
-  .panel-toggle { margin-left: auto; }
-  .account { color: var(--muted); }
-  .signout { margin: 0; }
+  .more { margin-left: auto; position: relative; }
+  .burger { font-size: 16px; line-height: 1; padding: 4px 9px; }
+  .backdrop { position: fixed; inset: 0; z-index: 70; }
+  .dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 71;
+    min-width: 230px;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px #0008;
+  }
+  .dropdown button { width: 100%; text-align: left; border-color: transparent; background: none; }
+  .dropdown button:hover { background: var(--hover); }
+  .dropdown form { margin: 0; }
+  .sep { height: 1px; background: var(--line); margin: 4px 0; }
+  .account { color: var(--muted); padding: 4px 10px; font-size: 12px; }
   .reveal-banner {
     background: var(--reveal);
     color: #fff;

@@ -144,7 +144,7 @@ No other types change. The removed install command's types (`installer`, `instal
 
 **Validation point**: The full test suite passes, including the ported and new guide text checks. A connected test session lists six guides, reads `review-game`, gets an error naming the six guides for `tcg-review`, and sees all six in the instructions. `tcgreplay install` exits with "unknown command".
 
-#### - [ ] Task: Remove the install command
+#### - [x] Task: Remove the install command
 **Id:** 816f2137-df9c-42f1-9aaf-e4bae0afc0cd
 **Repo:** tcgreplay
 **Depends on:** none
@@ -155,11 +155,11 @@ Delete the `install` subcommand, which copied the coaching skills into a client'
 *Technical detail:* [context.md#task-remove-the-install-command](./context.md#task-remove-the-install-command)
 
 **Acceptance criteria**:
-- [ ] Running the playmat with `install`, or any other unknown word, fails with an "unknown command" message and a non-zero exit, and starts nothing.
-- [ ] The playmat's help output mentions neither install nor skills.
-- [ ] No code path in the binary copies skill files or edits a client's configuration.
+- [x] Running the playmat with `install`, or any other unknown word, fails with an "unknown command" message and a non-zero exit, and starts nothing.
+- [x] The playmat's help output mentions neither install nor skills.
+- [x] No code path in the binary copies skill files or edits a client's configuration.
 
-#### - [ ] Task: Turn the coaching skills into guides
+#### - [x] Task: Turn the coaching skills into guides
 **Id:** 037320c2-789b-47ff-8482-efac6dff36e3
 **Repo:** tcgreplay
 **Depends on:**
@@ -171,13 +171,13 @@ Move the six coaching skills into a new guides package compiled into the binary,
 *Technical detail:* [context.md#task-turn-the-coaching-skills-into-guides](./context.md#task-turn-the-coaching-skills-into-guides)
 
 **Acceptance criteria**:
-- [ ] There are exactly six guides, with the six agreed names, each with a one-line "use when" and the full workflow text of the skill it came from.
-- [ ] Asking the guides package for an unknown name gives an error that lists all six valid names.
-- [ ] Every guide that sends the assistant to another workflow names it by a guide name that exists, and no guide mentions a skill.
-- [ ] No guide contains "Claude" or "Nic ", tells the assistant to translate turn numbers, or gives a turn branch name without the seat.
-- [ ] The repo no longer holds any tcg skill, and Spektacular's skills are still reachable through this repo's `.claude/skills` and `.agents/skills` links.
+- [x] There are exactly six guides, with the six agreed names, each with a one-line "use when" and the full workflow text of the skill it came from.
+- [x] Asking the guides package for an unknown name gives an error that lists all six valid names.
+- [x] Every guide that sends the assistant to another workflow names it by a guide name that exists, and no guide mentions a skill.
+- [x] No guide contains "Claude" or "Nic ", tells the assistant to translate turn numbers, or gives a turn branch name without the seat.
+- [x] The repo no longer holds any tcg skill, and Spektacular's skills are still reachable through this repo's `.claude/skills` and `.agents/skills` links.
 
-#### - [ ] Task: Serve the guides through a guide tool and the connect instructions
+#### - [x] Task: Serve the guides through a guide tool and the connect instructions
 **Id:** 1bc3d818-e3fd-4ee2-912b-36feab56e842
 **Repo:** tcgreplay
 **Depends on:**
@@ -189,10 +189,10 @@ Add one `guide` tool to the MCP server: with no name it lists the guides with th
 *Technical detail:* [context.md#task-serve-the-guides-through-a-guide-tool-and-the-connect-instructions](./context.md#task-serve-the-guides-through-a-guide-tool-and-the-connect-instructions)
 
 **Acceptance criteria**:
-- [ ] A freshly connected assistant that calls `guide` with no name gets six entries, each with a name and a one-line "use when", in the agreed order.
-- [ ] Calling `guide` for `review-game` returns its full text, including how to find decision points and how to record findings; calling it for `tcg-review` returns an error that lists the six valid names.
-- [ ] The instructions a new connection receives, on desktop and hosted, list all six guides with their "use when" lines and tell the assistant to read a guide before starting that workflow, while staying about one line per guide.
-- [ ] A guide that names a tool or argument the playmat does not have fails the test suite.
+- [x] A freshly connected assistant that calls `guide` with no name gets six entries, each with a name and a one-line "use when", in the agreed order.
+- [x] Calling `guide` for `review-game` returns its full text, including how to find decision points and how to record findings; calling it for `tcg-review` returns an error that lists the six valid names.
+- [x] The instructions a new connection receives, on desktop and hosted, list all six guides with their "use when" lines and tell the assistant to read a guide before starting that workflow, while staying about one line per guide.
+- [x] A guide that names a tool or argument the playmat does not have fails the test suite.
 
 ### Milestone 2: Guides can be picked directly as prompts, identically on hosted and desktop
 
@@ -200,7 +200,7 @@ Add one `guide` tool to the MCP server: with no name it lists the guides with th
 
 **Validation point**: The prompt contract tests pass over both transports, and the hosted-vs-desktop comparison test passes. In Claude Code connected to the dev playmat, the six prompts are listed and the review prompt's text matches the review guide (manual check in the implementation test plan).
 
-#### - [ ] Task: Publish each guide as a server prompt
+#### - [x] Task: Publish each guide as a server prompt
 **Id:** 7c8c9968-624f-4ac1-bf68-6787f81f813d
 **Repo:** tcgreplay
 **Depends on:**
@@ -212,11 +212,11 @@ Register one MCP prompt per guide, named after the guide and described by its "u
 *Technical detail:* [context.md#task-publish-each-guide-as-a-server-prompt](./context.md#task-publish-each-guide-as-a-server-prompt)
 
 **Acceptance criteria**:
-- [ ] A connected client listing prompts sees six, named after the guides, each described by its "use when" line.
-- [ ] Choosing any prompt gives exactly the same text as reading that guide with the `guide` tool.
-- [ ] Clients that ignore prompts behave as before: tools and instructions are unchanged by the prompts' presence.
+- [x] A connected client listing prompts sees six, named after the guides, each described by its "use when" line.
+- [x] Choosing any prompt gives exactly the same text as reading that guide with the `guide` tool.
+- [x] Clients that ignore prompts behave as before: tools and instructions are unchanged by the prompts' presence.
 
-#### - [ ] Task: Prove hosted and desktop serve the same guides
+#### - [x] Task: Prove hosted and desktop serve the same guides
 **Id:** e1cf543a-876a-4c6b-8885-c416ef9604d2
 **Repo:** tcgreplay
 **Depends on:**
@@ -228,9 +228,9 @@ Add tests that connect to a signed-in hosted playmat and to a desktop playmat fr
 *Technical detail:* [context.md#task-prove-hosted-and-desktop-serve-the-same-guides](./context.md#task-prove-hosted-and-desktop-serve-the-same-guides)
 
 **Acceptance criteria**:
-- [ ] Listing the guides, reading each one and listing and choosing each prompt give identical results on the hosted and the desktop playmat.
-- [ ] The hosted instructions carry the same guide block as the desktop instructions, plus only the hosted board-link line.
-- [ ] A signed-in hosted account whose game calls are refused as busy can still list and read guides.
+- [x] Listing the guides, reading each one and listing and choosing each prompt give identical results on the hosted and the desktop playmat.
+- [x] The hosted instructions carry the same guide block as the desktop instructions, plus only the hosted board-link line.
+- [x] A signed-in hosted account whose game calls are refused as busy can still list and read guides.
 
 ### Milestone 3: Project docs and packaging describe guides instead of skills
 
@@ -238,7 +238,7 @@ Add tests that connect to a signed-in hosted playmat and to a desktop playmat fr
 
 **Validation point**: The Docker image still builds, with the guides compiled in. The design notes and the updated knowledge convention name guides and no longer mention `tcgreplay install` or tcg skills.
 
-#### - [ ] Task: Update the build context and design notes for guides
+#### - [x] Task: Update the build context and design notes for guides
 **Id:** 0ef9f2ba-7cde-4625-8020-a338d2aefdb7
 **Repo:** tcgreplay
 **Depends on:**
@@ -250,10 +250,10 @@ The Docker ignore rules say embedded skills must stay in the image build. Now th
 *Technical detail:* [context.md#task-update-the-build-context-and-design-notes-for-guides](./context.md#task-update-the-build-context-and-design-notes-for-guides)
 
 **Acceptance criteria**:
-- [ ] The container image still builds with the guides compiled in, and no longer receives the skills folder.
-- [ ] The design notes describe the guides and how they reach an assistant, and no longer mention `tcgreplay install` or tcg skills.
+- [x] The container image still builds with the guides compiled in, and no longer receives the skills folder.
+- [x] The design notes describe the guides and how they reach an assistant, and no longer mention `tcgreplay install` or tcg skills.
 
-#### - [ ] Task: Update the skill text and packaging convention for guides
+#### - [x] Task: Update the skill text and packaging convention for guides
 **Id:** a253ae02-d25c-4cc5-b449-d281a76eea2a
 **Repo:** tcgreplay
 **Depends on:**
@@ -265,8 +265,8 @@ The project convention *Skill text and packaging* tells future work never to wri
 *Technical detail:* [context.md#task-update-the-skill-text-and-packaging-convention-for-guides](./context.md#task-update-the-skill-text-and-packaging-convention-for-guides)
 
 **Acceptance criteria**:
-- [ ] The convention names the guides and the test that enforces it, and no longer refers to tcg skills or their embedding.
-- [ ] The user confirmed the new wording before it was written.
+- [x] The convention names the guides and the test that enforces it, and no longer refers to tcg skills or their embedding.
+- [x] The user confirmed the new wording before it was written.
 
 ## Open Questions
 
@@ -283,3 +283,100 @@ The project convention *Skill text and packaging* tells future work never to wri
 - **The Makefile's `install` target.** It installs the binary itself, is not the removed subcommand, and stays.
 - **Serving guides as MCP resources.** The spec asks for a tool plus prompts; resources were considered and rejected (see research).
 
+
+## Changelog
+
+### 2026-10-20 — Task: Remove the install command
+
+**What was done**: Deleted the `install` subcommand and its tests. `main` no longer dispatches subcommands: after `flag.Parse()` it refuses any leftover argument with `unknown command "<word>"`, the usage text and exit status 2, before logging or any mode starts. The package doc no longer mentions install or skills.
+
+**Deviations**: None. The tests also cover a third stray word (`serve`) and assert that the `-data` directory is never created, as evidence that nothing started.
+
+**Files changed**:
+- `cmd/tcgreplay/install.go` (deleted)
+- `cmd/tcgreplay/install_test.go` (deleted)
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/main_test.go` (new: `TestMainHelper` re-exec helper, `TestUnknownCommandRefused`, `TestHelpOmitsInstall`)
+
+**Discoveries**: Go's `flag` package stops at the first non-flag argument, so flags after a stray word (`install -client claude`) are left as positional args; the refusal therefore has to look at `flag.NArg()`, not at unknown flags. A test helper must not be named `TestMain`, which Go reserves. `skills/skills.go` has no importer left until the next task deletes it.
+
+### 2026-10-20 — Task: Turn the coaching skills into guides
+
+**What was done**: Moved the six coaching skills with `git mv` from `skills/tcg-<x>/SKILL.md` to `internal/guides/<x>.md`, renamed them (`import-game`, `opponent-deck`, `review-game`, `replay-drill`, `before-you-move`, `numbers-drill`), cut each description to a single-line "Use when …", and replaced the skill wording in the bodies with guide names. New package `internal/guides` embeds them and offers `List()` in the fixed order and `Get(name)`, whose error lists the six names. The skills package's Go files are deleted, so `skills/` holds only Spektacular's skills.
+
+**Deviations**: None. The body diff against the old skills is exactly the seven wording changes the plan listed.
+
+**Files changed**:
+- `internal/guides/import-game.md` (moved from `skills/tcg-import-game/SKILL.md`)
+- `internal/guides/opponent-deck.md` (moved from `skills/tcg-opponent-deck/SKILL.md`)
+- `internal/guides/review-game.md` (moved from `skills/tcg-review-game/SKILL.md`)
+- `internal/guides/replay-drill.md` (moved from `skills/tcg-replay-drill/SKILL.md`)
+- `internal/guides/before-you-move.md` (moved from `skills/tcg-before-you-move/SKILL.md`)
+- `internal/guides/numbers-drill.md` (moved from `skills/tcg-numbers-drill/SKILL.md`)
+- `internal/guides/guides.go` (new)
+- `internal/guides/guides_test.go` (new: ported format, word-ban, removed-tools and turn-numbering checks; no "skill"/`tcg-`; cross-references resolve; order; `Get` text and unknown-name error; anchor phrases per guide; no tcg skills left and the spek skills still reachable through `.claude/skills` and `.agents/skills`)
+- `skills/skills.go` (deleted)
+- `skills/skills_test.go` (deleted)
+
+**Discoveries**: `guides.go` panics at package init on a malformed guide or one missing from the order, so a bad guide file fails every importer's tests, not just the guides package's. Cross-references are only detected in the form "the `<name>` guide"; a bare backticked hyphenated word is not treated as a reference, because finding categories such as `prize-trade` look the same.
+
+### 2026-10-20 — Task: Serve the guides through a guide tool and the connect instructions
+
+**What was done**: Added a `guide` tool to the MCP server. With no name it returns the six guides as a JSON list of name and "use when"; with a name it returns the guide's text; an unknown name is a tool error listing the six names. It is registered with `mcp.AddTool` beside `add`, so it never binds to a game and works even when a hosted account is refused as busy. The connect instructions now end with a guide block generated from the guide list (one "read its guide first" line, then one line per guide), placed before the hosted board-link line.
+
+**Deviations**: The plan's `text(...)` helper does not exist, so the unknown-name error result is built inline the way `add` builds its errors. `add`'s doc comment no longer says every tool goes through it, and points at `registerGuides`.
+
+**Files changed**:
+- `internal/mcpserver/guides.go` (new)
+- `internal/mcpserver/server.go`
+- `internal/mcpserver/guides_test.go` (new: list, read, unknown name, instructions on desktop and hosted, every snake_case word in a guide is a real tool or argument (with a self-test), guide works when `Resolve` always fails)
+- `internal/mcpserver/server_test.go` (instructions assertions include the guide block; hosted asserts the block sits before the board line)
+
+**Discoveries**: The open question resolved cleanly: every snake_case word in the six guides is a live tool name or input property, so the only allowlist entry is the record marker `tcgreplay_record`. The client sees each tool's `InputSchema` as `any`, so the check re-marshals it to read `properties`.
+
+### 2026-10-20 — Task: Publish each guide as a server prompt
+
+**What was done**: `registerGuides` now also adds one MCP prompt per guide, named after it and described by its "use when" line, with no arguments. Getting a prompt returns one `user` message holding exactly the guide's text, the same text the `guide` tool returns. Adding prompts makes the server advertise the prompts capability; the tools and instructions are unchanged.
+
+**Deviations**: None.
+
+**Files changed**:
+- `internal/mcpserver/guides.go`
+- `internal/mcpserver/guides_test.go` (prompts capability advertised; six prompts with guide names and descriptions; each prompt's text equals the `guide` tool's text; an unknown prompt name is an error; prompts add no tools)
+
+**Discoveries**: None.
+
+### 2026-10-20 — Task: Prove hosted and desktop serve the same guides
+
+**What was done**: Added `TestHostedGuidesMatchDesktop`, which connects to a signed-in hosted playmat and a desktop playmat from the same build. It checks that both give the same guide list, the same text for every guide, the same prompt descriptions and the same prompt texts. It also checks that the hosted instructions are the desktop instructions plus exactly one board-link line. `TestHostedFreedPlaceToldBusy` now checks that an account refused as busy can still list and read guides, at both points in the scenario where a game call is refused.
+
+**Deviations**: The busy scenario's second clock advance is split around a guide call by the account holding the place. This also proves that reading a guide is not game activity, because that account's game still expires on time. No production code changed.
+
+**Files changed**:
+- `cmd/tcgreplay/guides_test.go` (new)
+- `cmd/tcgreplay/hosted_places_test.go`
+
+**Discoveries**: None.
+
+### 2026-10-20 — Task: Update the build context and design notes for guides
+
+**What was done**: `.dockerignore` now excludes the whole `skills` folder, which holds only Spektacular's skills, and its comment says the guides in `internal/guides` stay in the build. The design notes' "Skills (any assistant)" paragraph is replaced by a "Guides (any assistant)" paragraph. It names the six guides, explains how they reach every client (the `guide` tool, one prompt per guide, and one line per guide in the server instructions), describes the text checks, and says clients register the playmat with their own tools. "MCP prompts" is dropped from the "Later" list.
+
+**Deviations**: None. The image was verified with a local build (the `docker` CLI here is podman): the binary in the image contains the guide text, for example "Ask before judging". The throwaway image was removed.
+
+**Files changed**:
+- `.dockerignore`
+- `TCG Review Playmat Design and Build Plan.md`
+
+**Discoveries**: None.
+
+### 2026-10-20 — Task: Update the skill text and packaging convention for guides
+
+**What was done**: Rewrote the repo-tier knowledge convention `conventions/skills-text-and-packaging.md` (store `tcgreplay`) through `spek-knowledge`, after the user confirmed the wording. It is now titled "Guide text and packaging" and says never to write "Claude" or "Nic " in an `internal/guides` guide (enforced by `internal/guides/guides_test.go`), and never to exclude `internal/guides` from a build context (embedded by `internal/guides/guides.go` with `//go:embed *.md`). Tags are now `[guides, testing, build, conventions]`.
+
+**Deviations**: The user chose to keep the existing path rather than moving the entry to `conventions/guide-text-and-packaging.md`.
+
+**Files changed**:
+- `tcgreplay` knowledge store (repo tier): `conventions/skills-text-and-packaging.md`
+
+**Discoveries**: `conventions` entries are always applied and never searched, so the CLI reports their tags as unreachable. The old entry's tags had the same property, so they were kept as they were.
