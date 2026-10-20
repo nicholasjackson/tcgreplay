@@ -1,24 +1,21 @@
-# Working context: guide-tool spec
+# Working context: plan for 20261020081616-39b3e658-guide-tool
 
-## Problem
-The coaching workflows (tcg-import-game, tcg-opponent-deck, tcg-review-game, tcg-replay-drill, tcg-before-you-move, tcg-numbers-drill) only reach an assistant if they are installed as Agent Skills: `tcgreplay install` copies them from the binary (`skills.FS`, `//go:embed tcg-*`) into the client's skills dir (Claude `.claude/skills`, Codex `.agents/skills`, Gemini `.gemini/skills`). claude.ai users must upload them by hand, and installed copies go stale (e.g. the turn-numbering change needed a re-upload). The user asked: "how can connecting an llm to tcg replay teach it how to use it without needing to install skills?" — and then: "I really like the idea of the guide tool", "I would like to get rid of the skills so let's see if we can build a guide tool".
+## Decisions / answers
+- User chose to plan the guide-tool spec (2026-10-20).
 
-## Direction discussed (assistant's proposal, user liked the guide tool)
-- A `guide` MCP tool: lists the guides and returns one by name, served from the text already embedded in the binary. Works in every MCP client because every client supports tools.
-- One line in the server instructions saying guides exist and when to read them.
-- Next-step hints in tool results (e.g. import_log result points at the review guide).
-- Possibly the same text as MCP prompts (clients like Claude Code surface them as commands) — offered as optional.
-- Server instructions are injected every turn, so they should stay short; the full guide text is fetched on demand.
+## Carried from spec session
+- Guide names: import-game, opponent-deck, review-game, replay-drill, before-you-move, numbers-drill.
+- Delete skills/tcg-* outright; remove `tcgreplay install` entirely; players delete installed copies by hand.
+- Discovery via server instructions (one line per guide) + MCP prompts; no next-step hints in tool results.
+- `.claude/skills` and `.agents/skills` in this repo are symlinks to `skills/`, which also holds spek-* skills (must keep working).
+- `skills/skills_test.go` enforces format and "Claude"/"Nic " bans for tcg skills — move to guides.
 
-## Facts
-- Skills total ~4,100 words across six SKILL.md files; skills cross-reference each other by name ("offer to review it first with tcg-review-game").
-- `skills/skills_test.go` enforces format and that tcg skills never mention "Claude" or "Nic ".
-- `.claude/skills` and `.agents/skills` in this repo are symlinks to `skills/` (also holds spek-* skills for Spektacular, which are out of scope).
-- Live hosted instance: https://tcgreplay.demo.gs (MCP at /mcp, Google OAuth); also desktop daemon via `tcgreplay install`.
-
-## Interview answers (2026-10-20)
-- Spec name: guide-tool; no epic.
-- Delete skills/tcg-* outright; guides in a new home/format. Remove `tcgreplay install` entirely ("get rid of install too, I can manually delete").
-- Discovery: server-instructions list + MCP prompts. No result hints. Assistant-only audience. Same six workflows, same content.
-- User (2026-10-20): "just create the spec and accept the reviewers comments" — draft remaining sections without asking, apply reviewer findings.
-- Spec stored after reviewer fixes (guide names: import-game, opponent-deck, review-game, replay-drill, before-you-move, numbers-drill).
+## Learnings
+- Discovery done: guides go in `internal/guides` (embed *.md); `guide` tool registered without `bind` (no hosted place needed); prompts via go-sdk AddPrompt in `internal/mcpserver`; shim relays raw JSON-RPC so prompts work on desktop.
+- Removing install needs main.go to refuse leftover positional args, else `tcgreplay install` silently starts the shim.
+- Knowledge convention `conventions/skills-text-and-packaging.md` must be updated to guides (needs user confirmation via spek-knowledge at implement time).
+- `TCG Review Playmat Design and Build Plan.md:298` describes skills/install; update it.
+- Drafting steps through out_of_scope done (2026-10-20); all section working files are in `.spektacular/work/20261020081616-39b3e658-guide-tool/`. 7 tasks across 3 milestones; task ids from `plan task-id`.
+- Assembled and staged plan/context/research to .spektacular/tmp/20261020081616-39b3e658-guide-tool/.
+- All three plan documents committed; working dir removed; now in walkthrough.
+- User signed off the walkthrough (2026-10-20); no changes requested.
