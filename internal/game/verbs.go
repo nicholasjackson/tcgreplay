@@ -158,7 +158,7 @@ func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 	// Even in review mode, where the turn lock is lifted, only the turn
 	// in progress can end.
 	if g.st.Phase == state.PhasePlaying && g.st.TurnOpen && g.st.Current != seat {
-		return nil, fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, g.st.Turn, seat)
+		return nil, fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, state.Round(g.st.Turn), seat)
 	}
 	g.open = nil
 	res, err := g.runLocked(seat, actor, actionSpec{label: "End turn", kind: "turn"}, func(t *tx) error {
@@ -168,7 +168,7 @@ func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 		return nil, err
 	}
 	next := seat.Other()
-	label := fmt.Sprintf("Turn %d", g.st.Turn+1)
+	label := fmt.Sprintf("Turn %d", state.Round(g.st.Turn+1))
 	res2, err := g.runLocked(next, state.ActorSystem, actionSpec{label: label, kind: "turn", anyTurn: true}, func(t *tx) error {
 		if err := t.emit(next, state.EvTurn, state.TurnPayload{Phase: "start", Number: t.st.Turn + 1}); err != nil {
 			return err
@@ -567,13 +567,24 @@ func (g *Game) Reveal(seat state.Seat, actor state.Actor, iids []state.IID) (*Re
 	})
 }
 
-// AddEffect records a lingering effect on target seat.
-func (g *Game) AddEffect(seat state.Seat, actor state.Actor, text string, target state.Seat, source state.IID, untilTurn int) (*Result, error) {
+// AddEffect records a lingering effect on target seat. It expires at the
+// end of untilSeat's half of combined turn untilTurn; 0 lasts until removed.
+func (g *Game) AddEffect(seat state.Seat, actor state.Actor, text string, target state.Seat, source state.IID, untilTurn int, untilSeat state.Seat) (*Result, error) {
+	if untilTurn != 0 && untilSeat == "" {
+		return nil, fmt.Errorf("until_turn needs until_seat: the seat whose turn the effect ends on")
+	}
 	return g.run(seat, actor, actionSpec{label: "Effect: " + text, kind: "effect"}, func(t *tx) error {
+		until := 0
+		if untilTurn != 0 {
+			var err error
+			if until, err = t.st.TurnOf(untilTurn, untilSeat); err != nil {
+				return err
+			}
+		}
 		id := fmt.Sprintf("e-%d", t.g.log.NextID())
 		t.data = id
 		return t.emit(seat, state.EvEffect, state.EffectPayload{Op: "add", Effect: state.Effect{
-			ID: id, Text: text, Seat: target, Source: source, UntilTurn: untilTurn,
+			ID: id, Text: text, Seat: target, Source: source, UntilTurn: until,
 		}})
 	})
 }

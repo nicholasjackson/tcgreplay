@@ -45,6 +45,7 @@ type args struct {
 	Until     int      `json:"until,omitempty"`
 	Text      string   `json:"text,omitempty"`
 	UntilTurn int      `json:"until_turn,omitempty"`
+	UntilSeat string   `json:"until_seat,omitempty"`
 	Reveal    bool     `json:"reveal,omitempty"`
 }
 
@@ -249,7 +250,7 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 	case "reveal":
 		r, err = g.Reveal(seat, human, ids(a.IIDs))
 	case "add_effect":
-		r, err = g.AddEffect(seat, human, a.Text, seatOf(a.Whose, seat.Other()), state.IID(a.IID), a.UntilTurn)
+		r, err = g.AddEffect(seat, human, a.Text, seatOf(a.Whose, seat.Other()), state.IID(a.IID), a.UntilTurn, state.Seat(a.UntilSeat))
 	case "remove_effect":
 		r, err = g.RemoveEffect(seat, human, a.Name)
 	case "end_turn":
@@ -258,8 +259,8 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 			// Hand the turn to Claude; in review either side is played here.
 			st := g.State()
 			r.Data = map[string]any{"prompt": fmt.Sprintf(
-				"Your turn in tcgreplay (game %s, branch %s). Call get_log since %d and play turn %d.",
-				g.ID, g.Branch(), since, st.Turn)}
+				"Your turn in tcgreplay (game %s, branch %s). Call get_log since %d and play turn %d (%s's turn).",
+				g.ID, g.Branch(), since, state.Round(st.Turn), st.Current)}
 		}
 	default:
 		return nil, nil, fmt.Errorf("unknown verb %q", req.Verb)

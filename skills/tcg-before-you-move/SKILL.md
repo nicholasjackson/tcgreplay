@@ -10,7 +10,7 @@ Most lost games contain a turn where the player acted before answering three que
 ## Choose a position
 
 - Use the game open on the playmat: its current head, or ask which turn. Turns where the player was about to act with several options are best; turns with a recorded `Finding (` are good choices. If no game is open, ask the player to import one (a battle log, or a game record they saved) and stop.
-- `rewind` to the start of that turn on a branch named `bym-t<N>`. Describe the position from the player's side (view `coach`): both boards with HP and damage, Tools, Energy, the player's hand, prizes each side, the Stadium.
+- `rewind` to the start of that turn on a branch named `bym-t<N>-<seat>` (the turn and the player whose turn it is, e.g. `bym-t3-p1`). Name the turn as the timeline does, counting both players: "turn 3, your turn". Describe the position from the player's side (view `coach`): both boards with HP and damage, Tools, Energy, the player's hand, prizes each side, the Stadium.
 
 ## The three questions
 

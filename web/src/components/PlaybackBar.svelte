@@ -6,6 +6,12 @@
   const r = $derived(app.replay);
   const held = $derived(app.held ? heldMoves() : 0);
   const current = $derived(r && r.index >= 0 ? r.steps[r.index] : null);
+  // The turn the step is in, counting both players, and whose half it is.
+  function turnOf(board) {
+    if (!board.turn) return 'Setup';
+    const name = board.sides?.[board.current]?.name || (board.current === app.human ? 'You' : app.assistant);
+    return `T${board.turn} · ${name}`;
+  }
 </script>
 
 {#if r || held}
@@ -27,7 +33,7 @@
         oninput={(ev) => seek(Number(ev.target.value))}
         aria-label="Position"
       />
-      <span class="pos">{r.index + 1} / {r.steps.length}{#if current} · T{current.board.turn}{/if}</span>
+      <span class="pos">{r.index + 1} / {r.steps.length}{#if current} · {turnOf(current.board)}{/if}</span>
       <button onclick={goLive} title="Back to the latest position">Live ⏭</button>
     {:else}
       <span class="msg">{held} new {held === 1 ? 'move' : 'moves'} from {app.assistant}</span>

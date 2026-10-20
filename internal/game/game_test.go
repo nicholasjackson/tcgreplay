@@ -364,7 +364,7 @@ func TestStadiumReplacesAndEffectsExpire(t *testing.T) {
 	must(t)(g.PlaceActive(state.P2, cl, "p2-1"))
 	must(t)(g.StartGame(state.P1, hu))
 	must(t)(g.PlayTrainer(state.P1, hu, "p1-17"))
-	must(t)(g.AddEffect(state.P1, hu, "Items locked", state.P2, "p1-1", 2))
+	must(t)(g.AddEffect(state.P1, hu, "Items locked", state.P2, "p1-1", 1, state.P2))
 	must(t)(g.EndTurn(state.P1, hu))
 	if n := len(g.State().Effects); n != 1 {
 		t.Fatalf("effect expired early: %d", n)
@@ -483,5 +483,505 @@ func TestJoiningFollowsCardText(t *testing.T) {
 	tr := must(t)(g.PlayTrainer(state.P1, hu, iono))
 	if d := must(t)(g.Draw(state.P2, hu, 1)); d.ActionID != tr.ActionID {
 		t.Fatalf("the opponent's Iono draw did not join it")
+	}
+}
+
+// startedGame places an Active for each seat and starts the game with p1
+// going first.
+func startedGame(t *testing.T) *Game {
+	t.Helper()
+	_, g := newTestGame(t)
+	hu, cl := state.ActorHuman, state.ActorClaude
+	if l, _ := g.State().Find("p1-1"); l.Zone != state.Hand {
+		must(t)(g.Move(state.P1, hu, "p1-1", state.Loc{Zone: state.Hand}, "", ""))
+	}
+	if l, _ := g.State().Find("p2-1"); l.Zone != state.Hand {
+		must(t)(g.Move(state.P2, cl, "p2-1", state.Loc{Zone: state.Hand}, "", ""))
+	}
+	must(t)(g.PlaceActive(state.P1, hu, "p1-1"))
+	must(t)(g.PlaceActive(state.P2, cl, "p2-1"))
+	must(t)(g.StartGame(state.P1, hu))
+	return g
+}
+
+// The board counts turns the way players do: each player's Nth turn is
+// turn N, while the stored state keeps counting one turn per player.
+func TestBoardViewShowsCombinedTurn(t *testing.T) {
+	g := startedGame(t)
+	hu, cl := state.ActorHuman, state.ActorClaude
+	check := func(stored, shown int, current state.Seat) {
+		t.Helper()
+		if st := g.State(); st.Turn != stored || st.Current != current {
+			t.Fatalf("stored turn %d current %s, want %d %s", st.Turn, st.Current, stored, current)
+		}
+		for _, viewer := range state.Seats {
+			v, err := g.View(viewer, "test", "test")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if v.Turn != shown || v.Current != current {
+				t.Fatalf("%s sees turn %d current %s, want %d %s", viewer, v.Turn, v.Current, shown, current)
+			}
+		}
+	}
+	check(1, 1, state.P1)
+	must(t)(g.EndTurn(state.P1, hu))
+	check(2, 1, state.P2) // the second player's first turn
+	must(t)(g.EndTurn(state.P2, cl))
+	check(3, 2, state.P1) // the first player's second turn
+	must(t)(g.EndTurn(state.P1, hu))
+	check(4, 2, state.P2)
+}
+
+// An effect's end turn is shown as the combined turn plus the player whose
+// turn it ends on; the stored effect keeps the per-player turn.
+func TestBoardViewShowsEffectEndAsCombinedTurn(t *testing.T) {
+	g := startedGame(t)
+	hu := state.ActorHuman
+	// Ends on p2's second turn: per-player turn 4 with p1 going first.
+	must(t)(g.AddEffect(state.P1, hu, "Items locked", state.P2, "p1-1", 2, state.P2))
+	must(t)(g.AddEffect(state.P1, hu, "Until removed", state.P2, "p1-1", 0, ""))
+
+	st := g.State()
+	if len(st.Effects) != 2 {
+		t.Fatalf("stored effects %+v", st.Effects)
+	}
+	if st.Effects[0].UntilTurn != 4 {
+		t.Fatalf("stored until turn %d, want 4", st.Effects[0].UntilTurn)
+	}
+	if st.Effects[1].UntilTurn != 0 {
+		t.Fatalf("stored until turn %d, want 0", st.Effects[1].UntilTurn)
+	}
+
+	v, err := g.View(state.P1, "test", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(v.Effects) != 2 {
+		t.Fatalf("view effects %+v", v.Effects)
+	}
+	e := v.Effects[0]
+	if e.UntilTurn != 2 || e.UntilSeat != state.P2 {
+		t.Fatalf("view effect until turn %d seat %q, want 2 p2", e.UntilTurn, e.UntilSeat)
+	}
+	if e.ID != st.Effects[0].ID || e.Text != "Items locked" || e.Seat != state.P2 || e.Source != "p1-1" {
+		t.Fatalf("view effect fields not copied: %+v", e)
+	}
+	if e := v.Effects[1]; e.UntilTurn != 0 || e.UntilSeat != "" {
+		t.Fatalf("lasting effect shows until turn %d seat %q, want 0 and none", e.UntilTurn, e.UntilSeat)
+	}
+	b, err := json.Marshal(v.Effects[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"until_turn":2`, `"until_seat":"p2"`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("effect JSON %s lacks %s", b, want)
+		}
+	}
+
+	// Projecting must not rewrite the stored effect.
+	if got := g.State().Effects[0].UntilTurn; got != 4 {
+		t.Fatalf("stored until turn after view %d, want 4", got)
+	}
+}
+
+// tenTurnGame plays ten player turns, five each with p1 going first,
+// leaving p2's fifth turn open. On the way it branches "alt" from the start
+// of p1's third turn (per-player turn 5).
+func tenTurnGame(t *testing.T) *Game {
+	t.Helper()
+	g := startedGame(t)
+	hu, cl := state.ActorHuman, state.ActorClaude
+	actor := map[state.Seat]state.Actor{state.P1: hu, state.P2: cl}
+	altHead := 0
+	for i := 0; i < 9; i++ {
+		must(t)(g.EndTurn(g.State().Current, actor[g.State().Current]))
+		if g.State().Turn == 5 {
+			altHead = g.Head()
+		}
+	}
+	if st := g.State(); st.Turn != 10 || st.Current != state.P2 {
+		t.Fatalf("stored turn %d current %s, want 10 p2", st.Turn, st.Current)
+	}
+	mainHead := g.Head()
+	if name, err := g.Rewind(altHead, "alt"); err != nil || name != "alt" {
+		t.Fatalf("branching: %q %v", name, err)
+	}
+	if err := g.Checkout(store.MainBranch); err != nil {
+		t.Fatal(err)
+	}
+	if g.Head() != mainHead {
+		t.Fatalf("main head %d, want %d", g.Head(), mainHead)
+	}
+	return g
+}
+
+// combinedTurns maps each per-player turn of tenTurnGame to the turn and
+// seat shown for it.
+var combinedTurns = map[int]struct {
+	turn int
+	seat string
+}{
+	1: {1, "p1"}, 2: {1, "p2"}, 3: {2, "p1"}, 4: {2, "p2"}, 5: {3, "p1"},
+	6: {3, "p2"}, 7: {4, "p1"}, 8: {4, "p2"}, 9: {5, "p1"}, 10: {5, "p2"},
+}
+
+// checkCombinedLog checks every line shows the combined turn and the seat
+// of the per-player turn its event was stored in.
+func checkCombinedLog(t *testing.T, g *Game, where string, lines []LogLine) {
+	t.Helper()
+	if len(lines) == 0 {
+		t.Fatalf("%s: empty log", where)
+	}
+	maxTurn, setup := 0, 0
+	seen := map[int]bool{}
+	for _, l := range lines {
+		e := g.log.Event(l.ID)
+		if e == nil {
+			t.Fatalf("%s: line %d has no event", where, l.ID)
+		}
+		if e.Turn == 0 {
+			setup++
+			if l.Turn != 0 || l.TurnSeat != "" {
+				t.Errorf("%s: setup line %v shows turn %d seat %q", where, l, l.Turn, l.TurnSeat)
+			}
+			continue
+		}
+		want, ok := combinedTurns[e.Turn]
+		if !ok {
+			t.Fatalf("%s: line %d stored in unexpected turn %d", where, l.ID, e.Turn)
+		}
+		seen[e.Turn] = true
+		if l.Turn != want.turn || l.TurnSeat != want.seat {
+			t.Errorf("%s: line %v (per-player turn %d) shows turn %d %q, want %d %q",
+				where, l, e.Turn, l.Turn, l.TurnSeat, want.turn, want.seat)
+		}
+		maxTurn = max(maxTurn, l.Turn)
+	}
+	if maxTurn != 5 {
+		t.Errorf("%s: highest turn %d, want 5", where, maxTurn)
+	}
+	if setup == 0 {
+		t.Errorf("%s: no setup lines", where)
+	}
+	if len(seen) != 10 {
+		t.Errorf("%s: lines cover per-player turns %v, want all ten", where, seen)
+	}
+}
+
+// The log, the playmat's log and the branch list count turns the way
+// players do and name the player whose turn it is.
+func TestLogAndBranchesShowCombinedTurn(t *testing.T) {
+	g := tenTurnGame(t)
+	lines, err := g.Log(0, "", "test", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkCombinedLog(t, g, "get_log", lines)
+
+	// Concrete values for the first three per-player turns.
+	firstOf := map[int]LogLine{}
+	for _, l := range lines {
+		if e := g.log.Event(l.ID); e.Turn > 0 {
+			if _, ok := firstOf[e.Turn]; !ok {
+				firstOf[e.Turn] = l
+			}
+		}
+	}
+	for perPlayer, want := range map[int]struct {
+		turn int
+		seat string
+	}{1: {1, "p1"}, 2: {1, "p2"}, 3: {2, "p1"}} {
+		if l := firstOf[perPlayer]; l.Turn != want.turn || l.TurnSeat != want.seat {
+			t.Errorf("per-player turn %d line %v shows %d %q, want %d %q", perPlayer, l, l.Turn, l.TurnSeat, want.turn, want.seat)
+		}
+	}
+
+	snap, err := g.UISnapshot(state.P1, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snap.Log) != len(lines) {
+		t.Fatalf("playmat log has %d lines, get_log %d", len(snap.Log), len(lines))
+	}
+	checkCombinedLog(t, g, "playmat", snap.Log)
+
+	wantBranches := map[string]struct {
+		turn int
+		seat string
+	}{store.MainBranch: {5, "p2"}, "alt": {3, "p1"}}
+	for where, branches := range map[string][]BranchInfo{"list_branches": g.Branches(), "playmat": snap.Branches} {
+		got := map[string]bool{}
+		for _, b := range branches {
+			if b.Turn > 5 {
+				t.Errorf("%s: branch %s shows turn %d", where, b.Name, b.Turn)
+			}
+			want, ok := wantBranches[b.Name]
+			if !ok {
+				continue
+			}
+			got[b.Name] = true
+			if b.Turn != want.turn || b.TurnSeat != want.seat {
+				t.Errorf("%s: branch %s shows turn %d %q, want %d %q", where, b.Name, b.Turn, b.TurnSeat, want.turn, want.seat)
+			}
+		}
+		if len(got) != len(wantBranches) {
+			t.Errorf("%s: branches %+v lack main or alt", where, branches)
+		}
+	}
+	b, err := json.Marshal(g.Branches())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"turn":5,"turn_seat":"p2"`) {
+		t.Errorf("branch JSON %s lacks main's turn and seat", b)
+	}
+}
+
+// Turn events read as the combined turn and the seat, and the action that
+// starts a turn is labelled with the combined turn.
+func TestTurnEventsReadAsCombinedTurn(t *testing.T) {
+	g := tenTurnGame(t)
+	lines, err := g.Log(0, "", "test", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var starts, ends []string
+	var third *LogLine
+	for i, l := range lines {
+		switch {
+		case strings.HasPrefix(l.Text, "turn ") && strings.Contains(l.Text, " start "):
+			starts = append(starts, l.Text)
+		case strings.HasPrefix(l.Text, "turn ") && strings.Contains(l.Text, " end "):
+			ends = append(ends, l.Text)
+		}
+		if l.Text == "turn 3 start (p2)" {
+			third = &lines[i]
+		}
+	}
+	wantStarts := []string{
+		"turn 1 start (p1)", "turn 1 start (p2)", "turn 2 start (p1)", "turn 2 start (p2)", "turn 3 start (p1)",
+		"turn 3 start (p2)", "turn 4 start (p1)", "turn 4 start (p2)", "turn 5 start (p1)", "turn 5 start (p2)",
+	}
+	if !slices.Equal(starts, wantStarts) {
+		t.Errorf("turn starts\n  %q\nwant\n  %q", starts, wantStarts)
+	}
+	wantEnds := []string{
+		"turn 1 end (p1)", "turn 1 end (p2)", "turn 2 end (p1)", "turn 2 end (p2)", "turn 3 end (p1)",
+		"turn 3 end (p2)", "turn 4 end (p1)", "turn 4 end (p2)", "turn 5 end (p1)",
+	}
+	if !slices.Equal(ends, wantEnds) {
+		t.Errorf("turn ends\n  %q\nwant\n  %q", ends, wantEnds)
+	}
+
+	// The second player's third turn.
+	if third == nil {
+		t.Fatal("no line reads turn 3 start (p2)")
+	}
+	if third.Turn != 3 || third.TurnSeat != "p2" || third.Label != "Turn 3" {
+		t.Errorf("line %+v, want turn 3, seat p2, label Turn 3", *third)
+	}
+	s := third.String()
+	for _, want := range []string{"T3 p2", "Turn 3]", "turn 3 start (p2)"} {
+		if !strings.Contains(s, want) {
+			t.Errorf("String() %q lacks %q", s, want)
+		}
+	}
+	b, err := json.Marshal(*third)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"turn":3,"turn_seat":"p2"`) {
+		t.Errorf("line JSON %s lacks the turn and seat", b)
+	}
+
+	// Setup lines name no seat.
+	setup := lines[0]
+	if g.log.Event(setup.ID).Turn != 0 {
+		t.Fatalf("first line %v is not setup", setup)
+	}
+	if s := setup.String(); !strings.HasPrefix(s, fmt.Sprintf("#%d T0 ", setup.ID)) || strings.Contains(s, "T0 p") {
+		t.Errorf("setup line String() %q", s)
+	}
+}
+
+// An effect's end is described as the combined turn and the seat it ends on.
+func TestLogDescribesEffectEndAsCombinedTurn(t *testing.T) {
+	g := startedGame(t)
+	// Per-player turn 4 with p1 going first is p2's second turn.
+	must(t)(g.AddEffect(state.P1, state.ActorHuman, "Items locked", state.P2, "p1-1", 2, state.P2))
+	lines, err := g.Log(0, "", "test", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	last := lines[len(lines)-1]
+	if !strings.Contains(last.Text, "Items locked (until end of turn 2 (p2))") {
+		t.Errorf("effect line %q lacks until end of turn 2 (p2)", last.Text)
+	}
+	if last.Turn != 1 || last.TurnSeat != "p1" {
+		t.Errorf("effect line shows turn %d %q, want 1 p1", last.Turn, last.TurnSeat)
+	}
+}
+
+// An effect that ends on the second player's turn 4 lasts through the first
+// player's turn 4 and ends with the second player's.
+func TestEffectEndsOnNamedPlayersTurn(t *testing.T) {
+	g := startedGame(t)
+	hu, cl := state.ActorHuman, state.ActorClaude
+	actor := map[state.Seat]state.Actor{state.P1: hu, state.P2: cl}
+	must(t)(g.AddEffect(state.P1, hu, "Items locked", state.P2, "p1-1", 4, state.P2))
+	if got := g.State().Effects[0].UntilTurn; got != 8 {
+		t.Fatalf("stored until turn %d, want 8 (p2's turn 4 with p1 first)", got)
+	}
+	lines, err := g.Log(0, "", "test", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if last := lines[len(lines)-1]; !strings.Contains(last.Text, "until end of turn 4 (p2)") {
+		t.Errorf("effect line %q lacks until end of turn 4 (p2)", last.Text)
+	}
+
+	// End every turn up to and including p1's turn 4 (per-player turn 7).
+	for g.State().Turn < 8 {
+		st := g.State()
+		if len(st.Effects) != 1 {
+			t.Fatalf("effect gone during turn %d (%s): %+v", state.Round(st.Turn), st.Current, st.Effects)
+		}
+		must(t)(g.EndTurn(st.Current, actor[st.Current]))
+	}
+	st := g.State()
+	if st.Turn != 8 || st.Current != state.P2 {
+		t.Fatalf("stored turn %d current %s, want 8 p2", st.Turn, st.Current)
+	}
+	if len(st.Effects) != 1 {
+		t.Fatalf("effect gone after p1's turn 4 ended: %+v", st.Effects)
+	}
+	must(t)(g.EndTurn(state.P2, cl))
+	if n := len(g.State().Effects); n != 0 {
+		t.Fatalf("effect still on the board after p2's turn 4 ended: %+v", g.State().Effects)
+	}
+}
+
+// An end turn without the seat it ends on is ambiguous and refused.
+func TestEffectEndTurnNeedsSeat(t *testing.T) {
+	g := startedGame(t)
+	head := g.Head()
+	_, err := g.AddEffect(state.P1, state.ActorHuman, "Items locked", state.P2, "p1-1", 2, "")
+	if err == nil {
+		t.Fatal("effect with until turn but no seat was recorded")
+	}
+	if !strings.Contains(err.Error(), "until_seat") || !strings.Contains(err.Error(), "seat whose turn") {
+		t.Errorf("error %q does not ask for until_seat", err)
+	}
+	if g.Head() != head || len(g.State().Effects) != 0 {
+		t.Fatal("refused effect changed the game")
+	}
+}
+
+// Acting for the wrong player names the combined turn and whose it is.
+func TestWrongSeatErrorNamesCombinedTurn(t *testing.T) {
+	g := startedGame(t)
+	hu, cl := state.ActorHuman, state.ActorClaude
+	if g.Mode() != ModePlay {
+		t.Fatalf("mode %q, want play", g.Mode())
+	}
+	must(t)(g.EndTurn(state.P1, hu))
+	// p2's first turn.
+	want := "it is p2's turn (turn 1), not p1's"
+	if _, err := g.Draw(state.P1, hu, 1); err == nil || err.Error() != want {
+		t.Errorf("p1 drawing on p2's turn 1: %v, want %q", err, want)
+	}
+	if _, err := g.EndTurn(state.P1, hu); err == nil || err.Error() != want {
+		t.Errorf("p1 ending p2's turn 1: %v, want %q", err, want)
+	}
+	must(t)(g.EndTurn(state.P2, cl))
+	must(t)(g.EndTurn(state.P1, hu))
+	must(t)(g.EndTurn(state.P2, cl))
+	// p1's third turn: per-player turn 5.
+	if st := g.State(); st.Turn != 5 || st.Current != state.P1 {
+		t.Fatalf("stored turn %d current %s, want 5 p1", st.Turn, st.Current)
+	}
+	want = "it is p1's turn (turn 3), not p2's"
+	if _, err := g.Draw(state.P2, cl, 1); err == nil || err.Error() != want {
+		t.Errorf("p2 drawing on p1's turn 3: %v, want %q", err, want)
+	}
+	// Review mode lifts the turn lock, but only the open turn can end.
+	if err := g.SetMode(ModeReview); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := g.EndTurn(state.P2, cl); err == nil || err.Error() != want {
+		t.Errorf("p2 ending p1's turn 3 in review: %v, want %q", err, want)
+	}
+}
+
+// Opening-turn warnings follow each player's first turn: no Supporter or
+// attack for the player going first, no evolving for either player.
+func TestOpeningTurnWarnings(t *testing.T) {
+	_, g := newTestGame(t)
+	hu, cl := state.ActorHuman, state.ActorClaude
+	actor := map[state.Seat]state.Actor{state.P1: hu, state.P2: cl}
+	for _, seat := range state.Seats {
+		for _, n := range []int{1, 2, 5, 6, 13, 14} {
+			iid := state.IID(fmt.Sprintf("%s-%d", seat, n))
+			if l, _ := g.State().Find(iid); l.Zone != state.Hand {
+				must(t)(g.Move(seat, actor[seat], iid, state.Loc{Zone: state.Hand}, "", ""))
+			}
+		}
+	}
+	must(t)(g.PlaceActive(state.P1, hu, "p1-1"))
+	must(t)(g.PlaceActive(state.P2, cl, "p2-1"))
+	must(t)(g.StartGame(state.P1, hu))
+
+	const (
+		supporter = "the player going first cannot play a Supporter on their first turn"
+		attack    = "the player going first cannot attack on their first turn"
+		evolve    = "evolving on a player's first turn"
+	)
+	has := func(r *Result, w string) bool { return slices.Contains(r.Warnings, w) }
+	active := func(s state.Seat) state.Loc { return state.Loc{Seat: s, Zone: state.Active} }
+	bench := func(s state.Seat) state.Loc { return state.Loc{Seat: s, Zone: state.Bench, Slot: 0} }
+
+	// p1's turn 1 (per-player 1).
+	must(t)(g.Bench(state.P1, hu, "p1-2", -1))
+	if r := must(t)(g.PlayTrainer(state.P1, hu, "p1-13")); !has(r, supporter) {
+		t.Errorf("Supporter in p1's turn 1: warnings %v lack %q", r.Warnings, supporter)
+	}
+	if r := must(t)(g.Attack(state.P1, hu, "Punch", active(state.P2), 0)); !has(r, attack) {
+		t.Errorf("attack in p1's turn 1: warnings %v lack %q", r.Warnings, attack)
+	}
+	if r := must(t)(g.Evolve(state.P1, hu, "p1-5", active(state.P1))); !has(r, evolve) {
+		t.Errorf("evolving in p1's turn 1: warnings %v lack %q", r.Warnings, evolve)
+	}
+	must(t)(g.EndTurn(state.P1, hu))
+
+	// p2's turn 1 (per-player 2).
+	must(t)(g.Bench(state.P2, cl, "p2-2", -1))
+	if r := must(t)(g.PlayTrainer(state.P2, cl, "p2-13")); has(r, supporter) {
+		t.Errorf("Supporter in p2's turn 1 warned: %v", r.Warnings)
+	}
+	if r := must(t)(g.Attack(state.P2, cl, "Punch", active(state.P1), 0)); has(r, attack) {
+		t.Errorf("attack in p2's turn 1 warned: %v", r.Warnings)
+	}
+	if r := must(t)(g.Evolve(state.P2, cl, "p2-5", active(state.P2))); !has(r, evolve) {
+		t.Errorf("evolving in p2's turn 1: warnings %v lack %q", r.Warnings, evolve)
+	}
+	must(t)(g.EndTurn(state.P2, cl))
+
+	// p1's turn 2 (per-player 3).
+	if r := must(t)(g.Evolve(state.P1, hu, "p1-6", bench(state.P1))); has(r, evolve) {
+		t.Errorf("evolving in p1's turn 2 warned: %v", r.Warnings)
+	}
+	if r := must(t)(g.PlayTrainer(state.P1, hu, "p1-14")); has(r, supporter) {
+		t.Errorf("Supporter in p1's turn 2 warned: %v", r.Warnings)
+	}
+	if r := must(t)(g.Attack(state.P1, hu, "Aura Sphere", active(state.P2), 0)); has(r, attack) {
+		t.Errorf("attack in p1's turn 2 warned: %v", r.Warnings)
+	}
+	must(t)(g.EndTurn(state.P1, hu))
+
+	// p2's turn 2 (per-player 4).
+	if r := must(t)(g.Evolve(state.P2, cl, "p2-6", bench(state.P2))); has(r, evolve) {
+		t.Errorf("evolving in p2's turn 2 warned: %v", r.Warnings)
 	}
 }

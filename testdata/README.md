@@ -15,7 +15,7 @@ Per game:
 
 - `file`, `bytes`, `lines`, `sha256` – integrity checks against the raw log.
 - `player`, `opponent`, `player_deck`, `opponent_archetype`, `family`.
-- `expected` – assertion-ready oracle for a parser: `coin_toss_winner`, `went_first`, `turns` (per player), `total_turns`, `prizes_taken` (per player), `winner`, `end_reason` (`all_prizes_taken` | `opponent_conceded` | `self_conceded` | `bench_out`). Prize counts are cross-checked against a hand-kept game ledger.
+- `expected` – assertion-ready oracle for a parser: `coin_toss_winner`, `went_first`, `turns` (per player), `total_turns` (combined turns: the higher per-player count), `prizes_taken` (per player), `winner`, `end_reason` (`all_prizes_taken` | `opponent_conceded` | `self_conceded` | `bench_out`). Prize counts are cross-checked against a hand-kept game ledger.
 - `features` – log constructs present in that game (mulligan, weakness/resistance lines, poison checkup, devolve, borrowed attacks, simultaneous KO, etc.). Use to pick fixtures per parser feature.
 - `parser_quirks` – known oddities in that specific log.
 - `borrowed_attacks`, `ledger_result`, `note` – context.
