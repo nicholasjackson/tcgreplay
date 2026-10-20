@@ -28,8 +28,10 @@ type Options struct {
 	// Seed makes the reconstruction reproducible; 0 picks one at random.
 	Seed uint64
 	// DefOf, if set, names a card definition for a card known only by name
-	// (the opponent's), so it shows with its art. "" if unknown.
-	DefOf func(name string) string
+	// (the opponent's), so it shows with its art. moves are the attacks and
+	// Abilities the log shows the card using, to pick among same-named
+	// cards. "" if unknown.
+	DefOf func(name string, moves []string) string
 	// Trace, if set, receives each line and a board summary after it.
 	Trace io.Writer
 
@@ -216,6 +218,7 @@ func replayOnce(secs []*Section, me, opp string, opts Options, seed uint64, deci
 		limit:          map[string]int{},
 		oppLimit:       opts.oppLimit,
 		used:           map[seatName]int{},
+		oppMoves:       map[string][]string{},
 		rng:            rng,
 		trace:          opts.Trace,
 		boundAt:        map[state.IID]int{},
@@ -498,8 +501,14 @@ func (r *replay) finish(res *Result, opts Options) error {
 	for _, e := range opts.MyDeck {
 		defs[e.Name] = e.Def
 	}
-	oppDefs := map[string]string{}
+	oppDefs, byName := map[string]string{}, map[string]string{}
 	for _, e := range opts.OppDeck {
+		// A list entry named without a set code got the name's current
+		// print; the moves the log shows may prove a different one.
+		if e.Set == "" && len(r.oppMoves[e.Name]) > 0 {
+			byName[e.Name] = e.Def
+			continue
+		}
 		oppDefs[e.Name] = e.Def
 	}
 	oppDef := func(name string) string {
@@ -508,7 +517,10 @@ func (r *replay) finish(res *Result, opts Options) error {
 		}
 		d := ""
 		if opts.DefOf != nil {
-			d = opts.DefOf(name)
+			d = opts.DefOf(name, r.oppMoves[name])
+		}
+		if d == "" {
+			d = byName[name]
 		}
 		oppDefs[name] = d
 		return d

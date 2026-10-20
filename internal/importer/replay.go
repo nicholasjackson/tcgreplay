@@ -68,6 +68,9 @@ type replay struct {
 	// oppLimit is an assumed opponent list's counts; nil allows MaxCopies.
 	oppLimit map[string]int
 	used     map[seatName]int
+	// oppMoves lists the attacks and Abilities each opponent card name was
+	// seen using, to pick its print.
+	oppMoves map[string][]string
 	rep      *Report
 	rng      *rand.Rand
 	nodes    []handler
@@ -247,10 +250,22 @@ func (r *replay) pick(seat state.Seat, zones []state.Zone, name string, exclude 
 	}
 	for _, z := range zones {
 		cards := r.zoneCards(seat, z)
+		// Of the copies already bound to the name, a copy the other player
+		// has seen (say, revealed by a search) goes first: that is the
+		// one they saw leave, so no stale reveal stays face up in hand.
+		var bound state.IID
 		for _, iid := range cards {
 			if name != "" && r.bound[iid] == name && !slices.Contains(exclude, iid) {
-				return iid, nil
+				if r.st.KnownBy(iid, seat.Other()) {
+					return iid, nil
+				}
+				if bound == "" {
+					bound = iid
+				}
 			}
+		}
+		if bound != "" {
+			return bound, nil
 		}
 		for _, iid := range cards {
 			if r.bound[iid] == "" && r.bindable(iid, name) && !slices.Contains(exclude, iid) {
@@ -572,4 +587,11 @@ func (r *replay) disambiguate(seat state.Seat, name string, cands []state.Loc) s
 		}
 	}
 	return cands[0]
+}
+
+// sawMove notes that seat's card name used move (an attack or Ability).
+func (r *replay) sawMove(seat state.Seat, name, move string) {
+	if seat == OppSeat && !slices.Contains(r.oppMoves[name], move) {
+		r.oppMoves[name] = append(r.oppMoves[name], move)
+	}
 }

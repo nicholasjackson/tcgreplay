@@ -502,6 +502,47 @@
         "Resistance prints as a negative breakdown line and as 'took -30 less damage' (double negative) in the headline."
       ],
       "note": "Two-round Stadium war (Gravity Mountain vs Battle Cage); Lucky Helmet and Enriching Energy triggers."
+    },
+    {
+      "id": "2026-10-20_t4tsuya_dragapult-blaziken",
+      "file": "logs/2026-10-20_t4tsuya_dragapult-blaziken.txt",
+      "bytes": 10601,
+      "lines": 259,
+      "sha256": "cee9433ec2672ebc125bba6cf4e496a01699dda44724e6f7e42ac7655ccbc362",
+      "date": "2026-10-20",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "T4TSUYA",
+      "opponent_archetype": "Dragapult ex / Blaziken ex / Chi-Yu",
+      "family": "spread",
+      "expected": {
+        "coin_toss_winner": "NicJackson",
+        "went_first": "T4TSUYA",
+        "turns": {
+          "T4TSUYA": 4,
+          "NicJackson": 4
+        },
+        "total_turns": 4,
+        "prizes_taken": {
+          "NicJackson": 6,
+          "T4TSUYA": 5
+        },
+        "winner": "NicJackson",
+        "end_reason": "all_prizes_taken"
+      },
+      "ledger_result": "W",
+      "borrowed_attacks": [],
+      "features": [
+        "damage_breakdown",
+        "weakness_applied",
+        "tool_attached",
+        "hidden_opponent_draws",
+        "stadium_discarded_by_attack"
+      ],
+      "parser_quirks": [
+        "Ground Melter discards the Stadium in play with a '<player> discarded <Stadium>.' subline under the attack."
+      ],
+      "note": "Chi-Yu (Twilight Masquerade 39) uses Ground Melter, which discards Team Rocket's Watchtower from play."
     }
   ]
 }

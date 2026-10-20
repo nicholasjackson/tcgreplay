@@ -44,7 +44,7 @@ func (f fakeDB) Card(_ context.Context, id string) (*cards.Card, error) {
 	return nil, fmt.Errorf("%s: %w", id, cards.ErrNotFound)
 }
 func (f fakeDB) Cached(id string) *cards.Card { return f[id] }
-func (f fakeDB) ByName(_ context.Context, name string) (string, error) {
+func (f fakeDB) ByName(_ context.Context, name string, _ ...string) (string, error) {
 	for id, c := range f {
 		if c.Name == name {
 			return id, nil

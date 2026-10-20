@@ -87,11 +87,11 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 	}
 	opts := importer.Options{Me: req.Me, MyDeck: mine, OppDeck: theirs, Seed: req.Seed}
 	if m.DB != nil {
-		opts.DefOf = func(name string) string {
+		opts.DefOf = func(name string, moves []string) string {
 			if id, ok := deck.BasicEnergyDef(name); ok {
 				return id
 			}
-			id, _ := m.DB.ByName(ctx, name)
+			id, _ := m.DB.ByName(ctx, name, moves...)
 			return id
 		}
 	}

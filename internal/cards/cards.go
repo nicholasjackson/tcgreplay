@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -156,8 +157,10 @@ type DB interface {
 	// Resolve maps a set code as printed in TCG Live exports (e.g. "SVI")
 	// and a collector number to a TCGdex card id.
 	Resolve(ctx context.Context, setCode, number string) (string, error)
-	// ByName picks a TCGdex card id for a card known only by name.
-	ByName(ctx context.Context, name string) (string, error)
+	// ByName picks a TCGdex card id for a card known only by name. moves,
+	// the attacks and Abilities the card was seen using, pick among its
+	// prints: same-named cards can be different Pokémon.
+	ByName(ctx context.Context, name string, moves ...string) (string, error)
 }
 
 // Client is a TCGdex client with a disk cache.
@@ -172,7 +175,7 @@ type Client struct {
 	mem      map[string]*Card
 	setIndex map[string]string // upper set code -> set id
 	indexed  bool
-	byName   map[string]string // nameKey -> card id
+	byName   map[string][]string // nameKey -> card ids, preferred print first
 }
 
 // NewClient returns a client caching under dir.
@@ -454,29 +457,68 @@ func nameKey(name string) string {
 // ByName implements DB. A name has many prints; it picks the newest one
 // with art (what Standard play uses), preferring the regular print over
 // higher-numbered alternate arts. Pokémon TCG Pocket sets are skipped. "Basic Fire Energy", as logs name it,
-// also matches "Fire Energy".
-func (c *Client) ByName(ctx context.Context, name string) (string, error) {
+// also matches "Fire Energy". With moves, it picks the preferred print
+// that has the most of them: Chi-Yu seen using Ground Melter is the
+// Twilight Masquerade Fire Chi-Yu, not a newer Darkness one.
+func (c *Client) ByName(ctx context.Context, name string, moves ...string) (string, error) {
+	ids, err := c.prints(ctx, name)
+	if err != nil {
+		return "", err
+	}
+	if len(moves) == 0 {
+		return ids[0], nil
+	}
+	best, most := ids[0], 0
+	for _, id := range ids {
+		card, err := c.Card(ctx, id)
+		if err != nil {
+			continue // offline or gone: not a candidate
+		}
+		if n := card.hasMoves(moves); n > most {
+			best, most = id, n
+			if n == len(moves) {
+				break
+			}
+		}
+	}
+	return best, nil
+}
+
+// prints lists the prints of name, preferred first.
+func (c *Client) prints(ctx context.Context, name string) ([]string, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.byName == nil {
 		if err := c.buildNameIndex(ctx); err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 	key := nameKey(name)
-	if id, ok := c.byName[key]; ok {
-		return id, nil
+	if ids, ok := c.byName[key]; ok {
+		return ids, nil
 	}
 	if k, ok := strings.CutPrefix(key, "basic "); ok {
-		if id, ok := c.byName[k]; ok {
-			return id, nil
+		if ids, ok := c.byName[k]; ok {
+			return ids, nil
 		}
 	}
-	return "", fmt.Errorf("no card named %q: %w", name, ErrNotFound)
+	return nil, fmt.Errorf("no card named %q: %w", name, ErrNotFound)
+}
+
+// hasMoves counts the moves the card has as an attack or Ability.
+func (c *Card) hasMoves(moves []string) int {
+	n := 0
+	for _, m := range moves {
+		if slices.ContainsFunc(c.Attacks, func(a Attack) bool { return a.Name == m }) ||
+			slices.ContainsFunc(c.Abilities, func(a Ability) bool { return a.Name == m }) {
+			n++
+		}
+	}
+	return n
 }
 
 // buildNameIndex reads every set (cached after the first time) and keeps
-// the preferred print of each name. The caller holds c.mu.
+// every print of each name, preferred first. The caller holds c.mu.
 func (c *Client) buildNameIndex(ctx context.Context) error {
 	var sets []setSummary
 	if err := c.getJSON(ctx, "/sets", filepath.Join(c.CacheDir, "sets.json"), &sets); err != nil {
@@ -496,7 +538,7 @@ func (c *Client) buildNameIndex(ctx context.Context) error {
 		}
 		return a.num < b.num
 	}
-	best := map[string]pick{}
+	all := map[string][]pick{}
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 8)
@@ -522,16 +564,27 @@ func (c *Client) buildNameIndex(ctx context.Context) error {
 				}
 				p := pick{card.ID, d.ReleaseDate, card.Image != "", num}
 				k := nameKey(card.Name)
-				if cur, ok := best[k]; !ok || better(p, cur) {
-					best[k] = p
-				}
+				all[k] = append(all[k], p)
 			}
 		}(s.ID)
 	}
 	wg.Wait()
-	c.byName = make(map[string]string, len(best))
-	for k, p := range best {
-		c.byName[k] = p.id
+	c.byName = make(map[string][]string, len(all))
+	for k, ps := range all {
+		slices.SortFunc(ps, func(a, b pick) int {
+			switch {
+			case better(a, b):
+				return -1
+			case better(b, a):
+				return 1
+			}
+			return strings.Compare(a.id, b.id)
+		})
+		ids := make([]string, len(ps))
+		for i, p := range ps {
+			ids[i] = p.id
+		}
+		c.byName[k] = ids
 	}
 	return nil
 }

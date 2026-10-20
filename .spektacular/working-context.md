@@ -1,29 +1,24 @@
-# Working context — spec 20261019170829-bfb31628-turn-numbering-by-round
+# Working context: guide-tool spec
 
 ## Problem
-User: "for turns you get a turn per player but in Pokemon it would be a turn where both players take actions."
-The playmat numbers each player's turn separately (Turn 1 = first player, Turn 2 = second player, ...). The user wants "Turn N" to mean both players' Nth turns.
+The coaching workflows (tcg-import-game, tcg-opponent-deck, tcg-review-game, tcg-replay-drill, tcg-before-you-move, tcg-numbers-drill) only reach an assistant if they are installed as Agent Skills: `tcgreplay install` copies them from the binary (`skills.FS`, `//go:embed tcg-*`) into the client's skills dir (Claude `.claude/skills`, Codex `.agents/skills`, Gemini `.gemini/skills`). claude.ai users must upload them by hand, and installed copies go stale (e.g. the turn-numbering change needed a re-upload). The user asked: "how can connecting an llm to tcg replay teach it how to use it without needing to install skills?" — and then: "I really like the idea of the guide tool", "I would like to get rid of the skills so let's see if we can build a guide tool".
 
-## Decisions (user approved: "ok great this looks good")
-- Keep the internal per-player counter `state.Turn` unchanged; rules depend on it (first-turn evolve/supporter rules in internal/game/verbs.go:218-221,406; effect expiry UntilTurn in internal/state/apply.go:426; EnteredTurn; draws_like_main; saved game records).
-- Derive combined turn = (t+1)/2 plus whose half (the seat). Turn 1 = first player's turn + second player's first turn.
-- Labels: "Turn 3 · Your turn" / "Turn 3 · Lukiees's turn". Timeline groups both halves under one "Turn 3" heading with a sub-heading per player.
-- MCP surface also switches to combined numbering (get_state, log lines, until_turn on add_effect, end-turn prompt, errors). until_turn takes combined turn + which seat's turn it ends on; server converts.
-- User asked to drive the spec to completion without per-step check-ins; they review everything at the end.
-- No epic: the only epic (hosted-playmat) is unrelated.
+## Direction discussed (assistant's proposal, user liked the guide tool)
+- A `guide` MCP tool: lists the guides and returns one by name, served from the text already embedded in the binary. Works in every MCP client because every client supports tools.
+- One line in the server instructions saying guides exist and when to read them.
+- Next-step hints in tool results (e.g. import_log result points at the review guide).
+- Possibly the same text as MCP prompts (clients like Claude Code surface them as commands) — offered as optional.
+- Server instructions are injected every turn, so they should stay short; the full guide text is fetched on demand.
 
-## Learnings
-- TCG Live battle logs carry no turn numbers ("X's Turn"), so the importer is unaffected by numbering.
-- Branch-name conventions in skills use t<N> (review-t4, bym-t<N>, drill-<game>-t<N>) and the Timeline uses `turn-<N>`; with combined numbering two halves share N, so names must also distinguish the half.
-- tcg-review-game SKILL.md:14 "Name turns both ways" rule becomes obsolete.
-- state.First records who went first.
-- All sections drafted from the approved proposal without per-step confirmation (user's instruction); non-goals and constraints are drafts awaiting the user's end review.
-- No design document: one-line steers in Technical Approach suffice (design list was empty).
-- Spec stored; reviewer findings 1-10 applied (opening-turn rules are warnings, not blocks). Split check: no offer (one atomic change across surfaces).
+## Facts
+- Skills total ~4,100 words across six SKILL.md files; skills cross-reference each other by name ("offer to review it first with tcg-review-game").
+- `skills/skills_test.go` enforces format and that tcg skills never mention "Claude" or "Nic ".
+- `.claude/skills` and `.agents/skills` in this repo are symlinks to `skills/` (also holds spek-* skills for Spektacular, which are out of scope).
+- Live hosted instance: https://tcgreplay.demo.gs (MCP at /mcp, Google OAuth); also desktop daemon via `tcgreplay install`.
 
-## Plan workflow (started 2026-10-19)
-- User: "plan it" after reviewing the spec. Drafting steps run without section check-ins; walkthrough sign-off needed at the end.
-- User (plan discovery): turns must equal the TCG Live definition, 1 turn = both players, everywhere. So the import report's total_turns becomes the combined count (max of the per-player counts); per-player `turns` map stays. Don't ask further questions of this kind: apply the rule.
-- Persistence: only game records (battle log + seed + decks) are persisted; everything (labels, events) is rebuilt on load, so no migration.
-- Plan committed (plan/context/research); in walkthrough awaiting sign-off.
-- User signed off the plan at walkthrough (2026-10-19).
+## Interview answers (2026-10-20)
+- Spec name: guide-tool; no epic.
+- Delete skills/tcg-* outright; guides in a new home/format. Remove `tcgreplay install` entirely ("get rid of install too, I can manually delete").
+- Discovery: server-instructions list + MCP prompts. No result hints. Assistant-only audience. Same six workflows, same content.
+- User (2026-10-20): "just create the spec and accept the reviewers comments" — draft remaining sections without asking, apply reviewer findings.
+- Spec stored after reviewer fixes (guide names: import-game, opponent-deck, review-game, replay-drill, before-you-move, numbers-drill).

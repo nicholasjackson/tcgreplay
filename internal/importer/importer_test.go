@@ -336,6 +336,155 @@ func oneToolEach(events []state.Event) string {
 	return ""
 }
 
+// TestAttackDiscardsStadium discards the Stadium in play when an attack's
+// subline names it: Chi-Yu's Ground Melter ends "discard that Stadium",
+// logged as "T4TSUYA discarded Team Rocket's Watchtower." under the attack.
+// It must not take another copy from the hand or deck instead.
+func TestAttackDiscardsStadium(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	text, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-20_t4tsuya_dragapult-blaziken.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for seed := uint64(1); seed <= 10; seed++ {
+		res, err := Import(string(text), Options{MyDeck: entries, Seed: seed})
+		if err != nil {
+			t.Fatal(err)
+		}
+		st, err := state.Fold(res.Events())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if st.Stadium != "" {
+			t.Errorf("seed %d: %s is still in play", seed, st.Cards[st.Stadium].Name)
+		}
+		n := 0
+		for _, iid := range st.Sides[OppSeat].Discard {
+			if st.Cards[iid].Name == "Team Rocket's Watchtower" {
+				n++
+			}
+		}
+		if n != 1 {
+			t.Errorf("seed %d: %d Team Rocket's Watchtower in the discard, want 1", seed, n)
+		}
+	}
+}
+
+// TestDefOfGetsMoves asks for an opponent card's print with the moves the
+// log shows it using, so a Chi-Yu that used Ground Melter gets the print
+// that has it. An assumed list naming Chi-Yu without a set code does not
+// pin the print; it is the fallback when the lookup finds none.
+func TestDefOfGetsMoves(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	text, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-20_t4tsuya_dragapult-blaziken.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	chiYuDef := func(opts Options) string {
+		t.Helper()
+		res, err := Import(string(text), opts)
+		if err != nil {
+			t.Fatal(err)
+		}
+		st, err := state.Fold(res.Events())
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, c := range st.Cards {
+			if c.Owner == OppSeat && c.Name == "Chi-Yu" {
+				return c.Def
+			}
+		}
+		t.Fatal("no Chi-Yu")
+		return ""
+	}
+	var asked []string
+	defOf := func(name string, moves []string) string {
+		if name != "Chi-Yu" {
+			return ""
+		}
+		asked = moves
+		if slices.Contains(moves, "Ground Melter") {
+			return "sv06-039"
+		}
+		return "me05-059"
+	}
+	if got := chiYuDef(Options{MyDeck: entries, Seed: 1, DefOf: defOf}); got != "sv06-039" {
+		t.Errorf("Chi-Yu is %s, want sv06-039", got)
+	}
+	if !slices.Equal(asked, []string{"Ground Melter"}) {
+		t.Errorf("DefOf got moves %v, want [Ground Melter]", asked)
+	}
+
+	byName := []deck.Entry{{Count: 1, Name: "Chi-Yu", Def: "me05-059"}}
+	if got := chiYuDef(Options{MyDeck: entries, OppDeck: byName, Seed: 1, DefOf: defOf}); got != "sv06-039" {
+		t.Errorf("with a by-name list, Chi-Yu is %s, want sv06-039", got)
+	}
+	offline := func(string, []string) string { return "" }
+	if got := chiYuDef(Options{MyDeck: entries, OppDeck: byName, Seed: 1, DefOf: offline}); got != "me05-059" {
+		t.Errorf("with no lookup, Chi-Yu is %s, want the list's me05-059", got)
+	}
+	pinned := []deck.Entry{{Count: 1, Name: "Chi-Yu", Set: "TWM", Number: "39", Def: "sv06-039-pinned"}}
+	if got := chiYuDef(Options{MyDeck: entries, OppDeck: pinned, Seed: 1, DefOf: defOf}); got != "sv06-039-pinned" {
+		t.Errorf("with a set code in the list, Chi-Yu is %s, want the list's print", got)
+	}
+}
+
+// TestPlaysTheRevealedCopy plays the copy the other player saw: when a
+// hand holds a revealed card and an unrevealed copy of it, playing that
+// name must not leave the revealed one face up in hand. The Dragapult game
+// reveals Dudunsparce with Poké Pad while a copy named at the mulligan
+// sits unseen in hand.
+func TestPlaysTheRevealedCopy(t *testing.T) {
+	entries, games := loadCorpus(t)
+	for _, g := range games {
+		t.Run(filepath.Base(g.File), func(t *testing.T) {
+			text, err := os.ReadFile(filepath.Join(corpus, g.File))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for seed := uint64(1); seed <= 10; seed++ {
+				res, err := Import(string(text), Options{MyDeck: entries, Seed: seed})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if msg := staleReveal(res.Events()); msg != "" {
+					t.Errorf("seed %d: %s", seed, msg)
+				}
+			}
+		})
+	}
+}
+
+// staleReveal reports a card played face up from hand unseen while a copy
+// of it the other player had seen stayed behind in that hand. Cards
+// returned to the deck are not checked: a whole hand goes back one card at
+// a time.
+func staleReveal(events []state.Event) string {
+	st := state.New()
+	for i := range events {
+		e := &events[i]
+		if p, _ := e.Decode(); e.Type == state.EvMove {
+			m := p.(*state.MovePayload)
+			if m.From != nil && m.From.Zone == state.Hand && m.To.Zone.IsPublic() {
+				seat := m.From.Seat
+				name := st.Cards[m.IID].Name
+				if !st.KnownBy(m.IID, seat.Other()) {
+					for _, x := range st.Sides[seat].Hand {
+						if x != m.IID && st.Cards[x].Name == name && st.KnownBy(x, seat.Other()) {
+							return fmt.Sprintf("event %d: %s played unseen %s; the seen %s stayed in hand", e.ID, seat, m.IID, x)
+						}
+					}
+				}
+			}
+		}
+		if err := st.Apply(e); err != nil {
+			return err.Error()
+		}
+	}
+	return ""
+}
+
 // TestToolCredits places a Tool on the copy the damage breakdown proves
 // held it: the Night Joker that counted Binding Mochi came from a Zoroark
 // holding one.

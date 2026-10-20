@@ -273,6 +273,7 @@ func buildHandlers(a, b string) []handler {
 		// Attacks, abilities and damage.
 		h(`{P}'s (.+?) used (.+?) on {P}'s (.+?) for (\d+) damage\..*`, func(r *replay, m []string, n, _ *Node) error {
 			actor := r.seat(m[1])
+			r.sawMove(actor, m[2], m[3])
 			l, err := r.target(state.Seat(""), r.seat(m[4]), m[5])
 			if err != nil {
 				return err
@@ -286,7 +287,10 @@ func buildHandlers(a, b string) []handler {
 			r.checkToolCredits(n, actor, l)
 			return nil
 		}),
-		h(`{P}'s (.+?) used (.+?)\.`, noop),
+		h(`{P}'s (.+?) used (.+?)\.`, func(r *replay, m []string, n, _ *Node) error {
+			r.sawMove(r.seat(m[1]), m[2], m[3])
+			return nil
+		}),
 		h(`{P} put (an?|\d+) damage counters? on {P}'s (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
 			actor := r.seat(m[1])
 			l, err := r.target(actor, r.seat(m[3]), m[4])
@@ -479,11 +483,17 @@ func buildHandlers(a, b string) []handler {
 			seat := r.seat(m[1])
 			return r.handTo(seat, count(m[2]), n.Bullets(), state.Loc{Seat: seat, Zone: state.Discard})
 		}),
-		h(`{P} discarded (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
+		h(`{P} discarded (.+)\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
 			if r.lastStadium != "" && r.bound[r.lastStadium] == m[2] && r.st.Cards[r.lastStadium].Owner == seat {
 				r.lastStadium = "" // the replaced Stadium, already discarded
 				return nil
+			}
+			// An attack that discards the Stadium in play (Ground Melter)
+			// names it under the attack line, with the Stadium's owner as
+			// the player. An Ability's discard (Trade) is from the hand.
+			if s := r.st.Stadium; s != "" && r.bound[s] == m[2] && r.st.Cards[s].Owner == seat && parent != nil && attackRe.MatchString(parent.Text) {
+				return r.move(seat, s, state.Loc{Seat: seat, Zone: state.Discard}, "", "")
 			}
 			iid, err := r.take(seat, []state.Zone{state.Hand, state.Deck}, m[2])
 			if err != nil {
@@ -688,6 +698,10 @@ func (r *replay) bindGroup(iids []state.IID, names []string) error {
 // handTo moves n cards from hand to dest, binding names when listed.
 // shuffleFromDiscardRe matches cards whose "shuffled N cards into their
 // deck" subline takes from the discard pile rather than the hand.
+// attackRe matches an attack line: "<player>'s <Pokémon> used <attack> on
+// <target> for <n> damage."
+var attackRe = regexp.MustCompile(` used .+ on .+ for \d+ damage\.`)
+
 var shuffleFromDiscardRe = regexp.MustCompile(` played (Sacred Ash|Super Rod|Pal Pad|Energy Recycler)\.$`)
 
 func (r *replay) handTo(seat state.Seat, n int, names []string, dest state.Loc) error {
