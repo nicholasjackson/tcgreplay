@@ -90,7 +90,7 @@
       <div class="effects">
         {#each b.effects as e (e.id)}
           <span class="effect" title="{e.id} from {e.source || '?'}">
-            {e.text} · {e.seat}{#if e.until_turn} · until end of T{e.until_turn}{/if}
+            {e.text} · {e.seat}{#if e.until_turn} · until end of T{e.until_turn} · {nameOf(e.until_seat)}{/if}
             <button onclick={() => act('remove_effect', { name: e.id })} aria-label="Remove effect">×</button>
           </span>
         {/each}

@@ -78,11 +78,7 @@ func (g *Game) UISnapshot(viewer state.Seat, frameEvents []int) (*UISnapshot, er
 		}
 		ids[e.ID] = true
 		text := describe(e, before, st, viewer)
-		line := LogLine{ID: e.ID, Turn: e.Turn, Seat: string(e.Seat), Action: e.Action, Text: text}
-		if a := g.log.Action(e.Action); a != nil {
-			line.Label = a.Label
-		}
-		snap.Log = append(snap.Log, line)
+		snap.Log = append(snap.Log, g.newLogLine(e, st, text))
 		if want[e.ID] {
 			f := Frame{
 				Event: e.ID, Actor: e.Actor, Text: text,
@@ -103,7 +99,7 @@ func (g *Game) UISnapshot(viewer state.Seat, frameEvents []int) (*UISnapshot, er
 	for name, head := range g.log.Branches() {
 		bi := BranchInfo{Name: name, Head: head, Current: name == g.log.Current()}
 		if e := g.log.Event(head); e != nil {
-			bi.Turn = e.Turn
+			bi.Turn, bi.TurnSeat = state.Round(e.Turn), string(g.st.TurnSeat(e.Turn))
 			if a := g.log.Action(e.Action); a != nil {
 				bi.Last = a.Label
 			}

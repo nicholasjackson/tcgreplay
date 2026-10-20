@@ -66,6 +66,7 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 - In play mode you act as your own seat and only on your turn (promoting after a knockout is allowed any time). In review mode either seat may act at any time (pass seat; it defaults to the seat whose turn it is), though only the turn in progress can be ended.
 - play_trainer, use_ability and attack open a compound action: following verbs join it until end_action, another opener, or end_turn. attach, bench, evolve and retreat join only if the card's text mentions doing so; otherwise they stand alone and close it. Effects on the opponent's side (the switch of Boss's Orders, Iono's draws) join it when you pass the opponent's seat.
 - Every write returns the events and a delta, so you rarely need to re-read the board. Warnings are advisory, never blocking.
+- Turns count both players: turn N is the first player's Nth turn and the second player's Nth turn. Logs show "T<N> <seat>"; always name the seat with a turn.
 - Quote card text from card_text, not memory.`
 
 // boardInstruction is added to the instructions when results carry a board link.
@@ -374,7 +375,8 @@ type (
 		Text      string `json:"text"`
 		On        string `json:"on,omitempty" jsonschema:"seat affected"`
 		Source    string `json:"source,omitempty" jsonschema:"iid of the card causing it"`
-		UntilTurn int    `json:"until_turn,omitempty" jsonschema:"expires at the end of this turn number; 0 means until removed"`
+		UntilTurn int    `json:"until_turn,omitempty" jsonschema:"expires at the end of this turn (turns count both players: turn 3 is each player's third turn); 0 means until removed"`
+		UntilSeat string `json:"until_seat,omitempty" jsonschema:"seat whose turn the effect ends on (p1 or p2); required with until_turn"`
 	}
 	EffectID struct {
 		SeatArg
@@ -732,13 +734,13 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Reveal(seat, actor, ids)
 		})
 	})
-	add(s, srv, "add_effect", "Record a lingering effect, e.g. 'Items locked' on p1 until the end of turn 5.", func(ctx context.Context, in AddEffect) (any, error) {
+	add(s, srv, "add_effect", "Record a lingering effect, e.g. 'Items locked' on p1 until the end of p1's turn 3 (until_turn 3, until_seat p1).", func(ctx context.Context, in AddEffect) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			on := seat.Other()
 			if in.On != "" {
 				on = state.Seat(strings.ToLower(in.On))
 			}
-			return g.AddEffect(seat, actor, in.Text, on, iid(in.Source), in.UntilTurn)
+			return g.AddEffect(seat, actor, in.Text, on, iid(in.Source), in.UntilTurn, state.Seat(strings.ToLower(in.UntilSeat)))
 		})
 	})
 	add(s, srv, "remove_effect", "Remove a lingering effect.", func(ctx context.Context, in EffectID) (any, error) {

@@ -98,7 +98,7 @@ func describe(e *state.Event, before, after *state.State, viewer state.Seat) str
 		}
 		s := fmt.Sprintf("%s added effect %s on %s: %s", who, p.Effect.ID, p.Effect.Seat, p.Effect.Text)
 		if p.Effect.UntilTurn > 0 {
-			s += fmt.Sprintf(" (until end of turn %d)", p.Effect.UntilTurn)
+			s += fmt.Sprintf(" (until end of turn %d (%s))", state.Round(p.Effect.UntilTurn), after.TurnSeat(p.Effect.UntilTurn))
 		}
 		return s
 	case *state.RevealPayload:
@@ -108,17 +108,19 @@ func describe(e *state.Event, before, after *state.State, viewer state.Seat) str
 		}
 		return fmt.Sprintf("%s revealed %s", who, strings.Join(names, ", "))
 	case *state.TurnPayload:
-		return fmt.Sprintf("turn %d %s (%s)", p.Number, p.Phase, e.Seat)
+		return fmt.Sprintf("turn %d %s (%s)", state.Round(p.Number), p.Phase, e.Seat)
 	case *state.AssumePayload:
 		return fmt.Sprintf("assumed identities for %d hidden cards", len(p.Cards))
 	}
 	return string(e.Type)
 }
 
-// LogLine is one rendered event.
+// LogLine is one rendered event. Turn is the combined turn and TurnSeat
+// the player whose half of it the event falls in ("" during setup).
 type LogLine struct {
 	ID          int      `json:"id"`
 	Turn        int      `json:"turn"`
+	TurnSeat    string   `json:"turn_seat,omitempty"`
 	Seat        string   `json:"seat,omitempty"`
 	Action      string   `json:"action,omitempty"`
 	Label       string   `json:"label,omitempty"`
@@ -126,9 +128,24 @@ type LogLine struct {
 	Annotations []string `json:"annotations,omitempty"`
 }
 
+// newLogLine renders e, with st the state just after it.
+func (g *Game) newLogLine(e *state.Event, st *state.State, text string) LogLine {
+	line := LogLine{
+		ID: e.ID, Turn: state.Round(e.Turn), TurnSeat: string(st.TurnSeat(e.Turn)),
+		Seat: string(e.Seat), Action: e.Action, Text: text,
+	}
+	if a := g.log.Action(e.Action); a != nil {
+		line.Label = a.Label
+	}
+	return line
+}
+
 func (l LogLine) String() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "#%d T%d", l.ID, l.Turn)
+	if l.TurnSeat != "" {
+		b.WriteString(" " + l.TurnSeat)
+	}
 	if l.Action != "" {
 		fmt.Fprintf(&b, " [%s %s]", l.Action, l.Label)
 	}
@@ -162,11 +179,7 @@ func (g *Game) Log(since int, viewer state.Seat, tool string, actor string) ([]L
 			continue
 		}
 		ids[e.ID] = true
-		line := LogLine{ID: e.ID, Turn: e.Turn, Seat: string(e.Seat), Action: e.Action, Text: describe(e, before, st, viewer)}
-		if a := g.log.Action(e.Action); a != nil {
-			line.Label = a.Label
-		}
-		out = append(out, line)
+		out = append(out, g.newLogLine(e, st, describe(e, before, st, viewer)))
 	}
 	notes := map[int][]string{}
 	for _, a := range g.log.Annotations(ids) {
@@ -409,7 +422,9 @@ type BranchInfo struct {
 	Head    int    `json:"head"`
 	Current bool   `json:"current"`
 	Turn    int    `json:"turn"`
-	Last    string `json:"last,omitempty"`
+	// TurnSeat is the player whose half of Turn the head falls in.
+	TurnSeat string `json:"turn_seat,omitempty"`
+	Last     string `json:"last,omitempty"`
 	// DrawsLikeMain is set on a branch whose draws repeat main's.
 	DrawsLikeMain bool `json:"draws_like_main,omitempty"`
 }
@@ -422,7 +437,7 @@ func (g *Game) Branches() []BranchInfo {
 	for name, head := range g.log.Branches() {
 		bi := BranchInfo{Name: name, Head: head, Current: name == g.log.Current(), DrawsLikeMain: g.likeMain[name]}
 		if e := g.log.Event(head); e != nil {
-			bi.Turn = e.Turn
+			bi.Turn, bi.TurnSeat = state.Round(e.Turn), string(g.st.TurnSeat(e.Turn))
 			if a := g.log.Action(e.Action); a != nil {
 				bi.Last = a.Label
 			}

@@ -62,6 +62,16 @@ func TestCorpus(t *testing.T) {
 	entries, games := loadCorpus(t)
 	for _, g := range games {
 		t.Run(filepath.Base(g.File), func(t *testing.T) {
+			// Guard the fixture: the expected total is the combined turn
+			// count, the higher of the two players' counts.
+			most := 0
+			for _, n := range g.Expected.Turns {
+				most = max(most, n)
+			}
+			if g.Expected.TotalTurns != most {
+				t.Errorf("index expects total_turns %d, but the most turns either player took is %d (%v)", g.Expected.TotalTurns, most, g.Expected.Turns)
+			}
+
 			text, err := os.ReadFile(filepath.Join(corpus, g.File))
 			if err != nil {
 				t.Fatal(err)
@@ -123,6 +133,39 @@ func TestCorpus(t *testing.T) {
 				if rep.Observed[name] != n {
 					t.Errorf("observed %d %s, want %d", rep.Observed[name], name, n)
 				}
+			}
+		})
+	}
+}
+
+// TestTotalTurnsCombined checks the report's total is the combined turn
+// count, the higher of the two players' counts, not their sum.
+func TestTotalTurnsCombined(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	cases := []struct {
+		name  string
+		file  string
+		turns map[string]int
+		total int
+	}{
+		{"five each", "logs/2026-10-11_haagensen_ns-zoroark-rematch.txt", map[string]int{"NicJackson": 5, "Haagensen": 5}, 5},
+		{"six and five", "logs/2026-10-11_chef0221_alakazam-dusclops.txt", map[string]int{"NicJackson": 6, "CHEF0221": 5}, 6},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			text, err := os.ReadFile(filepath.Join(corpus, c.file))
+			if err != nil {
+				t.Fatal(err)
+			}
+			res, err := Import(string(text), Options{MyDeck: entries, Seed: 1})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !maps.Equal(res.Report.Turns, c.turns) {
+				t.Errorf("turns = %v, want %v", res.Report.Turns, c.turns)
+			}
+			if res.Report.TotalTurns != c.total {
+				t.Errorf("total turns = %d, want %d", res.Report.TotalTurns, c.total)
 			}
 		})
 	}

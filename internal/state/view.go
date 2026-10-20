@@ -66,9 +66,16 @@ type BoardView struct {
 	First    Seat              `json:"first,omitempty"`
 	Head     int               `json:"head"`
 	Stadium  *CardView         `json:"stadium,omitempty"`
-	Effects  []Effect          `json:"effects,omitempty"`
+	Effects  []EffectView      `json:"effects,omitempty"`
 	Coins    []string          `json:"last_coins,omitempty"`
 	Sides    map[Seat]SideView `json:"sides"`
+}
+
+// EffectView is a lingering effect as shown: UntilTurn is the combined turn
+// and UntilSeat the player whose turn it ends on.
+type EffectView struct {
+	Effect
+	UntilSeat Seat `json:"until_seat,omitempty"`
 }
 
 // StackDamage returns the damage on every Pokémon in play, keyed by the
@@ -153,9 +160,16 @@ func (s *State) Project(view View, viewer Seat, hp HPFunc) BoardView {
 	}
 
 	bv := BoardView{
-		View: view, Phase: s.Phase, Turn: s.Turn, Current: s.Current,
+		View: view, Phase: s.Phase, Turn: Round(s.Turn), Current: s.Current,
 		TurnOpen: s.TurnOpen, First: s.First, Head: s.Head,
-		Effects: s.Effects, Coins: s.Coins, Sides: map[Seat]SideView{},
+		Coins: s.Coins, Sides: map[Seat]SideView{},
+	}
+	for _, e := range s.Effects {
+		ev := EffectView{Effect: e}
+		if e.UntilTurn > 0 {
+			ev.UntilTurn, ev.UntilSeat = Round(e.UntilTurn), s.TurnSeat(e.UntilTurn)
+		}
+		bv.Effects = append(bv.Effects, ev)
 	}
 	if !reveal {
 		bv.Viewer = viewer

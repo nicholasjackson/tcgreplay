@@ -276,7 +276,7 @@ func (t *tx) mainDraw(seat state.Seat) state.IID {
 		t.warn = append(t.warn, fmt.Sprintf("main drew %s here, but it is not in %s's deck on this branch; drew the top card", t.st.Name(iid), seat))
 		return ""
 	}
-	t.warn = append(t.warn, fmt.Sprintf("main drew no more cards for %s in turn %d; drew the top card", seat, turn))
+	t.warn = append(t.warn, fmt.Sprintf("main drew no more cards for %s in turn %d (%s's turn); drew the top card", seat, state.Round(turn), t.st.TurnSeat(turn)))
 	return ""
 }
 
@@ -428,7 +428,7 @@ func (g *Game) checkTurn(seat state.Seat) error {
 		return fmt.Errorf("no turn is in progress")
 	}
 	if g.st.Current != seat {
-		return fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, g.st.Turn, seat)
+		return fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, state.Round(g.st.Turn), seat)
 	}
 	return nil
 }

@@ -10,8 +10,8 @@ A review is a conversation about decisions, not a verdict. The player learns mos
 ## 0. Ground rules
 
 - **Ask before judging.** At each decision point, set the scene and ask what the player was thinking. Give your view only after they answer, or when they ask for it.
-- **Put the board where you are talking.** Before asking about a turn, `rewind` to the start of it on a branch named for the point (`review-t4`), so the playmat and its timeline show that turn rather than the end of the game. Never just tell the player which timeline header to click.
-- **Name turns both ways.** The timeline counts both players' turns in one sequence: "Turn 4" is the second player's 2nd turn. Say "turn 4 (your 2nd turn)".
+- **Put the board where you are talking.** Before asking about a turn, `rewind` to the start of it on a branch named for the turn and the player whose turn it is (`review-t2-p2`), so the playmat and its timeline show that turn rather than the end of the game. Never just tell the player which timeline header to click.
+- **Name turns as players do.** Turn N counts both players: it is the first player's Nth turn and the second player's Nth turn, the way the timeline and the log show it (`T2 p2`). Always say whose turn it is: "turn 2, your turn" or "turn 2, <opponent>'s turn".
 - **Check the current branch before you move anything.** Branch switches are shared with the player's browser; `list_branches` first, and never make test moves on a branch the player is using.
 - **Card text from `card_text`**, never memory. Quote the numbers you rely on: HP, attack costs, damage, Weakness, Resistance, Tool effects.
 - **Hidden information is an assumption.** The opponent's unseen cards come from an assumed list: say "they had" only for cards the log proves, "they likely had" otherwise.
@@ -31,7 +31,7 @@ Pick the two to four that mattered most, in game order. Ignore turns with no rea
 
 ## 2. Walk each point
 
-1. `rewind` to the start of the turn (after the turn's draw) on a `review-tN` branch.
+1. `rewind` to the start of the turn (after the turn's draw) on a `review-t<N>-<seat>` branch (`<seat>` is `p1` or `p2`, the player whose turn it is).
 2. Set the scene in a few lines: both boards, the player's hand, prizes, what the opponent threatens next turn.
 3. Ask what they were thinking, with one or two specific questions ("you had Boss's Orders and Lillie's in hand: what made you pick Lillie's?").
 4. Wait for the answer. If the player wants to play the turn themselves on the board, let them and read their moves with `get_log` afterwards.

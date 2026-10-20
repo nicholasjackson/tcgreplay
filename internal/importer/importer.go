@@ -331,8 +331,9 @@ func replayOnce(secs []*Section, me, opp string, opts Options, seed uint64, deci
 			r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("%s retreated but the new Active Pokémon was never named", r.players[seat]))
 		}
 	}
+	// Turns count both players, so the total is the longer side's count.
 	for _, n := range r.rep.Turns {
-		r.rep.TotalTurns += n
+		r.rep.TotalTurns = max(r.rep.TotalTurns, n)
 	}
 
 	if r.trace != nil {

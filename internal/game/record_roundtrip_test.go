@@ -211,6 +211,36 @@ func TestRecordRestoresCorpus(t *testing.T) {
 					t.Errorf("report differs:\n  %+v\n  restored %+v", res.Report, back.Report)
 				}
 				sameGame(t, res.Game, back.Game)
+
+				// The restored game labels turns with combined numbering:
+				// its highest turn is the most turns either player took.
+				most := 0
+				for _, n := range back.Report.Turns {
+					most = max(most, n)
+				}
+				if most == 0 {
+					t.Fatalf("report counts no turns: %v", back.Report.Turns)
+				}
+				lines, err := back.Game.Log(0, "", "test", "test")
+				if err != nil {
+					t.Fatal(err)
+				}
+				highest := 0
+				for _, l := range lines {
+					if l.Turn > most {
+						t.Errorf("line %v shows turn %d, above %d", l, l.Turn, most)
+					}
+					if l.Turn > 0 && l.TurnSeat == "" {
+						t.Errorf("line %v names no seat", l)
+					}
+					highest = max(highest, l.Turn)
+				}
+				if highest != most {
+					t.Errorf("highest log turn %d, want %d (report turns %v)", highest, most, back.Report.Turns)
+				}
+				if highest != back.Report.TotalTurns {
+					t.Errorf("highest log turn %d, want report total turns %d", highest, back.Report.TotalTurns)
+				}
 			})
 		}
 	}

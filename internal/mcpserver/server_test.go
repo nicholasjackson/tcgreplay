@@ -172,6 +172,56 @@ func testMCPRoundTrip(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
 	if out, isErr = call(t, cs, "get_state", map[string]any{"view": "reveal"}); isErr {
 		t.Fatal(out)
 	}
+
+	// Start the game with p1 going first, then record an effect that ends
+	// on p2's turn 2: per-player turn 4 in storage, shown as turn 2 p2.
+	if l, _ := g.State().Find("p1-1"); l.Zone != state.Hand {
+		if out, isErr = call(t, cs, "move", map[string]any{"seat": "p1", "iid": "p1-1", "to": "hand"}); isErr {
+			t.Fatal(out)
+		}
+	}
+	if out, isErr = call(t, cs, "place_active", map[string]any{"seat": "p1", "iid": "p1-1"}); isErr {
+		t.Fatal(out)
+	}
+	if out, isErr = call(t, cs, "start_game", map[string]any{"first": "p1"}); isErr {
+		t.Fatal(out)
+	}
+	out, isErr = call(t, cs, "add_effect", map[string]any{"seat": "p1", "text": "Items locked", "on": "p2", "source": "p1-1", "until_turn": 2, "until_seat": "p2"})
+	if isErr {
+		t.Fatalf("add_effect: %s", out)
+	}
+	if !strings.Contains(out, "until end of turn 2 (p2)") {
+		t.Errorf("add_effect result does not describe the end as turn 2 (p2): %s", out)
+	}
+	if effs := g.State().Effects; len(effs) != 1 || effs[0].UntilTurn != 4 {
+		t.Fatalf("stored effects %+v, want one until per-player turn 4", effs)
+	}
+	out, isErr = call(t, cs, "get_state", nil)
+	if isErr {
+		t.Fatal(out)
+	}
+	st.Board = state.BoardView{}
+	if err := json.Unmarshal([]byte(out), &st); err != nil {
+		t.Fatal(err)
+	}
+	if effs := st.Board.Effects; len(effs) != 1 || effs[0].Text != "Items locked" || effs[0].UntilTurn != 2 || effs[0].UntilSeat != state.P2 {
+		t.Fatalf("board effects %+v, want Items locked until turn 2 p2", effs)
+	}
+	if !strings.Contains(out, `"until_turn": 2`) || !strings.Contains(out, `"until_seat": "p2"`) {
+		t.Errorf("board JSON lacks until_turn 2 and until_seat p2: %s", out)
+	}
+
+	// An end turn without the seat it ends on is refused.
+	out, isErr = call(t, cs, "add_effect", map[string]any{"seat": "p1", "text": "Retreat locked", "on": "p2", "until_turn": 2})
+	if !isErr {
+		t.Fatalf("add_effect without until_seat succeeded: %s", out)
+	}
+	if !strings.Contains(out, "until_seat") {
+		t.Errorf("add_effect error does not ask for until_seat: %s", out)
+	}
+	if n := len(g.State().Effects); n != 1 {
+		t.Fatalf("refused add_effect changed the effects: %d", n)
+	}
 }
 
 func TestImportLogTool(t *testing.T) { forEachTransport(t, testImportLogTool) }

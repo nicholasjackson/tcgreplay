@@ -298,7 +298,9 @@ func TestEndTurnCopiesPrompt(t *testing.T) {
 		Data struct{ Prompt string } `json:"data"`
 	}
 	next(t, c, "result", &r)
-	if !r.OK || !strings.Contains(r.Data.Prompt, "get_log since") || !strings.Contains(r.Data.Prompt, "turn 2") {
+	if !r.OK || !strings.Contains(r.Data.Prompt, "get_log since") ||
+		!strings.Contains(r.Data.Prompt, "play turn 1 (p2's turn)") ||
+		strings.Contains(r.Data.Prompt, "turn 2") {
 		t.Fatalf("prompt: %+v", r)
 	}
 }

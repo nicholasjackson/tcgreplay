@@ -16,7 +16,7 @@ Past mistakes make the best puzzles: the position is real, the player has been t
 
 ## 2. Set it up without the answer
 
-- `rewind` to the start of the turn containing the finding (after that turn's draw), on a branch named `drill-<game>-t<N>` (add `-2`, `-3` for repeats). The timeline then stops before the finding, so the annotation is not visible.
+- `rewind` to the start of the turn containing the finding (after that turn's draw), on a branch named `drill-<game>-t<N>-<seat>` (the turn and the player whose turn it is; add `-2`, `-3` for repeats). Turns count both players, as on the timeline: name one as "turn 3, your turn". The timeline then stops before the finding, so the annotation is not visible.
 - Do not quote the finding, its principle, or the original play.
 - Describe the position the way the player would have seen it: both boards, their hand, prizes each side, the opponent's visible threats. Use view `coach`, never `reveal`: the player must not see hidden cards.
 - Ask: "It's your turn. What's your play?" They can answer in words or play the turn on the board.
