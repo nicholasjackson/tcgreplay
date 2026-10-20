@@ -1,9 +1,6 @@
 // Command tcgreplay is a local virtual Pokémon TCG playmat driven by an AI
 // assistant (Claude, Codex, Gemini) over MCP (stdio).
 //
-// "tcgreplay install -client claude|codex|gemini" installs the bundled
-// skills and registers the server with that assistant.
-//
 // The Claude desktop app may launch several copies, and restarts them at
 // will, so by default this process is only a thin stdio shim: it relays MCP
 // to a long-running daemon (starting one if needed) that owns the current
@@ -67,13 +64,6 @@ func (c config) args() []string {
 }
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "install" {
-		if err := runInstall(os.Args[2:], os.Stdout); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		return
-	}
 	var c config
 	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for the playmat's log and daemon files")
 	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")
@@ -94,6 +84,13 @@ func main() {
 	idle, idleErr := envDuration("TCGREPLAY_IDLE_TIMEOUT", 60*time.Minute)
 	flag.DurationVar(&c.idleTimeout, "idle-timeout", idle, "with -hosted, how long an account's game may go without activity before it is dropped, e.g. 2m or 1h; 0 never drops (default $TCGREPLAY_IDLE_TIMEOUT, else 60m)")
 	flag.Parse()
+	// The binary has no subcommands: refuse any leftover word, so a removed
+	// one (such as install) fails instead of starting the shim.
+	if flag.NArg() > 0 {
+		fmt.Fprintf(os.Stderr, "unknown command %q\n", flag.Arg(0))
+		flag.Usage()
+		os.Exit(2)
+	}
 	c.idleErr = idleErr
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "idle-timeout" {

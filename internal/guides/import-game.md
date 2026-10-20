@@ -1,6 +1,6 @@
 ---
-name: tcg-import-game
-description: Import a Pokémon TCG Live battle log into the tcgreplay playmat as a reviewable game with two complete decks, then triage it. Use when the player pastes a TCG Live battle log or a saved game record, or asks to import, load, replay or review a game, whenever the tcgreplay tools (import_log, set_opponent_deck, get_profile) are available.
+name: import-game
+description: Use when the player pastes a TCG Live battle log or a saved game record, or asks to import, load or replay a game.
 ---
 
 # Import a game
@@ -11,7 +11,7 @@ The goal is a game on the playmat that is ready to review: the player's side exa
 
 This needs the tcgreplay MCP tools (`import_log`, `set_opponent_deck`, `get_profile`). If they are not available, say the playmat is not connected and stop. Do not reconstruct the game by hand.
 
-If another skill records results (a game ledger, a notes vault), let it do its part as usual. This skill only adds the playmat game.
+If something else records results (a game ledger, a notes vault), let it do its part as usual. This guide only adds the playmat game.
 
 ## 1. Read the log first
 
@@ -23,7 +23,7 @@ Before importing, read the log yourself:
 
 ## 2. Build the opponent's list
 
-Follow the `tcg-opponent-deck` skill to write a likely 60-card list for the opponent from what the log shows. Doing it before the import means the game is built complete in one step.
+Follow the `opponent-deck` guide to write a likely 60-card list for the opponent from what the log shows. Doing it before the import means the game is built complete in one step.
 
 ## 3. Import
 
@@ -53,4 +53,4 @@ Give the player a short summary:
 - The game id, and that it is on the playmat with its timeline.
 - The game record from the result (`record`), in a code block, exactly as returned (after a `set_opponent_deck` fix, the updated one). The playmat keeps nothing after this session: the player can keep the record in their notes and paste it back later to bring this exact game back. Branches and notes made during the review are not in it and last only for this session. `get_record` returns it again at any time.
 
-Then offer to review it with the `tcg-review-game` skill. Do not start judging plays until the player asks.
+Then offer to review it with the `review-game` guide. Do not start judging plays until the player asks.

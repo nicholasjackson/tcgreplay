@@ -1,6 +1,6 @@
 ---
-name: tcg-review-game
-description: Review an imported Pokémon TCG game on the tcgreplay playmat turn by turn with the player, asking their reasoning before giving a view, testing alternative lines on branches, and recording findings on the timeline. Use when the player asks to review, go through, analyse or coach a game that is on the playmat, or accepts the offer of a review after tcg-import-game.
+name: review-game
+description: Use when the player asks to review, go through, analyse or coach a game on the playmat, or accepts the offer of a review after importing.
 ---
 
 # Review a game
@@ -68,4 +68,4 @@ Categories, one per finding:
 
 ## 5. Close
 
-Summarise in a few lines: the findings with their categories, what went well (name real good plays), and whether the result was earned, gifted, dealt or played. If the same principle showed up more than once, say so: that is the thing to practise. Offer the `tcg-replay-drill` skill to practise the position later without the answer showing.
+Summarise in a few lines: the findings with their categories, what went well (name real good plays), and whether the result was earned, gifted, dealt or played. If the same principle showed up more than once, say so: that is the thing to practise. Offer the `replay-drill` guide to practise the position later without the answer showing.

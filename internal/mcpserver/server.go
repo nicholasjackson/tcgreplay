@@ -56,6 +56,7 @@ func (s *Server) MCP() *mcp.Server {
 		},
 	})
 	s.register(srv)
+	s.registerGuides(srv)
 	return srv
 }
 
@@ -72,13 +73,14 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 // boardInstruction is added to the instructions when results carry a board link.
 const boardInstruction = "\n- Results of import_log, new_game and set_opponent_deck carry a board link: give it to the player so they can watch and act on the live board."
 
-// instructions returns the server instructions, with the board-link line
-// in hosted mode.
+// instructions returns the server instructions: the playmat basics, the
+// guide list, and the board-link line in hosted mode.
 func (s *Server) instructions() string {
+	ins := instructions + guideInstructions()
 	if s.BoardURL == "" {
-		return instructions
+		return ins
 	}
-	return instructions + boardInstruction
+	return ins + boardInstruction
 }
 
 // withBoard adds this call's board link to a game-opening result in
@@ -164,10 +166,11 @@ func out(v any) (*mcp.CallToolResult, any, error) {
 	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(b)}}}, nil, nil
 }
 
-// add registers a tool on srv. Every tool goes through here, which binds
-// each call to the game it acts on (see bind) before running h; a failure
-// to find it comes back as a tool error, so the assistant can tell the
-// user.
+// add registers a tool on srv. Every tool that acts on a game goes through
+// here, which binds each call to the game it acts on (see bind) before
+// running h; a failure to find it comes back as a tool error, so the
+// assistant can tell the user. Tools that need no game, such as guide, are
+// registered beside it (see registerGuides).
 func add[In any](s *Server, srv *mcp.Server, name, desc string, h func(context.Context, In) (any, error)) {
 	mcp.AddTool(srv, &mcp.Tool{Name: name, Description: desc}, func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error) {
 		ctx, err := s.bind(ctx, req)

@@ -1,6 +1,6 @@
 ---
-name: tcg-numbers-drill
-description: Quick damage and HP arithmetic drills for Pokémon TCG built from real cards in the game open on the tcgreplay playmat, checked against card text. Use when the player asks for a numbers drill, damage maths practice, quick quiz on their deck or the meta's threat cards, or to learn their numbers cold.
+name: numbers-drill
+description: Use when the player asks for a numbers drill, damage maths practice, or a quick quiz on the cards in the open game or the meta's threats.
 ---
 
 # Numbers drill

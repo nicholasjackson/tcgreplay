@@ -85,7 +85,9 @@ func TestHostedNeverActedGivesUpPlace(t *testing.T) {
 // place; A's next tool call is refused with the busy message and its
 // board page with a 503, and A is not let back in until B's game expires
 // in turn, when A's next call takes the place back, finds its game
-// expired, and an import carries on.
+// expired, and an import carries on. Guides need no place: whichever
+// account is refused as busy can still list and read them, and reading
+// one neither takes a place nor keeps a game from expiring.
 func TestHostedFreedPlaceToldBusy(t *testing.T) {
 	h, clock := startPlacesHosted(t, 1, 2*time.Minute)
 	csA, cookieA := h.signInAs(t, userA)
@@ -103,11 +105,16 @@ func TestHostedFreedPlaceToldBusy(t *testing.T) {
 			t.Errorf("A's refused get_state %q does not say %q", out, want)
 		}
 	}
+	checkGuidesWhileBusy(t, "A", csA)
 	if resp, body := getWith(t, h.ts.URL+"/", cookieA, nil); resp.StatusCode != http.StatusServiceUnavailable || !strings.Contains(body, "the server is busy") {
 		t.Errorf("A's board page with B holding the place: %d %q, want 503 busy", resp.StatusCode, body)
 	}
 
-	clock.Advance(2*time.Minute + time.Second)
+	// B reads a guide part-way through its idle time: that is not game
+	// activity, so B's game still expires on time.
+	clock.Advance(time.Minute)
+	callTool(t, csB, "guide", nil)
+	clock.Advance(time.Minute + time.Second)
 	out, isErr = toolResult(t, csA, "get_state", nil)
 	if !isErr || !strings.Contains(out, "expired") {
 		t.Fatalf("A's get_state after B's game expired: %q (error %v), want the expiry notice", out, isErr)
@@ -119,6 +126,10 @@ func TestHostedFreedPlaceToldBusy(t *testing.T) {
 	out, isErr = toolResult(t, csB, "get_state", nil)
 	if !isErr || !strings.Contains(out, "the server is busy") {
 		t.Errorf("B's get_state with A holding the place again: %q (error %v), want busy", out, isErr)
+	}
+	checkGuidesWhileBusy(t, "B", csB)
+	if got := stateGame(t, csA); got != "game-a" {
+		t.Errorf("A's get_state after B read guides reads %q, want game-a", got)
 	}
 }
 

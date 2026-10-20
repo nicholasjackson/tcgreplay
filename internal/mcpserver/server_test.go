@@ -563,8 +563,13 @@ func TestBoardLinks(t *testing.T) {
 					}
 				}
 			}
-			if ins := cs.InitializeResult().Instructions; !strings.Contains(ins, "board link") {
+			ins := cs.InitializeResult().Instructions
+			if !strings.Contains(ins, "board link") {
 				t.Errorf("instructions do not mention the board link: %q", ins)
+			}
+			// The board line comes after the guide block.
+			if want := instructions + guideInstructions() + boardInstruction; ins != want {
+				t.Errorf("instructions = %q, want %q", ins, want)
 			}
 		})
 	}
@@ -577,7 +582,7 @@ func TestNoBoardLinksOnDesktop(t *testing.T) {
 				t.Errorf("%s result has a board key: %v", tool, res["board"])
 			}
 		}
-		if ins := cs.InitializeResult().Instructions; ins != instructions {
+		if ins := cs.InitializeResult().Instructions; ins != instructions+guideInstructions() {
 			t.Errorf("instructions changed without a board address: %q", ins)
 		}
 	})

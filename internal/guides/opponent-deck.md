@@ -1,6 +1,6 @@
 ---
-name: tcg-opponent-deck
-description: Build a likely 60-card list for the opponent in an imported Pokémon TCG Live game and apply it to the tcgreplay playmat, so both decks are complete and the opponent's unseen prizes, hand and deck are dealt at random from it. Use right after import_log (or when importing, to pass opp_deck), when the reveal view shows unknown "?" cards, or when asked to guess, build or assume the opponent's deck.
+name: opponent-deck
+description: Use right after importing a game, or when the opponent's unseen cards show as unknown, to build and apply the opponent's likely 60-card list.
 ---
 
 # Build the opponent's likely deck

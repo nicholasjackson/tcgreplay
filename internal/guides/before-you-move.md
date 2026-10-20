@@ -1,11 +1,11 @@
 ---
-name: tcg-before-you-move
-description: Coach the pre-move routine on a real tcgreplay board position. Stops at a position and asks the player three questions in order (their turn, my kill, can I act), checking each answer against the actual HP, Tools, Weakness, Resistance and Energy on the board. Use when the player asks to practise their pre-move checklist, turn routine, or "what should I check before I move", or to quiz a position.
+name: before-you-move
+description: Use when the player asks to practise their pre-move checklist or turn routine, or to be quizzed on a position.
 ---
 
 # Before you move
 
-Most lost games contain a turn where the player acted before answering three questions. This skill practises asking them, in order, on a real board, until it is a habit. It checks answers; it does not hand them out.
+Most lost games contain a turn where the player acted before answering three questions. This guide practises asking them, in order, on a real board, until it is a habit. It checks answers; it does not hand them out.
 
 ## Choose a position
 
