@@ -24,6 +24,9 @@ export const app = $state({
   caption: '',
   toasts: [],
   panelOpen: true,
+  // Where the timeline sits: 'side' (right of the board) or 'bottom'
+  // (below it, for tall screens). Remembered in this browser.
+  panelAt: 'side',
   menu: null, // {x, y, title, items}
   modal: null, // {kind, ...}
   zoom: null, // card view
@@ -39,6 +42,22 @@ export const app = $state({
   deckListShow: 'all', // deck list filter: all, unplayed or undrawn
   lastLog: 0, // highest log id seen, to mark new lines
 });
+
+try {
+  if (localStorage.getItem('panelAt') === 'bottom') app.panelAt = 'bottom';
+} catch {
+  // storage unavailable: keep the default
+}
+
+// setPanelAt moves the timeline to the side or the bottom.
+export function setPanelAt(at) {
+  app.panelAt = at;
+  try {
+    localStorage.setItem('panelAt', at);
+  } catch {
+    // storage unavailable: the choice lasts for this page only
+  }
+}
 
 let toastId = 0;
 

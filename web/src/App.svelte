@@ -1,6 +1,6 @@
 <script>
   import { openDeckList } from './lib/actions.js';
-  import { app } from './lib/store.svelte.js';
+  import { app, setPanelAt } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
   import Side from './components/Side.svelte';
   import Hand from './components/Hand.svelte';
@@ -13,6 +13,7 @@
 
   const snap = $derived(app.snap);
   const review = $derived(snap?.mode === 'review');
+  const bottom = $derived(app.panelOpen && app.panelAt === 'bottom');
 
   function setMode(ev) {
     act('set_mode', { mode: ev.target.checked ? 'review' : 'play' });
@@ -34,7 +35,7 @@
   }
 </script>
 
-<div class="app" class:reveal={app.reveal}>
+<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom}>
   <header>
     <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
     <strong>tcgreplay</strong>
@@ -60,6 +61,9 @@
       <button class="decklist" onclick={() => openDeckList(app.human)} title="Every card in your deck and where each copy is">Deck list</button>
     {/if}
     <button class="panel-toggle" onclick={() => (app.panelOpen = !app.panelOpen)}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
+    {#if app.panelOpen}
+      <button onclick={() => setPanelAt(bottom ? 'side' : 'bottom')} title="Move the timeline beside or below the board">Timeline {bottom ? 'at side' : 'at bottom'}</button>
+    {/if}
     {#if app.account}
       <span class="account" title="Signed in with Google">{app.account}</span>
       <form class="signout" method="POST" action="/auth/logout" onsubmit={() => (app.signingOut = true)}><button type="submit">Sign out</button></form>
@@ -70,7 +74,7 @@
     <div class="reveal-banner">REVEAL VIEW: both hands, prizes and decks are face up. Post-mortem only.</div>
   {/if}
 
-  <div class="body" class:panel={app.panelOpen}>
+  <div class="body" class:panel={app.panelOpen} class:bottom>
     <main>
       {#if app.board}
         <div class="seat-name top">{nameOf(app.claude)} · {app.claude}</div>
@@ -125,6 +129,17 @@
     box-sizing: border-box;
   }
   .app.reveal { border: 6px solid var(--reveal); }
+  /* With no timeline beside the board, the board takes the full width (see
+     --cw in app.css). With the timeline below, the board also keeps 200px of
+     height for it, and the timeline fills whatever height the board leaves. */
+  .app.wide {
+    --cw: clamp(48px, min((100vh - 115px) / 11.1, (100vw - 40px) / 10), 240px);
+    --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
+  }
+  .app.panel-bottom {
+    height: 100vh;
+    --cw: clamp(48px, min((100vh - 315px) / 11.1, (100vw - 40px) / 10), 240px);
+  }
   header {
     display: flex;
     align-items: center;
@@ -165,6 +180,13 @@
     max-height: calc(100vh - 44px);
     position: sticky;
     top: 0;
+  }
+  .body.panel.bottom { grid-template-columns: 1fr; grid-template-rows: auto minmax(200px, 1fr); }
+  .body.bottom aside {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    max-height: none;
+    position: static;
   }
   aside h2 { font-size: 13px; margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
   .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
