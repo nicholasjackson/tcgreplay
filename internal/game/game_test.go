@@ -504,6 +504,47 @@ func startedGame(t *testing.T) *Game {
 	return g
 }
 
+// Moving an Active Pokémon to an empty Bench slot takes its Energy, Tools
+// and damage with it, and clears its Special Conditions.
+func TestMovePokemonToBenchTakesAttachments(t *testing.T) {
+	g := startedGame(t)
+	hu := state.ActorHuman
+	fromDeck := func(def string) state.IID {
+		t.Helper()
+		s := g.State()
+		for _, iid := range s.Sides[state.P1].Deck {
+			if s.Cards[iid].Def == def {
+				must(t)(g.Move(state.P1, hu, iid, state.Loc{Zone: state.Hand}, "", ""))
+				return iid
+			}
+		}
+		t.Fatalf("no %s in deck", def)
+		return ""
+	}
+	energy, tool := fromDeck("sve-006"), fromDeck("tst-6")
+	active := state.Loc{Seat: state.P1, Zone: state.Active}
+	must(t)(g.Attach(state.P1, hu, energy, active, "energy"))
+	must(t)(g.Attach(state.P1, hu, tool, active, "tool"))
+	must(t)(g.PlaceDamage(state.P1, hu, active, 30))
+	must(t)(g.SetCondition(state.P1, hu, active, "poisoned", true))
+
+	must(t)(g.Move(state.P1, hu, "p1-1", state.Loc{Zone: state.Bench, Slot: 2}, "", ""))
+	side := g.State().Sides[state.P1]
+	if !side.Active.Empty() {
+		t.Fatalf("active still holds %v", side.Active.Cards())
+	}
+	b := side.Bench[2]
+	if b.Top() != "p1-1" || !slices.Equal(b.Energy, []state.IID{energy}) || !slices.Equal(b.Tools, []state.IID{tool}) {
+		t.Fatalf("bench 2 = %+v", b)
+	}
+	if b.Damage != 30 || len(b.Conditions) > 0 {
+		t.Fatalf("bench 2 damage %d conditions %v", b.Damage, b.Conditions)
+	}
+	if p := g.State().Check(); len(p) > 0 {
+		t.Fatal(p)
+	}
+}
+
 // The board counts turns the way players do: each player's Nth turn is
 // turn N, while the stored state keeps counting one turn per player.
 func TestBoardViewShowsCombinedTurn(t *testing.T) {

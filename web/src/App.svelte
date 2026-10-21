@@ -125,10 +125,14 @@
     {/if}
   </div>
 
-  <PlaybackBar />
-  {#if app.caption}
-    <div class="caption">{app.caption}</div>
-  {/if}
+  <!-- The caption stacks under the playback bar, however many rows the bar
+       wraps to. -->
+  <div class="overlay">
+    <PlaybackBar />
+    {#if app.caption}
+      <div class="caption">{app.caption}</div>
+    {/if}
+  </div>
 
   <div class="toasts" aria-live="polite">
     {#each app.toasts as t (t.id)}
@@ -234,20 +238,30 @@
   .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
   .landing { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .muted { color: var(--muted); }
-  .caption {
+  .overlay {
     position: fixed;
-    top: 112px;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    pointer-events: none;
+  }
+  .overlay > :global(*) { pointer-events: auto; }
+  .caption {
     white-space: pre-line;
     font-size: 15px;
     line-height: 1.45;
-    left: 50%;
-    transform: translateX(-50%);
     background: #000d;
     color: #fff;
     padding: 8px 16px;
     border-radius: 20px;
     border: 2px solid var(--accent);
-    z-index: 20;
     max-width: 80vw;
     text-align: center;
   }

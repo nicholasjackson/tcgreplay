@@ -542,6 +542,9 @@ func (g *Game) Move(seat state.Seat, actor state.Actor, iid state.IID, to state.
 		if to.Zone != state.Stadium {
 			to.Seat = c.Owner
 		}
+		if ok, err := t.moveStack(iid, to, as); ok || err != nil {
+			return err
+		}
 		if as == "" && to.Zone.IsStack() {
 			if st, _ := t.st.Stack(to); !st.Empty() {
 				if cc := t.g.card(t.st, iid); cc != nil {
@@ -558,6 +561,33 @@ func (g *Game) Move(seat state.Seat, actor state.Actor, iid state.IID, to state.
 		}
 		return t.move(iid, to, as, face)
 	})
+}
+
+// moveStack moves a whole Pokémon in play, with its evolutions, Energy,
+// Tools and damage, when its current Pokémon goes to an empty Pokémon slot.
+// It reports false when the move is not of that kind.
+func (t *tx) moveStack(iid state.IID, to state.Loc, as string) (bool, error) {
+	from, err := t.st.Find(iid)
+	if err != nil || !from.Zone.IsStack() || !to.Zone.IsStack() || from.SameStack(to) {
+		return false, nil
+	}
+	if as != "" && as != state.AsPokemon {
+		return false, nil
+	}
+	src, _ := t.st.Stack(from)
+	if src.Top() != iid {
+		return false, nil
+	}
+	if dst, err := t.st.Stack(to); err != nil || !dst.Empty() {
+		return false, err
+	}
+	// Special Conditions end when a Pokémon leaves the Active Spot.
+	if from.Zone == state.Active && to.Zone == state.Bench && len(src.Conditions) > 0 {
+		if err := t.emit(t.seat, state.EvCondition, state.ConditionPayload{Target: from, Condition: "all"}); err != nil {
+			return true, err
+		}
+	}
+	return true, t.emit(t.seat, state.EvSwap, state.SwapPayload{A: from, B: to})
 }
 
 // Reveal shows cards to both players.

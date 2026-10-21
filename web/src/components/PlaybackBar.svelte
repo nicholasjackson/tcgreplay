@@ -61,12 +61,8 @@
 {/if}
 
 <style>
+  /* App.svelte positions the bar, with the caption below it. */
   .bar {
-    position: fixed;
-    top: 52px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 25;
     display: flex;
     align-items: center;
     gap: 8px;

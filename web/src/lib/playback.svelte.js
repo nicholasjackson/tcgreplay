@@ -136,7 +136,40 @@ export function step(delta) {
   const r = app.replay;
   if (!r) return;
   pause();
+  if (delta < 0 && r.index < 0 && r.from > 0) return extendBack();
   show(Math.max(-1, Math.min(r.steps.length - 1, r.index + delta)));
+}
+
+// extending is set while an earlier stretch is being fetched, so repeated
+// clicks do not fetch it twice.
+let extending = false;
+
+// extendBack steps back past the start of a replay: it reloads the replay
+// from the start of the turn before, keeping its end, and shows the move
+// before the old start.
+async function extendBack() {
+  const r = app.replay;
+  const log = app.snap?.log || [];
+  if (extending || !r) return;
+  const at = log.findLast((l) => l.id <= r.from);
+  const from = at ? (log.findLast((l) => l.turn < at.turn && l.id < r.from)?.id ?? 0) : 0;
+  extending = true;
+  let res;
+  try {
+    res = await request('replay', { from, until: r.to });
+  } catch {
+    return;
+  } finally {
+    extending = false;
+  }
+  // The viewer left the replay, or started another, meanwhile.
+  if (app.replay !== r || !res.ok || !res.data?.steps?.length) return;
+  const steps = res.data.steps;
+  // The move before the old start: the step before the one ending at
+  // r.from, or, when r.from fell inside a step, the last step before it.
+  const j = steps.findLastIndex((s) => s.last <= r.from);
+  app.replay = { ...res.data, index: -1, playing: false, auto: false };
+  show(Math.max(-1, j >= 0 && steps[j].last === r.from ? j - 1 : j));
 }
 
 export function seek(index) {
