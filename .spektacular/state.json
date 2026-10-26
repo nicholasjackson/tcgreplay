@@ -1,23 +1,34 @@
 {
-  "kind": "spec",
-  "run_id": "609a3cc75811d0d9b75b3e6ed4d4836f",
-  "current_step": "finished",
+  "kind": "plan",
+  "run_id": "537caf5fc86de1bf8a2ed123b8b7d29a",
+  "step_span": {
+    "id": "9a7fb0c1c854d146",
+    "name": "walkthrough",
+    "start": "2026-10-26T11:35:53.447975768Z"
+  },
+  "current_step": "walkthrough",
   "completed_steps": [
     "new",
-    "interview",
     "overview",
-    "requirements",
-    "acceptance_criteria",
-    "constraints",
-    "technical_approach",
-    "success_metrics",
-    "non_goals",
+    "discovery",
+    "architecture",
+    "components",
+    "data_structures",
+    "implementation_detail",
+    "dependencies",
+    "testing_approach",
+    "milestones",
+    "tasks",
+    "open_questions",
+    "out_of_scope",
+    "assemble",
     "verification",
-    "split",
-    "finished"
+    "write_plan",
+    "write_context",
+    "write_research"
   ],
-  "created_at": "2026-10-26T10:41:39.910728904Z",
-  "updated_at": "2026-10-26T11:13:04.472258438Z",
+  "created_at": "2026-10-26T11:20:58.289414244Z",
+  "updated_at": "2026-10-26T11:35:53.448309231Z",
   "data": {
     "name": "20261026104139-4e1bb7fa-wait-for-turn"
   }

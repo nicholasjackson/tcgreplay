@@ -1,0 +1,1044 @@
+{
+  "plan": "20261026104139-4e1bb7fa-wait-for-turn",
+  "items": [
+    {
+      "item": "5637335f-d478-4bfb-82d4-d9bdeb5b4511",
+      "title": "Game notices say what changed",
+      "checks": [
+        {
+          "at": "2026-10-26T12:31:34Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "5637335f-d478-4bfb-82d4-d9bdeb5b4511",
+            "title": "Game notices say what changed",
+            "criteria": [
+              "Switching a game between play and review mode notifies its listeners, and the notice says it was a mode switch; switching to the mode it is already in sends nothing.",
+              "Checking out a branch, rewinding (by the tool or the board's jump) and undoing each send a notice naming that kind of change; new events send a notice with no change kind, as today.",
+              "Ending a turn on the board in play mode returns the same prompt text as before, now built by the game.",
+              "Open boards still refresh on every kind of notice, including a mode switch made by the assistant."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/reads.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "reads.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/ui.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/hub.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/game.go:155-170 (SetMode): returns early with no notice when g.mode == m (lines 161-163); otherwise sets the mode and calls every listener with Update{Change: ChangeMode} (lines 164-168). The assistant's set_mode path calls this same method (internal/mcpserver/server.go:457), and the board's path does too (internal/webui/actions.go:138). game_test.go:1052-1061 checks the same-mode silence and the mode-switch notice."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/game/reads.go:501 Rewind passes ChangeRewind; reads.go:532 JumpTo passes ChangeRewind; reads.go:570 Undo passes ChangeUndo; reads.go:602 Checkout passes ChangeCheckout; checkoutLocked (reads.go:607-623) puts that change into the Update it sends to listeners. New events carry no change kind: the event path (game.go listener loop near line 428) is unchanged in the diff and Update.Change is omitted from JSON when empty (game.go:49-51). game_test.go:1091-1086 (TestNoticesSayWhatChanged, lines 1062-1086) covers rewind, checkout, jump, undo and draw."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/game/ui.go:167-172 adds Game.HandOff(since), which formats \"Your turn in tcgreplay (game %s, branch %s). Call get_log since %d and play turn %d (%s's turn).\" from g.ID, g.log.Current(), since, state.Round(g.st.Turn) and g.st.Current. The old inline text and its field sources (diff of internal/webui/actions.go:249-252) are the same, and internal/webui/actions.go:257-258 now calls g.HandOff(since) only in play mode. game_test.go:1089-1100 (TestHandOff) asserts the exact string. The text is identical to the removed code."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/webui/hub.go:68-75: the subscriber appends u.Events (empty for a notice) and always calls h.wake(), so any notice, including ChangeMode from the assistant, drives hub.run (hub.go:97-135) to push a fresh state to every client. The added comment at hub.go:65-67 documents this. webui_test.go:764-783 (TestModeSwitchRefreshesBoard) checks that an open board gets a review-mode snapshot after g.SetMode(ModeReview). No lock-order problem: hub.run releases h.mu before calling stateMessage."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "87047afe-af4e-4f0a-9074-2cf6c15410ba",
+      "title": "The presence and the turn wait",
+      "checks": [
+        {
+          "at": "2026-10-26T12:44:32Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "87047afe-af4e-4f0a-9074-2cf6c15410ba",
+            "title": "The presence and the turn wait",
+            "criteria": [
+              "A wait on the player's seat ends within a fraction of a second of that seat ending its turn, reporting the new turn, whose turn it is, the hand-off text and the point the player's moves start from.",
+              "In review mode, a turn ending for the other seat does not end a wait on the handed-over seat.",
+              "With no player activity for the check-in time, the wait reports a check-in. Activity more often than that never triggers one. The next call after a check-in starts a fresh clock, or reports the turn as ended if the player ended it meanwhile.",
+              "A mode switch, a new or replaced game, an expired game, a branch checkout and a rewind each end the wait with the matching reason, whether they happen during a call or between calls.",
+              "No call lasts longer than the cap. A second call takes over from one still in flight, and a cancelled call returns at once.",
+              "After many waits that time out, get cancelled, get superseded or end on game changes, the game's listeners, the presence's timers and the running goroutines are back where they started."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "p.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "session.ended"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/game-listeners-under-lock.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/manager.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "m.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "manager.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "presence_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "presence.go:380-400: the wait loop re-reads the board via waitView after each wake, and on turnEnded returns WaitTurnEnded with Turn/TurnSeat from State(), Prompt from HandOff(cursor) and Since=cursor. The wake comes from gameUpdate (presence.go:183-197, bumps changed) fired by Game.notify (game.go:423-431) on EndTurn events. presence_test.go:95-129 TestWaitTurnEndedPromptly checks the 500ms lag, turn 2, seat p2, since, next=head and the prompt text. Test not re-run by me; judged from code."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "presence.go:245: waitView only sets turnEnded when e.Type == EvTurn \u0026\u0026 e.Seat == seat with phase end, so the other seat's end is ignored. presence_test.go:156-181 TestWaitReviewOtherSeatEnd: p1 ends turn, the test asserts the wait stays open for 150ms, then p2 ending its turn returns turn_ended for p2."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "presence.go:375-409: idle is measured from max(idleFrom, lastBoard) and returns WaitCheckIn when time since that reaches CheckIn, setting checkedIn. BoardActivity (presence.go:200-205, 274-276) bumps changed, so frequent activity recomputes the clock and never reaches check-in (presence_test.go:199-223). presence.go:331-334 restarts the clock on the next call after a check-in, and the turn_ended check at presence.go:390 runs first, so an end made meanwhile is reported (presence_test.go:246-263). Caveat: nothing outside the package calls BoardActivity (grep found no caller in webui or MCP code), so the activity signal is not wired in this diff, though the criterion is satisfied inside presence."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Mode switch: game.go:153-172 SetMode emits Update{Change: ChangeMode}, and gameUpdate (presence.go:186-192) ends the session with EndModeChanged. New/replaced game: manager.go:182 setCurrent calls gameChanged, which ends the session with EndGameReplaced when its game differs. Expiry: manager.go:131 calls cleared(), which sets EndGameExpired, and Wait's Current() error path (presence.go:291-303) reports it between calls. Checkout: reads.go checkoutLocked passes ChangeCheckout, mapped to EndBranchSwitched. Rewind and jump: reads.go:501/530 pass ChangeRewind, mapped to EndRewound. Undo: reads.go:568 passes ChangeUndo, mapped to EndRewound. Between calls: a session ended by a listener is returned by the next continuing call (presence.go:365-372), and a cursor off the branch also gives EndRewound (presence.go:382-389). presence_test.go:266-353 covers each case during and between calls. Scope note: game.go, reads.go and ui.go are not in the goal's listed files, but this criterion depends on their Update.Change and SetMode notify changes, so I did not mark it impossible."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Cap: presence.go:352-353 sets a per-call capTimer and presence.go:422-424 returns still_waiting on it (test presence_test.go:355-374). Supersede: presence.go:337-340 increments callGen and bumps changed, and the old call returns still_waiting at presence.go:357-363 (presence_test.go:376-401). Cancel: presence.go:424-426 returns ctx.Err() at once (presence_test.go:403-417)."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Listeners: presence.go:161-166 subscribes to a game once, guarded by watched, and Wait itself never subscribes, so the count stays flat (presence_test.go:419-492 compares len(g.listeners) before and after 200 mixed waits). Timers: capTimer and idleTimer are stopped by defers (presence.go:352-355). Goroutines: Wait spawns none, and the test checks NumGoroutine returns to baseline (presence_test.go:493-499). Lock order: waitView and HandOff are called without p.mu held (presence.go:310, 380, 399), and gameUpdate takes p.mu under g.mu as documented (presence.go:97-98)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c7463a67-1bee-4a40-989b-f9bc864d7b83",
+      "title": "The wait_for_turn tool",
+      "checks": [
+        {
+          "at": "2026-10-26T12:48:50Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c7463a67-1bee-4a40-989b-f9bc864d7b83",
+            "title": "The wait_for_turn tool",
+            "criteria": [
+              "Over both the desktop and hosted connections, the tool reports each outcome with its seat, the next cursor, the log lines in the view `get_log` would use, and a `next` line saying what to do.",
+              "In play mode the tool waits only on the player's seat, and refuses a fresh wait during the assistant's own turn when nothing is pending; in review mode it waits on the named seat or the seat whose turn it is.",
+              "The tool finds its game through the quiet resolver when one is set, and through the normal lookup otherwise.",
+              "The standing instructions tell the assistant to wait after handing over a turn, to ask exactly \"Still playing?\" on a check-in, and never to ask the player to say \"your turn\" or \"done\".",
+              "The tool appears in the tool list."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "wait.go:12-23 and wait.go:64-84 give every result an outcome, seat, since (the next cursor) and next line, and wait.go:90-109 renders log lines through the get_log view (seat in play mode, reveal in review). But wait.go:65 skips the log for the ended outcome (`if o.Kind != game.WaitEnded \u0026\u0026 g != nil`), so an ended outcome reports no log lines. Criterion 1 says each outcome carries them. Adding the log to the ended branch, or stating that it is deliberately omitted, would close this. No test was found covering the ended outcome's log in wait_test.go, which I did not run."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Play mode: wait.go:47-51 forces seat to s.HumanSeat and refuses any other seat. A fresh wait during the other seat's turn is refused at game/presence.go:311-319 (`it is %s's turn: end_turn first, then wait`) unless the player's turn has ended with nothing moved since. Review mode: wait.go:52-55 uses the named seat or g.State().Current when none is given."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "server.go:34-37 adds the ResolveQuiet field. server.go:190-196 addQuiet binds with ResolveQuiet when set and falls back to Resolve otherwise. server.go:705 registers wait_for_turn through addQuiet. wait_test.go:250-299 tests both resolver paths and checks the call counts."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "server.go:76 (the instructions block, appended after the last line) says to call wait_for_turn after handing the player a turn in play or review mode, and to call it again until the turn ends. It says never to ask the player to say \"your turn\" or \"done\", and on a check-in to ask only \"Still playing?\". wait.go:75 also carries the exact \"Still playing?\" text."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "server.go:705 registers the tool with addQuiet. server_test.go:414-420 now requires both get_record and wait_for_turn in the tool list. Registration sits in the shared register() path, so it applies to both connections. I did not run the test."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-10-26T12:50:44Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "c7463a67-1bee-4a40-989b-f9bc864d7b83",
+            "title": "The wait_for_turn tool",
+            "criteria": [
+              "Over both the desktop and hosted connections, the tool reports each outcome with its seat, the next cursor, the log lines in the view `get_log` would use, and a `next` line saying what to do.",
+              "In play mode the tool waits only on the player's seat, and refuses a fresh wait during the assistant's own turn when nothing is pending; in review mode it waits on the named seat or the seat whose turn it is.",
+              "The tool finds its game through the quiet resolver when one is set, and through the normal lookup otherwise.",
+              "The standing instructions tell the assistant to wait after handing over a turn, to ask exactly \"Still playing?\" on a check-in, and never to ask the player to say \"your turn\" or \"done\".",
+              "The tool appears in the tool list."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/wait.go:12-24 defines waitResult with outcome, seat, since (next cursor), log, reason and next. wait.go:64-87 sets next for every outcome Wait produces (turn_ended, check_in, ended, default still_waiting). wait.go:93-111 renders the log with the same viewer and view as get_log (internal/mcpserver/server.go:516-524: reveal in review mode, seat otherwise). The wait tests run over both the in-memory and HTTP transports (internal/mcpserver/server_test.go:30-43), which is how the desktop and hosted connections are exercised. Caveat: game/presence.go:42-43 defines WaitRespond and WaitPromote, but nothing in Wait produces them, so they never reach the tool. Also, the diff touches internal/game, internal/webui and the game listeners, which are outside the scope list (scope rule concern, not a criterion verdict)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Play mode: wait.go:46-51 forces seat to s.HumanSeat and rejects any other named seat. Fresh waits during the assistant's turn are refused: game/presence.go:310-319 returns 'it is %s's turn: end_turn first, then wait' unless the player's turn ended with no non-system move since. Review mode: wait.go:52-55 defaults the seat to g.State().Current when none is named, and uses the named seat otherwise. presence.go:313-315 starts from the head in review mode."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/server.go:33-37 adds the ResolveQuiet field. server.go:190-195 addQuiet binds with ResolveQuiet when set and falls back to Resolve otherwise. server.go:705 registers wait_for_turn through addQuiet. wait.go:38-39 calls s.m(ctx), which reads the bound manager. TestWaitUsesQuietResolver in internal/mcpserver/wait_test.go:286-338 checks both branches and that other tools still use Resolve. Hosted (cmd/tcgreplay/hosted.go:196) sets only Resolve, so it falls back, which the criterion permits."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/server.go:303 appends to the instructions: 'After you hand the player a turn ... call wait_for_turn and do what its result's next says ... Never ask the player to say \"your turn\" or \"done\"; on a check-in ask only \"Still playing?\".' The quoted \"your turn\" appears only once in the instructions. wait.go:78 gives the check-in next line 'Ask the player exactly \"Still playing?\" and nothing else.' TestInstructionsTeachTheLoop (wait_test.go:343-360) checks these strings."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/server.go:705 registers addQuiet(s, srv, \"wait_for_turn\", ...). server_test.go:417 adds wait_for_turn to the TestToolList required names, which checks the tool list the server returns."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "c51ac894-dc16-4165-8342-cfd2cd167773",
+      "title": "Waiting does not keep a hosted game alive",
+      "checks": [
+        {
+          "at": "2026-10-26T12:52:53Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c51ac894-dc16-4165-8342-cfd2cd167773",
+            "title": "Waiting does not keep a hosted game alive",
+            "criteria": [
+              "A hosted wait does not move its account's last-activity time or take a place.",
+              "A hosted game left with only a waiting assistant expires after the same idle time as a game with no assistant, and the waiting assistant is told the game expired.",
+              "Every other tool still counts as activity, as today."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/mcp.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "usergames.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/mcp_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/idle_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_idle_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/usergames/mcp.go:39-49 ResolveMCPQuiet calls r.Get(acct), not r.Use, and never sets holds or last. usergames.go:155-166 Get only creates the entry and runs expireIfIdle, so it neither moves e.last nor takes a place. The wait itself (internal/game/presence.go:284-429 Wait) does not touch the registry. internal/usergames/mcp_test.go:68-110 TestResolveMCPQuietIsNotActivity checks LastActive is unchanged and holds is false after a quiet lookup. Note: the wait machinery (presence.go, mcpserver/wait.go) and changes to internal/game/game.go, manager.go, reads.go, ui.go, mcpserver/server.go and webui/* sit outside the six files this item names. That is a scope concern for the caller; it does not change this verdict."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Expiry is unchanged: usergames.go:186-196 expireIfIdle expires a holding entry after cfg.Idle without activity, and a quiet lookup never refreshes e.last, so a waiting-only game expires at the same idle time. expireIfIdle calls M.Expire, which calls presenceRef().cleared() (game/manager.go Expire hunk), and cleared() ends the session with EndGameExpired (presence.go:171-179). Wait then returns WaitEnded with reason game_expired (presence.go:365-371). mcpserver/wait.go:31 maps that to \"the game expired\" and wait.go:84 sets Next to stop waiting. The test TestWaitingDoesNotKeepGame in internal/usergames/idle_test.go:411-468 drives this with quiet lookups every 30s and checks the wait ends with game_expired at 2 minutes."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/server.go:705 is the only addQuiet registration (wait_for_turn). Every other tool goes through add() (server.go:345-347), which uses s.Resolve, i.e. ResolveMCP and r.Use, so each call still records activity and takes a place as before (usergames.go:99-114). The grep found no other ResolveQuiet use. guide (mcpserver/guides.go) was already outside bind and is unchanged. internal/usergames/mcp_test.go:104-110 checks that ResolveMCP still moves LastActive. Verification was reported as passing but was not re-run here; the verdicts rest on reading the code."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "1b311f39-a9bf-4a9e-8ce3-76a029b75717",
+      "title": "Adjustable wait timings",
+      "checks": [
+        {
+          "at": "2026-10-26T12:56:15Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "1b311f39-a9bf-4a9e-8ce3-76a029b75717",
+            "title": "Adjustable wait timings",
+            "criteria": [
+              "With no settings given, managers use a 30-second cap, a five-minute check-in and a two-minute lock release.",
+              "Each setting can be changed by flag or environment variable, and the flag wins over the environment.",
+              "A cap of zero, below zero or above 50 seconds, or a negative check-in or lock-release time, stops the playmat from starting with a clear message.",
+              "The daemon started by the shim, the in-process server and every hosted account's manager all use the configured values."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "config.args"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/shim.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/daemon.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/main.go (diff hunk @@ -83,6 +137,12 @@): envWait(\"TCGREPLAY_WAIT_CAP\", 30*time.Second), envWait(\"TCGREPLAY_CHECK_IN\", 5*time.Minute), envWait(\"TCGREPLAY_LOCK_RELEASE\", 2*time.Minute) are the defaults when nothing is set. Also main.go hunk @@ -137,6 +216,7 @@ and the defaults in the flag-visit block, and cmd/tcgreplay/timing_test.go TestMainTimingSettings 'default' case expects the log line 'turn waits up to 30s a call, check-in after 5m0s, lock release after 2m0s'."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Each setting has a flag (-wait-cap, -check-in, -lock-release via flag.DurationVar, main.go hunk @@ -137,6 +137,12 @@) with its env var as the flag default via envWait. main.go hunk @@ -143,... @@ (the flag.Visit block) sets waitCap/checkErr/lockErr to nil when the matching flag was set on the command line, so a flag overrides the environment even when the env value is invalid. timing_test.go TestMainTimingSettings 'flag over env' and TestMainRejectsBadTiming 'flag over invalid env' exercise this."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/main.go validTiming (diff hunk @@ -54,13 +55,66 @@): WaitCap \u003c= 0 or \u003e maxWaitCap (50s) returns an error; CheckIn \u003c 0 and LockRelease \u003c 0 return errors; invalid env values are reported via c.timingErr. In main, validTiming runs right after flag.Parse and before the --version and mode dispatch; on error it prints the message to stderr and os.Exit(2). Messages name the setting, e.g. '-wait-cap 51s: must be above 0 and at most 50s'. timing_test.go TestValidTiming and TestMainRejectsBadTiming cover zero, negative and over-50s caps and negative check-in and lock-release values. A zero check-in or lock-release is replaced by its default (not rejected), which is consistent with 'negative' being the rejected case."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Shim/daemon: cmd/tcgreplay/shim.go spawnDaemon (line 320) runs the daemon with c.args(), and config.args (main.go hunk @@ -74,... @@) now appends -wait-cap, -check-in and -lock-release with the resolved values, so the daemon's flags match the shim's. The daemon (cmd/tcgreplay/daemon.go line ~163) calls newServer(c, \"\"), which sets m.Timing = c.timing (main.go hunk @@ -216,6 +216,7 @@). In-process: cmd/tcgreplay/main.go runInProcess calls newServer, so it gets the timing; its start-up log includes timingText. Hosted: cmd/tcgreplay/hosted.go NewManager closure (diff hunk @@ -175,7 +175,11 @@) sets m.Timing = c.timing for every account's manager, and hosted.go logs timingText(c.timing). timing_test.go TestManagersUseTiming covers desktop and two hosted accounts. Note: the goal's listed config.args file does not exist in the code root; args() lives in main.go, so this is not a gap in the criterion."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "62a6e8cf-32fc-4491-944f-c37a06e1935e",
+      "title": "Mid-turn promote and respond outcomes",
+      "checks": [
+        {
+          "at": "2026-10-26T13:02:26Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "62a6e8cf-32fc-4491-944f-c37a06e1935e",
+            "title": "Mid-turn promote and respond outcomes",
+            "criteria": [
+              "When the player knocks out the assistant's Active by attack, Ability or a plain knock-out, the wait reports a promotion once. After the assistant promotes, a continuing wait goes back to waiting.",
+              "When the player plays Judge or Unfair Stamp, the wait reports the card with its name, id and text, and the assistant can then shuffle its hand into its deck and draw during the player's turn in play mode.",
+              "A card that asks nothing of the assistant's side is reported once, and a continuing wait does not report it again.",
+              "The assistant's seat can act during the player's turn in play mode only while a response is open; at any other time the turn lock refuses it as today.",
+              "Each promote and respond result's `next` line tells the assistant what to do, and to wait again afterwards."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/verbs.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "p.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/presence.go:436-493 (Wait loop): promote := v.activeEmpty \u0026\u0026 !s.koReported; s.koReported is set to v.activeEmpty each pass, so one promote per vacancy and no repeat while still empty; after the switch the vacancy closes and continuing waits fall through to still_waiting. activeEmpty is a plain check of the assistant's Active (presence.go:250-252), so attack, Ability and plain knock-outs all reach it. internal/game/presence_respond_test.go:101-156 TestWaitPromote covers all three and checks promote once, then still_waiting after Switch (verbs.go:381-389 Switch uses anyTurn for promotion)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "presence.go:284-311 usedCard fills IID (a.Source), Name (a.Label, e.g. \"Judge\"), Def (card id) and Text (c.Effect for trainers); mcpserver/wait.go:88-93 renders them in cards. presence_respond_test.go:163-200 TestWaitRespondJudgeAndUnfairStamp checks the exact UsedCard for Judge and Unfair Stamp and shuffles the hand, shuffles, and draws in play mode (Move/Shuffle/Draw use g.run with crossSeat, game.go:350-373)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "presence.go:473-484: each opener action id is recorded in s.reported and only unreported ids are returned, so a continuing wait (same session, Since passed) does not repeat a card. presence_respond_test.go:205-233 TestResponseWindowOnlyWhileOpen asserts Ultra Ball is reported once and the next wait is still_waiting."
+            },
+            {
+              "criterion": 4,
+              "verdict": "not_met",
+              "evidence": "The response window is gated in game.go:455 (checkTurn: g.responder != seat), but the turn lock is skipped entirely when a crossSeat verb joins an open action of the other seat: game.go:365-369 sets joined := g.open != nil \u0026\u0026 (g.open.Seat == seat || spec.crossSeat) \u0026\u0026 ...; then `if !spec.anyTurn \u0026\u0026 !(joined \u0026\u0026 g.open.Seat != seat)` skips checkTurn. Draw, Shuffle and Move are crossSeat (verbs.go:198, 512, 538) and have no joinIf, so if the player leaves an action open (e.g. Ultra Ball with no end_action), the assistant's draw or shuffle during the player's turn succeeds with no response open, contrary to 'only while a response is open'. Tests do not cover this: TestResponseWindowOnlyWhileOpen calls EndAction before testing refusal. Fix needed in game.go runLocked so the lock applies to joined cross-seat verbs unless the response window is open."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "mcpserver/wait.go:93 (respond): next names the assistant's seat, says to do any card effect with the seat's verbs, and says to call wait_for_turn with since N, or call it again straight away if nothing. wait.go:95 (promote): next says to promote with switch (to_slot) and then call wait_for_turn with since N. wait.go:105 (default still_waiting) also says to call again. Each next ends with a wait-again instruction."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-10-26T13:17:56Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "62a6e8cf-32fc-4491-944f-c37a06e1935e",
+            "title": "Mid-turn promote and respond outcomes",
+            "criteria": [
+              "When the player knocks out the assistant's Active by attack, Ability or a plain knock-out, the wait reports a promotion once. After the assistant promotes, a continuing wait goes back to waiting.",
+              "When the player plays Judge or Unfair Stamp, the wait reports the card with its name, id and text, and the assistant can then shuffle its hand into its deck and draw during the player's turn in play mode.",
+              "A card that asks nothing of the assistant's side is reported once, and a continuing wait does not report it again.",
+              "The assistant's seat can act during the player's turn in play mode only while a response is open; at any other time the turn lock refuses it as today.",
+              "Each promote and respond result's `next` line tells the assistant what to do, and to wait again afterwards."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/verbs.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "p.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/presence.go:443-492 (wait loop): promote := v.activeEmpty \u0026\u0026 !s.koReported, then s.koReported = v.activeEmpty, so one promotion per vacancy and the flag clears once the Active is filled; the call returns WaitPromote. The attack, Ability and plain knock-out cases are covered by TestWaitPromote in internal/game/presence_respond_test.go:101-156, which checks the promote once, that a continuing wait reports the attack or Ability and then goes back to still_waiting, and that it still_waits after the assistant's Switch at line 147."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "presence.go:280-311 (usedCard) and presence.go:486-492 report the trainer with Name (action label), Def (card id, e.g. sv01-176 for Judge) and Text (c.Effect); mcpserver/wait.go:88-93 renders them as name, card (id) and text. The response window is opened by setResponder(seat.Other()) (presence.go:487). game.go:461 checkTurn lets the responder act (`g.st.Current != seat \u0026\u0026 g.responder != seat`), so Move/Shuffle/Draw by p2 succeed during p1's turn. TestWaitRespondJudgeAndUnfairStamp (presence_respond_test.go:163-200) covers Judge (4 draws) and Unfair Stamp (2 draws) after the player's action is closed with EndAction."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "presence.go:473-484: a per-call reported map keyed by action id (s.reported) means each opener is returned once and then skipped. A card with no assistant effect (Ultra Ball) is returned as respond, and mcpserver/wait.go:93 says to call again straight away if there is nothing to do. TestResponseWindowOnlyWhileOpen (presence_respond_test.go:227-233) checks that the second wait after Ultra Ball returns still_waiting, not respond again."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The window is game.go:72-87 (responder field), set only by Wait via setResponder (presence.go:487) and cleared at the start of each Wait call (presence.go:366), on ending a turn (verbs.go:164), on checkout (reads.go:626), on mode change (game.go:170) and when a session ends (presence.go:432). checkTurn (game.go:461) and the cross-join gate (game.go:372-374) refuse the assistant's seat otherwise. TestResponseWindowOnlyWhileOpen and TestAssistantJoinNeedsResponseWindow (presence_respond_test.go:202-287) cover refusal before a response, after the next wait, and after the turn ends. Caveat: verbs with anyTurn (verbs.go:389 promote switch, 523 flip, 596 reveal, 625 remove effect, infer.go:102 assume) still skip the turn lock as before this item, which the criterion's 'as today' wording appears to allow."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "mcpserver/wait.go:95 (promote): 'promote with switch (to_slot) if you have a Benched Pokémon, then call wait_for_turn with since N.'; wait.go:93 (respond): 'call wait_for_turn with since N'; wait.go:105 (default still_waiting) also says to call again. switch with to_slot is registered at mcpserver/server.go:640 and Switch struct at server.go:344-349. Each promote and respond result sets Next and tells the assistant to wait again afterwards."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "60639400-0c9d-471f-98da-098108b561f6",
+      "title": "The acting lock and opponent status on the board server",
+      "checks": [
+        {
+          "at": "2026-10-26T13:34:17Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "60639400-0c9d-471f-98da-098108b561f6",
+            "title": "The acting lock and opponent status on the board server",
+            "criteria": [
+              "While the assistant answers a card, promotes or plays its own turn, the board refuses game actions, closing an action, checkout and rewind with an \"opponent is acting\" message, but still allows mode switching, the reveal toggle, replays and reads.",
+              "Once the assistant waits again or ends its turn, the player's actions work again in the same turn.",
+              "If the assistant makes no move for the lock-release time, the board unlocks by itself and shows the opponent stopped responding. An assistant that keeps moving more often than that stays locked until it finishes.",
+              "Open boards are told \"waiting\" while the assistant waits, and the status disappears within 60 seconds of the assistant stopping, including straight after a check-in.",
+              "In review mode with no handed-over turn, the board never refuses an action and never shows an opponent status.",
+              "Ending a turn on the board reports that the assistant is waiting when it is."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "p.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/manager.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/hub.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/webui/actions.go:141-143 refuses every verb not in lookVerbs (line 112-115: set_reveal, set_mode, replay, search_deck, deck_list, look_top) while s.M.Locked(), with the opponent-acting error. end_action, checkout, rewind, draw, move and end_turn all fall under that refusal. The lock is set by presence.go:440-462 (Locked/AssistantMoved) from a card answer (WaitRespond) or promote (WaitPromote) via the defer at presence.go:550-565, and from the assistant's own-turn writes via mcpserver/server.go verb() (AssistantMoved(true) when mode is play and Current is the assistant's seat). internal/webui/lock_test.go:136-212 (TestLockRefusesGameActions) exercises both halves."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "A new Wait call clears the lock at presence.go:542 (p.clearActingLocked()) before it runs. The assistant's end_turn calls AssistantDone() (mcpserver/server.go end_turn handler, after s.verb) which clears acting at presence.go:466-475. Tests lock_test.go:217-271 (TestLockReleasesAfterFinish, 'waits again' and 'ends its turn' subtests) check that draw and end_action succeed afterwards."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "presence.go:265-275 releaseFired sets acting=false and stopped=true when time.Since(lastMove) \u003e= lockRelease, then notifies. The timer is armed in startActingLocked (presence.go:243-252) at LockRelease, and every assistant move under the lock refreshes lastMove and resets it (AssistantMoved, presence.go:451-462), so a steadily moving assistant stays locked. opponentLocked (presence.go:294-304) reports 'stopped', and hub.go:148-151 pushes it. Timing default is 2 min (presence.go:36-37). lock_test.go:317-323 covers the stop and unlock."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "'waiting' is reported while inFlight or within waitingUntil (presence.go:300). Starting a Wait calls p.notify(), and OnPresence is wired to hub.wake (internal/webui/server.go, m.OnPresence(s.hub.wake)), so open boards are pushed. A still_waiting result keeps the status for waitingGrace = 20s (presence.go:142, 279-290) with a grace timer that notifies at lapse. A check-in or any other end runs waitingForLocked(0) at once (presence.go:553-561 default branch), so the status clears straight after a check-in. The 20s grace plus the 50s cap keeps any stop within 60s. lock_test.go:289-323 (TestOpponentStatusPushed) checks waiting, then cleared after check-in."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "presence.go:451-458: AssistantMoved(false) only refreshes the lock when already acting, and does not set it. mcpserver/server.go verb() sets the lock only when g.Mode()==ModePlay and Current is the assistant's seat. Mode changes clear the lock (presence.go:217-219 via ChangeMode in gameUpdate). Opponent() returns '' with no wait in flight (presence.go:300-303). internal/webui/lock_test.go:325-380 (TestNoLockInReviewWithoutWait) checks no refusal and no opponent field across review moves."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "internal/webui/actions.go end_turn case (diff hunk around line 876-890): waiting := s.M.Opponent() == \"waiting\" is read before EndTurn, and data[\"waiting\"]=true is set in r.Data alongside the prompt. actions.go:293 returns r as the result, so dispatch exposes its Data. Absent when not waiting. lock_test.go:382-426 (TestEndTurnReportsWaiting) covers both cases."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b49a0200-5e27-49f9-96f2-20fb436c1f82",
+      "title": "Board shows the opponent status",
+      "checks": [
+        {
+          "at": "2026-10-26T13:36:19Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b49a0200-5e27-49f9-96f2-20fb436c1f82",
+            "title": "Board shows the opponent status",
+            "criteria": [
+              "The opponent's name on the board carries the matching message while the assistant waits, acts or has stopped responding, and nothing otherwise.",
+              "The board's game controls are disabled while the opponent is acting and come back when it finishes.",
+              "Ending a turn while the assistant is waiting shows no \"paste this prompt\" message; with no assistant waiting, the prompt is copied as before.",
+              "The board app builds."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/ws.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Stack.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Strip.svelte"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Server: internal/game/presence.go:294-301 opponentLocked returns \"acting\", \"stopped\" or \"waiting\", and Manager.Opponent() (presence.go:440) returns \"\" otherwise. internal/webui/hub.go stateMessage (diff hunk ~line 145) sends msg[\"opponent\"] only when non-empty, and server.go wires m.OnPresence(s.hub.wake) so changes push a state. Client: web/src/lib/ws.js onState sets app.opponent = msg.opponent || '' (diff hunk line 48-51). web/src/App.svelte (diff hunk ~line 98-110) renders the badge beside the top seat name (the assistant's seat) only when app.opponent is truthy, with the text 'Opponent is waiting', 'Opponent is acting' or 'Opponent stopped responding' from the oppStatus map (App.svelte diff lines 36-44). Nothing renders for ''."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/src/components/Strip.svelte:72 End action has disabled={oppActing()}; Strip.svelte:74 Draw uses disabled={!canAct()}, and web/src/lib/store.svelte.js (diff hunk ~line 99-106) makes canAct() return false when oppActing(); Strip.svelte:77 End turn has disabled={(!myTurn \u0026\u0026 !review) || oppActing()}. Card.svelte:55 and Stack.svelte:54 make drag false while app.opponent === 'acting'. oppActing() is app.opponent === 'acting', so the controls re-enable when the status clears. Server backs this up: internal/webui/actions.go lock check refuses non-look verbs while s.M.Locked(). Note: setup-phase buttons (Mulligan, start_game) in Strip.svelte lines 66-69 and controls outside the scope files are not disabled; I did not treat that as a failure since the criterion is about the game controls in the scope files."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/src/lib/actions.js (diff hunk ~line 347-365): endTurn now returns after toast('Turn ended.') when data?.waiting is set, and only otherwise reaches the navigator.clipboard.writeText(data.prompt) path (line ~361 'Turn ended. Prompt copied'). Server side internal/webui/actions.go end_turn sets data[\"waiting\"]=true only when s.M.Opponent() == \"waiting\" before EndTurn, and otherwise still sends data[\"prompt\"] = g.HandOff(since), so the prompt is copied as before with no waiting assistant."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Not rebuilt by me (read-only). The verify summary records make build (npm ci, vite build of the board app, go build) as pass. Imports checked for the changed files: actions.js imports toast from store.svelte.js (line 3); Strip.svelte imports oppActing from store.svelte.js (line 4), which is exported at store.svelte.js (diff ~line 105); Card.svelte and Stack.svelte import app (lines 4); ws.js imports toast (line 2). The new .opp-status CSS in App.svelte is plain CSS. No obvious build break in the diff. Verdict relies on the recorded build pass."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c9c3f1ef-7944-4f9e-a602-60f2bde2b69e",
+      "title": "Guides teach the waiting step",
+      "checks": [
+        {
+          "at": "2026-10-26T13:37:48Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c9c3f1ef-7944-4f9e-a602-60f2bde2b69e",
+            "title": "Guides teach the waiting step",
+            "criteria": [
+              "When the replay-drill guide asks the player to play the drill turn on the board, it tells the assistant to wait on that seat and move on to comparing when the turn ends, never asking for \"done\".",
+              "When the review-game guide lets the player play a turn themselves or play a line out against the assistant, it tells the assistant to wait on the player's seat and play the other seat's reply when the turn ends.",
+              "The guides still pass every existing guide rule (no \"Claude\" or \"Nic \", real tool names only, turns named by round and seat), and the tests fail if the waiting step is removed."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/replay-drill.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "replay-drill.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/review-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "review-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/guides_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/guides/replay-drill.md:23 says 'If they play it on the board, call `wait_for_turn` with their seat and do what each result's `next` says ... When it reports the turn ended, go straight to Compare. Never ask them to say they are done.' Compare (line 27) also reads the line from the wait_for_turn result. Diff hunk @@ -20,10 +20,11 @@ shows this added."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/guides/review-game.md:37 (step 4) says 'let them: call `wait_for_turn` with their seat, answer any card that asks your side to act, and read their moves from the result when the turn ends.' Line 48 (Test the alternative) says 'after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended. Never ask them to say \"done\".' This covers playing the other seat's reply when the turn ends."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The style rules hold: no 'Claude' or 'Nic ' in the two guides, and wait_for_turn is a registered tool (internal/mcpserver/server.go:725 addQuiet). Turns are named by round and seat in the new text, which names none. The test requirement fails. The only new anchors are internal/guides/guides_test.go:229-230, which check that the substring 'wait_for_turn' appears anywhere in each guide. replay-drill.md also mentions wait_for_turn at line 27, and review-game.md at line 48, so deleting the waiting step at replay-drill.md:23 or review-game.md:37 leaves the anchor satisfied and TestGuidesKeepTheirRules still passes. internal/mcpserver/guides_test.go is unchanged and only checks tool names, not the waiting step. A stronger anchor tied to the step's own wording (for example the 'When it reports the turn ended' or 'Never ask them to say they are done' sentence) would be needed. Scope note: the root replay-drill.md and review-game.md named in the scope do not exist in the worktree code root, so nothing there to change."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-10-26T13:38:42Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "c9c3f1ef-7944-4f9e-a602-60f2bde2b69e",
+            "title": "Guides teach the waiting step",
+            "criteria": [
+              "When the replay-drill guide asks the player to play the drill turn on the board, it tells the assistant to wait on that seat and move on to comparing when the turn ends, never asking for \"done\".",
+              "When the review-game guide lets the player play a turn themselves or play a line out against the assistant, it tells the assistant to wait on the player's seat and play the other seat's reply when the turn ends.",
+              "The guides still pass every existing guide rule (no \"Claude\" or \"Nic \", real tool names only, turns named by round and seat), and the tests fail if the waiting step is removed."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/replay-drill.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "replay-drill.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/review-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "review-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/guides_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/guides/replay-drill.md:23 says: \"If they play it on the board, call `wait_for_turn` with their seat and do what each result's `next` says, answering any card that asks your side to act. When it reports the turn ended, go straight to Compare. Never ask them to say they are done.\" Compare's line 27 also reads the log from the wait_for_turn result. The diff confirms these lines are new."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/guides/review-game.md:37 (step 4) says to call `wait_for_turn` with their seat, answer any card that asks your side to act, and read their moves from the result when the turn ends. internal/guides/review-game.md:48 (section 3) says that to play a line out with the player taking one seat, after each `end_turn` call `wait_for_turn` on the player's seat and reply when it reports their turn ended, never asking them to say \"done\"."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Existing rules hold: the new guide text contains no \"Claude\", \"Nic \" or \"skill\". Tool names used (wait_for_turn, end_turn) are registered in internal/mcpserver/server.go:725 and :711. Turn references are by round and seat, with no new bare turn branch names. internal/guides/guides_test.go:229-234 anchors the new phrases for review-game and replay-drill, and TestGuidesKeepTheirRules fails if any is removed, since it checks strings.Contains on each guide's text. Scope note: no replay-drill.md or review-game.md exists at the code root (a glob of *.md at the root lists none), so the two root-level scope entries have no file to change; the embedded guides under internal/guides are the files that matter and they are the ones changed. I did not run the tests; the verification summary's pass result is taken as given."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    }
+  ]
+}
