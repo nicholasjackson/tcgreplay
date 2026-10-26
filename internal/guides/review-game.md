@@ -34,7 +34,7 @@ Pick the two to four that mattered most, in game order. Ignore turns with no rea
 1. `rewind` to the start of the turn (after the turn's draw) on a `review-t<N>-<seat>` branch (`<seat>` is `p1` or `p2`, the player whose turn it is).
 2. Set the scene in a few lines: both boards, the player's hand, prizes, what the opponent threatens next turn.
 3. Ask what they were thinking, with one or two specific questions ("you had Boss's Orders and Lillie's in hand: what made you pick Lillie's?").
-4. Wait for the answer. If the player wants to play the turn themselves on the board, let them and read their moves with `get_log` afterwards.
+4. Wait for the answer. If the player wants to play the turn themselves on the board, let them: call `wait_for_turn` with their seat, answer any card that asks your side to act, and read their moves from the result when the turn ends.
 5. Then give your view, plainly: was it a mistake, and why? Distinguish a **poor decision** from a **bad outcome**: a correct play that lost to variance is not an error.
 
 ## 3. Test the alternative
@@ -45,6 +45,7 @@ When you claim a better line, show it:
 - Check the line is legal and the numbers reach: count damage in order (attacker bonuses, then Weakness doubles, then Resistance subtracts; Tools and Stadiums change HP).
 - Test the opponent's best reply, not their worst. `sample_hidden` after rewinding to the same event deals plausible hidden cards; try two or three samples on separate branches before claiming a line is safe.
 - If the alternative turns out no better, say so. A review that finds the player was right is still a good review.
+- To play a line out with the player taking one seat, play the other seat's turns yourself and, after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended. Never ask them to say "done".
 
 ## 4. Record the finding
 

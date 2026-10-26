@@ -36,6 +36,13 @@
   function ownName() {
     return app.account ? app.account.split('@')[0] : '';
   }
+  // oppStatus is the badge beside the opponent's name for each status.
+  const oppStatus = {
+    waiting: 'Opponent is waiting',
+    acting: 'Opponent is acting',
+    stopped: 'Opponent stopped responding',
+  };
+
   function nameOf(seat) {
     const n = app.board?.sides[seat]?.name;
     return n || (seat === app.human ? ownName() || 'You' : app.assistant);
@@ -98,7 +105,10 @@
   <div class="body" class:panel={app.panelOpen} class:bottom>
     <main>
       {#if app.board}
-        <div class="seat-name top">{nameOf(app.claude)} · {app.claude}</div>
+        <div class="seat-name top">
+          {nameOf(app.claude)} · {app.claude}
+          {#if app.opponent}<span class="opp-status {app.opponent}">{oppStatus[app.opponent]}</span>{/if}
+        </div>
         <Hand seat={app.claude} small />
         <Side seat={app.claude} mirrored />
         <Strip />
@@ -236,6 +246,9 @@
   }
   aside h2 { font-size: 13px; margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
   .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
+  .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: 999px; border: 1px solid var(--line); color: var(--text); }
+  .opp-status.acting { border-color: var(--accent); color: var(--accent); }
+  .opp-status.stopped { border-color: var(--reveal); color: var(--reveal); }
   .landing { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .muted { color: var(--muted); }
   .overlay {

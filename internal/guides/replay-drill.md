@@ -20,10 +20,11 @@ Past mistakes make the best puzzles: the position is real, the player has been t
 - Do not quote the finding, its principle, or the original play.
 - Describe the position the way the player would have seen it: both boards, their hand, prizes each side, the opponent's visible threats. Use view `coach`, never `reveal`: the player must not see hidden cards.
 - Ask: "It's your turn. What's your play?" They can answer in words or play the turn on the board.
+- If they play it on the board, call `wait_for_turn` with their seat and do what each result's `next` says, answering any card that asks your side to act. When it reports the turn ended, go straight to Compare. Never ask them to say they are done.
 
 ## 3. Compare
 
-- Read their line (from what they say, or `get_log` since the rewind point).
+- Read their line: from what they say, or from the log in the `wait_for_turn` result (or `get_log` since the rewind point).
 - Check it on its merits first: is it legal, do the numbers reach, what does it leave exposed? Use `card_text` for every number.
 - Then compare with the finding's better line. Three outcomes:
   - **Found it:** same idea (it need not be move for move). Say so, and give the principle.

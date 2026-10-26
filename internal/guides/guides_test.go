@@ -224,10 +224,14 @@ func TestGetUnknownListsTheGuides(t *testing.T) {
 // One rule or step per guide that moving it from a skill must not drop.
 func TestGuidesKeepTheirRules(t *testing.T) {
 	anchors := map[string][]string{
-		"import-game":     {"Read the log first", "Triage"},
-		"opponent-deck":   {"Name the archetype"},
-		"review-game":     {"Ask before judging", "Put the board where you are talking", "Test the alternative"},
-		"replay-drill":    {"Set it up without the answer"},
+		"import-game":   {"Read the log first", "Triage"},
+		"opponent-deck": {"Name the archetype"},
+		"review-game": {"Ask before judging", "Put the board where you are talking", "Test the alternative",
+			"call `wait_for_turn` with their seat, answer any card that asks your side to act, and read their moves from the result when the turn ends",
+			"after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended"},
+		"replay-drill": {"Set it up without the answer",
+			"call `wait_for_turn` with their seat and do what each result's `next` says",
+			"When it reports the turn ended, go straight to Compare. Never ask them to say they are done."},
 		"before-you-move": {"The three questions"},
 		"numbers-drill":   {"Damage order"},
 	}

@@ -38,6 +38,12 @@ type Manager struct {
 	// lastDeck is the owner's decklist from the last successful import,
 	// reused when an import gives none.
 	lastDeck string
+	// presence tracks the assistant's turn wait on the current game; it is
+	// made on first use.
+	presence *presence
+
+	// Timing holds the turn wait's settings; zero fields use the defaults.
+	Timing Timing
 }
 
 // NewManager returns a manager with no game open; dir holds the assistant
@@ -122,6 +128,7 @@ func (m *Manager) Expire(notice string) {
 	m.notice = notice
 	hooks := slices.Clone(m.onClear)
 	m.mu.Unlock()
+	m.presenceRef().cleared()
 	for _, f := range hooks {
 		f()
 	}
@@ -172,6 +179,7 @@ func (m *Manager) setCurrent(g *Game) {
 	m.notice = ""
 	hooks := slices.Clone(m.onLoad)
 	m.mu.Unlock()
+	m.presenceRef().gameChanged(g)
 	for _, f := range hooks {
 		f(g)
 	}

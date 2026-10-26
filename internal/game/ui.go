@@ -160,6 +160,17 @@ func (g *Game) TurnStartedAt(seat state.Seat) int {
 	return 0
 }
 
+// HandOff is the message that hands the turn now in progress to the
+// assistant: which game and branch, where its log starts (since, from
+// TurnStartedAt before the turn ended) and whose turn it is. The board's
+// end-of-turn prompt and the turn wait share it.
+func (g *Game) HandOff(since int) string {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return fmt.Sprintf("Your turn in tcgreplay (game %s, branch %s). Call get_log since %d and play turn %d (%s's turn).",
+		g.ID, g.log.Current(), since, state.Round(g.st.Turn), g.st.Current)
+}
+
 // ReplayStep is one action in a replay: what it did, any notes on it, and
 // the board after it.
 type ReplayStep struct {

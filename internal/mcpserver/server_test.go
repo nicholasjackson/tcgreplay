@@ -414,8 +414,10 @@ func TestToolList(t *testing.T) {
 			}
 			schemas[tool.Name] = tool.InputSchema
 		}
-		if _, ok := schemas["get_record"]; !ok {
-			t.Error("no get_record tool")
+		for _, want := range []string{"get_record", "wait_for_turn"} {
+			if _, ok := schemas[want]; !ok {
+				t.Errorf("no %s tool", want)
+			}
 		}
 		for _, gone := range []string{"list_games", "load_game"} {
 			if _, ok := schemas[gone]; ok {

@@ -48,6 +48,7 @@ function onState(msg) {
   app.assistant = msg.assistant || 'Assistant';
   app.reveal = !!msg.reveal;
   app.notice = msg.notice || '';
+  app.opponent = msg.opponent || '';
   if (msg.error) toast(msg.error, 'error');
   showSnapshot(msg.snapshot);
 }

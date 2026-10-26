@@ -347,9 +347,14 @@ function firstEmptyBench(seat) {
   return i < 0 ? 0 : i;
 }
 
-// endTurn ends the human's turn and copies the prompt for the assistant.
+// endTurn ends the human's turn and copies the prompt for the assistant,
+// unless the assistant is waiting and picks the turn up by itself.
 export async function endTurn(seat = app.human) {
   const data = await act('end_turn', seatArgs(seat));
+  if (data?.waiting) {
+    toast('Turn ended.', 'info');
+    return;
+  }
   if (!data?.prompt) return;
   try {
     await navigator.clipboard.writeText(data.prompt);

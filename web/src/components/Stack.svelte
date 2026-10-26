@@ -51,7 +51,7 @@
   aria-label={label || spec}
 >
   {#if stack}
-    <div class="pile" draggable="true" ondragstart={dragStack} ondragend={endDrag} role="group">
+    <div class="pile" draggable={app.opponent !== 'acting'} ondragstart={dragStack} ondragend={endDrag} role="group">
       <div class="attachments">
         {#each stack.tools || [] as t (t.iid)}
           <div class="att tool">

@@ -304,3 +304,62 @@ func TestSweepEvery(t *testing.T) {
 		}
 	}
 }
+
+// TestWaitingDoesNotKeepGame: a game whose only traffic is an assistant
+// waiting on the player (resolving quietly every 30 seconds, as each
+// wait_for_turn call does) expires after the same idle time as a game with
+// no assistant, and the expiry ends the wait in progress with
+// game_expired.
+func TestWaitingDoesNotKeepGame(t *testing.T) {
+	clock := &fakeClock{t: time.Date(2026, 10, 18, 9, 0, 0, 0, time.UTC)}
+	r := idleRegistry(t, 2*time.Minute, clock.Now)
+	e := use(t, r, alice)
+	startGame(t, e.M, "a-game")
+	g, _ := e.M.Current()
+	if err := g.SetMode(game.ModeReview); err != nil {
+		t.Fatal(err)
+	}
+	e.M.Timing = game.Timing{WaitCap: 10 * time.Second, CheckIn: time.Hour}
+
+	type result struct {
+		o   game.WaitOutcome
+		err error
+	}
+	done := make(chan result, 1)
+	go func() {
+		o, err := e.M.Wait(context.Background(), game.WaitRequest{Seat: state.P1})
+		done <- result{o, err}
+	}()
+
+	quiet := func() {
+		t.Helper()
+		m, _, err := r.ResolveMCPQuiet(context.Background(), tokenExtra(alice.ID, alice.Email))
+		if err != nil || m != e.M {
+			t.Fatalf("quiet lookup: %v, %v", m, err)
+		}
+	}
+	for i := 0; i < 4; i++ { // 30s, 1m, 1m30s, 2m
+		clock.Advance(30 * time.Second)
+		quiet()
+		r.Sweep()
+		checkOpen(t, e.M, g)
+	}
+	select {
+	case res := <-done:
+		t.Fatalf("wait returned before the game expired: %+v, %v", res.o, res.err)
+	default:
+	}
+
+	clock.Advance(time.Second)
+	quiet()
+	r.Sweep()
+	checkExpired(t, e.M, "2 minutes")
+	select {
+	case res := <-done:
+		if res.err != nil || res.o.Kind != game.WaitEnded || res.o.Reason != game.EndGameExpired {
+			t.Fatalf("wait ended with %+v, %v; want ended, game_expired", res.o, res.err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("the expiry did not end the wait")
+	}
+}

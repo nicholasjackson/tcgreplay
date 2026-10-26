@@ -46,7 +46,18 @@ type Update struct {
 	Branch string   `json:"branch"`
 	Events []int    `json:"events"`
 	Delta  []string `json:"delta"`
+	// Change says what moved the board when it was not new events: one of
+	// the Change constants, or "" for new events.
+	Change string `json:"change,omitempty"`
 }
+
+// The kinds of change an Update reports besides new events.
+const (
+	ChangeMode     = "mode"
+	ChangeCheckout = "checkout"
+	ChangeRewind   = "rewind"
+	ChangeUndo     = "undo"
+)
 
 // Game is one game: its event log and current state.
 type Game struct {
@@ -69,6 +80,11 @@ type Game struct {
 	// likeMain holds the branches whose draws repeat main's: each draw
 	// takes the card main drew at the same point, while it is in the deck.
 	likeMain map[string]bool
+	// responder, when set, is the seat answering the other seat's card
+	// mid-turn: play mode's turn lock lets it act during that turn. The
+	// turn wait opens and closes it; ending the turn, a mode switch and a
+	// branch move close it too.
+	responder state.Seat
 }
 
 // Options configure a new game.
@@ -139,14 +155,23 @@ func (g *Game) Mode() Mode {
 	return g.mode
 }
 
-// SetMode switches between play and review.
+// SetMode switches between play and review, telling listeners when the
+// mode changes.
 func (g *Game) SetMode(m Mode) error {
 	if m != ModePlay && m != ModeReview {
 		return fmt.Errorf("unknown mode %q", m)
 	}
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	if g.mode == m {
+		return nil
+	}
 	g.mode = m
+	g.responder = ""
+	u := Update{Head: g.log.Head(), Branch: g.log.Current(), Change: ChangeMode}
+	for _, f := range g.listeners {
+		f(u)
+	}
 	return nil
 }
 
@@ -340,8 +365,14 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 	joined := !spec.system && !spec.opener && g.open != nil &&
 		(g.open.Seat == seat || spec.crossSeat) && g.joins(spec.joinIf)
 	// The opponent's part of an effect (Iono's draws) happens on the turn of
-	// the player whose action it joins.
-	if !spec.anyTurn && !(joined && g.open.Seat != seat) {
+	// the player whose action it joins. In play mode the assistant plays the
+	// opponent, and answers the player's card only through the response
+	// window the turn wait opens.
+	crossJoin := joined && g.open.Seat != seat
+	if crossJoin && g.mode == ModePlay && actor == state.ActorClaude && g.responder != seat {
+		crossJoin = false
+	}
+	if !spec.anyTurn && !crossJoin {
 		if err := g.checkTurn(seat); err != nil {
 			return nil, err
 		}
@@ -427,10 +458,17 @@ func (g *Game) checkTurn(seat state.Seat) error {
 	if !g.st.TurnOpen {
 		return fmt.Errorf("no turn is in progress")
 	}
-	if g.st.Current != seat {
+	if g.st.Current != seat && g.responder != seat {
 		return fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, state.Round(g.st.Turn), seat)
 	}
 	return nil
+}
+
+// setResponder opens the response window for seat, or closes it ("").
+func (g *Game) setResponder(seat state.Seat) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.responder = seat
 }
 
 // card returns a card's definition if it can be found, else nil.

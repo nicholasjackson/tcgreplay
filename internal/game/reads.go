@@ -191,6 +191,43 @@ func (g *Game) Log(since int, viewer state.Seat, tool string, actor string) ([]L
 	return out, nil
 }
 
+// eventsSince returns the events on the current branch after event since,
+// oldest first, and false when since is not on the current branch. Call
+// with g.mu held.
+func (g *Game) eventsSince(since int) ([]state.Event, bool) {
+	var out []state.Event
+	for id := g.log.Head(); id != since; {
+		if id == 0 {
+			return nil, false
+		}
+		e := g.log.Event(id)
+		if e == nil {
+			return nil, false
+		}
+		out = append(out, *e)
+		id = e.Parent
+	}
+	slices.Reverse(out)
+	return out, true
+}
+
+// OnCurrentBranch reports whether event id (0 for the start of the game)
+// is on the current branch, so a log since it reads that line's moves.
+func (g *Game) OnCurrentBranch(id int) bool {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return id == 0 || g.log.OnPath(id, g.log.Head())
+}
+
+// actionOf returns the action an event belongs to, or nil. Call with g.mu
+// held.
+func (g *Game) actionOf(id string) *store.Action {
+	if id == "" {
+		return nil
+	}
+	return g.log.Action(id)
+}
+
 func (g *Game) audit(tool string, viewer state.Seat, actor string) {
 	view := "seat"
 	if viewer == "" {
@@ -469,7 +506,7 @@ func (g *Game) Rewind(eventID int, name string) (string, error) {
 	if err := g.log.Branch(name, eventID); err != nil {
 		return "", err
 	}
-	if err := g.checkoutLocked(name); err != nil {
+	if err := g.checkoutLocked(name, ChangeRewind); err != nil {
 		return "", err
 	}
 	return name, nil
@@ -500,7 +537,7 @@ func (g *Game) JumpTo(eventID int, base string) (string, error) {
 				return "", err
 			}
 		}
-		return name, g.checkoutLocked(name)
+		return name, g.checkoutLocked(name, ChangeRewind)
 	}
 }
 
@@ -538,7 +575,7 @@ func (g *Game) Undo(n int) (int, error) {
 	if err := g.log.Branch(branch, head); err != nil {
 		return 0, err
 	}
-	if err := g.checkoutLocked(branch); err != nil {
+	if err := g.checkoutLocked(branch, ChangeUndo); err != nil {
 		return 0, err
 	}
 	return head, nil
@@ -570,10 +607,12 @@ func (g *Game) SetDrawsLikeMain(on bool) error {
 func (g *Game) Checkout(name string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	return g.checkoutLocked(name)
+	return g.checkoutLocked(name, ChangeCheckout)
 }
 
-func (g *Game) checkoutLocked(name string) error {
+// checkoutLocked switches to branch name and tells listeners, with change
+// saying why the board moved.
+func (g *Game) checkoutLocked(name, change string) error {
 	prev := g.log.Current()
 	if err := g.log.Checkout(name); err != nil {
 		return err
@@ -584,7 +623,8 @@ func (g *Game) checkoutLocked(name string) error {
 		return err
 	}
 	g.open = nil
-	u := Update{Head: g.log.Head(), Branch: name}
+	g.responder = ""
+	u := Update{Head: g.log.Head(), Branch: name, Change: change}
 	for _, f := range g.listeners {
 		f(u)
 	}

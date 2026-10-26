@@ -31,3 +31,19 @@ func (r *Registry) ResolveMCP(_ context.Context, extra *mcp.RequestExtra) (*game
 	}
 	return e.M, e.Link(r.cfg.Public), nil
 }
+
+// ResolveMCPQuiet is the MCP tool server's ResolveQuiet hook, used by
+// wait_for_turn: it finds the caller's game manager and board link like
+// ResolveMCP, but neither records activity nor takes a place. Waiting is
+// not activity, so an abandoned game still expires.
+func (r *Registry) ResolveMCPQuiet(_ context.Context, extra *mcp.RequestExtra) (*game.Manager, string, error) {
+	if extra == nil {
+		return nil, "", errSignIn
+	}
+	acct, ok := hostauth.AccountFromToken(extra.TokenInfo)
+	if !ok {
+		return nil, "", errSignIn
+	}
+	e := r.Get(acct)
+	return e.M, e.Link(r.cfg.Public), nil
+}

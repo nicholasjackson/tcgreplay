@@ -1026,3 +1026,74 @@ func TestOpeningTurnWarnings(t *testing.T) {
 		t.Errorf("evolving in p2's turn 2 warned: %v", r.Warnings)
 	}
 }
+
+// TestNoticesSayWhatChanged: every notice says what moved the board. New
+// events carry no change kind; a mode switch, checkout, rewind, jump and
+// undo each carry theirs, and a switch to the mode already set sends
+// nothing.
+func TestNoticesSayWhatChanged(t *testing.T) {
+	g := startedGame(t)
+	var got []Update
+	g.Subscribe(func(u Update) { got = append(got, u) })
+	last := func(t *testing.T, what, change string) {
+		t.Helper()
+		if len(got) != 1 {
+			t.Fatalf("%s sent %d notices, want 1: %+v", what, len(got), got)
+		}
+		if got[0].Change != change {
+			t.Fatalf("%s notice change %q, want %q", what, got[0].Change, change)
+		}
+		got = nil
+	}
+
+	a := must(t)(g.Draw(state.P1, state.ActorHuman, 1))
+	last(t, "draw", "")
+
+	if err := g.SetMode(ModePlay); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("switching to the current mode notified: %+v", got)
+	}
+	if err := g.SetMode(ModeReview); err != nil {
+		t.Fatal(err)
+	}
+	last(t, "mode switch", ChangeMode)
+
+	if _, err := g.Rewind(a.Events[0]-1, "alt"); err != nil {
+		t.Fatal(err)
+	}
+	last(t, "rewind", ChangeRewind)
+
+	if err := g.Checkout("main"); err != nil {
+		t.Fatal(err)
+	}
+	last(t, "checkout", ChangeCheckout)
+	if got := g.Branch(); got != "main" {
+		t.Fatalf("on branch %s after checkout", got)
+	}
+
+	if _, err := g.JumpTo(a.Events[0]-1, "jump"); err != nil {
+		t.Fatal(err)
+	}
+	last(t, "jump", ChangeRewind)
+
+	must(t)(g.Draw(state.P1, state.ActorHuman, 1))
+	got = nil
+	if _, err := g.Undo(1); err != nil {
+		t.Fatal(err)
+	}
+	last(t, "undo", ChangeUndo)
+}
+
+// TestHandOff: the hand-off names the game, branch, the event to read the
+// log from and the turn now in progress.
+func TestHandOff(t *testing.T) {
+	g := startedGame(t)
+	since := g.TurnStartedAt(state.P1)
+	must(t)(g.EndTurn(state.P1, state.ActorHuman))
+	want := fmt.Sprintf("Your turn in tcgreplay (game t1, branch main). Call get_log since %d and play turn 1 (p2's turn).", since)
+	if got := g.HandOff(since); got != want {
+		t.Fatalf("hand-off\n got %q\nwant %q", got, want)
+	}
+}

@@ -66,6 +66,8 @@ func (h *hub) watch(g *game.Game) {
 	h.mu.Unlock()
 	if first {
 		g.Subscribe(func(u game.Update) {
+			// A change notice (mode, checkout, rewind, undo) has no
+			// events but still refreshes every board.
 			h.mu.Lock()
 			h.pending = append(h.pending, u.Events...)
 			h.mu.Unlock()
@@ -142,6 +144,10 @@ func (h *hub) stateMessage(reveal bool, frames []int) ([]byte, bool) {
 		// assistant names whoever plays that seat over MCP.
 		"assistant": h.s.M.Assistant(),
 		"reveal":    reveal,
+	}
+	// opponent is what the assistant is doing: waiting, acting or stopped.
+	if o := h.s.M.Opponent(); o != "" {
+		msg["opponent"] = o
 	}
 	g, err := h.s.M.Current()
 	if err != nil {

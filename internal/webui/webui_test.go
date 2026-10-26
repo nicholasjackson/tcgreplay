@@ -761,3 +761,23 @@ func TestHubWatchesOnlyCurrent(t *testing.T) {
 		t.Error("hub does not watch the current game")
 	}
 }
+
+// TestModeSwitchRefreshesBoard: a mode switch made outside the board (by
+// the assistant's set_mode) pushes a fresh state to open boards.
+func TestModeSwitchRefreshesBoard(t *testing.T) {
+	ts, m := setup(t)
+	g, _ := m.Current()
+	c := dial(t, ts)
+	var st stateMsg
+	next(t, c, "state", &st)
+	if st.Snapshot == nil || st.Snapshot.Mode != game.ModePlay {
+		t.Fatalf("first state: %+v", st.Snapshot)
+	}
+	if err := g.SetMode(game.ModeReview); err != nil {
+		t.Fatal(err)
+	}
+	next(t, c, "state", &st)
+	if st.Snapshot == nil || st.Snapshot.Mode != game.ModeReview {
+		t.Fatalf("state after mode switch: %+v", st.Snapshot)
+	}
+}

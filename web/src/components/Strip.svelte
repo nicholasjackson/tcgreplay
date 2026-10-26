@@ -1,7 +1,7 @@
 <script>
   // The middle of the mat: Stadium, turn, coin, a play area to drop
   // Trainers on, lingering effects and the turn buttons.
-  import { app, canAct } from '../lib/store.svelte.js';
+  import { app, canAct, oppActing } from '../lib/store.svelte.js';
   import { dropOnZone, endTurn, readDrag, seatArgs } from '../lib/actions.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
@@ -69,12 +69,12 @@
         <button onclick={() => act('start_game', { first: app.claude })}>{app.assistant} goes first</button>
       {:else}
         {#if snap?.open_action}
-          <button onclick={() => act('end_action')} title="Close the open compound action">End action {snap.open_action}</button>
+          <button onclick={() => act('end_action')} title="Close the open compound action" disabled={oppActing()}>End action {snap.open_action}</button>
         {/if}
         <button onclick={() => act('draw', { n: 1, ...seatArgs(actor) })} disabled={!canAct()}>
           {actor === app.human ? 'Draw' : `Draw for ${nameOf(actor)}`}
         </button>
-        <button class="primary" onclick={() => endTurn(actor)} disabled={!myTurn && !review}>
+        <button class="primary" onclick={() => endTurn(actor)} disabled={(!myTurn && !review) || oppActing()}>
           {actor === app.human ? 'End turn' : `End ${nameOf(actor)}'s turn`}
         </button>
       {/if}
