@@ -175,7 +175,11 @@ func newHosted(c config, public *url.URL, google oauth2.Endpoint) (*usergames.Re
 	var reg *usergames.Registry
 	var a *hostauth.Auth // set below, before any board is built
 	reg = usergames.New(usergames.Config{
-		NewManager: func() *game.Manager { return game.NewManager(c.dataDir, db) },
+		NewManager: func() *game.Manager {
+			m := game.NewManager(c.dataDir, db)
+			m.Timing = c.timing
+			return m
+		},
 		NewBoard: func(m *game.Manager) *webui.Server {
 			ui := webui.New(m, human)
 			ui.Public = public
@@ -193,7 +197,7 @@ func newHosted(c config, public *url.URL, google oauth2.Endpoint) (*usergames.Re
 	}
 	// BoardURL keeps the instructions' board-link line; each result's link
 	// comes from Resolve.
-	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/", Resolve: reg.ResolveMCP}).MCP()
+	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet}).MCP()
 	srv.AddReceivingMiddleware(a.MCPMiddleware())
 	return reg, srv, a, nil
 }
@@ -222,7 +226,7 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, %s, %d requests a minute per account, %d users, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, %s, %d requests a minute per account, %d users, %s, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
 	hs := &http.Server{Handler: hostedHandler(srv, reg, a), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})

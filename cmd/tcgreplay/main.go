@@ -17,6 +17,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -54,13 +55,66 @@ type config struct {
 	// TCGREPLAY_IDLE_TIMEOUT, reported when hosted mode starts.
 	idleTimeout time.Duration
 	idleErr     error
+	// timing is the turn wait's settings, given to every game manager;
+	// timingErr is an invalid TCGREPLAY_WAIT_CAP, TCGREPLAY_CHECK_IN or
+	// TCGREPLAY_LOCK_RELEASE whose flag was not given.
+	timing    game.Timing
+	timingErr error
 	// now, if set, is the per-account registry's clock (tests).
 	now func() time.Time
 }
 
-// args renders the config as flags for spawning the daemon.
+// args renders the config as flags for spawning the daemon. Unset wait
+// timings are left out, so the daemon uses its defaults.
 func (c config) args() []string {
-	return []string{"-data", c.dataDir, "-cache", c.cacheDir, "-seat", c.seat, "-ui-addr", c.uiAddr, fmt.Sprintf("-offline=%t", c.offline)}
+	args := []string{"-data", c.dataDir, "-cache", c.cacheDir, "-seat", c.seat, "-ui-addr", c.uiAddr, fmt.Sprintf("-offline=%t", c.offline)}
+	for _, t := range []struct {
+		flag string
+		d    time.Duration
+	}{{"-wait-cap", c.timing.WaitCap}, {"-check-in", c.timing.CheckIn}, {"-lock-release", c.timing.LockRelease}} {
+		if t.d != 0 {
+			args = append(args, t.flag, t.d.String())
+		}
+	}
+	return args
+}
+
+// maxWaitCap keeps every wait_for_turn call well inside the one-minute
+// limit of clients and proxies.
+const maxWaitCap = 50 * time.Second
+
+// validTiming checks the turn wait's settings: the cap must be above 0 and
+// at most 50s, and the check-in and lock-release times must not be
+// negative (0 means the default).
+func validTiming(c config) error {
+	if c.timingErr != nil {
+		return c.timingErr
+	}
+	if c.timing.WaitCap <= 0 || c.timing.WaitCap > maxWaitCap {
+		return fmt.Errorf("-wait-cap %s: must be above 0 and at most %s", c.timing.WaitCap, maxWaitCap)
+	}
+	if c.timing.CheckIn < 0 {
+		return fmt.Errorf("-check-in %s: must not be negative", c.timing.CheckIn)
+	}
+	if c.timing.LockRelease < 0 {
+		return fmt.Errorf("-lock-release %s: must not be negative", c.timing.LockRelease)
+	}
+	return nil
+}
+
+// timingText describes the turn wait's settings for the start-up log.
+func timingText(t game.Timing) string {
+	return fmt.Sprintf("turn waits up to %s a call, check-in after %s, lock release after %s", t.WaitCap, t.CheckIn, t.LockRelease)
+}
+
+// envWait reads one of the turn wait's duration settings from the
+// environment, like envDuration.
+func envWait(key string, def time.Duration) (time.Duration, error) {
+	d, err := envDuration(key, def)
+	if err != nil {
+		return def, fmt.Errorf("%s: invalid duration %q (use e.g. 30s or 2m)", key, os.Getenv(key))
+	}
+	return d, nil
 }
 
 func main() {
@@ -83,6 +137,12 @@ func main() {
 	flag.IntVar(&c.maxUsers, "max-users", envInt("TCGREPLAY_MAX_USERS", 10), "with -hosted, signed-in Google accounts served at once (a place is freed when an account's game goes idle or its last sign-in ends); 0 for no cap (default $TCGREPLAY_MAX_USERS, else 10)")
 	idle, idleErr := envDuration("TCGREPLAY_IDLE_TIMEOUT", 60*time.Minute)
 	flag.DurationVar(&c.idleTimeout, "idle-timeout", idle, "with -hosted, how long an account's game may go without activity before it is dropped, e.g. 2m or 1h; 0 never drops (default $TCGREPLAY_IDLE_TIMEOUT, else 60m)")
+	waitCap, capErr := envWait("TCGREPLAY_WAIT_CAP", 30*time.Second)
+	flag.DurationVar(&c.timing.WaitCap, "wait-cap", waitCap, "longest a single wait_for_turn call waits before reporting it is still waiting; above 0 and at most 50s (default $TCGREPLAY_WAIT_CAP, else 30s)")
+	checkIn, checkErr := envWait("TCGREPLAY_CHECK_IN", 5*time.Minute)
+	flag.DurationVar(&c.timing.CheckIn, "check-in", checkIn, "how long the player may leave the board untouched on their turn before the assistant asks \"Still playing?\" (default $TCGREPLAY_CHECK_IN, else 5m)")
+	lockRelease, lockErr := envWait("TCGREPLAY_LOCK_RELEASE", 2*time.Minute)
+	flag.DurationVar(&c.timing.LockRelease, "lock-release", lockRelease, "how long the assistant may go without a move before the board unlocks by itself (default $TCGREPLAY_LOCK_RELEASE, else 2m)")
 	flag.Parse()
 	// The binary has no subcommands: refuse any leftover word, so a removed
 	// one (such as install) fails instead of starting the shim.
@@ -92,11 +152,30 @@ func main() {
 		os.Exit(2)
 	}
 	c.idleErr = idleErr
+	// A flag overrides the environment, even an invalid value there.
 	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "idle-timeout" {
-			c.idleErr = nil // the flag overrides the environment
+		switch f.Name {
+		case "idle-timeout":
+			c.idleErr = nil
+		case "wait-cap":
+			capErr = nil
+		case "check-in":
+			checkErr = nil
+		case "lock-release":
+			lockErr = nil
 		}
 	})
+	c.timingErr = errors.Join(capErr, checkErr, lockErr)
+	if err := validTiming(c); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if c.timing.CheckIn == 0 {
+		c.timing.CheckIn = 5 * time.Minute
+	}
+	if c.timing.LockRelease == 0 {
+		c.timing.LockRelease = 2 * time.Minute
+	}
 
 	if *showVersion {
 		fmt.Println(version)
@@ -137,6 +216,7 @@ func main() {
 // link added to game-opening results in hosted mode; the desktop passes "".
 func newServer(c config, boardURL string) (*game.Manager, *mcp.Server) {
 	m := game.NewManager(c.dataDir, newCardDB(c))
+	m.Timing = c.timing
 	claude := state.Seat(c.seat)
 	return m, (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version, BoardURL: boardURL}).MCP()
 }
@@ -150,7 +230,7 @@ func newCardDB(c config) *cards.Client {
 
 func runInProcess(ctx context.Context, c config) error {
 	m, srv := newServer(c, "")
-	log.Printf("tcgreplay %s in-process: data %s, cache %s, claude plays %s", version, c.dataDir, c.cacheDir, c.seat)
+	log.Printf("tcgreplay %s in-process: data %s, cache %s, claude plays %s, %s", version, c.dataDir, c.cacheDir, c.seat, timingText(c.timing))
 	if c.uiAddr != "" {
 		startUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)
 	}

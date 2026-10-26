@@ -31,6 +31,10 @@ type Server struct {
 	// token. An error refuses the call with its message. Nil (the desktop)
 	// means M and BoardURL for every call.
 	Resolve func(ctx context.Context, extra *mcp.RequestExtra) (m *game.Manager, board string, err error)
+	// ResolveQuiet, if set, is used in place of Resolve by wait_for_turn,
+	// so that waiting is not activity on the game. Nil falls back to
+	// Resolve.
+	ResolveQuiet func(ctx context.Context, extra *mcp.RequestExtra) (m *game.Manager, board string, err error)
 }
 
 const actor = state.ActorClaude
@@ -68,7 +72,8 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 - play_trainer, use_ability and attack open a compound action: following verbs join it until end_action, another opener, or end_turn. attach, bench, evolve and retreat join only if the card's text mentions doing so; otherwise they stand alone and close it. Effects on the opponent's side (the switch of Boss's Orders, Iono's draws) join it when you pass the opponent's seat.
 - Every write returns the events and a delta, so you rarely need to re-read the board. Warnings are advisory, never blocking.
 - Turns count both players: turn N is the first player's Nth turn and the second player's Nth turn. Logs show "T<N> <seat>"; always name the seat with a turn.
-- Quote card text from card_text, not memory.`
+- Quote card text from card_text, not memory.
+- After handing the player a turn (your end_turn in play mode, or a drill or line for them to play in review mode), call wait_for_turn and do what its result's next says, calling it again until the turn ends. Never ask the player to say "your turn" or "done"; on a check-in ask only "Still playing?".`
 
 // boardInstruction is added to the instructions when results carry a board link.
 const boardInstruction = "\n- Results of import_log, new_game and set_opponent_deck carry a board link: give it to the player so they can watch and act on the live board."
@@ -105,13 +110,19 @@ type boundCall struct {
 // caller's own when a resolver is set, else the server's single ones) and
 // returns ctx carrying them.
 func (s *Server) bind(ctx context.Context, req *mcp.CallToolRequest) (context.Context, error) {
+	return s.bindWith(ctx, req, s.Resolve)
+}
+
+// bindWith is bind with the given resolver (nil for the server's single
+// game manager).
+func (s *Server) bindWith(ctx context.Context, req *mcp.CallToolRequest, resolve func(context.Context, *mcp.RequestExtra) (*game.Manager, string, error)) (context.Context, error) {
 	c := boundCall{m: s.M, board: s.BoardURL}
-	if s.Resolve != nil {
+	if resolve != nil {
 		var extra *mcp.RequestExtra
 		if req != nil {
 			extra = req.Extra
 		}
-		m, board, err := s.Resolve(ctx, extra)
+		m, board, err := resolve(ctx, extra)
 		if err != nil {
 			return ctx, err
 		}
@@ -172,10 +183,31 @@ func out(v any) (*mcp.CallToolResult, any, error) {
 // assistant can tell the user. Tools that need no game, such as guide, are
 // registered beside it (see registerGuides).
 func add[In any](s *Server, srv *mcp.Server, name, desc string, h func(context.Context, In) (any, error)) {
+	addWith(s, srv, name, desc, s.Resolve, true, h)
+}
+
+// addQuiet is add for a tool whose calls are not activity on the game: it
+// binds with ResolveQuiet when set, else Resolve, and is not one of the
+// assistant's moves.
+func addQuiet[In any](s *Server, srv *mcp.Server, name, desc string, h func(context.Context, In) (any, error)) {
+	resolve := s.ResolveQuiet
+	if resolve == nil {
+		resolve = s.Resolve
+	}
+	addWith(s, srv, name, desc, resolve, false, h)
+}
+
+// addWith registers a tool bound with resolve. When moves is set, each
+// call counts as one of the assistant's moves, which keeps its acting
+// lock from releasing itself.
+func addWith[In any](s *Server, srv *mcp.Server, name, desc string, resolve func(context.Context, *mcp.RequestExtra) (*game.Manager, string, error), moves bool, h func(context.Context, In) (any, error)) {
 	mcp.AddTool(srv, &mcp.Tool{Name: name, Description: desc}, func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error) {
-		ctx, err := s.bind(ctx, req)
+		ctx, err := s.bindWith(ctx, req, resolve)
 		if err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}}}, nil, nil
+		}
+		if moves {
+			s.m(ctx).AssistantMoved(false)
 		}
 		v, err := h(ctx, in)
 		if err != nil {
@@ -222,7 +254,16 @@ func (s *Server) verb(ctx context.Context, seatArg string, f func(g *game.Game, 
 	if err != nil {
 		return nil, err
 	}
-	return f(g, seat)
+	r, err := f(g, seat)
+	if err != nil {
+		return nil, err
+	}
+	// A write on its own turn in play mode locks the board while the
+	// assistant plays, even when no wait came first.
+	if g.Mode() == game.ModePlay && g.State().Current == s.ClaudeSeat {
+		s.m(ctx).AssistantMoved(true)
+	}
+	return r, nil
 }
 
 func parseLoc(spec string, def state.Seat) (state.Loc, error) {
@@ -274,6 +315,10 @@ type (
 	GetLog struct {
 		Since int    `json:"since,omitempty" jsonschema:"only events after this id"`
 		View  string `json:"view,omitempty" jsonschema:"seat, coach or reveal; default seat in play mode, reveal in review mode"`
+	}
+	WaitArg struct {
+		Seat  string `json:"seat,omitempty" jsonschema:"review mode: the seat you handed to the player; defaults to the seat whose turn it is. Play mode: the player's seat only"`
+		Since *int   `json:"since,omitempty" jsonschema:"omit to start waiting after a hand-over; pass the previous result's since to carry on"`
 	}
 	CardText struct {
 		Card string `json:"card" jsonschema:"TCGdex card id (e.g. sv01-113) or a card iid (e.g. p2-12)"`
@@ -661,7 +706,11 @@ func (s *Server) register(srv *mcp.Server) {
 		})
 	})
 	add(s, srv, "end_turn", "End your turn. The opponent's turn starts and they draw a card.", func(ctx context.Context, in SeatArg) (any, error) {
-		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.EndTurn(seat, actor) })
+		r, err := s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.EndTurn(seat, actor) })
+		if err == nil {
+			s.m(ctx).AssistantDone()
+		}
+		return r, err
 	})
 	add(s, srv, "end_action", "Close the open compound action.", func(ctx context.Context, _ Empty) (any, error) {
 		g, err := s.m(ctx).Current()
@@ -673,6 +722,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return "no open action", nil
 	})
+	addQuiet(s, srv, "wait_for_turn", "After you hand the player a turn (end_turn in play mode; a drill or a line for them to play in review mode), call this and act on the result. Each call returns within about 30 seconds.", s.waitForTurn)
 
 	// Deck and randomness.
 	add(s, srv, "search_deck", "List a deck's cards sorted by category and name (never in true order). Then move or bench what you take, and shuffle.", func(ctx context.Context, in Search) (any, error) {

@@ -14,6 +14,9 @@ export const app = $state({
   reveal: false,
   // Why there is no game, when the server says (an expired game); '' otherwise.
   notice: '',
+  // What the assistant is doing: 'waiting' for the human's turn, 'acting'
+  // (the board is locked), 'stopped' responding, or ''.
+  opponent: '',
   // Latest snapshot from the server (game, branch, mode, board, log, ...).
   snap: null,
   // Board being displayed; differs from snap.board while animating frames.
@@ -99,10 +102,16 @@ export function ownerOf(iid) {
   return String(iid).split('-')[0];
 }
 
+// oppActing reports whether the assistant is acting, so the server refuses
+// the human's game actions until it finishes.
+export function oppActing() {
+  return app.opponent === 'acting';
+}
+
 // isMyTurn reports whether the human may act now.
 export function canAct() {
   const b = app.snap?.board;
-  if (!b) return false;
+  if (!b || oppActing()) return false;
   if (app.snap.mode === 'review') return true;
   return b.phase === 'setup' || (b.turn_open && b.current === app.human);
 }

@@ -68,3 +68,47 @@ func TestResolveMCPRequiresSignIn(t *testing.T) {
 		}
 	}
 }
+
+// TestResolveMCPQuietIsNotActivity: the wait's quiet lookup finds the
+// caller's own manager and board link without moving its last activity or
+// taking a place, while ResolveMCP still counts as activity.
+func TestResolveMCPQuietIsNotActivity(t *testing.T) {
+	clock := &fakeClock{t: time.Date(2026, 10, 18, 9, 0, 0, 0, time.UTC)}
+	r := newRegistry(t, t.TempDir(), clock.Now)
+
+	a := r.Get(alice)
+	created := r.LastActive(a)
+	clock.Advance(7 * time.Minute)
+	m, link, err := r.ResolveMCPQuiet(context.Background(), tokenExtra(alice.ID, alice.Email))
+	if err != nil {
+		t.Fatalf("ResolveMCPQuiet: %v", err)
+	}
+	if m != a.M {
+		t.Error("ResolveMCPQuiet returned a manager other than the account's own")
+	}
+	if want := "https://playmat.example.com/?board=" + Handle(alice.ID); link != want {
+		t.Errorf("link = %q, want %q", link, want)
+	}
+	if got := r.LastActive(a); !got.Equal(created) {
+		t.Errorf("after a quiet lookup, LastActive = %v, want it unchanged at %v", got, created)
+	}
+	r.mu.Lock()
+	holds := a.holds
+	r.mu.Unlock()
+	if holds {
+		t.Error("a quiet lookup took a place")
+	}
+
+	// Any other tool call is activity, as before.
+	clock.Advance(time.Minute)
+	if _, _, err := r.ResolveMCP(context.Background(), tokenExtra(alice.ID, alice.Email)); err != nil {
+		t.Fatal(err)
+	}
+	if got := r.LastActive(a); !got.Equal(clock.t) {
+		t.Errorf("after a tool call, LastActive = %v, want %v", got, clock.t)
+	}
+
+	if _, _, err := r.ResolveMCPQuiet(context.Background(), nil); err == nil {
+		t.Error("quiet lookup without sign-in: no error")
+	}
+}

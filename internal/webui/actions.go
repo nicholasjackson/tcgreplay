@@ -88,6 +88,8 @@ func (s *Server) dispatch(ctx context.Context, c *client, req request) response 
 			return res
 		}
 	}
+	// Anything the player does on the board restarts the check-in clock.
+	s.M.BoardActivity()
 	data, gr, err := s.do(ctx, c, req, &res)
 	if err != nil {
 		res.Error = err.Error()
@@ -103,6 +105,16 @@ func (s *Server) dispatch(ctx context.Context, c *client, req request) response 
 	}
 	return res
 }
+
+// lookVerbs are the board requests allowed while the assistant acts: reads,
+// replays, the reveal toggle and switching mode (which also ends the
+// assistant's wait).
+var lookVerbs = map[string]bool{
+	"set_reveal": true, "set_mode": true, "replay": true,
+	"search_deck": true, "deck_list": true, "look_top": true,
+}
+
+var errOpponentActing = errors.New("the opponent is acting; wait for them to finish")
 
 func (s *Server) do(ctx context.Context, c *client, req request, res *response) (any, *game.Result, error) {
 	a := req.Args
@@ -123,6 +135,12 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 		seat = o
 	}
 	loc := func(spec string) (state.Loc, error) { return state.ParseLoc(spec, seat) }
+
+	// While the assistant acts, the player may look (reads, replays, the
+	// reveal toggle) and switch mode, but not change the game or the line.
+	if s.M.Locked() && !lookVerbs[req.Verb] {
+		return nil, nil, errOpponentActing
+	}
 
 	switch req.Verb {
 	case "set_reveal":
@@ -255,12 +273,16 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 		r, err = g.RemoveEffect(seat, human, a.Name)
 	case "end_turn":
 		since := g.TurnStartedAt(seat)
+		waiting := s.M.Opponent() == "waiting"
 		if r, err = g.EndTurn(seat, human); err == nil && g.Mode() == game.ModePlay {
 			// Hand the turn to Claude; in review either side is played here.
-			st := g.State()
-			r.Data = map[string]any{"prompt": fmt.Sprintf(
-				"Your turn in tcgreplay (game %s, branch %s). Call get_log since %d and play turn %d (%s's turn).",
-				g.ID, g.Branch(), since, state.Round(st.Turn), st.Current)}
+			// A waiting assistant picks it up by itself, so the board need
+			// not ask for the prompt to be pasted.
+			data := map[string]any{"prompt": g.HandOff(since)}
+			if waiting {
+				data["waiting"] = true
+			}
+			r.Data = data
 		}
 	default:
 		return nil, nil, fmt.Errorf("unknown verb %q", req.Verb)

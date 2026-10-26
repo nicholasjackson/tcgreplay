@@ -52,7 +52,7 @@
     class:lift
     class:back={card.hidden}
     style:--rot="{rotate}deg"
-    draggable={draggable && !card.hidden}
+    draggable={draggable && !card.hidden && app.opponent !== 'acting'}
     ondragstart={dragstart}
     ondragend={endDrag}
     onclick={click}

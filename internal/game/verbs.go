@@ -161,6 +161,7 @@ func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 		return nil, fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, state.Round(g.st.Turn), seat)
 	}
 	g.open = nil
+	g.responder = ""
 	res, err := g.runLocked(seat, actor, actionSpec{label: "End turn", kind: "turn"}, func(t *tx) error {
 		return t.emit(seat, state.EvTurn, state.TurnPayload{Phase: "end", Number: t.st.Turn})
 	})

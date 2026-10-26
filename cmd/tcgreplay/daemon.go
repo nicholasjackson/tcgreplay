@@ -160,7 +160,7 @@ func runDaemon(ctx context.Context, c config, replace bool) error {
 	defer os.Remove(infoPath(c))
 
 	m, srv := newServer(c, "")
-	log.Printf("tcgreplay %s daemon (pid %d): socket %s, data %s, claude plays %s", version, os.Getpid(), sock, c.dataDir, c.seat)
+	log.Printf("tcgreplay %s daemon (pid %d): socket %s, data %s, claude plays %s, %s", version, os.Getpid(), sock, c.dataDir, c.seat, timingText(c.timing))
 	if c.uiAddr != "" {
 		go keepUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)
 	}
