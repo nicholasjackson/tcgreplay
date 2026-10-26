@@ -170,16 +170,17 @@ func TestRecordFromImport(t *testing.T) {
 	}
 	sameGame(t, res.Game, again.Game)
 
-	// No deck: the last deck is reused and recorded.
-	res, err = m.Import(ctx, ImportRequest{ID: "nodeck", Log: logText, Seed: 7})
+	// No deck: a battle log is refused, but the record, holding its own,
+	// still imports on its own.
+	if _, err := m.Import(ctx, ImportRequest{ID: "nodeck", Log: logText, Seed: 7}); !errors.Is(err, errNoDeck) {
+		t.Errorf("import without a deck: err %v, want %v", err, errNoDeck)
+	}
+	rebuilt, err := m.Import(ctx, ImportRequest{ID: "fromrec", Log: rec.JSON()})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Record.Deck != deckText {
-		t.Error("record of an import without a deck does not hold the reused deck")
-	}
-	if got, ok := res.Game.Record(); !ok || got != res.Record {
-		t.Error("game record differs")
+	if rebuilt.Record.Deck != deckText {
+		t.Error("record import lost the deck")
 	}
 }
 

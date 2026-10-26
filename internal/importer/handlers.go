@@ -662,8 +662,10 @@ func buildHandlers(a, b string) []handler {
 }
 
 // toBench puts a card from hand or deck into the first empty bench slot.
+// The log is the authority on bench size, so a sixth Pokémon (Area Zero
+// Underdepths, Sky Field) takes a slot past the usual five.
 func (r *replay) toBench(seat state.Seat, iid state.IID) error {
-	slot := slices.IndexFunc(r.st.Sides[seat].Bench, func(s *state.Stack) bool { return s.Empty() })
+	slot := r.st.FreeBenchSlot(seat)
 	if slot < 0 {
 		return fmt.Errorf("%s's bench is full", r.players[seat])
 	}

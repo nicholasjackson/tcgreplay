@@ -35,9 +35,6 @@ type Manager struct {
 	// cleared when a game becomes current.
 	notice    string
 	assistant string
-	// lastDeck is the owner's decklist from the last successful import,
-	// reused when an import gives none.
-	lastDeck string
 	// presence tracks the assistant's turn wait on the current game; it is
 	// made on first use.
 	presence *presence

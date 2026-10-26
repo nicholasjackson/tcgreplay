@@ -342,9 +342,12 @@ export function pileCardActions(card, seat, from) {
   return out;
 }
 
+// firstEmptyBench is past the shown slots when they are full; the server
+// allows up to 8 and warns past the limit.
 function firstEmptyBench(seat) {
-  const i = app.board.sides[seat].bench.findIndex((b) => !b);
-  return i < 0 ? 0 : i;
+  const bench = app.board.sides[seat].bench;
+  const i = bench.findIndex((b) => !b);
+  return i < 0 ? bench.length : i;
 }
 
 // endTurn ends the human's turn and copies the prompt for the assistant,

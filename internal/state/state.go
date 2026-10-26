@@ -13,6 +13,11 @@ const (
 	PhasePlaying = "playing"
 )
 
+// MaxBench is the most Pokémon a bench can hold, with a Stadium such as
+// Area Zero Underdepths in play. The playmat allows it at any time and
+// leaves the BenchSize limit to the warnings.
+const MaxBench = 8
+
 // Side is one player's half of the playmat.
 type Side struct {
 	Name string `json:"name,omitempty"`
@@ -145,8 +150,11 @@ func (s *State) Stack(l Loc) (*Stack, error) {
 	case Active:
 		return side.Active, nil
 	case Bench:
-		if l.Slot < 0 || l.Slot >= len(side.Bench) {
-			return nil, fmt.Errorf("bench slot %d out of range (bench size %d)", l.Slot, len(side.Bench))
+		if l.Slot < 0 || l.Slot >= MaxBench {
+			return nil, fmt.Errorf("bench slot %d out of range (a bench holds at most %d)", l.Slot, MaxBench)
+		}
+		if l.Slot >= len(side.Bench) {
+			return nil, nil
 		}
 		return side.Bench[l.Slot], nil
 	}
@@ -160,9 +168,30 @@ func (s *State) setStack(l Loc, st *Stack) {
 	}
 	if l.Zone == Active {
 		side.Active = st
-	} else {
-		side.Bench[l.Slot] = st
+		return
 	}
+	// The bench has BenchSize slots, and grows past them to MaxBench only
+	// while the extra slots are in use.
+	for l.Slot >= len(side.Bench) {
+		side.Bench = append(side.Bench, nil)
+	}
+	side.Bench[l.Slot] = st
+	for len(side.Bench) > s.BenchSize && side.Bench[len(side.Bench)-1] == nil {
+		side.Bench = side.Bench[:len(side.Bench)-1]
+	}
+}
+
+// FreeBenchSlot returns seat's first empty bench slot, which is past
+// BenchSize when those slots are all full, or -1 when MaxBench are.
+func (s *State) FreeBenchSlot(seat Seat) int {
+	bench := s.Sides[seat].Bench
+	if i := slices.IndexFunc(bench, func(st *Stack) bool { return st.Empty() }); i >= 0 {
+		return i
+	}
+	if len(bench) < MaxBench {
+		return len(bench)
+	}
+	return -1
 }
 
 // StackLocs lists every occupied stack location for seat, active first.

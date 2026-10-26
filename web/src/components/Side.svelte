@@ -1,7 +1,7 @@
 <script>
   // One player's half of the mat. The opponent's half is mirrored: bench
   // on the outside, Active Spot towards the middle.
-  import { app } from '../lib/store.svelte.js';
+  import { app, cardInfo } from '../lib/store.svelte.js';
   import { deckMenu, dropOnZone, readDrag } from '../lib/actions.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
@@ -11,6 +11,10 @@
 
   const side = $derived(app.board.sides[seat]);
   const mine = $derived(seat === app.human || app.snap?.mode === 'review');
+  // A Stadium such as Area Zero Underdepths lets a bench hold 8: once the
+  // shown slots are full, offer the next one to drop on.
+  const expands = $derived(/\b8 Pokémon on (their|his or her) Bench/.test(cardInfo(app.board.stadium?.def)?.effect ?? ''));
+  const slots = $derived(expands && side.bench.length < 8 && side.bench.every(Boolean) ? [...side.bench, null] : side.bench);
   let over = $state('');
 
   function dragover(zone) {
@@ -60,7 +64,7 @@
       <Stack {seat} slot="active" stack={side.active} label="{seat} Active" />
     </div>
     <div class="row bench">
-      {#each side.bench as b, i (i)}
+      {#each slots as b, i (i)}
         <Stack {seat} slot="bench:{i}" stack={b} label="{seat} bench {i + 1}" />
       {/each}
     </div>

@@ -22,8 +22,8 @@ type ImportRequest struct {
 	// Log is the battle log text as copied from TCG Live, or a game
 	// record (see Record) to restore.
 	Log string `json:"log"`
-	// Deck is the log owner's decklist in TCG Live export format. If
-	// empty, the deck from the previous import is used.
+	// Deck is the log owner's decklist in TCG Live export format. It is
+	// required for a battle log; a record holds its own.
 	Deck string `json:"deck"`
 	// OppDeck optionally assumes the opponent's list for unrevealed cards.
 	OppDeck string `json:"opp_deck,omitempty"`
@@ -45,6 +45,9 @@ type ImportResult struct {
 
 var nonID = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
+// errNoDeck refuses a battle log imported without the owner's decklist.
+var errNoDeck = errors.New("a decklist is required to import a battle log: pass the player's list in TCG Live export format")
+
 // errRecordExtras refuses a record imported together with the values it
 // already holds.
 var errRecordExtras = errors.New("a game record already holds both decks, the player's name and the seed: import it on its own, then use set_opponent_deck to change the opponent's list")
@@ -65,12 +68,7 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 	}
 	var warnings []string
 	if strings.TrimSpace(req.Deck) == "" {
-		m.mu.Lock()
-		req.Deck = m.lastDeck
-		m.mu.Unlock()
-		if strings.TrimSpace(req.Deck) == "" {
-			return nil, fmt.Errorf("no decklist given and no previous import to reuse one from")
-		}
+		return nil, errNoDeck
 	}
 	parse := func(text, who string) ([]deck.Entry, error) {
 		entries, w, err := m.ParseDeck(ctx, text, who)
@@ -130,9 +128,6 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 	g.record = &sealed
 	warnings = append(warnings, res.Report.Warnings...)
 	warnings = append(warnings, g.st.Check()...)
-	m.mu.Lock()
-	m.lastDeck = req.Deck
-	m.mu.Unlock()
 	m.setCurrent(g)
 	return &ImportResult{Game: g, Report: res.Report, Warnings: warnings, Record: sealed}, nil
 }

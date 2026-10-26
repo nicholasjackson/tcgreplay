@@ -33,7 +33,7 @@ Otherwise call `import_log` with:
 
 - `log`: the battle log exactly as pasted.
 - `opp_deck`: the list from step 2.
-- `deck`: only if the player gives a decklist or says they changed lists; otherwise omit it and the previous import's deck is reused. If the import fails for lack of a decklist, ask the player for their TCG Live export.
+- `deck`: the player's list for this game, always. The playmat keeps no list between imports. Take it from wherever you keep the player's records, and confirm with them which list they played if you are not sure; otherwise ask for their TCG Live export.
 - `id`: omit to get one from the date and opponent.
 
 ## 4. Check the result
@@ -51,6 +51,6 @@ Give the player a short summary:
 - The opponent list you assumed: archetype and confidence, and that unseen cards are dealt from it.
 - **Worth reviewing?** Games with few real decisions where the loss traces to the opening hand (a lone Basic, no Supporter, a dead draw) belong in the deck-building bucket, not the review queue: say so and why. Otherwise name the two or three decision points that look most worth a rewind (for example the turn a prize race swung).
 - The game id, and that it is on the playmat with its timeline.
-- The game record from the result (`record`), in a code block, exactly as returned (after a `set_opponent_deck` fix, the updated one). The playmat keeps nothing after this session: the player can keep the record in their notes and paste it back later to bring this exact game back. Branches and notes made during the review are not in it and last only for this session. `get_record` returns it again at any time.
+- The game record from the result (`record`), in a code block, exactly as returned (after a `set_opponent_deck` fix, the updated one). The playmat keeps nothing after this session: if something keeps the player's records (step 0), save the record there with the game; otherwise the player can keep it in their notes. Either way it can be pasted back later to bring this exact game back. Branches and notes made during the review are not in it and last only for this session. `get_record` returns it again at any time.
 
 Then offer to review it with the `review-game` guide. Do not start judging plays until the player asks.

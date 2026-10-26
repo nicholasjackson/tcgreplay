@@ -257,9 +257,9 @@ func testImportLogTool(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
 		t.Fatalf("unexpected import result: %s", out)
 	}
 	testRecordTools(t, cs, out, string(logText), string(deck))
-	// The deck is remembered for the next import.
-	if out, isErr := call(t, cs, "import_log", map[string]any{"log": string(logText), "id": "imp-2"}); isErr {
-		t.Fatalf("import reusing the previous deck: %s", out)
+	// The deck is not remembered for the next import.
+	if out, isErr := call(t, cs, "import_log", map[string]any{"log": string(logText), "id": "imp-2"}); !isErr || !strings.Contains(out, "decklist is required") {
+		t.Fatalf("import without a deck: %s", out)
 	}
 	if out, isErr := call(t, cs, "get_state", map[string]any{"view": "reveal"}); isErr {
 		t.Fatal(out)

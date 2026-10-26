@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -449,6 +450,32 @@ func (g *Game) turnWarnings() []string {
 	}
 	if retreats > 1 {
 		w = append(w, fmt.Sprintf("%s retreated %d times this turn", seat, retreats))
+	}
+	return append(w, g.benchWarnings()...)
+}
+
+// expandsBench matches the text of a Stadium that lets a bench hold 8
+// (Area Zero Underdepths, Sky Field).
+var expandsBench = regexp.MustCompile(`\b8 Pokémon on (?:their|his or her) Bench`)
+
+// benchWarnings flags a bench holding more than BenchSize Pokémon without
+// a Stadium in play that allows it, such as after the Stadium leaves.
+func (g *Game) benchWarnings() []string {
+	limit := g.st.BenchSize
+	if c := g.card(g.st, g.st.Stadium); c != nil && expandsBench.MatchString(c.Effect) {
+		limit = state.MaxBench
+	}
+	var w []string
+	for _, seat := range state.Seats {
+		n := 0
+		for _, b := range g.st.Sides[seat].Bench {
+			if !b.Empty() {
+				n++
+			}
+		}
+		if n > limit {
+			w = append(w, fmt.Sprintf("%s has %d Pokémon on the Bench, more than %d: discard down to %d unless a Stadium allows more", seat, n, limit, limit))
+		}
 	}
 	return w
 }

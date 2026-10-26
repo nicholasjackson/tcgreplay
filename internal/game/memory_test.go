@@ -3,6 +3,7 @@ package game
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -212,26 +213,20 @@ func TestImportReplaces(t *testing.T) {
 // TestLastDeckInMemory: an import without a deck reuses the last one this
 // manager imported, but a new manager does not pick one up from the data
 // directory, even when an old last-deck.txt is there.
-func TestLastDeckInMemory(t *testing.T) {
+func TestImportNeedsDeck(t *testing.T) {
 	deckText := corpusDeck(t)
 	logText := readText(t, donkLogPath)
 	ctx := context.Background()
-	dir := seededDataDir(t, deckText)
 
-	m := NewManager(dir, nil)
+	m := NewManager(seededDataDir(t, deckText), nil)
 	if _, err := m.Import(ctx, ImportRequest{ID: "a", Log: logText, Deck: deckText, Seed: 1}); err != nil {
 		t.Fatal(err)
 	}
-	res, err := m.Import(ctx, ImportRequest{ID: "b", Log: logText, Seed: 1})
-	if err != nil {
-		t.Fatalf("import reusing the last deck: %v", err)
+	// The previous import's deck is not kept for the next one.
+	if _, err := m.Import(ctx, ImportRequest{ID: "b", Log: logText, Seed: 1}); !errors.Is(err, errNoDeck) {
+		t.Errorf("import without a deck: err %v, want %v", err, errNoDeck)
 	}
-	if res.Record.Deck != deckText {
-		t.Error("import without a deck did not reuse the last one")
-	}
-
-	_, err = NewManager(dir, nil).Import(ctx, ImportRequest{ID: "c", Log: logText, Seed: 1})
-	if err == nil || !strings.Contains(err.Error(), "no decklist given") {
-		t.Errorf("new manager import without a deck: err %v, want no decklist given", err)
+	if g, err := m.Current(); err != nil || g.ID != "a" {
+		t.Errorf("refused import replaced the open game: %v", err)
 	}
 }

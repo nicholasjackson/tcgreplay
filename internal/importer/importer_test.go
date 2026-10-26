@@ -594,3 +594,47 @@ func TestMoveFromUndamagedWarns(t *testing.T) {
 		t.Errorf("no warning about moving damage off an undamaged Budew; warnings %q", res.Report.Warnings)
 	}
 }
+
+// TestBenchPastFive replays a bench of more than five, as Area Zero
+// Underdepths allows: the log is the authority, so no Pokémon is refused.
+func TestBenchPastFive(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	b, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-11_ledjo23_alakazam-donk.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra := "- LeDjo23 drew 3 cards.\n" +
+		"LeDjo23 played Duskull to the Bench.\n" +
+		"LeDjo23 played Duskull to the Bench.\n"
+	text := strings.Replace(string(b), "- LeDjo23 drew 3 cards.\n", extra, 1)
+	res, err := Import(text, Options{MyDeck: entries, Seed: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Report.Problems {
+		if strings.Contains(p.Text, "to the Bench") {
+			t.Errorf("line %d not imported: %q: %s", p.Line, p.Text, p.Err)
+		}
+	}
+	st := state.New()
+	evs := res.Events()
+	most := 0
+	for i := range evs {
+		if err := st.Apply(&evs[i]); err != nil {
+			t.Fatal(err)
+		}
+		if st.Phase == state.PhaseEmpty {
+			continue
+		}
+		n := 0
+		for _, s := range st.Sides[OppSeat].Bench {
+			if !s.Empty() {
+				n++
+			}
+		}
+		most = max(most, n)
+	}
+	if most <= 5 {
+		t.Errorf("opponent's bench peaked at %d, want more than 5", most)
+	}
+}

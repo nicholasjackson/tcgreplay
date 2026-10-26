@@ -285,7 +285,7 @@ type (
 	}
 	ImportLog struct {
 		Log     string `json:"log" jsonschema:"the battle log text copied from Pokémon TCG Live, or a game record returned earlier by import_log, set_opponent_deck or get_record (pass it unchanged) to restore that exact game"`
-		Deck    string `json:"deck,omitempty" jsonschema:"the log owner's decklist in TCG Live export format; omit to reuse the deck from the previous import; omit when log is a record"`
+		Deck    string `json:"deck,omitempty" jsonschema:"the log owner's decklist in TCG Live export format; required for a battle log; omit when log is a record"`
 		OppDeck string `json:"opp_deck,omitempty" jsonschema:"optional assumed opponent decklist; fills cards the log never reveals, tagged as reference; omit when log is a record"`
 		Me      string `json:"me,omitempty" jsonschema:"the log owner's player name; detected from the log if omitted; omit when log is a record"`
 		ID      string `json:"id,omitempty" jsonschema:"game id; generated from the date and opponent if empty"`

@@ -93,17 +93,17 @@ func (g *Game) Bench(seat state.Seat, actor state.Actor, iid state.IID, slot int
 		if err := inHand(t.st, seat, iid); err != nil {
 			return err
 		}
-		bench := t.st.Sides[seat].Bench
 		if slot < 0 {
-			slot = slices.IndexFunc(bench, func(s *state.Stack) bool { return s.Empty() })
+			slot = t.st.FreeBenchSlot(seat)
 			if slot < 0 {
 				return fmt.Errorf("%s's bench is full", seat)
 			}
 		}
-		if slot >= len(bench) {
-			return fmt.Errorf("bench slot %d out of range (bench size %d)", slot, len(bench))
+		st, err := t.st.Stack(state.Loc{Seat: seat, Zone: state.Bench, Slot: slot})
+		if err != nil {
+			return err
 		}
-		if !bench[slot].Empty() {
+		if !st.Empty() {
 			return fmt.Errorf("bench slot %d is occupied", slot)
 		}
 		t.warnNotBasic(iid)

@@ -1097,3 +1097,55 @@ func TestHandOff(t *testing.T) {
 		t.Fatalf("hand-off\n got %q\nwant %q", got, want)
 	}
 }
+
+func TestBenchPastFive(t *testing.T) {
+	m, g := newTestGame(t)
+	hu, cl := state.ActorHuman, state.ActorClaude
+	// The Arena becomes a Stadium that lets each bench hold 8.
+	m.DB.(fakeDB)["tst-5"].Effect = "Each player can have 8 Pokémon on their Bench."
+	for _, iid := range []state.IID{"p1-1", "p1-2", "p1-3", "p1-4", "p1-5", "p1-6", "p1-7", "p1-17"} {
+		if l, _ := g.State().Find(iid); l.Zone != state.Hand {
+			must(t)(g.Move(state.P1, hu, iid, state.Loc{Zone: state.Hand}, "", ""))
+		}
+	}
+	if l, _ := g.State().Find("p2-1"); l.Zone != state.Hand {
+		must(t)(g.Move(state.P2, cl, "p2-1", state.Loc{Zone: state.Hand}, "", ""))
+	}
+	must(t)(g.PlaceActive(state.P1, hu, "p1-1"))
+	must(t)(g.PlaceActive(state.P2, cl, "p2-1"))
+	must(t)(g.StartGame(state.P1, hu))
+	overLimit := func(r *Result) bool {
+		return slices.ContainsFunc(r.Warnings, func(w string) bool { return strings.Contains(w, "on the Bench, more than") })
+	}
+
+	for _, iid := range []state.IID{"p1-2", "p1-3", "p1-4", "p1-5", "p1-6"} {
+		must(t)(g.Bench(state.P1, hu, iid, -1))
+	}
+	// A sixth Pokémon takes a slot past the five, with a warning.
+	r := must(t)(g.Bench(state.P1, hu, "p1-7", -1))
+	if n := len(g.State().Sides[state.P1].Bench); n != 6 {
+		t.Fatalf("bench has %d slots, want 6", n)
+	}
+	if !overLimit(r) {
+		t.Errorf("no warning for a sixth Benched Pokémon: %v", r.Warnings)
+	}
+	// With the Stadium in play the sixth is allowed.
+	if r := must(t)(g.PlayTrainer(state.P1, hu, "p1-17")); overLimit(r) {
+		t.Errorf("warning with a bench-expanding Stadium in play: %v", r.Warnings)
+	}
+	// When the Stadium leaves, the warning is back.
+	if r := must(t)(g.Move(state.P1, hu, "p1-17", state.Loc{Zone: state.Discard}, "", "")); !overLimit(r) {
+		t.Errorf("no warning after the Stadium left: %v", r.Warnings)
+	}
+	// Discarding the sixth shrinks the bench back to five slots.
+	if r := must(t)(g.Move(state.P1, hu, "p1-7", state.Loc{Zone: state.Discard}, "", "")); overLimit(r) {
+		t.Errorf("warning with five Benched Pokémon: %v", r.Warnings)
+	}
+	if n := len(g.State().Sides[state.P1].Bench); n != 5 {
+		t.Errorf("bench has %d slots after discarding the sixth, want 5", n)
+	}
+	must(t)(g.Move(state.P1, hu, "p1-7", state.Loc{Zone: state.Hand}, "", ""))
+	if _, err := g.Bench(state.P1, hu, "p1-7", state.MaxBench); err == nil || !strings.Contains(err.Error(), "out of range") {
+		t.Errorf("benching past slot 8: err %v, want out of range", err)
+	}
+}
