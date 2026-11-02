@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Touch Board Mockups</title>
+<style>
+  :root {
+    --bg: #0d1611;
+    --page-text: #e8efe9;
+    --felt: radial-gradient(ellipse at center, #22492d 0%, #17321f 70%, #10241a 100%);
+    --panel: #1c2421;
+    --panel2: #242e2a;
+    --strip: #0f1d16cc;
+    --text: #e8efe9;
+    --muted: #9bb0a2;
+    --line: #2f3b35;
+    --slot: #ffffff2e;
+    --accent: #e3b341;
+    --accent-glow: #e3b341aa;
+    --danger: #ef5350;
+    --p1: #4fc3f7;
+    --p2: #ef5350;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--page-text); font: 15px/1.5 system-ui, -apple-system, sans-serif; }
+  .page { max-width: 1240px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 28px; margin: 0 0 6px; }
+  .lede { color: var(--muted); max-width: 70ch; margin: 0 0 32px; }
+  .frame-block { margin: 0 0 56px; }
+  .frame-block h2 { font-size: 18px; margin: 0 0 4px; }
+  .frame-block h2 span { color: var(--accent); font-weight: 700; margin-right: 8px; }
+  .frame-block p.note { color: var(--muted); margin: 0 0 16px; max-width: 80ch; }
+  .row { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
+  .callouts { flex: 1; min-width: 260px; max-width: 420px; }
+  .callouts ol { margin: 0; padding-left: 20px; }
+  .callouts li { margin: 0 0 10px; }
+  .callouts b { color: var(--accent); }
+
+  /* ---------- device frames ---------- */
+  .phone {
+    width: 390px; height: 844px; flex: none;
+    border-radius: 48px; border: 10px solid #050806; outline: 1px solid #333;
+    background: var(--felt); position: relative; overflow: hidden; color: var(--text);
+    font-size: 13px;
+  }
+  .phone::before { /* dynamic island */
+    content: ''; position: absolute; top: 10px; left: 50%; translate: -50% 0;
+    width: 110px; height: 30px; border-radius: 20px; background: #000; z-index: 99;
+  }
+  .scale-wrap { flex: none; overflow: hidden; }
+  .tablet {
+    width: 1024px; height: 768px; border-radius: 28px; border: 14px solid #050806; outline: 1px solid #333;
+    background: var(--felt); position: relative; overflow: hidden; color: var(--text); font-size: 13px;
+    transform-origin: top left;
+  }
+  .desk {
+    width: 760px; height: 520px; border-radius: 10px; border: 1px solid #444;
+    background: var(--felt); position: relative; overflow: hidden; color: var(--text); font-size: 13px; flex: none;
+  }
+  .desk .chrome { height: 28px; background: #2a2f2c; display: flex; align-items: center; gap: 6px; padding: 0 10px; }
+  .desk .chrome i { width: 11px; height: 11px; border-radius: 50%; background: #555; display: block; }
+
+  /* ---------- cards ---------- */
+  .c {
+    --w: 58px; width: var(--w); aspect-ratio: 63 / 88; flex: none; border-radius: calc(var(--w) * .06);
+    position: relative; overflow: hidden; box-shadow: 0 2px 6px #0008;
+    display: flex; flex-direction: column; padding: calc(var(--w) * .06);
+    font-size: max(7px, calc(var(--w) * .13)); line-height: 1.1; color: #1d1d1d;
+    background: linear-gradient(160deg, #f4efe0, #d9d0b5); border: calc(var(--w)*.045) solid #c9a43c;
+  }
+  .c b { font-weight: 800; }
+  .c .art { flex: 1; margin: 6% 0; border-radius: 3px; }
+  .c.fighting .art { background: linear-gradient(135deg, #d7834f, #8c3c1e); }
+  .c.psychic  .art { background: linear-gradient(135deg, #b98ad8, #5d2f80); }
+  .c.colorless .art { background: linear-gradient(135deg, #e5e5e5, #9a9a9a); }
+  .c.darkness .art { background: linear-gradient(135deg, #5c6d78, #1e282e); }
+  .c.trainer { border-color: #8a8f99; background: linear-gradient(160deg, #eef1f4, #cfd5dc); }
+  .c.trainer .art { background: linear-gradient(135deg, #8fb4d9, #3c6390); }
+  .c.back { border-color: #1d3f9e; padding: 0;
+    background: radial-gradient(circle at 50% 50%, #e9eef3 0 13%, #232a33 13% 17%, transparent 17%), linear-gradient(#c8312b 0 47%, #232a33 47% 53%, #2a5bd7 53%); }
+  .c.energy { border: none; padding: 0; background: radial-gradient(circle at 50% 45%, #b5562b 0 38%, #fff 39% 44%, #b5562b 45%);
+    display: grid; place-items: center; color: #fff; font-weight: 800; font-size: calc(var(--w)*.45); text-shadow: 0 1px 2px #0009; }
+  .c.energy.psy { background: radial-gradient(circle at 50% 45%, #8c4bb5 0 38%, #fff 39% 44%, #8c4bb5 45%); }
+  .c .hp { position: absolute; right: 7%; top: 5%; color: #a22; font-weight: 800; }
+  .dmg { position: absolute; z-index: 3; right: -4px; top: 30%; background: #c62828; color: #fff; font-weight: 800;
+    font-size: 11px; border-radius: 10px; padding: 1px 6px; box-shadow: 0 1px 3px #0009; }
+  .att { position: absolute; bottom: -6px; left: 50%; translate: -50% 0; display: flex; gap: 1px; z-index: 2; }
+  .att i { width: 12px; height: 12px; border-radius: 50%; background: #b5562b; border: 1.5px solid #fff; display: block; }
+  .stack { position: relative; padding-bottom: 6px; }
+  .slot { width: var(--w, 58px); aspect-ratio: 63/88; border: 1.5px dashed var(--slot); border-radius: 5px; flex: none; }
+
+  /* ---------- phone board ---------- */
+  .topbar { position: absolute; top: 0; left: 0; right: 0; height: 50px; padding: 18px 16px 0; display: flex; align-items: center; gap: 8px;
+    background: var(--panel); font-size: 12px; z-index: 5; }
+  .topbar .dot { width: 9px; height: 9px; border-radius: 50%; background: #43a047; }
+  .topbar .grow { flex: 1; }
+  .topbar .warn { color: #ffb300; }
+  .topbar .burger { font-size: 16px; }
+  .ph-body { position: absolute; top: 50px; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
+  .counters { display: flex; gap: 6px; padding: 5px 10px; font-size: 11px; align-items: center; }
+  .counters .who { font-weight: 700; margin-right: auto; }
+  .counters .who.p1 { color: var(--p1); } .counters .who.p2 { color: var(--p2); }
+  .chip { background: #0007; border: 1px solid #ffffff22; border-radius: 12px; padding: 4px 9px; min-height: 26px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .chip.small { padding: 2px 7px; min-height: 0; }
+  .lane { display: flex; justify-content: center; padding: 4px 0; }
+  .bench-row { display: flex; gap: 8px; padding: 4px 12px 8px; overflow: hidden; position: relative; }
+  .bench-row .more { position: absolute; right: 0; top: 0; bottom: 0; width: 46px; display: grid; place-items: center;
+    background: linear-gradient(90deg, transparent, #10241aee 60%); font-weight: 700; color: var(--accent); font-size: 12px; }
+  .mid { margin: 4px 0; background: var(--strip); display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+  .mid .stad { --w: 34px; }
+  .mid .turn { font-weight: 700; color: var(--accent); }
+  .mid .grow { flex: 1; }
+  .btn { background: #2c3833; border: 1px solid #3d4a44; color: var(--text); border-radius: 10px; padding: 0 14px; min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; font: inherit; font-weight: 600; flex: none; }
+  .btn.sm { min-height: 34px; padding: 0 10px; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #1b1b1b; }
+  .btn.danger { color: #ff8a80; border-color: #6b2b2b; background: #3a1f1f; }
+  .btn.ghost { background: transparent; }
+  .btn .go { opacity: .7; font-size: 15px; }
+  .btn .sub { font-weight: 800; color: var(--accent); }
+  .btn.primary .sub { color: #1b1b1b; }
+  .hand { margin-top: auto; background: #0008; border-top: 1px solid #ffffff1a; padding: 8px 0 26px; position: relative; }
+  .hand .label { font-size: 11px; color: var(--muted); padding: 0 12px 4px; display: flex; justify-content: space-between; }
+  .hand .cards { display: flex; gap: 8px; padding: 0 12px; overflow: hidden; }
+  .hand .cards .c { --w: 72px; }
+  .home { position: absolute; bottom: 8px; left: 50%; translate: -50% 0; width: 130px; height: 5px; border-radius: 3px; background: #fff9; z-index: 99; }
+
+  /* ---------- sheets ---------- */
+  .sheet { position: absolute; inset: 0; background: var(--panel); z-index: 20; display: flex; flex-direction: column; }
+  .sheet-head { padding: 52px 16px 12px; display: flex; gap: 14px; border-bottom: 1px solid var(--line); background: var(--panel2); position: relative; }
+  .sheet-head .c { --w: 104px; }
+  .sheet-head .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .sheet-head h3 { margin: 0; font-size: 19px; line-height: 1.2; }
+  .sheet-head .sum { color: var(--muted); font-size: 12px; }
+  .sheet-head .close { position: absolute; right: 12px; top: 48px; width: 44px; height: 44px; border-radius: 22px; display: grid; place-items: center;
+    background: #ffffff12; font-size: 18px; }
+  .linkish { color: var(--accent); font-weight: 600; font-size: 13px; }
+  .grab { position: absolute; top: 40px; left: 50%; translate: -50% 0; width: 40px; height: 5px; border-radius: 3px; background: #ffffff33; }
+  .sheet-body { flex: 1; overflow: hidden; padding: 6px 0 30px; }
+  .sec { padding: 10px 0 6px; }
+  .sec-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 16px 6px; font-weight: 700; }
+  .scroller { display: flex; gap: 8px; padding: 0 16px; overflow: hidden; position: relative;
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .scroller.fits { -webkit-mask-image: none; mask-image: none; }
+  .stepper { display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+  .stepper .val { min-width: 72px; min-height: 44px; border-radius: 10px; background: #0f1512; border: 1px solid var(--line);
+    display: grid; place-items: center; font-weight: 800; font-size: 18px; }
+  .stepper .val small { display: block; font-size: 9px; font-weight: 600; color: var(--muted); margin-top: -4px; }
+  .tog { border-radius: 22px; padding: 0 14px; min-height: 40px; display: inline-flex; align-items: center; border: 1px solid #3d4a44; background: transparent; color: var(--text); font-weight: 600; flex: none; }
+  .tog.on { background: #6a3fa833; border-color: #a77be0; color: #e6d4ff; }
+  .tog.on::before { content: '✓ '; white-space: pre; }
+  .divider { height: 1px; background: var(--line); margin: 6px 16px; }
+
+  /* ---------- target mode ---------- */
+  .dim { position: absolute; inset: 0; background: #000a; z-index: 8; pointer-events: none; }
+  .lit { position: relative; z-index: 9; outline: 3px solid var(--accent); box-shadow: 0 0 18px 4px var(--accent-glow); border-radius: 6px; }
+  .banner { position: absolute; top: 50px; left: 0; right: 0; z-index: 12; background: #2b2410; border-bottom: 2px solid var(--accent);
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+  .banner .c { --w: 34px; }
+  .banner .t { flex: 1; font-size: 13px; line-height: 1.3; }
+  .banner .t b { color: var(--accent); }
+  .tap { position: absolute; z-index: 30; width: 44px; height: 44px; border-radius: 50%; background: #ffffff44; border: 2px solid #fff; translate: -50% -50%;
+    box-shadow: 0 0 0 8px #ffffff22; pointer-events: none; }
+  .ghost { position: absolute; z-index: 25; rotate: -6deg; filter: drop-shadow(0 10px 18px #000c); }
+  .zone { outline: 2px dashed var(--accent); outline-offset: 3px; border-radius: 6px; }
+  .zone.hot { outline-style: solid; background: #e3b34133; box-shadow: 0 0 16px 2px var(--accent-glow); }
+  .arrow { position: absolute; z-index: 24; color: var(--accent); font-size: 26px; font-weight: 800; }
+
+  /* ---------- tablet ---------- */
+  .tb-board { position: absolute; inset: 0; padding: 50px 30px 20px; display: flex; flex-direction: column; gap: 10px; filter: blur(1.5px) brightness(.55); }
+  .tb-row { display: flex; gap: 12px; justify-content: center; }
+  .tb-row .c, .tb-row .slot { --w: 66px; }
+  .dialog { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 860px; height: 620px; z-index: 20; background: var(--panel);
+    border-radius: 18px; display: flex; overflow: hidden; box-shadow: 0 20px 60px #000c; }
+  .dialog .left { width: 340px; padding: 24px; background: var(--panel2); display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .dialog .left .c { --w: 280px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg span { padding: 8px 18px; font-weight: 600; }
+  .seg span.on { background: #ffffff18; }
+  .dialog .right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .dialog .right header { display: flex; align-items: flex-start; padding: 22px 20px 10px; gap: 10px; }
+  .dialog .right header h3 { margin: 0; font-size: 22px; }
+  .dialog .right header .grow { flex: 1; }
+  .dialog .right .sections { flex: 1; overflow: hidden; padding: 0 4px 16px; position: relative; }
+  .wrap { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px; }
+  .scrollbar { position: absolute; right: 6px; top: 8px; width: 4px; height: 38%; border-radius: 2px; background: #ffffff33; }
+
+  /* ---------- desktop popover ---------- */
+  .pop { position: absolute; z-index: 20; width: 264px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 30px #000b; padding: 6px 0 8px; font-size: 13px; }
+  .pop .title { padding: 6px 12px 4px; font-weight: 800; }
+  .pop .sum { padding: 0 12px 6px; color: var(--muted); font-size: 11px; }
+  .pop .h { padding: 8px 12px 2px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .pop .it { padding: 5px 12px; display: flex; justify-content: space-between; }
+  .pop .it.hover { background: #ffffff14; }
+  .pop .it .k { color: var(--muted); }
+  .pop .it.danger { color: #ff8a80; }
+  .pop .mini { display: flex; gap: 4px; padding: 4px 12px; flex-wrap: wrap; align-items: center; }
+  .pop .mini span { border: 1px solid #3d4a44; border-radius: 6px; padding: 2px 7px; }
+  .pop .mini .v { background: #0f1512; font-weight: 800; min-width: 38px; text-align: center; }
+  .pop .mini .on { border-color: #a77be0; color: #e6d4ff; background: #6a3fa833; }
+  .cursor { position: absolute; z-index: 30; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 18px solid #fff; rotate: -30deg; filter: drop-shadow(0 1px 1px #000); }
+
+  /* ---------- attack panel ---------- */
+  .panel-back { display: flex; align-items: center; gap: 6px; padding: 10px 16px 0; color: var(--accent); font-weight: 600; }
+  .attack-card { margin: 10px 16px; padding: 12px 14px; border-radius: 12px; background: #0f1512; border: 1px solid var(--line); }
+  .attack-card .name { display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; }
+  .attack-card p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+  .target-pick { margin: 0 16px; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: #0f1512; }
+  .target-pick .c { --w: 36px; }
+  .target-pick .grow { flex: 1; }
+  .confirm { position: absolute; left: 16px; right: 16px; bottom: 34px; }
+  .confirm .btn { width: 100%; min-height: 52px; font-size: 16px; }
+
+  @media (max-width: 860px) {
+    .callouts { max-width: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Touch-friendly board: mockups</h1>
+  <p class="lede">These go with the design document <code>mobile-board/design.md</code>. Frames are drawn at real CSS sizes: iPhone 390×844 and iPad 1024×768 (shown at reduced scale). The cards are stand-ins, and the numbered notes refer to the design's sections.</p>
+
+  <!-- ===================== A: phone board ===================== -->
+  <section class="frame-block">
+    <h2><span>A</span>iPhone board (compact portrait layout)</h2>
+    <p class="note">On a phone the mat is reorganised so its cards are about 64px wide rather than the 35px a scaled-down desktop mat would give.</p>
+    <div class="row">
+      <div class="phone">
+        <div class="topbar"><span class="dot"></span><b>tcgreplay</b><span class="grow"></span><span class="warn">⚠ 1</span><span class="burger">☰</span></div>
+        <div class="ph-body">
+          <div class="counters"><span class="who p2">LeDjo23</span><span class="chip">✋ 6</span><span class="chip">Deck 41</span><span class="chip">Disc 3</span><span class="chip">Prizes 6</span></div>
+          <div class="bench-row" style="--w:56px">
+            <div class="stack"><div class="c psychic" style="--w:56px"><b>Abra</b><div class="art"></div></div></div>
+            <div class="stack"><div class="c colorless" style="--w:56px"><b>Dunsparce</b><div class="art"></div></div></div>
+            <div class="slot" style="--w:56px"></div><div class="slot" style="--w:56px"></div><div class="slot" style="--w:56px"></div>
+          </div>
+          <div class="lane"><div class="stack"><div class="c psychic" style="--w:70px"><b>Kadabra</b><span class="hp">80</span><div class="art"></div></div><span class="att"><i style="background:#8c4bb5"></i></span></div></div>
+          <div class="mid">
+            <div class="c trainer stad"><b style="font-size:6px">Area Zero</b><div class="art"></div></div>
+            <span class="turn">Your turn · T3</span><span class="grow"></span>
+            <span class="btn sm">🪙</span><span class="btn sm primary">End turn</span>
+          </div>
+          <div class="lane"><div class="stack"><div class="c fighting" style="--w:70px"><b>Mega Lucario ex</b><span class="hp">340</span><div class="art"></div></div><span class="dmg">60</span><span class="att"><i></i><i></i></span></div></div>
+          <div class="bench-row">
+            <div class="stack"><div class="c fighting" style="--w:56px"><b>Riolu</b><div class="art"></div></div><span class="att"><i></i></span></div>
+            <div class="stack"><div class="c psychic" style="--w:56px"><b>Lunatone</b><div class="art"></div></div></div>
+            <div class="stack"><div class="c fighting" style="--w:56px"><b>Solrock</b><div class="art"></div></div></div>
+            <div class="stack"><div class="c colorless" style="--w:56px"><b>Meowth ex</b><div class="art"></div></div></div>
+            <div class="stack"><div class="c psychic" style="--w:56px"><b>Mew ex</b><div class="art"></div></div></div>
+            <div class="stack"><div class="c fighting" style="--w:56px"><b>Riolu</b><div class="art"></div></div></div>
+            <div class="more">+1 ›</div>
+          </div>
+          <div class="counters"><span class="who p1">You</span><span class="chip">Deck 38</span><span class="chip">Disc 2</span><span class="chip">Lost 0</span><span class="chip">Prizes 5</span></div>
+          <div class="hand">
+            <div class="label"><span>Your hand · 7</span><span>scrolls ⟷</span></div>
+            <div class="cards">
+              <div class="c energy">F</div>
+              <div class="c trainer"><b>Boss's Orders</b><div class="art"></div></div>
+              <div class="c fighting"><b>Riolu</b><span class="hp">70</span><div class="art"></div></div>
+              <div class="c trainer"><b>Ultra Ball</b><div class="art"></div></div>
+              <div class="c energy">F</div>
+            </div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+      <div class="callouts"><ol>
+        <li><b>Counter bars</b> take the place of the piles column and the prize grid. Tapping a chip opens that pile, the deck sheet or the prize view.</li>
+        <li><b>The opponent's hand</b> shows as a count (✋ 6).</li>
+        <li><b>The bench</b> is one row that scrolls sideways. With Area Zero in play it can hold 8; "+1 ›" says some are off screen.</li>
+        <li><b>The middle strip</b> keeps the Stadium, the turn, the coin and End turn. Draw and End action sit here when they apply.</li>
+        <li><b>The hand</b> is a bottom strip with larger cards. Swiping sideways scrolls it, and dragging a card upward picks it up (frame H).</li>
+        <li><b>The header</b> keeps only the connection dot, the warnings and ☰. The game name, branch, review-mode toggle and timeline move into ☰.</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <!-- ===================== B: phone action sheet ===================== -->
+  <section class="frame-block">
+    <h2><span>B</span>iPhone action sheet: your Active Pokémon</h2>
+    <p class="note">Tapping a card opens this sheet. It takes the whole screen; each section is one row, and a row scrolls sideways when it overflows.</p>
+    <div class="row">
+      <div class="phone">
+        <div class="sheet">
+          <div class="sheet-head">
+            <span class="grab"></span>
+            <div class="c fighting"><b>Mega Lucario ex</b><span class="hp">340</span><div class="art"></div></div>
+            <div class="meta">
+              <h3>Mega Lucario ex</h3>
+              <span class="sum">Active · HP 340 · 60 damage<br>2 Fighting Energy</span>
+              <span class="linkish">Card text ›</span>
+            </div>
+            <span class="close">✕</span>
+          </div>
+          <div class="sheet-body">
+            <div class="sec"><div class="sec-label">Attack</div>
+              <div class="scroller fits">
+                <span class="btn">Aura Jab <span class="sub">130</span></span>
+                <span class="btn">Mega Brave <span class="sub">270</span></span>
+              </div></div>
+            <div class="sec"><div class="sec-label">Move</div>
+              <div class="scroller fits">
+                <span class="btn">Retreat <span class="go">›</span></span>
+                <span class="btn">Switch, no cost <span class="go">›</span></span>
+              </div></div>
+            <div class="sec"><div class="sec-label">Damage</div>
+              <div class="stepper">
+                <span class="btn">−10</span>
+                <span class="val">60<small>tap to type</small></span>
+                <span class="btn">+10</span><span class="btn">+30</span><span class="btn">+50</span>
+              </div></div>
+            <div class="sec"><div class="sec-label">Conditions</div>
+              <div class="scroller">
+                <span class="tog">Asleep</span><span class="tog">Burned</span><span class="tog">Confused</span><span class="tog">Paralyzed</span><span class="tog">Poisoned</span>
+              </div></div>
+            <div class="divider"></div>
+            <div class="sec"><div class="sec-label">Other</div>
+              <div class="scroller">
+                <span class="btn">Return to hand</span><span class="btn">Devolve</span><span class="btn danger">Knock Out</span>
+              </div></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+      <div class="callouts"><ol>
+        <li><b>The header</b> shows the card, a one-line state summary and <i>Card text ›</i>. That toggle swaps the sections for the card's full text, so a separate Zoom item is no longer needed.</li>
+        <li><b>›</b> marks an action that continues on the board (target mode, frame C). With one possible target, the button acts straight away and names the target ("Retreat to Riolu").</li>
+        <li><b>Damage</b> is a stepper. Tapping the value opens the number pad for a total, which replaces "Set damage…" and its prompt.</li>
+        <li><b>Conditions</b> are toggle chips; this row overflows and fades at the edge to show it scrolls.</li>
+        <li><b>Knock Out</b> is last and styled as dangerous. Today's list for this card has about 25 items; the sheet has 5 short rows.</li>
+        <li>An empty section is left out: this card has no Ability, so the row is absent.</li>
+        <li>To close: ✕, swiping down on the header, or the browser's back.</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <!-- ===================== C: target mode ===================== -->
+  <section class="frame-block">
+    <h2><span>C</span>Target mode: attaching an Energy from the hand</h2>
+    <p class="note">The player tapped Attach on a Fighting Energy. The sheet closed; the board shows the candidates and waits for a tap.</p>
+    <div class="row">
+      <div class="phone">
+        <div class="topbar"><span class="dot"></span><b>tcgreplay</b><span class="grow"></span><span class="warn">⚠ 1</span><span class="burger">☰</span></div>
+        <div class="banner">
+          <div class="c energy" style="--w:30px">F</div>
+          <span class="t">Attach <b>Fighting Energy</b><br>Tap one of your Pokémon</span>
+          <span class="btn sm">Cancel</span>
+        </div>
+        <div class="ph-body" style="padding-top:58px">
+          <div class="counters"><span class="who p2">LeDjo23</span><span class="chip">✋ 6</span><span class="chip">Deck 41</span><span class="chip">Prizes 6</span></div>
+          <div class="bench-row">
+            <div class="c psychic" style="--w:56px"><b>Abra</b><div class="art"></div></div>
+            <div class="c colorless" style="--w:56px"><b>Dunsparce</b><div class="art"></div></div>
+          </div>
+          <div class="lane"><div class="c psychic" style="--w:70px"><b>Kadabra</b><div class="art"></div></div></div>
+          <div class="mid"><span class="turn">Your turn · T3</span><span class="grow"></span><span class="btn sm primary">End turn</span></div>
+          <div class="lane"><div class="stack lit"><div class="c fighting" style="--w:70px"><b>Mega Lucario ex</b><span class="hp">340</span><div class="art"></div></div><span class="att"><i></i><i></i></span></div></div>
+          <div class="bench-row" style="overflow:visible">
+            <div class="stack lit"><div class="c fighting" style="--w:56px"><b>Riolu</b><div class="art"></div></div><span class="att"><i></i></span></div>
+            <div class="stack lit"><div class="c psychic" style="--w:56px"><b>Lunatone</b><div class="art"></div></div></div>
+            <div class="stack lit"><div class="c fighting" style="--w:56px"><b>Solrock</b><div class="art"></div></div></div>
+            <div class="stack lit"><div class="c colorless" style="--w:56px"><b>Meowth ex</b><div class="art"></div></div></div>
+            <div class="stack lit"><div class="c psychic" style="--w:56px"><b>Mew ex</b><div class="art"></div></div></div>
+          </div>
+          <div class="counters"><span class="who p1">You</span><span class="chip">Deck 38</span><span class="chip">Prizes 5</span></div>
+          <div class="hand"><div class="label"><span>Your hand · 7</span></div>
+            <div class="cards"><div class="c energy" style="opacity:.35">F</div><div class="c trainer"><b>Boss's Orders</b><div class="art"></div></div><div class="c fighting"><b>Riolu</b><div class="art"></div></div><div class="c trainer"><b>Ultra Ball</b><div class="art"></div></div></div></div>
+        </div>
+        <div class="dim" style="top:120px"></div>
+        <span class="tap" style="left:40px; top:552px"></span>
+        <div class="home"></div>
+      </div>
+      <div class="callouts"><ol>
+        <li><b>The banner</b> names the action and the card, with Cancel. Tapping anywhere that isn't a candidate also cancels.</li>
+        <li><b>The candidates</b> glow with the board's accent, as <code>app.highlight</code> does today, and everything else dims. They are the same targets the menu lists today (all your Pokémon in play); the playmat enforces no rules.</li>
+        <li><b>The card being played</b> is faded in the hand, so it's clear which copy is moving.</li>
+        <li>The same mode serves Evolve, Retreat, Switch, moving an attached card and choosing an attack's target. It works with a mouse too, which shortens the desktop menu (frame G).</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <!-- ===================== D: attack panel ===================== -->
+  <section class="frame-block">
+    <h2><span>D</span>Attack panel (replaces two <code>window.prompt</code> dialogs)</h2>
+    <p class="note">Tapping Aura Jab in frame B opens a panel inside the sheet rather than acting straight away.</p>
+    <div class="row">
+      <div class="phone">
+        <div class="sheet">
+          <div class="sheet-head">
+            <span class="grab"></span>
+            <div class="c fighting" style="--w:64px"><b>Mega Lucario ex</b><div class="art"></div></div>
+            <div class="meta"><h3>Mega Lucario ex</h3><span class="sum">Active · 60 damage</span></div>
+            <span class="close">✕</span>
+          </div>
+          <div class="sheet-body" style="position:relative">
+            <div class="panel-back">‹ Actions</div>
+            <div class="attack-card">
+              <div class="name"><span>Aura Jab</span><span>130</span></div>
+              <p>Card text from TCGdex, as the Card text view shows it.</p>
+            </div>
+            <div class="sec"><div class="sec-label">Damage after Weakness and Resistance</div>
+              <div class="stepper"><span class="btn">−10</span><span class="val">130<small>tap to type</small></span><span class="btn">+10</span><span class="btn">×2</span></div></div>
+            <div class="sec"><div class="sec-label">Target</div>
+              <div class="target-pick">
+                <div class="c psychic"><b>Kadabra</b><div class="art"></div></div>
+                <span class="grow"><b>Kadabra</b><br><span style="color:var(--muted);font-size:12px">LeDjo23's Active</span></span>
+                <span class="btn sm">Change ›</span>
+              </div></div>
+            <div class="confirm"><span class="btn primary">Attack Kadabra for 130</span></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+      <div class="callouts"><ol>
+        <li><b>Damage</b> starts at the printed number. The player adjusts it for Weakness and Resistance, as the prompt asks today. ×2 covers Weakness in one tap.</li>
+        <li><b>The target</b> defaults to the opponent's Active. <i>Change ›</i> enters target mode over the opponent's side and then returns here.</li>
+        <li><b>The confirm button</b> spells out what will happen. It is the one large primary button in the sheet.</li>
+        <li>The same panel pattern covers Draw N and Look at top N (a stepper limited to the deck's size, then Go).</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <!-- ===================== E: hand card ===================== -->
+  <section class="frame-block">
+    <h2><span>E</span>iPhone action sheet: a card in your hand</h2>
+    <p class="note">Short menus get the same sheet, so it simply has fewer rows. This replaces nine "Attach to …" items with one button.</p>
+    <div class="row">
+      <div class="phone">
+        <div class="sheet">
+          <div class="sheet-head">
+            <span class="grab"></span>
+            <div class="c energy" style="--w:104px">F</div>
+            <div class="meta"><h3>Basic Fighting Energy</h3><span class="sum">In your hand</span><span class="linkish">Card text ›</span></div>
+            <span class="close">✕</span>
+          </div>
+          <div class="sheet-body">
+            <div class="sec"><div class="sec-label">Play</div><div class="scroller fits"><span class="btn primary">Attach <span class="go">›</span></span></div></div>
+            <div class="sec"><div class="sec-label">Move</div><div class="scroller"><span class="btn">Discard</span><span class="btn">Deck top</span><span class="btn">Deck bottom</span><span class="btn">Lost Zone</span></div></div>
+            <div class="sec"><div class="sec-label">Other</div><div class="scroller fits"><span class="btn">Reveal to opponent</span></div></div>
+          </div>
+        </div>
+        <div class="home"></div>
+      </div>
+      <div class="callouts"><ol>
+        <li><b>The common action comes first</b> and is the primary button: Attach for Energy and Tools, Play for other Trainers, and Bench, Set as Active or Evolve for Pokémon.</li>
+        <li><b>Move</b> holds the moves elsewhere. Four buttons overflow a 390px row, so it scrolls.</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <!-- ===================== F: tablet panel ===================== -->
+  <section class="frame-block">
+    <h2><span>F</span>iPad action panel: card on the left, actions on the right</h2>
+    <p class="note">A benched Lunatone opened by touch on an iPad in landscape, shown at 62% scale. The board stays dimmed behind the panel.</p>
+    <div class="row">
+      <div class="scale-wrap" style="width:635px; height:476px">
+        <div class="tablet" style="transform: scale(.62)">
+          <div class="tb-board">
+            <div class="tb-row"><div class="c psychic"><b>Abra</b><div class="art"></div></div><div class="c colorless"><b>Dunsparce</b><div class="art"></div></div><div class="slot"></div><div class="slot"></div><div class="slot"></div></div>
+            <div class="tb-row"><div class="c psychic"><b>Kadabra</b><div class="art"></div></div></div>
+            <div class="tb-row" style="height:60px"></div>
+            <div class="tb-row"><div class="c fighting"><b>Mega Lucario ex</b><div class="art"></div></div></div>
+            <div class="tb-row"><div class="c fighting"><b>Riolu</b><div class="art"></div></div><div class="c psychic"><b>Lunatone</b><div class="art"></div></div><div class="c fighting"><b>Solrock</b><div class="art"></div></div><div class="slot"></div><div class="slot"></div></div>
+            <div class="tb-row" style="margin-top:20px"><div class="c energy">F</div><div class="c trainer"><b>Boss's Orders</b><div class="art"></div></div><div class="c trainer"><b>Ultra Ball</b><div class="art"></div></div></div>
+          </div>
+          <div class="dialog">
+            <div class="left">
+              <div class="c psychic"><b>Lunatone</b><span class="hp">110</span><div class="art"></div></div>
+              <div class="seg"><span class="on">Card</span><span>Text</span></div>
+            </div>
+            <div class="right">
+              <header><div><h3>Lunatone</h3><span style="color:var(--muted)">Bench 2 · HP 110 · no damage</span></div><span class="grow"></span><span class="btn sm ghost">✕</span></header>
+              <div class="sections">
+                <div class="sec"><div class="sec-label">Ability</div><div class="wrap"><span class="btn">Lunar Cycle</span></div></div>
+                <div class="sec"><div class="sec-label">Move</div><div class="wrap"><span class="btn">Switch into Active</span></div></div>
+                <div class="sec"><div class="sec-label">Damage</div><div class="stepper"><span class="btn">−10</span><span class="val">0<small>tap to type</small></span><span class="btn">+10</span><span class="btn">+30</span><span class="btn">+50</span></div></div>
+                <div class="divider"></div>
+                <div class="sec"><div class="sec-label">Other</div><div class="wrap"><span class="btn">Return to hand</span><span class="btn danger">Knock Out</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callouts"><ol>
+        <li><b>Left:</b> the card at a large size, with a Card | Text switch under it. The panel replaces the Zoom view for touch.</li>
+        <li><b>Right:</b> the same sections as the phone, but rows wrap instead of scrolling sideways because there's room. A long menu (an Active with many options) scrolls the right column only.</li>
+        <li>An action that needs a target closes the panel and enters target mode on the full board.</li>
+        <li>With the iPad's trackpad, a click still zooms and a right-click opens frame G's popover. The choice follows the input used, not the device.</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <!-- ===================== G: desktop popover ===================== -->
+  <section class="frame-block">
+    <h2><span>G</span>Desktop: right-click popover with the same sections</h2>
+    <p class="note">Mouse use keeps today's popover. Only its contents change: the same sections, the stepper inline, and target mode in place of the per-target items.</p>
+    <div class="row">
+      <div class="desk">
+        <div class="chrome"><i></i><i></i><i></i></div>
+        <div style="position:absolute; left:150px; top:120px" class="stack"><div class="c fighting" style="--w:92px"><b>Mega Lucario ex</b><span class="hp">340</span><div class="art"></div></div><span class="dmg">60</span><span class="att"><i></i><i></i></span></div>
+        <div style="position:absolute; left:60px; top:300px; display:flex; gap:12px">
+          <div class="c fighting" style="--w:70px"><b>Riolu</b><div class="art"></div></div><div class="c psychic" style="--w:70px"><b>Lunatone</b><div class="art"></div></div><div class="c fighting" style="--w:70px"><b>Solrock</b><div class="art"></div></div>
+        </div>
+        <span class="cursor" style="left:214px; top:196px"></span>
+        <div class="pop" style="left:222px; top:60px">
+          <div class="title">Mega Lucario ex</div>
+          <div class="sum">Active · 60 damage · 2 Energy</div>
+          <div class="h">Attack</div>
+          <div class="it hover"><span>Aura Jab</span><span class="k">130</span></div>
+          <div class="it"><span>Mega Brave</span><span class="k">270</span></div>
+          <div class="h">Move</div>
+          <div class="it"><span>Retreat</span><span class="k">›</span></div>
+          <div class="it"><span>Switch, no cost</span><span class="k">›</span></div>
+          <div class="h">Damage</div>
+          <div class="mini"><span>−10</span><span class="v">60</span><span>+10</span><span>+30</span><span>+50</span></div>
+          <div class="h">Conditions</div>
+          <div class="mini"><span>Asleep</span><span>Burned</span><span>Confused</span><span class="on">Paralyzed</span><span>Poisoned</span></div>
+          <div class="h">Other</div>
+          <div class="it"><span>Return to hand</span></div>
+          <div class="it"><span>Devolve</span></div>
+          <div class="it danger"><span>Knock Out</span></div>
+        </div>
+      </div>
+      <div class="callouts"><ol>
+        <li><b>Opened by a right-click</b> at the pointer, as today. A left click still zooms the card.</li>
+        <li><b>Section headers</b> group the items; › leads to target mode, which uses the mouse exactly as touch uses taps.</li>
+        <li><b>Stepper and chips</b> sit inline, so a damage change doesn't open a prompt.</li>
+        <li>It is 264px wide with a max-height of 80vh, scrolling past that as <code>ContextMenu.svelte</code> does now.</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <!-- ===================== H: dragging on touch ===================== -->
+  <section class="frame-block">
+    <h2><span>H</span>Dragging on touch: from the hand to the bench</h2>
+    <p class="note">Drag and drop still works, through Pointer Events. Here the player drags a Riolu up out of the hand.</p>
+    <div class="row">
+      <div class="phone">
+        <div class="topbar"><span class="dot"></span><b>tcgreplay</b><span class="grow"></span><span class="burger">☰</span></div>
+        <div class="ph-body">
+          <div class="counters"><span class="who p2">LeDjo23</span><span class="chip">✋ 6</span><span class="chip">Prizes 6</span></div>
+          <div class="bench-row"><div class="c psychic" style="--w:56px"><b>Abra</b><div class="art"></div></div><div class="c colorless" style="--w:56px"><b>Dunsparce</b><div class="art"></div></div></div>
+          <div class="lane"><div class="c psychic" style="--w:70px"><b>Kadabra</b><div class="art"></div></div></div>
+          <div class="mid"><span class="turn">Your turn · T3</span><span class="grow"></span><span class="btn sm primary">End turn</span></div>
+          <div class="lane"><div class="stack zone"><div class="c fighting" style="--w:70px"><b>Mega Lucario ex</b><div class="art"></div></div></div></div>
+          <div class="bench-row" style="overflow:visible">
+            <div class="stack zone"><div class="c fighting" style="--w:56px"><b>Riolu</b><div class="art"></div></div></div>
+            <div class="stack zone"><div class="c psychic" style="--w:56px"><b>Lunatone</b><div class="art"></div></div></div>
+            <div class="stack zone"><div class="c fighting" style="--w:56px"><b>Solrock</b><div class="art"></div></div></div>
+            <div class="slot zone hot" style="--w:56px"></div>
+            <div class="slot zone" style="--w:56px"></div>
+          </div>
+          <div class="counters"><span class="who p1">You</span><span class="chip zone">Deck 38</span><span class="chip zone">Disc 2</span><span class="chip zone">Lost 0</span></div>
+          <div class="hand"><div class="label"><span>Your hand · 7</span></div>
+            <div class="cards"><div class="c energy">F</div><div class="c trainer"><b>Boss's Orders</b><div class="art"></div></div><div class="slot" style="--w:72px"></div><div class="c trainer"><b>Ultra Ball</b><div class="art"></div></div></div></div>
+        </div>
+        <div class="ghost" style="left:200px; top:420px"><div class="c fighting" style="--w:72px"><b>Riolu</b><span class="hp">70</span><div class="art"></div></div></div>
+        <span class="tap" style="left:240px; top:540px"></span>
+        <span class="arrow" style="left:230px; top:570px">↑</span>
+        <div class="home"></div>
+      </div>
+      <div class="callouts"><ol>
+        <li><b>Direction decides:</b> in the hand, a sideways swipe scrolls and an upward drag lifts the card. On the mat, any move past 8px starts a drag.</li>
+        <li><b>The ghost</b> floats above the finger, offset so the finger doesn't hide it.</li>
+        <li><b>Every drop zone</b> is outlined while dragging, and the one under the finger lights up (the empty bench slot). The pile chips in the counter bar are zones too.</li>
+        <li>Letting go outside a zone cancels. Mouse drags use the same code, replacing HTML5 drag and drop everywhere.</li>
+      </ol></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
