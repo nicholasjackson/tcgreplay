@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 )
 
@@ -21,7 +22,7 @@ const (
 func respondGame(t *testing.T) (*Manager, *Game, state.IID, state.IID) {
 	t.Helper()
 	m, g := startedManager(t)
-	db := m.DB.(fakeDB)
+	db := m.DB.(cardstest.FakeDB)
 	db["sv01-176"] = &cards.Card{ID: "sv01-176", Name: "Judge", Category: "Trainer", TrainerType: "Supporter", Effect: judgeText}
 	db["sv06-165"] = &cards.Card{ID: "sv06-165", Name: "Unfair Stamp", Category: "Trainer", TrainerType: "Item", Effect: unfairStampText}
 

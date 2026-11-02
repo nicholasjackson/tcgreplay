@@ -1,13 +1,15 @@
 <script>
   // One player's half of the mat. The opponent's half is mirrored: bench
   // on the outside, Active Spot towards the middle.
-  import { app, cardInfo } from '../lib/store.svelte.js';
-  import { deckMenu, dropOnZone, readDrag } from '../lib/actions.js';
+  import { app, cardInfo, openSheet } from '../lib/store.svelte.js';
+  import { deckMenu, dropOnZone } from '../lib/actions.js';
+  import { dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
   import Stack from './Stack.svelte';
+  import CounterBar from './CounterBar.svelte';
 
-  let { seat, mirrored = false } = $props();
+  let { seat, mirrored = false, name = seat } = $props();
 
   const side = $derived(app.board.sides[seat]);
   const mine = $derived(seat === app.human || app.snap?.mode === 'review');
@@ -15,22 +17,8 @@
   // shown slots are full, offer the next one to drop on.
   const expands = $derived(/\b8 Pokémon on (their|his or her) Bench/.test(cardInfo(app.board.stadium?.def)?.effect ?? ''));
   const slots = $derived(expands && side.bench.length < 8 && side.bench.every(Boolean) ? [...side.bench, null] : side.bench);
-  let over = $state('');
-
-  function dragover(zone) {
-    return (ev) => {
-      ev.preventDefault();
-      over = zone;
-    };
-  }
-  function drop(zone) {
-    return async (ev) => {
-      ev.preventDefault();
-      over = '';
-      const data = readDrag(ev);
-      if (data) await dropOnZone(data, zone);
-    };
-  }
+  // pile makes a deck, discard or Lost Zone pile a drop zone.
+  const pile = (zone) => dropZone(zone, (data) => dropOnZone(data, zone));
   function prize(p) {
     if (!p.card) return;
     if (!mine) return;
@@ -41,12 +29,52 @@
   function openPile(zone) {
     app.modal = { kind: 'pile', seat, zone };
   }
-  function deck(ev) {
-    app.menu = { x: ev.clientX, y: ev.clientY, ...deckMenu(seat) };
+  function deck(ev, pointerType) {
+    openSheet(ev, () => deckMenu(seat), pointerType);
   }
   const topOf = (pile) => (pile && pile.length ? pile[pile.length - 1] : null);
+
+  // offscreen counts the bench slots past the right edge of the phone's
+  // scrolling bench row, for its "+n ›" hint.
+  let hidden = $state(0);
+  function offscreen(row) {
+    const update = () => {
+      const edge = row.getBoundingClientRect().right;
+      hidden = [...row.children].filter((c) => c.getBoundingClientRect().left >= edge - 4).length;
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(row);
+    // A slot added or taken away changes the count without resizing the row.
+    const mo = new MutationObserver(update);
+    mo.observe(row, { childList: true });
+    row.addEventListener('scroll', update, { passive: true });
+    update();
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      row.removeEventListener('scroll', update);
+    };
+  }
 </script>
 
+{#if app.layout === 'phone'}
+  <!-- The phone board: counters for the piles and prizes, the Active
+       centred, and a bench row that scrolls sideways. -->
+  <section class="side phone" class:mirrored aria-label="{seat} side">
+    <CounterBar {seat} {name} />
+    <div class="bench-wrap">
+      <div class="row bench" data-scroll-x {@attach offscreen}>
+        {#each slots as b, i (i)}
+          <Stack {seat} slot="bench:{i}" stack={b} label="{seat} bench {i + 1}" />
+        {/each}
+      </div>
+      {#if hidden}<span class="more" aria-hidden="true">+{hidden} ›</span>{/if}
+    </div>
+    <div class="row active-row">
+      <Stack {seat} slot="active" stack={side.active} label="{seat} Active" />
+    </div>
+  </section>
+{:else}
 <section class="side" class:mirrored aria-label="{seat} side">
   <div class="prizes" title="{side.prizes_left} prizes left">
     {#each side.prizes as p (p.slot)}
@@ -73,12 +101,9 @@
   <div class="piles">
     <div
       class="pile deck"
-      class:over={over === 'deck'}
-      ondragover={dragover('deck')}
-      ondragleave={() => (over = '')}
-      ondrop={drop('deck')}
+      {@attach pile('deck')}
       onclick={deck}
-      oncontextmenu={(ev) => { ev.preventDefault(); deck(ev); }}
+      oncontextmenu={(ev) => { ev.preventDefault(); deck(ev, 'mouse'); }}
       role="button"
       tabindex="0"
       onkeydown={(ev) => ev.key === 'Enter' && deck(ev)}
@@ -90,10 +115,7 @@
     </div>
     <div
       class="pile"
-      class:over={over === 'discard'}
-      ondragover={dragover('discard')}
-      ondragleave={() => (over = '')}
-      ondrop={drop('discard')}
+      {@attach pile('discard')}
       role="button"
       tabindex="0"
       onclick={() => openPile('discard')}
@@ -106,10 +128,7 @@
     </div>
     <div
       class="pile lost"
-      class:over={over === 'lost'}
-      ondragover={dragover('lost')}
-      ondragleave={() => (over = '')}
-      ondrop={drop('lost')}
+      {@attach pile('lost')}
       role="button"
       tabindex="0"
       onclick={() => openPile('lost')}
@@ -122,6 +141,7 @@
     </div>
   </div>
 </section>
+{/if}
 
 <style>
   .side {
@@ -182,8 +202,39 @@
     padding: 4px;
     cursor: pointer;
   }
-  .pile.over { background: var(--drop); border-color: var(--accent); }
   .pile.deck :global(.card) { --w: calc(var(--cw) * 0.8); }
   .pile :global(.card:not(.sm)) { --w: calc(var(--cw) * 0.8); }
   .label { font-size: 0.8em; color: var(--muted); white-space: nowrap; }
+  /* Phone: one column, the counters outermost and the Active towards the
+     middle; the bench scrolls sideways, a finger swiping it as in the hand. */
+  .side.phone { display: flex; flex-direction: column-reverse; align-items: stretch; gap: 4px; padding: 4px 0; max-width: none; }
+  .side.phone.mirrored { flex-direction: column; }
+  .bench-wrap { position: relative; min-width: 0; }
+  .phone .bench {
+    flex-wrap: nowrap;
+    justify-content: safe center;
+    overflow-x: auto;
+    padding: 4px 16px;
+    gap: 6px;
+    scrollbar-width: none;
+  }
+  .phone .bench :global(.pile),
+  .phone .bench :global(.card) { touch-action: pan-x; }
+  .more {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    translate: 0 -50%;
+    padding: 4px 8px;
+    border-radius: 12px 0 0 12px;
+    background: #000a;
+    color: #fff;
+    font: 700 12px system-ui;
+    pointer-events: none;
+  }
+  @media (pointer: coarse) {
+    .pile { min-width: 44px; min-height: 44px; }
+    .pile.deck :global(.card),
+    .pile :global(.card:not(.sm)) { --w: max(44px, calc(var(--cw) * 0.8)); }
+  }
 </style>

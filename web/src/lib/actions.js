@@ -2,8 +2,9 @@
 // helpers only pick the verb a human most likely meant.
 import { app, cardInfo, ownerOf, toast } from './store.svelte.js';
 import { act } from './ws.js';
-
-const DRAG_TYPE = 'application/x-tcgreplay';
+import { targetItem } from './target.js';
+import AttackPanel from '../components/AttackPanel.svelte';
+import CountPanel from '../components/CountPanel.svelte';
 
 // seatArgs acts for the card's owner in review mode, so either side can be
 // moved while demonstrating a line.
@@ -21,24 +22,6 @@ export function slotSpec(seat, slot) {
 export function parseSpec(spec) {
   const [seat, zone, slot] = spec.split(':');
   return { seat, zone, slot: slot === undefined ? undefined : Number(slot) };
-}
-
-export function startDrag(ev, data) {
-  ev.dataTransfer.setData(DRAG_TYPE, JSON.stringify(data));
-  ev.dataTransfer.effectAllowed = 'move';
-  app.dragging = data;
-}
-
-export function endDrag() {
-  app.dragging = null;
-}
-
-export function readDrag(ev) {
-  try {
-    return JSON.parse(ev.dataTransfer.getData(DRAG_TYPE));
-  } catch {
-    return null;
-  }
 }
 
 function roleFor(info) {
@@ -127,21 +110,34 @@ export function knockOut(spec) {
   return act('knock_out', { target: spec });
 }
 
-// ownStacks lists the seat's occupied Pokémon slots as {spec, label}.
+// ownStacks lists the seat's occupied Pokémon slots as target candidates:
+// {spec, name, iid} of each one's top card.
 export function ownStacks(seat) {
   const s = app.board?.sides[seat];
   if (!s) return [];
   const out = [];
-  if (s.active) out.push({ spec: `${seat}:active`, label: `Active (${s.active.pokemon.at(-1)?.name ?? '?'})` });
-  s.bench.forEach((b, i) => {
-    if (b) out.push({ spec: `${seat}:bench:${i}`, label: `Bench ${i + 1} (${b.pokemon.at(-1)?.name ?? '?'})` });
-  });
+  const add = (spec, st) => {
+    const top = st.pokemon.at(-1);
+    out.push({ spec, name: top?.name ?? '?', iid: top?.iid });
+  };
+  if (s.active) add(`${seat}:active`, s.active);
+  s.bench.forEach((b, i) => b && add(`${seat}:bench:${i}`, b));
   return out;
 }
 
-function ask(question, def = '') {
-  const v = window.prompt(question, def);
-  return v === null ? null : v.trim();
+// benchStacks lists the seat's benched Pokémon as candidates, as ownStacks.
+function benchStacks(seat) {
+  return ownStacks(seat).filter((c) => c.spec.includes(':bench:'));
+}
+
+// Menus are data: a builder returns {title, card, text, summary, sections}
+// ActionSheet.svelte shows it as the phone sheet, the tablet panel or the
+// desktop popover. A section holds items ({label, detail, primary, danger}
+// and one of run, target or panel), a stepper ({value, step, quick, min, set}) or toggles ({label,
+// on, set}); the groups follow the design's order and empty ones are left
+// out.
+function sections(...list) {
+  return list.filter((s) => s.stepper || s.toggles?.length || s.items?.length);
 }
 
 // handMenu builds the menu for a card in hand.
@@ -150,129 +146,178 @@ export function handMenu(card) {
   const sa = seatArgs(seat);
   const info = cardInfo(card.def);
   const side = app.board.sides[seat];
-  const items = [];
+  const play = [];
   const cat = info?.category;
   if (!cat || cat === 'Pokemon') {
-    if (!side.active) items.push({ label: 'Set as Active', run: () => act('place_active', { iid: card.iid, ...sa }) });
-    items.push({ label: 'Bench', run: () => act('bench', { iid: card.iid, ...sa }) });
-    for (const t of ownStacks(seat)) {
-      items.push({ label: `Evolve ${t.label}`, run: () => act('evolve', { iid: card.iid, target: t.spec, ...sa }) });
-    }
+    if (!side.active) play.push({ label: 'Set as Active', run: () => act('place_active', { iid: card.iid, ...sa }) });
+    play.push({ label: 'Bench', run: () => act('bench', { iid: card.iid, ...sa }) });
+    play.push(
+      targetItem({
+        label: 'Evolve',
+        one: (name) => `Evolve ${name}`,
+        prompt: `Evolve into ${card.name}`,
+        hint: 'Tap the Pokémon to evolve',
+        card,
+        candidates: ownStacks(seat),
+        run: (target) => act('evolve', { iid: card.iid, target, ...sa }),
+      }),
+    );
   }
+  // attach is the Attach item for a Tool or an Energy.
+  const attach = (as) =>
+    targetItem({
+      label: 'Attach',
+      one: (name) => `Attach to ${name}`,
+      prompt: `Attach ${card.name}`,
+      hint: 'Tap one of your Pokémon',
+      card,
+      candidates: ownStacks(seat),
+      run: (target) => act('attach', { iid: card.iid, target, as, ...sa }),
+    });
   if (!cat || cat === 'Trainer') {
-    if (info?.trainer_type === 'Tool') {
-      for (const t of ownStacks(seat)) {
-        items.push({ label: `Attach to ${t.label}`, run: () => act('attach', { iid: card.iid, target: t.spec, as: 'tool', ...sa }) });
-      }
-    } else {
-      items.push({ label: 'Play', run: () => act('play_trainer', { iid: card.iid, ...sa }) });
-    }
+    if (info?.trainer_type === 'Tool') play.push(attach('tool'));
+    else play.push({ label: 'Play', run: () => act('play_trainer', { iid: card.iid, ...sa }) });
   }
-  if (!cat || cat === 'Energy') {
-    for (const t of ownStacks(seat)) {
-      items.push({ label: `Attach to ${t.label}`, run: () => act('attach', { iid: card.iid, target: t.spec, as: 'energy', ...sa }) });
-    }
-  }
-  items.push({ sep: true });
-  items.push({ label: 'Discard', run: () => act('move', { iid: card.iid, to: 'discard', ...sa }) });
-  items.push({ label: 'To deck (top)', run: () => act('move', { iid: card.iid, to: 'deck:top', ...sa }) });
-  items.push({ label: 'To deck (bottom)', run: () => act('move', { iid: card.iid, to: 'deck:bottom', ...sa }) });
-  items.push({ label: 'Lost Zone', run: () => act('move', { iid: card.iid, to: 'lost', ...sa }) });
-  items.push({ label: 'Reveal to opponent', run: () => act('reveal', { iids: [card.iid], ...sa }) });
-  items.push({ label: 'Zoom', run: () => (app.zoom = card) });
-  return { title: card.name || card.iid, items };
+  if (!cat || cat === 'Energy') play.push(attach('energy'));
+  const playable = play.filter(Boolean);
+  if (playable.length) playable[0].primary = true;
+  const move = (to) => () => act('move', { iid: card.iid, to, ...sa });
+  return {
+    title: card.name || card.iid,
+    card,
+    summary: seat === app.human ? 'In your hand' : `In ${seat}'s hand`,
+    sections: sections(
+      { label: 'Play', items: playable },
+      {
+        label: 'Move',
+        items: [
+          { label: 'Discard', run: move('discard') },
+          { label: 'Deck top', run: move('deck:top') },
+          { label: 'Deck bottom', run: move('deck:bottom') },
+          { label: 'Lost Zone', run: move('lost') },
+        ],
+      },
+      { label: 'Other', items: [{ label: 'Reveal to opponent', run: () => act('reveal', { iids: [card.iid], ...sa }) }] },
+    ),
+  };
 }
 
-const CONDITIONS = ['asleep', 'confused', 'paralyzed', 'poisoned', 'burned'];
+const CONDITIONS = ['asleep', 'burned', 'confused', 'paralyzed', 'poisoned'];
+const capital = (w) => w[0].toUpperCase() + w.slice(1);
 
 // stackMenu builds the menu for a Pokémon in play.
 export function stackMenu(seat, slot, stack) {
+  if (!stack) return null;
   const spec = slotSpec(seat, slot);
   const mine = seat === app.human || app.snap?.mode === 'review';
   const sa = seatArgs(seat);
   const top = stack.pokemon.at(-1);
   const info = cardInfo(top?.def);
-  const items = [];
+  const attacks = [];
   if (mine && slot === 'active') {
-    for (const a of info?.attacks || []) {
-      items.push({
-        label: `Attack: ${a.name}${a.damage ? ` (${a.damage})` : ''}`,
-        run: () => {
-          const dmg = ask(`Damage for ${a.name} after Weakness/Resistance`, String(parseInt(a.damage) || 0));
-          if (dmg === null) return;
-          const target = ask('Target (active or bench:N on the opponent)', 'active');
-          if (target === null) return;
-          act('attack', { name: a.name, damage: Number(dmg) || 0, target, ...sa });
-        },
-      });
-    }
-    if (!info?.attacks?.length) {
-      items.push({
-        label: 'Attack…',
-        run: () => {
-          const name = ask('Attack name');
-          if (!name) return;
-          const dmg = ask('Damage', '0');
-          if (dmg === null) return;
-          act('attack', { name, damage: Number(dmg) || 0, ...sa });
-        },
-      });
-    }
+    const panel = (attack) => ({ component: AttackPanel, props: { seat, attack, card: top } });
+    for (const a of info?.attacks || []) attacks.push({ label: a.name, detail: a.damage || '', panel: panel(a) });
+    if (!info?.attacks?.length) attacks.push({ label: 'Attack…', panel: panel(null) });
   }
-  if (mine) {
-    for (const ab of info?.abilities || []) {
-      items.push({ label: `Ability: ${ab.name}`, run: () => act('use_ability', { target: spec, name: ab.name, ...sa }) });
-    }
-  }
+  const abilities = mine
+    ? (info?.abilities || []).map((ab) => ({ label: ab.name, run: () => act('use_ability', { target: spec, name: ab.name, ...sa }) }))
+    : [];
+  const move = [];
   if (mine && slot === 'active') {
-    const side = app.board.sides[seat];
-    side.bench.forEach((b, i) => {
-      if (!b) return;
-      const name = b.pokemon.at(-1)?.name ?? '?';
-      items.push({
-        label: `Retreat to ${name} (bench ${i + 1})`,
-        run: () => {
+    const bench = benchStacks(seat);
+    const slotOf = (spec) => parseSpec(spec).slot;
+    move.push(
+      targetItem({
+        label: 'Retreat',
+        one: (name) => `Retreat to ${name}`,
+        prompt: `Retreat ${top?.name ?? ''}`,
+        hint: 'Tap the benched Pokémon to switch in',
+        card: top,
+        candidates: bench,
+        run: (spec) => {
           const cost = info?.retreat ?? 0;
           const energy = (stack.energy || []).slice(0, cost).map((e) => e.iid);
           if (energy.length < cost) toast(`Retreat Cost is ${cost}; only ${energy.length} Energy attached`, 'warn');
-          act('retreat', { to_slot: i, energy, ...sa });
+          act('retreat', { to_slot: slotOf(spec), energy, ...sa });
         },
-      });
-      items.push({ label: `Switch with ${name} (no cost)`, run: () => act('switch', { to_slot: i, ...sa }) });
-    });
+      }),
+      targetItem({
+        label: 'Switch, no cost',
+        one: (name) => `Switch with ${name}, no cost`,
+        prompt: `Switch ${top?.name ?? ''}, no cost`,
+        hint: 'Tap the benched Pokémon to switch in',
+        card: top,
+        candidates: bench,
+        run: (spec) => act('switch', { to_slot: slotOf(spec), ...sa }),
+      }),
+    );
   }
   if (mine && slot.startsWith('bench')) {
     const i = Number(slot.split(':')[1]);
     const empty = !app.board.sides[seat].active;
-    items.push({ label: empty ? 'Promote to Active' : 'Switch into Active', run: () => act('switch', { to_slot: i, ...sa }) });
+    move.push({ label: empty ? 'Promote to Active' : 'Switch into Active', run: () => act('switch', { to_slot: i, ...sa }) });
   }
-  if (items.length) items.push({ sep: true });
-  for (const d of [10, 30, 50, -10]) {
-    items.push({ label: `${d > 0 ? '+' : ''}${d} damage`, run: () => act('place_damage', { target: spec, amount: d }) });
-  }
-  items.push({
-    label: 'Set damage…',
-    run: () => {
-      const v = ask('Total damage on this Pokémon', String(stack.damage || 0));
-      if (v === null) return;
-      act('place_damage', { target: spec, amount: (Number(v) || 0) - (stack.damage || 0) });
-    },
-  });
-  if (slot === 'active') {
-    items.push({ sep: true });
-    for (const c of CONDITIONS) {
-      const on = (stack.conditions || []).includes(c);
-      items.push({ label: `${on ? 'Clear' : 'Set'} ${c}`, run: () => act('set_condition', { target: spec, condition: c, on: !on }) });
-    }
-  }
-  items.push({ sep: true });
-  items.push({ label: 'Knock Out', run: () => act('knock_out', { target: spec }) });
+  const damage = stack.damage || 0;
+  const conds = stack.conditions || [];
+  const other = [];
   if (mine && top) {
-    items.push({ label: `Return ${top.name} to hand`, run: () => act('move', { iid: top.iid, to: 'hand', ...sa }) });
-    items.push({ label: `Discard ${top.name} (devolve)`, run: () => act('move', { iid: top.iid, to: 'discard', ...sa }) });
+    other.push({ label: 'Return to hand', run: () => act('move', { iid: top.iid, to: 'hand', ...sa }) });
+    other.push({ label: 'Devolve', run: () => act('move', { iid: top.iid, to: 'discard', ...sa }) });
   }
-  if (top) items.push({ label: 'Zoom', run: () => (app.zoom = top) });
-  return { title: top?.name ?? spec, items };
+  other.push({ label: 'Knock Out', danger: true, run: () => act('knock_out', { target: spec }) });
+  const where = slot === 'active' ? 'Active' : `Bench ${Number(slot.split(':')[1]) + 1}`;
+  const hp = stack.hp || info?.hp;
+  const energy = stack.energy?.length;
+  return {
+    title: top?.name ?? spec,
+    card: top,
+    summary: [
+      seat === app.human ? where : `${seat} ${where}`,
+      hp && `HP ${hp}`,
+      damage ? `${damage} damage` : 'no damage',
+      energy && `${energy} Energy`,
+    ]
+      .filter(Boolean)
+      .join(' · '),
+    sections: sections(
+      { label: 'Attack', items: attacks },
+      { label: 'Ability', items: abilities },
+      { label: 'Move', items: move.filter(Boolean) },
+      {
+        label: 'Damage',
+        stepper: {
+          value: damage,
+          step: 10,
+          quick: [30, 50],
+          min: 0,
+          set: (v) => v !== damage && act('place_damage', { target: spec, amount: v - damage }),
+        },
+      },
+      {
+        label: 'Conditions',
+        toggles:
+          slot === 'active'
+            ? CONDITIONS.map((c) => ({
+                label: capital(c),
+                on: conds.includes(c),
+                set: (on) => act('set_condition', { target: spec, condition: c, on }),
+              }))
+            : [],
+      },
+      { label: 'Other', items: other },
+    ),
+  };
+}
+
+// holderOf names the Pokémon a card is attached to.
+function holderOf(iid) {
+  const seat = ownerOf(iid);
+  const s = app.board?.sides[seat];
+  const stacks = s ? [['Active', s.active], ...s.bench.map((b, i) => [`Bench ${i + 1}`, b])] : [];
+  for (const [where, st] of stacks) {
+    if (st && [...(st.energy || []), ...(st.tools || [])].some((c) => c.iid === iid)) return `${where} (${st.pokemon.at(-1)?.name ?? '?'})`;
+  }
+  return '';
 }
 
 // attachmentMenu builds the menu for an attached Energy or Tool.
@@ -280,43 +325,60 @@ export function attachmentMenu(card, role) {
   const seat = ownerOf(card.iid);
   const sa = seatArgs(seat);
   const items = [
-    { label: 'Discard', run: () => act('move', { iid: card.iid, to: 'discard', ...sa }) },
+    targetItem({
+      label: 'Move to',
+      one: (name) => `Move to ${name}`,
+      prompt: `Move ${card.name}`,
+      hint: 'Tap the Pokémon to move it to',
+      card,
+      candidates: ownStacks(seat),
+      run: (to) => act('move', { iid: card.iid, to, as: role, ...sa }),
+    }),
+  ].filter(Boolean);
+  items.push(
     { label: 'To hand', run: () => act('move', { iid: card.iid, to: 'hand', ...sa }) },
-  ];
-  for (const t of ownStacks(seat)) {
-    items.push({ label: `Move to ${t.label}`, run: () => act('move', { iid: card.iid, to: t.spec, as: role, ...sa }) });
-  }
-  items.push({ label: 'Zoom', run: () => (app.zoom = card) });
-  return { title: card.name, items };
+    { label: 'Discard', run: () => act('move', { iid: card.iid, to: 'discard', ...sa }) },
+  );
+  const holder = holderOf(card.iid);
+  return {
+    title: card.name,
+    card,
+    summary: `${role === 'tool' ? 'Tool' : 'Energy'}${holder ? ` on ${holder}` : ''}`,
+    sections: sections({ label: 'Move', items }),
+  };
 }
 
 // deckMenu builds the menu for a deck.
 export function deckMenu(seat) {
   const sa = seatArgs(seat);
-  const items = [];
-  if (seat === app.human || app.snap?.mode === 'review') {
-    items.push({ label: 'Draw 1', run: () => act('draw', { n: 1, ...sa }) });
-    items.push({
-      label: 'Draw N…',
-      run: () => {
-        const n = Number(ask('Cards to draw', '1'));
-        if (n > 0) act('draw', { n, ...sa });
-      },
-    });
-    items.push({
-      label: 'Look at top N…',
-      run: async () => {
-        const n = Number(ask('How many cards?', '3'));
-        if (!(n > 0)) return;
-        const cards = await act('look_top', { n, whose: seat, ...sa });
-        if (cards) app.modal = { kind: 'look', seat, n, cards };
-      },
-    });
-    items.push({ label: 'Search…', run: () => openSearch(seat) });
+  const own = seat === app.human || app.snap?.mode === 'review';
+  const draw = [];
+  const look = [];
+  if (own) {
+    draw.push({ label: 'Draw 1', primary: true, run: () => act('draw', { n: 1, ...sa }) });
+    draw.push({ label: 'Draw N…', panel: { component: CountPanel, props: { verb: 'draw', seat } } });
+    look.push({ label: 'Look at top N…', panel: { component: CountPanel, props: { verb: 'look', seat } } });
+    look.push({ label: 'Search…', run: () => openSearch(seat) });
   }
-  items.push({ label: 'Deck list…', run: () => openDeckList(seat) });
-  items.push({ label: 'Shuffle', run: () => act('shuffle', { whose: seat, ...sa }) });
-  return { title: `${seat} deck`, items };
+  const n = app.board?.sides[seat]?.deck_count ?? 0;
+  return {
+    title: seat === app.human ? 'Your deck' : `${seat} deck`,
+    // The deck shows as its back, and its text says what it holds.
+    card: { iid: 'deck', hidden: true },
+    text: `${n} card${n === 1 ? '' : 's'} left, face down. Search lists them by category and name, never in deck order; the deck list shows every card the deck started with and where each copy is now.`,
+    summary: `${n} cards`,
+    sections: sections(
+      { label: 'Draw', items: draw },
+      { label: 'Look', items: look },
+      {
+        label: 'Other',
+        items: [
+          { label: 'Deck list…', run: () => openDeckList(seat) },
+          { label: 'Shuffle', run: () => act('shuffle', { whose: seat, ...sa }) },
+        ],
+      },
+    ),
+  };
 }
 
 // openDeckList shows every card a seat owns, with where each copy is.

@@ -10,46 +10,10 @@ import (
 	"testing"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 	"github.com/nicholasjackson/tcgreplay/internal/store"
 )
-
-// fakeDB serves a tiny card pool with set code TST.
-type fakeDB map[string]*cards.Card
-
-func newFakeDB() fakeDB {
-	return fakeDB{
-		"tst-1":   {ID: "tst-1", Name: "Riolu", Category: "Pokemon", Stage: "Basic", HP: 70, Types: []string{"Fighting"}, Retreat: 1, Attacks: []cards.Attack{{Name: "Punch", Damage: "10"}}, Abilities: []cards.Ability{{Name: "Focus", Effect: "Once during your turn, you may draw 2 cards."}}},
-		"tst-2":   {ID: "tst-2", Name: "Lucario", Category: "Pokemon", Stage: "Stage1", EvolveFrom: "Riolu", HP: 130, Types: []string{"Fighting"}, Retreat: 2, Attacks: []cards.Attack{{Name: "Aura Sphere", Damage: "130"}}},
-		"tst-3":   {ID: "tst-3", Name: "Ultra Ball", Category: "Trainer", TrainerType: "Item", Effect: "You can use this card only if you discard 2 other cards from your hand. Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck."},
-		"tst-4":   {ID: "tst-4", Name: "Iono", Category: "Trainer", TrainerType: "Supporter", Effect: "Each player shuffles their hand and puts it on the bottom of their deck. Then, each player draws a card for each of their remaining Prize cards."},
-		"tst-5":   {ID: "tst-5", Name: "Arena", Category: "Trainer", TrainerType: "Stadium"},
-		"tst-6":   {ID: "tst-6", Name: "Band", Category: "Trainer", TrainerType: "Tool"},
-		"sve-006": {ID: "sve-006", Name: "Fighting Energy", Category: "Energy", EnergyType: "Normal"},
-	}
-}
-
-func (f fakeDB) Card(_ context.Context, id string) (*cards.Card, error) {
-	if c, ok := f[id]; ok {
-		return c, nil
-	}
-	return nil, fmt.Errorf("%s: %w", id, cards.ErrNotFound)
-}
-func (f fakeDB) Cached(id string) *cards.Card { return f[id] }
-func (f fakeDB) ByName(_ context.Context, name string, _ ...string) (string, error) {
-	for id, c := range f {
-		if c.Name == name {
-			return id, nil
-		}
-	}
-	return "", cards.ErrNotFound
-}
-func (f fakeDB) Resolve(_ context.Context, set, num string) (string, error) {
-	if set != "TST" {
-		return "", cards.ErrNotFound
-	}
-	return "tst-" + num, nil
-}
 
 const testDeck = `Pokémon: 8
 4 Riolu TST 1
@@ -68,7 +32,7 @@ Total Cards: 60`
 
 func newTestGame(t *testing.T) (*Manager, *Game) {
 	t.Helper()
-	m := NewManager(t.TempDir(), newFakeDB())
+	m := NewManager(t.TempDir(), cardstest.New())
 	seed := uint64(1)
 	m.Rand = func() *rand.Rand { seed++; return rand.New(rand.NewPCG(seed, 99)) }
 	g, res, err := m.New(context.Background(), NewGameRequest{ID: "t1", DeckP1: testDeck, DeckP2: testDeck})
@@ -1102,7 +1066,7 @@ func TestBenchPastFive(t *testing.T) {
 	m, g := newTestGame(t)
 	hu, cl := state.ActorHuman, state.ActorClaude
 	// The Arena becomes a Stadium that lets each bench hold 8.
-	m.DB.(fakeDB)["tst-5"].Effect = "Each player can have 8 Pokémon on their Bench."
+	m.DB.(cardstest.FakeDB)["tst-5"].Effect = "Each player can have 8 Pokémon on their Bench."
 	for _, iid := range []state.IID{"p1-1", "p1-2", "p1-3", "p1-4", "p1-5", "p1-6", "p1-7", "p1-17"} {
 		if l, _ := g.State().Find(iid); l.Zone != state.Hand {
 			must(t)(g.Move(state.P1, hu, iid, state.Loc{Zone: state.Hand}, "", ""))

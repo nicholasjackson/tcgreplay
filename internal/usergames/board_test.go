@@ -14,6 +14,7 @@ import (
 
 	"github.com/coder/websocket"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
@@ -48,7 +49,7 @@ func (c *lockedClock) Advance(d time.Duration) time.Time {
 // verbs count as activity through reg.BoardLimit, as in hosted mode.
 func boardSite(t *testing.T, clock *lockedClock) (*Registry, *httptest.Server) {
 	t.Helper()
-	db := newFakeDB()
+	db := cardstest.New()
 	dir := t.TempDir()
 	public, _ := url.Parse("https://playmat.example.com")
 	var reg *Registry

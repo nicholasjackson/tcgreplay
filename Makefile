@@ -24,9 +24,13 @@ web/node_modules: web/package.json web/package-lock.json
 	cd web && npm ci
 	touch web/node_modules
 
+# test runs the Go checks, then builds the board and runs its browser
+# suite (web/e2e) by touch and by mouse against the board test server.
 test:
 	go vet ./...
 	go test ./...
+	$(MAKE) web
+	cd web && npm run test:e2e
 
 # dev builds and runs the dev daemon in the foreground, logging to the
 # terminal; the playmat is at http://$(DEV_UI)/. Claude Code reaches it

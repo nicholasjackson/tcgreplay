@@ -2,8 +2,9 @@
   // A fanned hand. The human's hand is face up; the opponent's shows known
   // cards face up and the rest as backs. Face-up cards are sorted Pokémon,
   // Trainers, Energy and by name, with copies of a card stacked together.
-  import { app, cardInfo } from '../lib/store.svelte.js';
-  import { dropOnZone, handMenu, readDrag } from '../lib/actions.js';
+  import { app, cardInfo, openSheet } from '../lib/store.svelte.js';
+  import { dropOnZone, handMenu } from '../lib/actions.js';
+  import { dropZone } from '../lib/pointer.svelte.js';
   import Card from './Card.svelte';
 
   let { seat, small = false } = $props();
@@ -31,7 +32,6 @@
     }
     return out;
   });
-  let over = $state(false);
 
   // The human's hand fans up from the bottom edge; the opponent's, at the
   // top, hangs down from it, so its cards also enlarge downward.
@@ -43,21 +43,14 @@
     const c = i - (n - 1) / 2;
     return c * c * (small ? -0.6 : 1.4);
   }
-  async function drop(ev) {
-    ev.preventDefault();
-    over = false;
-    const data = readDrag(ev);
-    if (data) await dropOnZone(data, 'hand');
-  }
 </script>
 
 <div
   class="hand"
   class:small
-  class:over
-  ondragover={(ev) => { ev.preventDefault(); over = true; }}
-  ondragleave={() => (over = false)}
-  ondrop={drop}
+  class:phone={app.layout === 'phone'}
+  data-scroll-x
+  {@attach dropZone('hand', (data) => dropOnZone(data, 'hand'))}
   role="list"
   aria-label="{seat} hand"
 >
@@ -70,7 +63,7 @@
             size={small ? 'sm' : 'md'}
             lift={false}
             from="{seat}:hand"
-            onmenu={c.hidden ? null : (ev) => (app.menu = { x: ev.clientX, y: ev.clientY, ...handMenu(c) })}
+            onmenu={c.hidden ? null : (ev, type) => openSheet(ev, () => handMenu(c), type)}
           />
         </div>
       {/each}
@@ -92,7 +85,16 @@
     transition: background 0.15s;
   }
   .hand.small { min-height: calc(var(--cw) * 0.62 * 1.4 + 10px); padding: 4px 20px; align-items: flex-start; }
-  .hand.over { background: var(--drop); }
+  /* A finger swiping sideways scrolls the hand; one moving up lifts a
+     card (see pointer.svelte.js). Narrow screens let the hand scroll. */
+  .hand,
+  .hand :global(.card) { touch-action: pan-x; }
+  @media (max-width: 639px) {
+    .hand { overflow-x: auto; justify-content: safe center; }
+  }
+  /* Phone: a flat strip of larger cards along the bottom. */
+  .hand.phone { --cw: 72px; min-height: calc(72px * 1.4 + 20px); padding: 8px 16px 18px; align-items: center; }
+  .hand.phone .slot { transform: none; margin: 0 3px; }
   .slot {
     position: relative;
     display: flex;
@@ -102,11 +104,13 @@
     transition: transform 0.2s ease;
   }
   .small .slot { margin: 0 calc(var(--cw) * -0.2); transform-origin: 50% -20%; }
-  .hand.small .slot:hover { transform: rotate(0deg) scale(2); z-index: 5; transition-delay: 0.1s; }
-  .hand:not(.small) .slot:hover {
-    transform: translateY(calc(var(--cw) * -0.3)) rotate(0deg) scale(1.6);
-    transition-delay: 0.1s;
-    z-index: 5;
+  @media (hover: hover) {
+    :global(body:not(.dragging)) .hand.small .slot:hover { transform: rotate(0deg) scale(2); z-index: 5; transition-delay: 0.1s; }
+    :global(body:not(.dragging)) .hand:not(.small) .slot:hover {
+      transform: translateY(calc(var(--cw) * -0.3)) rotate(0deg) scale(1.6);
+      transition-delay: 0.1s;
+      z-index: 5;
+    }
   }
   /* Copies of a card stack with a sliver of each showing. */
   .copy + .copy { margin-left: calc(var(--cw) * -0.82); }

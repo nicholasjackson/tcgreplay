@@ -1,8 +1,8 @@
 <script>
   // One card: art from TCGdex when known, a named text card otherwise, and
   // a card back when hidden.
-  import { app, cardInfo } from '../lib/store.svelte.js';
-  import { startDrag, endDrag } from '../lib/actions.js';
+  import { app, cardInfo, pointerTypeOf } from '../lib/store.svelte.js';
+  import { draggable as dragSource } from '../lib/pointer.svelte.js';
 
   let {
     card,
@@ -21,6 +21,8 @@
   // named it and no list has been assumed for it.
   const unknown = $derived(card && !card.hidden && !card.name && !card.def);
   const lit = $derived(card && app.highlight.includes(card.iid));
+  // The card an action is being played from fades while its target is chosen.
+  const source = $derived(card && app.target?.card?.iid === card.iid);
   let broken = $state(false);
 
   // energyType pulls the type out of names like "Basic Fighting Energy".
@@ -29,19 +31,21 @@
     return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : 'Special';
   }
 
-  function dragstart(ev) {
-    startDrag(ev, { kind: 'card', iid: card.iid, def: card.def, from, role });
-  }
+  // A tap opens the card's actions; a mouse click zooms it (or does what
+  // the caller asks); a right-click opens the actions at the pointer.
   function click(ev) {
     ev.stopPropagation();
-    if (onclick) onclick(ev);
+    if (onmenu && pointerTypeOf(ev) !== 'mouse') onmenu(ev);
+    else if (onclick) onclick(ev);
     else if (!card.hidden) app.zoom = card;
   }
   function contextmenu(ev) {
     if (!onmenu) return;
     ev.preventDefault();
     ev.stopPropagation();
-    onmenu(ev);
+    // A long touch is not a gesture on the board.
+    if (pointerTypeOf(ev) === 'touch') return;
+    onmenu(ev, 'mouse');
   }
 </script>
 
@@ -49,12 +53,11 @@
   <div
     class="card {size}"
     class:lit
+    class:target-source={source}
     class:lift
     class:back={card.hidden}
     style:--rot="{rotate}deg"
-    draggable={draggable && !card.hidden && app.opponent !== 'acting'}
-    ondragstart={dragstart}
-    ondragend={endDrag}
+    {@attach dragSource(draggable && !card.hidden && app.opponent !== 'acting' && { kind: 'card', iid: card.iid, def: card.def, from, role })}
     onclick={click}
     oncontextmenu={contextmenu}
     onkeydown={(ev) => ev.key === 'Enter' && click(ev)}
@@ -97,23 +100,35 @@
     cursor: grab;
     background: var(--card-bg);
     outline: 3px solid transparent;
+    /* A long touch selects nothing and opens no callout. */
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
   .card.sm { --w: calc(var(--cw) * 0.62); }
   .card.xs { --w: calc(var(--cw) * 0.42); }
   .card.lg { --w: calc(var(--cw) * 1.25); }
-  /* Rolling over a face-up card enlarges it to about two card widths,
-     after a short pause so sweeping the mouse across the mat stays calm.
-     Clicking still opens the full card view. */
-  .card.lift:not(.back):hover {
-    --hs: 1.8;
-    z-index: 40;
-    box-shadow: 0 10px 30px #000b;
-    transition-delay: 0.15s;
+  /* On a touch screen no card is smaller than a fingertip's 44px. */
+  @media (pointer: coarse) {
+    .card { --w: max(44px, var(--cw)); }
+    .card.sm { --w: max(44px, calc(var(--cw) * 0.62)); }
+    .card.xs { --w: max(44px, calc(var(--cw) * 0.42)); }
   }
-  .card.lift.lg:not(.back):hover { --hs: 1.55; }
-  .card.lift.sm:not(.back):hover { --hs: 2.8; }
-  .card.lift.xs:not(.back):hover { --hs: 4; }
+  @media (hover: hover) {
+    /* Rolling over a face-up card enlarges it to about two card widths,
+       after a short pause so sweeping the mouse across the mat stays calm.
+       Clicking still opens the full card view. Nothing enlarges during a
+       drag, so an enlarged card never covers the zone under the pointer. */
+    :global(body:not(.dragging)) .card.lift:not(.back):hover {
+      --hs: 1.8;
+      z-index: 40;
+      box-shadow: 0 10px 30px #000b;
+      transition-delay: 0.15s;
+    }
+    :global(body:not(.dragging)) .card.lift.lg:not(.back):hover { --hs: 1.55; }
+    :global(body:not(.dragging)) .card.lift.sm:not(.back):hover { --hs: 2.8; }
+    :global(body:not(.dragging)) .card.lift.xs:not(.back):hover { --hs: 4; }
+  }
   .card.lit {
     outline-color: var(--accent);
     box-shadow: 0 0 18px 4px var(--accent-glow);
