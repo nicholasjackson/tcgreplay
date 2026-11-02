@@ -289,7 +289,7 @@ app.target = TargetRequest   // or null
 
 **Validation point:** the browser suite passes at iPhone and iPad sizes by touch and at desktop size by mouse, covering a hand-to-bench drag, every drop-zone kind, a sideways hand scroll and a missed drop. The project's test command runs the suite.
 
-#### - [ ] Task: Board test server and browser test harness
+#### - [x] Task: Board test server and browser test harness
 **Id:** 37b4af36-4707-4337-905c-f9d98208a377
 **Repo:** tcgreplay
 **Depends on:** none
@@ -300,15 +300,15 @@ This gives the repo its first browser tests, so every later task can be checked 
 *Technical detail:* [context.md#task-board-test-server-and-browser-test-harness](./context.md#task-board-test-server-and-browser-test-harness)
 
 **Acceptance criteria**:
-- [ ] Running the project's test command builds the board and runs a browser suite at iPhone and iPad sizes by touch and at desktop size by mouse, after the existing Go checks.
-- [ ] Every browser test starts from the same known board, whatever earlier tests changed.
-- [ ] A smoke test in each profile loads the board and sees both players' names, the cards in hand and the Pokémon in play from the fixed position.
-- [ ] Any browser dialog opening during any test fails that test.
-- [ ] When the browsers Playwright needs are not installed, the test command says how to install them instead of failing obscurely.
-- [ ] The existing Go tests still pass, with the fake card pool shared from one place rather than copied.
-- [ ] Nothing in the shipped binary includes the test server or its reset endpoint.
+- [x] Running the project's test command builds the board and runs a browser suite at iPhone and iPad sizes by touch and at desktop size by mouse, after the existing Go checks.
+- [x] Every browser test starts from the same known board, whatever earlier tests changed.
+- [x] A smoke test in each profile loads the board and sees both players' names, the cards in hand and the Pokémon in play from the fixed position.
+- [x] Any browser dialog opening during any test fails that test.
+- [x] When the browsers Playwright needs are not installed, the test command says how to install them instead of failing obscurely.
+- [x] The existing Go tests still pass, with the fake card pool shared from one place rather than copied.
+- [x] Nothing in the shipped binary includes the test server or its reset endpoint.
 
-#### - [ ] Task: Touch dragging through one pointer layer
+#### - [x] Task: Touch dragging through one pointer layer
 **Id:** 1cefbf09-35c1-47fd-a334-03cdf2c3bac6
 **Repo:** tcgreplay
 **Depends on:**
@@ -320,13 +320,13 @@ This replaces the board's HTML5 drag and drop with one Pointer Events layer that
 *Technical detail:* [context.md#task-touch-dragging-through-one-pointer-layer](./context.md#task-touch-dragging-through-one-pointer-layer)
 
 **Acceptance criteria**:
-- [ ] By touch at iPhone and iPad sizes, dragging a Pokémon from the hand to an empty bench slot benches it, and the timeline shows the same line a mouse drag produces.
-- [ ] By touch, a card can be dropped on the Active Spot, a bench slot, a Pokémon in play, the discard pile, the deck, the Lost Zone, the Stadium, the play area and the hand, each with the same result as the same mouse drop.
-- [ ] Dragging a benched Pokémon onto the Active Spot switches them, by touch and by mouse, as a stack drag does today.
-- [ ] While a card is being dragged, every drop place is outlined and the one under the pointer is highlighted. Releasing over none leaves the board and timeline unchanged.
-- [ ] On a phone-sized screen with an overflowing hand, a sideways swipe scrolls the hand and moves no card, while an upward drag from a card lifts it.
-- [ ] Mouse dragging on the desktop behaves as before, and the play area still appears while a card is being dragged.
-- [ ] A tap that barely moves is treated as a tap, not a drag.
+- [x] By touch at iPhone and iPad sizes, dragging a Pokémon from the hand to an empty bench slot benches it, and the timeline shows the same line a mouse drag produces.
+- [x] By touch, a card can be dropped on the Active Spot, a bench slot, a Pokémon in play, the discard pile, the deck, the Lost Zone, the Stadium, the play area and the hand, each with the same result as the same mouse drop.
+- [x] Dragging a benched Pokémon onto the Active Spot switches them, by touch and by mouse, as a stack drag does today.
+- [x] While a card is being dragged, every drop place is outlined and the one under the pointer is highlighted. Releasing over none leaves the board and timeline unchanged.
+- [x] On a phone-sized screen with an overflowing hand, a sideways swipe scrolls the hand and moves no card, while an upward drag from a card lifts it.
+- [x] Mouse dragging on the desktop behaves as before, and the play area still appears while a card is being dragged.
+- [x] A tap that barely moves is treated as a tap, not a drag.
 
 ### Milestone 2: Every card's actions open by touch, grouped and sized for the screen
 
@@ -343,7 +343,7 @@ This replaces the board's HTML5 drag and drop with one Pointer Events layer that
 - The damage stepper and condition toggles work.
 - Every control measures at least 44×44 CSS px.
 
-#### - [ ] Task: Grouped actions in one action sheet
+#### - [x] Task: Grouped actions in one action sheet
 **Id:** 74c41358-d09b-4a53-ad85-e86aaae51763
 **Repo:** tcgreplay
 **Depends on:**
@@ -355,16 +355,16 @@ The menus for a card in hand, a Pokémon in play, an attached card and the deck 
 *Technical detail:* [context.md#task-grouped-actions-in-one-action-sheet](./context.md#task-grouped-actions-in-one-action-sheet)
 
 **Acceptance criteria**:
-- [ ] By touch, tapping a card in hand, a Pokémon in play, an attached card, the deck and a card in a pile view each opens its actions, showing the card and offering its text.
-- [ ] At 390×844 by touch, the sheet covers the screen, and a group whose actions overflow scrolls sideways and shows that more are off screen.
-- [ ] At 1024×768 by touch, the card is on the left and the actions on the right, and only the actions scroll when they are taller than the panel.
-- [ ] With a mouse, hovering over a card enlarges it, clicking shows it enlarged with its text, and right-clicking opens the grouped actions at the pointer. A device with both touch and a mouse behaves each way as it is used.
-- [ ] The actions are grouped in the design's order, with the common action first and Knock Out last. An Active Pokémon with two attacks and no Ability shows no Ability group.
-- [ ] Damage can be raised by 10, 30 or 50, lowered by 10, or typed as a total, and the board shows the new damage.
-- [ ] Each Special Condition on an Active Pokémon toggles on and off with one tap, and the toggle shows its state.
-- [ ] For every kind of card, the touch sheet offers the same actions as the desktop popover, and both offer every action today's menus do, apart from Zoom.
+- [x] By touch, tapping a card in hand, a Pokémon in play, an attached card, the deck and a card in a pile view each opens its actions, showing the card and offering its text.
+- [x] At 390×844 by touch, the sheet covers the screen, and a group whose actions overflow scrolls sideways and shows that more are off screen.
+- [x] At 1024×768 by touch, the card is on the left and the actions on the right, and only the actions scroll when they are taller than the panel.
+- [x] With a mouse, hovering over a card enlarges it, clicking shows it enlarged with its text, and right-clicking opens the grouped actions at the pointer. A device with both touch and a mouse behaves each way as it is used.
+- [x] The actions are grouped in the design's order, with the common action first and Knock Out last. An Active Pokémon with two attacks and no Ability shows no Ability group.
+- [x] Damage can be raised by 10, 30 or 50, lowered by 10, or typed as a total, and the board shows the new damage.
+- [x] Each Special Condition on an Active Pokémon toggles on and off with one tap, and the toggle shows its state.
+- [x] For every kind of card, the touch sheet offers the same actions as the desktop popover, and both offer every action today's menus do, apart from Zoom.
 
-#### - [ ] Task: Choose targets on the board
+#### - [x] Task: Choose targets on the board
 **Id:** 46ddd96f-8e7f-416b-bb51-174dfb66facb
 **Repo:** tcgreplay
 **Depends on:**
@@ -376,14 +376,14 @@ Actions that need a destination become one action followed by a tap on the board
 *Technical detail:* [context.md#task-choose-targets-on-the-board](./context.md#task-choose-targets-on-the-board)
 
 **Acceptance criteria**:
-- [ ] Choosing Attach for an Energy in hand shows a banner naming the Energy, highlights every Pokémon the player has in play, and attaches it to the one tapped.
-- [ ] Cancelling, or tapping anything other than a highlighted candidate, attaches nothing and adds nothing to the timeline.
-- [ ] Evolve, Retreat, Switch (no cost), Tool attach and moving an attached card each pick their destination on the board, offering the same candidates today's menus list.
-- [ ] With exactly one Pokémon on the bench, the Active Pokémon's Retreat names that Pokémon and retreats to it straight away.
-- [ ] With a full bench, attaching an Energy to a benched Pokémon takes three taps: the Energy, Attach and the Pokémon.
-- [ ] Board selection works the same way with a mouse on the desktop.
+- [x] Choosing Attach for an Energy in hand shows a banner naming the Energy, highlights every Pokémon the player has in play, and attaches it to the one tapped.
+- [x] Cancelling, or tapping anything other than a highlighted candidate, attaches nothing and adds nothing to the timeline.
+- [x] Evolve, Retreat, Switch (no cost), Tool attach and moving an attached card each pick their destination on the board, offering the same candidates today's menus list.
+- [x] With exactly one Pokémon on the bench, the Active Pokémon's Retreat names that Pokémon and retreats to it straight away.
+- [x] With a full bench, attaching an Energy to a benched Pokémon takes three taps: the Energy, Attach and the Pokémon.
+- [x] Board selection works the same way with a mouse on the desktop.
 
-#### - [ ] Task: Touch-friendly controls across the board
+#### - [x] Task: Touch-friendly controls across the board
 **Id:** bee420d0-abcb-4806-92f9-5b24f8d94e70
 **Repo:** tcgreplay
 **Depends on:**
@@ -400,11 +400,11 @@ This finishes the touch experience outside the sheet:
 *Technical detail:* [context.md#task-touch-friendly-controls-across-the-board](./context.md#task-touch-friendly-controls-across-the-board)
 
 **Acceptance criteria**:
-- [ ] At iPhone and iPad sizes by touch, every button, toggle and card target the board shows measures at least 44×44 CSS pixels.
-- [ ] By touch, cards do not enlarge or reveal hover-only buttons when touched. With a mouse on the desktop, hover still enlarges cards and shows the Pokémon's quick damage buttons.
-- [ ] By touch, the timeline's rewind and play-from-here buttons are visible and work.
-- [ ] By touch, tapping a card in a discard, search, look or deck-list view shows its large preview.
-- [ ] Cards are marked so that touching and holding one selects no text and opens no system callout.
+- [x] At iPhone and iPad sizes by touch, every button, toggle and card target the board shows measures at least 44×44 CSS pixels.
+- [x] By touch, cards do not enlarge or reveal hover-only buttons when touched. With a mouse on the desktop, hover still enlarges cards and shows the Pokémon's quick damage buttons.
+- [x] By touch, the timeline's rewind and play-from-here buttons are visible and work.
+- [x] By touch, tapping a card in a discard, search, look or deck-list view shows its large preview.
+- [x] Cards are marked so that touching and holding one selects no text and opens no system callout.
 
 ### Milestone 3: No browser dialogs anywhere
 
@@ -415,7 +415,7 @@ This finishes the touch experience outside the sheet:
 
 **Validation point:** the browser suite completes an attack with adjusted damage and a changed target and sees it in the timeline. It draws 3 and looks at the top 4 by count panels. Every browser test fails if any dialog opens, and none does.
 
-#### - [ ] Task: Panels replace the browser dialogs
+#### - [x] Task: Panels replace the browser dialogs
 **Id:** c78d2ada-7f25-4611-b6d3-1a2c4faa588c
 **Repo:** tcgreplay
 **Depends on:**
@@ -431,10 +431,10 @@ The prompt helper is removed, so no part of the board opens a browser dialog.
 *Technical detail:* [context.md#task-panels-replace-the-browser-dialogs](./context.md#task-panels-replace-the-browser-dialogs)
 
 **Acceptance criteria**:
-- [ ] Choosing an attack shows its printed damage. The player can change the damage, keep the opponent's Active or pick another opposing Pokémon on the board, and confirm. The timeline then records that attack with that damage and target.
-- [ ] A Pokémon with no attack data offers a way to name an attack and its damage inside the sheet.
-- [ ] From the deck's actions, the player can draw 3 cards and look at the top 4 by choosing the count on screen, and cannot choose more than the cards left in the deck.
-- [ ] No browser dialog opens anywhere on the board, at any size, by touch or by mouse.
+- [x] Choosing an attack shows its printed damage. The player can change the damage, keep the opponent's Active or pick another opposing Pokémon on the board, and confirm. The timeline then records that attack with that damage and target.
+- [x] A Pokémon with no attack data offers a way to name an attack and its damage inside the sheet.
+- [x] From the deck's actions, the player can draw 3 cards and look at the top 4 by choosing the count on screen, and cannot choose more than the cards left in the deck.
+- [x] No browser dialog opens anywhere on the board, at any size, by touch or by mouse.
 
 ### Milestone 4: The board fits a phone
 
@@ -456,7 +456,7 @@ The prompt helper is removed, so no part of the board opens a browser dialog.
 
 The earlier milestones' tests still pass at phone size.
 
-#### - [ ] Task: Compact phone board
+#### - [x] Task: Compact phone board
 **Id:** a2ce16fe-f973-448a-ae28-39f1c9be3bbc
 **Repo:** tcgreplay
 **Depends on:**
@@ -475,13 +475,13 @@ Held sideways, the phone shows a notice to turn it upright. Tablets and desktops
 *Technical detail:* [context.md#task-compact-phone-board](./context.md#task-compact-phone-board)
 
 **Acceptance criteria**:
-- [ ] At 390×844 in portrait, the page has no horizontal scroll, and cards in play and in hand are large enough to read and tap.
-- [ ] Both players' deck, discard, Lost Zone and prize counts are visible, and tapping each opens that pile, the deck's actions or the prize view.
-- [ ] With 8 Pokémon on a bench (Area Zero Underdepths in play), all 8 can be reached by scrolling the bench row.
-- [ ] The branch selector, review mode, reveal all, the timeline, the deck list and, on the hosted playmat, sign out can each be reached and used on a phone.
-- [ ] At 844×390 on a phone, the board is replaced by a notice to turn the phone upright, and turning it back shows the board with nothing lost.
-- [ ] At tablet and desktop sizes, the board looks and behaves as before this task.
-- [ ] The touch drag, action sheet, target selection and panel tests all still pass at phone size.
+- [x] At 390×844 in portrait, the page has no horizontal scroll, and cards in play and in hand are large enough to read and tap.
+- [x] Both players' deck, discard, Lost Zone and prize counts are visible, and tapping each opens that pile, the deck's actions or the prize view.
+- [x] With 8 Pokémon on a bench (Area Zero Underdepths in play), all 8 can be reached by scrolling the bench row.
+- [x] The branch selector, review mode, reveal all, the timeline, the deck list and, on the hosted playmat, sign out can each be reached and used on a phone.
+- [x] At 844×390 on a phone, the board is replaced by a notice to turn the phone upright, and turning it back shows the board with nothing lost.
+- [x] At tablet and desktop sizes, the board looks and behaves as before this task.
+- [x] The touch drag, action sheet, target selection and panel tests all still pass at phone size.
 
 ## Open Questions
 
@@ -505,3 +505,269 @@ Held sideways, the phone shows a notice to turn it upright. Tablets and desktops
 - **No desktop redesign** beyond the grouped popover, board target selection and the hover gating that touch requires (spec Non-Goals).
 - **No visual regression or screenshot tests.** The browser suite asserts behaviour and measurements. How closely the containers match the mockups is a manual review in the implementation test plan.
 - **No continuous integration setup.** The repo has no CI today; the suite runs in the project's test command. Adding a CI workflow would be its own piece of work.
+
+## Changelog
+
+### 2026-11-02 — Task: Board test server and browser test harness
+
+**What was done**: Added the repo's first browser test suite. A Go test-support program (`boardtest`) serves the built board over the fake card pool from a fixed review-mode position, with `POST /test/reset` to rebuild it. Playwright 1.64.1 runs phone, tablet and desktop profiles against it from `make test`, after the Go checks. Every test resets the board first and fails if a browser dialog opens.
+
+**Deviations**:
+- **Touch profiles run in Chromium, not WebKit** (user decision). Playwright's WebKit build needs Ubuntu library versions (libicu74, an older libxml2, libflite1, libbacktrace) and won't launch on this Arch machine. The phone and tablet profiles keep the iPhone 13 and iPad sizes, `hasTouch` and `isMobile`, but use Chromium's touch emulation. Only Chromium needs installing, and the missing-browser hint says `npx playwright install chromium`. Real iOS Safari stays a manual check.
+- **The fake card pool now lives in `internal/cards/cardstest`**, not `internal/webui/webtest/fakedb.go`. It was copied in three test packages (game, webui, usergames), not one, and all three now import the shared pool. It merges the copies and adds Makuhita (`tst-7`, a Basic with two attacks and no Ability) and Deep Zone (`tst-8`, a Stadium that expands the bench to 8). It has no image URLs, so browser tests make no network calls.
+- **The position code lives in `internal/webui/webtest/webtest.go`, tested by `webtest_test.go`** (in place of `position_test.go`, to follow the repo's `foo_test.go` naming). The test also checks that the shipped binary depends on neither `webtest` nor `cardstest` (`go list -deps`).
+- **The browser check is a script, `web/scripts/check-browsers.js`.** It runs first in `npm run test:e2e`, which `make test` calls, instead of living inline in the Makefile.
+- **An extra `web/e2e/harness.spec.js`** proves that reset works between tests and that the dialog guard fails a test. The smoke spec also asserts that the touch profiles report `pointer: coarse` with no hover, and the desktop a fine pointer with hover.
+
+**Files changed**:
+- `Makefile`
+- `.gitignore`
+- `internal/cards/cardstest/cardstest.go` (new)
+- `internal/webui/webtest/webtest.go` (new)
+- `internal/webui/webtest/webtest_test.go` (new)
+- `internal/webui/webtest/cmd/boardtest/main.go` (new)
+- `internal/webui/webui_test.go`
+- `internal/game/game_test.go`
+- `internal/game/manager_test.go`
+- `internal/game/presence_respond_test.go`
+- `internal/usergames/usergames_test.go`
+- `internal/usergames/board_test.go`
+- `web/package.json`
+- `web/package-lock.json`
+- `web/playwright.config.js` (new)
+- `web/scripts/check-browsers.js` (new)
+- `web/e2e/fixtures.js` (new)
+- `web/e2e/smoke.spec.js` (new)
+- `web/e2e/harness.spec.js` (new)
+
+**Discoveries**:
+- Playwright's `touchscreen` API only has `tap()`, so a touch drag can't be driven natively. `fixtures.js` `touchDrag` dispatches synthetic `PointerEvent`s (`pointerType: 'touch'`) at `elementFromPoint` for each step, and they bubble. The pointer layer in the next task must therefore listen for `pointermove` and `pointerup` on `window`, and must tolerate `setPointerCapture` throwing for a synthetic pointer. Synthetic events can't trigger native scrolling, so the hand-swipe test will need another approach (for example, asserting `touch-action` plus `scrollLeft` after a programmatic scroll, or Chromium CDP touch input).
+- The fixed position (iids by deck order) is documented in `webtest.go`. In the hand, p1-2 is Riolu, p1-3 Lucario, p1-17 and p1-18 Fighting Energy, p1-9 Band, p1-7 Iono, p1-12 Deep Zone and p1-13 Ultra Ball. In play are p1-5 (Makuhita, Active, with Energy p1-15), p1-1 (Riolu, bench 1) and p1-6 (Makuhita, bench 2). On p2's side, p2-5 is Active and p2-1 on the bench. Arena (p1-11) is in play, and it is turn 1 for p1, in review mode.
+- `npm audit` already reports advisories against vite 8.3.1 and deepmerge (via vite-plugin-svelte), not caused by this change.
+
+### 2026-11-02 — Task: Touch dragging through one pointer layer
+
+**What was done**: Replaced the board's HTML5 drag and drop with one Pointer Events controller, `web/src/lib/pointer.svelte.js`. It exposes two Svelte attachments, `draggable(payload)` and `dropZone(spec, onDrop)`, and mouse, pen and touch all go through it:
+- Cards, Pokémon stacks and pile-view cards drag through it.
+- Every drop place (Active, bench, Pokémon, discard, deck, Lost Zone, Stadium, play area, hand) hands the payload to the unchanged `dropOnStack` and `dropOnZone`.
+- A ghost follows the pointer, raised half a card for touch. Every zone is outlined and the one underneath is lit.
+- A release elsewhere, Escape or a cancelled pointer changes nothing.
+- In the hand, a sideways or downward finger scrolls and an upward one lifts the card.
+
+**Deviations**:
+- **The pointer is captured on the document, not on the dragged card.** The design only says "the pointer is captured". A test found that capturing the card kept its desktop hover enlargement during the drag, so `elementFromPoint` hit the enlarged card and a drop meant for the bench landed on the hand. As a further fix, all hover enlargement (`Card.svelte`, `Hand.svelte`) is now off while `body.dragging` is set, and the drag source has `pointer-events: none`.
+- **Taps stay native clicks in this task.** There is no `onTap` callback yet; the sheet task adds tap routing by pointer type. After a real drag, the controller swallows the one click that follows.
+- **The hand scrolls sideways only below 640px wide** (`overflow-x: auto; justify-content: safe center`). At wider sizes the hand still fans as before, and the desktop's hover enlargement isn't clipped.
+- **Pile, search and look views fade and let the pointer through while a drag lasts.** A card dragged out of them lands on the board; before, the view's backdrop blocked it.
+- **The test helpers now use real touch.** They drive touch through Chromium's DevTools protocol (`Input.dispatchTouchEvent`) rather than synthetic events, because every profile runs in Chromium. `act()` moved from `harness.spec.js` to `fixtures.js`.
+
+**Files changed**:
+- `web/src/lib/pointer.svelte.js` (new)
+- `web/src/lib/actions.js`
+- `web/src/components/Card.svelte`
+- `web/src/components/Stack.svelte`
+- `web/src/components/Hand.svelte`
+- `web/src/components/Side.svelte`
+- `web/src/components/Strip.svelte`
+- `web/src/components/Modal.svelte`
+- `web/src/app.css`
+- `web/e2e/fixtures.js`
+- `web/e2e/harness.spec.js`
+- `web/e2e/drag.spec.js` (new)
+
+**Discoveries**:
+- **Pointer capture on an element keeps it `:hover` for the whole drag**, so any hover transform stays applied and can cover the drop zones. Capture the document instead, and switch hover effects off while dragging.
+- **The play area mounts only once a card drag has started**, so drop zones must be hit-tested at move time and never cached at the start. Tests reach it by lifting the card first (the `LIFT` step in `fixtures.js`).
+- **What each drop records** (handy for later tests):
+  - an empty-bench drop from the hand is `p1 moved p1-2 Riolu p1:hand → p1:bench:2` (a move, not a bench verb);
+  - an Energy drop is `… → p1:active as energy`;
+  - a stack switch is `p1 swapped p1:bench:0 (Riolu) with p1:active (Makuhita)`.
+- **Real CDP touch works with `isMobile` and `hasTouch` in Chromium**: `touch-action`, native scrolling and implicit capture all behave as on a device.
+
+
+### 2026-11-02 — Task: Grouped actions in one action sheet
+
+**What was done**:
+- **The menu builders return groups.** `handMenu`, `stackMenu`, `attachmentMenu` and `deckMenu` now return `{title, card, text, summary, sections}`, grouped in the design's order. Empty groups are left out, Knock Out is last and marked danger, the Zoom items are gone, damage is a stepper (−10/+10/+30/+50, or type a total) and Special Conditions are toggles.
+- **One `ActionSheet.svelte` replaces `ContextMenu.svelte`.** It shows the model as:
+  - the full-screen phone sheet, whose rows scroll sideways with an edge fade;
+  - the tablet panel, with the card and a Card | Text switch on the left and actions that scroll on their own;
+  - the desktop popover at the pointer.
+
+  It closes with ✕, the backdrop, Escape, a swipe down on the phone header and browser Back.
+- **Taps and clicks.** A touch or pen tap on a card opens the sheet. A mouse click still zooms the card, and a right-click opens the popover.
+- **Pile, search and look views.** Cards there open a sheet with one Move group that mirrors their buttons; the buttons stay for the mouse.
+- **The store.** It gains `app.sheet`, `app.layout` (phone, tablet or desktop), `app.landscapePhone`, `openSheet` and `pointerTypeOf`.
+
+**Deviations**:
+- **The sheet state holds a builder, not a model.** `app.sheet` is `{build, pointerType, x, y}` rather than `{model, …}`, and the sheet re-runs `build()` as the board changes. The stepper and toggles therefore show the live damage and conditions while the sheet stays open. The sheet also closes itself if its card leaves play.
+- **Taps are routed by the click's pointer type, not by an `onTap` callback from the drag controller.** The store records the last `pointerdown` type for browsers whose click carries no `pointerType`. A long touch that fires `contextmenu` is ignored, since long press is not a gesture.
+- **The deck shows as its card back, with a short text.** The goal check's first attempt found the deck sheet showed no card or text (criterion 1). The model gained an optional `text` field for this.
+- **Labels follow the mockups.** In hand: Deck top, Deck bottom. In play: Return to hand, Devolve (was "Return X to hand" and "Discard X (devolve)"), and Switch with X, no cost. Draw 1 is marked primary on the deck.
+- **Attacks, Draw N and Look at top N still use `window.prompt`.** Per-target items (Evolve, Attach, Retreat, Switch, Move to) still list one item per target. The panels and target-mode tasks replace both.
+- **A toggle's ✓ is decoration only** (`content: '✓ ' / ''`), so its accessible name stays the condition's name.
+
+**Files changed**:
+- `web/src/components/ActionSheet.svelte` (new)
+- `web/src/components/ContextMenu.svelte` (deleted)
+- `web/src/lib/actions.js`
+- `web/src/lib/store.svelte.js`
+- `web/src/App.svelte`
+- `web/src/components/Card.svelte`
+- `web/src/components/Stack.svelte`
+- `web/src/components/Hand.svelte`
+- `web/src/components/Side.svelte`
+- `web/src/components/Modal.svelte`
+- `web/e2e/sheet.spec.js` (new)
+
+**Discoveries**:
+- **In Chromium, `click` and `contextmenu` are `PointerEvent`s whose `pointerType` says mouse or touch.** That makes a per-event "tap or click" decision cheap. A fallback to the last `pointerdown` covers browsers where they are not.
+- **The fixed position's two Fighting Energy cards stack in the hand, and the first copy is covered.** Tests must target the last copy.
+- **A test-visible hook for the sheet:**
+  - `.sheet[data-mode=phone|tablet|popover]` with `role=dialog` and the title as its name;
+  - each group is `section[role=group]` named by its label;
+  - the damage input is named "Damage total".
+
+### 2026-11-02 — Task: Choose targets on the board
+
+**What was done**:
+- **Destination actions are single items that finish on the board.** Attach (Energy and Tool), Evolve, Retreat, Switch (no cost) and Move to (an attached card) are now one item each.
+- **Choosing one starts target mode.** The sheet closes, and a `TargetBanner` names the action and the card, with Cancel. The candidates glow through `app.highlight` and the other cards dim. The card being played fades.
+- **The next tap or click decides.** A tap or click on a candidate runs the action. Anything else, Cancel, Escape or a right-click ends target mode with nothing done.
+- **One candidate acts at once.** Its label names the candidate, for example "Retreat to Riolu". Mouse and touch behave the same.
+
+**Deviations**:
+- **Target requests carry more than the plan's `{prompt, card, candidates, run}`.** They also have a `hint` line ("Tap one of your Pokémon"), and their candidates are `{spec, name, iid}` rather than bare drop specs. The name gives the single-candidate label, and the iid feeds the highlight.
+- **Taps are intercepted by a window capture-phase `click` listener in `lib/target.js`, not in the pointer layer.** The pointer layer only ignores presses while a target is pending, so no drag starts.
+- **The banner covers the header across the top** rather than sitting under it. That avoids measuring the header, which wraps.
+- **`ownStacks` now returns `{spec, name, iid}`, and its old label form ("Bench 1 (Riolu)") is gone.**
+- **Two sheet tests changed** because the target items collapsed the Move row:
+  - the phone overflow test now uses the Conditions row;
+  - the tablet "only the actions scroll" test shortens the window to 1024×560 so the actions overflow the panel.
+
+**Files changed**:
+- `web/src/lib/target.js` (new)
+- `web/src/components/TargetBanner.svelte` (new)
+- `web/src/lib/actions.js`
+- `web/src/lib/store.svelte.js`
+- `web/src/lib/pointer.svelte.js`
+- `web/src/components/ActionSheet.svelte`
+- `web/src/components/Card.svelte`
+- `web/src/App.svelte`
+- `web/src/app.css`
+- `web/e2e/target.spec.js` (new)
+- `web/e2e/sheet.spec.js`
+
+**Discoveries**:
+- **Retreat from the menu discards Energy for the Retreat Cost first.** Makuhita has a cost of 2 and holds 1 Energy, so the timeline shows the discard and then the swap. Tests should expect both lines.
+- **What target-mode actions record:**
+  - an Energy attach is `p1 moved p1-18 Fighting Energy p1:hand → p1:bench:0 as energy`;
+  - an Evolve is recorded as a move, `p1 moved p1-3 Lucario p1:hand → p1:bench:0`;
+  - a Tool attach is `… → p1:active as tool`.
+
+### 2026-11-02 — Task: Touch-friendly controls across the board
+
+**What was done**:
+- **Hover effects only where hover exists.** Card and hand hover enlargement now sit under `@media (hover: hover)`. The Pokémon's quick damage buttons show on hover only with a mouse, and are removed on touch, where the sheet's Damage stepper covers them.
+- **44px targets under a coarse pointer.** Buttons, selects, text inputs, a checkbox's label and every card (including Energy, Tools, prizes and pile cards) are at least 44×44 CSS px.
+- **The timeline on touch.** Its rewind and play-from-here buttons show without a hover, at 44px.
+- **Cards resist a long touch.** They set `user-select: none`, `-webkit-user-select: none` and `-webkit-touch-callout: none`.
+- **The modal's side preview follows the mouse only.** It never sticks after a tap.
+
+**Deviations**:
+- **"Tapping a card in a discard, search, look or deck-list view shows its large preview" is met by the card's sheet and Zoom, not the modal's side preview.**
+  - The side preview only fits beside a desktop dialog.
+  - On touch, a discard, search or look card opens its action sheet, which shows the card and its text. Task 3 relies on this tap.
+  - A deck-list card, which has no actions, opens Zoom, the large card with its text.
+- **On touch, the board's cards grow to a 44px minimum** (a `max(44px, …)` on `--w` under `pointer: coarse`). Energy, Tools and prizes are therefore larger on a tablet than with a mouse.
+
+**Files changed**:
+- `web/src/components/Card.svelte`
+- `web/src/components/Hand.svelte`
+- `web/src/components/Stack.svelte`
+- `web/src/components/Timeline.svelte`
+- `web/src/components/Modal.svelte`
+- `web/src/components/Side.svelte`
+- `web/src/app.css`
+- `web/e2e/touch.spec.js` (new)
+
+**Discoveries**:
+- **Chromium drops `-webkit-touch-callout` when it parses CSS** (the property is iOS-only), so `getComputedStyle` can't show it. The test reads the built stylesheet instead.
+- **Opacity-0 controls still take taps.** Hover-revealed buttons must be `display: none` on touch, not just transparent, or they become invisible tap targets.
+
+### 2026-11-02 — Task: Panels replace the browser dialogs
+
+**What was done**: The last browser dialogs are gone, and `ask()` is removed.
+- **Attacks open an `AttackPanel` inside the sheet.** It shows the attack's name and text, and a damage stepper that starts at the printed damage, with ×2 for Weakness. The target defaults to the opponent's Active; "Change ›" picks another opposing Pokémon on the board, then returns to the panel. The primary button reads "Attack <target> for <n>".
+- **A Pokémon without attack data gets a name field.** Its "Attack…" opens the same panel with an attack-name field.
+- **Draw N and Look at top N open a `CountPanel`.** The count runs from 1 up to the cards left in the deck, then Go.
+- **One `Stepper.svelte` serves every stepper.** The sheet's Damage group and both panels use it, and the sheet shows a panel with "‹ Actions" to go back.
+
+**Deviations**:
+- **"Change ›" keeps the sheet mounted but hidden** (`app.sheet.hidden`) while the target is tapped, so the panel keeps its damage and target. Target requests gained an optional `done()`, called once target mode ends either way, which brings the sheet back. While a target is pending, Escape ends only target mode (`stopImmediatePropagation`), so the hidden sheet stays.
+- **Panels are local state in `ActionSheet`, not `app.sheet.panel`.** An item carries `panel: {component, props}`.
+- **"Change ›" is disabled when the opponent has only one Pokémon in play.** There is nothing else to pick.
+
+**Files changed**:
+- `web/src/components/AttackPanel.svelte` (new)
+- `web/src/components/CountPanel.svelte` (new)
+- `web/src/components/Stepper.svelte` (new)
+- `web/src/components/ActionSheet.svelte`
+- `web/src/lib/actions.js`
+- `web/src/lib/target.js`
+- `web/e2e/panels.spec.js` (new)
+
+**Discoveries**:
+- **A panel that closes the sheet is unmounted at once.** Its props and derived values read after `close()` come back empty, which is how Look at top N lost its seat. Read everything first, then close. The sheet renders the panel null-safely (`panel?.component`), because closing clears `panel` while it is still on screen.
+- **An attack records two lines:**
+  - `p1 used attack Body Slam from p1:active (Makuhita)`;
+  - `p1 set damage on p2:bench:0 (Riolu): 0 → 140`.
+
+### 2026-11-02 — Task: Compact phone board
+
+**What was done**: On a phone held upright (narrower than 640px), the board switches to a compact layout:
+- **Card size.** `--cw` is set from the width.
+- **Counter bars.** Each player has one: chips for Deck, Discard, Lost and Prizes, plus the opponent's hand count. A chip opens the deck's actions, the pile view or a new prize view where a prize can be taken. The pile chips also take dropped cards.
+- **Bench.** The Active is centred, and the bench is one row scrolling sideways to all 8 slots, with a "+n ›" hint for the slots off screen.
+- **Hand and middle strip.** The hand is a flat strip of 72px cards. The middle strip is one row, which the play area covers while a card is dragged.
+- **Header.** It keeps the dot, warnings and ☰. The game name, branch, Review mode and Reveal all move into ☰, and the timeline opens there as a full-screen sheet.
+- **Held sideways.** A phone held sideways shows a "Turn your phone upright" notice in place of the board, and loses nothing.
+
+Tablets and desktops keep the mat.
+
+**Deviations**:
+- **The sideways-phone test is `(orientation: landscape) and (max-height: 499px) and (pointer: coarse)`, not "phone width in landscape".** A short tablet window must never show the notice.
+- **The phone timeline has its own closed-by-default flag** (`timelineOpen` in `App.svelte`). Opening the board on a phone shows the board, not the timeline. `app.panelOpen` still drives tablet and desktop.
+- **The phone board is taller than the screen at 390×844 and scrolls vertically.** The spec rules out only sideways scrolling.
+- **Cards in a pile view keep `touch-action: pan-y`** so a finger can scroll the list. A card is dragged out of the view by starting sideways.
+- **Test helpers became layout-aware for the phone:**
+  - `pile()` and `pileLabel()` find the side pile or the counter chip;
+  - `isPhone` is added;
+  - `timelineLines` reads the board's log from its state while the phone's timeline sheet is closed.
+
+  Several phone tests now scroll their targets into view.
+- **Timeline lines on touch now contain their floated buttons** (`display: flow-root`). Without it, the 44px buttons from the touch-controls task stacked into the next line.
+- **The first goal check found criterion 6 (tablet and desktop unchanged) unproven.** A test now shows that at tablet and desktop sizes none of the phone layout applies and card sizing follows the unchanged formula.
+
+**Files changed**:
+- `web/src/components/CounterBar.svelte` (new)
+- `web/src/App.svelte`
+- `web/src/components/Side.svelte`
+- `web/src/components/Hand.svelte`
+- `web/src/components/Strip.svelte`
+- `web/src/components/Modal.svelte`
+- `web/src/components/Timeline.svelte`
+- `web/src/lib/store.svelte.js`
+- `web/e2e/phone.spec.js` (new)
+- `web/e2e/fixtures.js`
+- `web/e2e/smoke.spec.js`
+- `web/e2e/drag.spec.js`
+- `web/e2e/sheet.spec.js`
+- `web/e2e/panels.spec.js`
+- `web/e2e/touch.spec.js`
+
+**Discoveries**:
+- **A flex column with `align-items: center` lets a wide child grow past the screen.** `main` then scrolls sideways while the document doesn't, so a no-sideways-scroll test has to check `main` too. The phone column stretches its children so the bench row scrolls within itself.
+- **A count of hidden children needs a `MutationObserver` as well as a `ResizeObserver`.** Adding a slot to a fixed-width row doesn't resize it.
+- **Playwright's iPhone profile is 390×844 here, but the phone board runs about 966px tall.** Tests on a phone must scroll a target into view before reading its position.
+

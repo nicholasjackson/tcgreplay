@@ -79,17 +79,15 @@ code { background: #0005; padding: 1px 5px; border-radius: 4px; }
 .dragging [data-drop].drop-lit { background: var(--drop); border-color: var(--accent); outline-style: solid; }
 .dragging, .dragging * { cursor: grabbing !important; }
 .drag-source { opacity: 0.35; pointer-events: none; }
-.drag-ghost {
-  position: fixed;
-  left: 0;
-  top: 0;
-  margin: 0;
-  z-index: 100;
-  pointer-events: none;
-  opacity: 0.9;
-  transition: none;
-  box-shadow: 0 12px 30px #000b;
-}
+/* The ghost's position and size are set inline (lib/pointer.svelte.js),
+   where no card style can override them. */
+.drag-ghost { box-shadow: 0 16px 36px #000c; }
+
+/* On a phone, Energy and Tools tuck further under their Pokémon, so less
+   of them hangs below it, and fan in close so several stay within the
+   Pokémon's own width. */
+.app.phone .attachments { margin-top: calc(var(--cw) * -0.3 - 24px); max-width: none; flex-wrap: nowrap; }
+.app.phone .att + .att { margin-left: -30px; }
 
 /* Target mode (lib/target.js): the candidates glow through the highlight
    and every other card dims; the card being played is faded. */

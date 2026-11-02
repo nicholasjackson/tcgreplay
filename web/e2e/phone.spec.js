@@ -16,7 +16,45 @@ test('a phone in portrait has no sideways scroll, and its cards are large enough
   expect(await page.locator('main').evaluate((m) => m.scrollWidth - m.clientWidth)).toBe(0);
   for (const title of ['Makuhita (p1-5)', 'Riolu (p1-1)', 'Makuhita (p2-5)', 'Riolu (p1-2)', 'Band (p1-9)']) {
     const box = await page.locator(`.card[title="${title}"]`).first().boundingBox();
-    expect(box.width, title).toBeGreaterThanOrEqual(60);
+    expect(box.width, title).toBeGreaterThanOrEqual(48);
+  }
+});
+
+test('the phone board fits the screen with the hand along the bottom, no scrolling', async ({ page }, testInfo) => {
+  test.skip(!isPhone(testInfo), 'the phone board');
+  // 390×664 is an iPhone 13 in Safari, its toolbars showing.
+  for (const size of [{ width: 390, height: 844 }, { width: 390, height: 664 }, { width: 375, height: 812 }, { width: 375, height: 667 }]) {
+    await page.setViewportSize(size);
+    const fit = await page.evaluate(() => {
+      const hand = document.querySelector('[aria-label="p1 hand"]').getBoundingClientRect();
+      const main = document.querySelector('main');
+      return { page: document.documentElement.scrollHeight - innerHeight, board: main.scrollHeight - main.clientHeight, handBottom: Math.round(hand.bottom), height: innerHeight };
+    });
+    expect(fit.page, `page scroll at ${size.width}×${size.height}`).toBeLessThanOrEqual(0);
+    expect(fit.handBottom, `hand on screen at ${size.width}×${size.height}`).toBeLessThanOrEqual(fit.height);
+    expect(fit.board, `board scroll at ${size.width}×${size.height}`).toBeLessThanOrEqual(0);
+  }
+  // Each counter bar is one row.
+  for (const seat of ['p1', 'p2']) {
+    const chips = await page.getByRole('group', { name: `${seat} counters` }).getByRole('button').evaluateAll((bs) => bs.map((b) => Math.round(b.getBoundingClientRect().top)));
+    expect(new Set(chips).size, `${seat} counters on one row`).toBe(1);
+  }
+});
+
+test('a busy phone board still fits: a two-row strip and Pokémon with several attachments', async ({ page }, testInfo) => {
+  test.skip(!isPhone(testInfo), 'the phone board');
+  await page.setViewportSize({ width: 390, height: 664 });
+  // An open action adds End action to the strip; Tools and Energy pile up.
+  await act(page, 'play_trainer', { iid: 'p1-7' });
+  for (const [iid, as] of [['p1-9', 'tool'], ['p1-17', 'energy'], ['p1-18', 'energy']]) await act(page, 'move', { iid, to: 'bench:1', as });
+  await expect(page.getByRole('button', { name: 'End action', exact: true })).toBeVisible();
+  await expect.poll(() => page.locator('main').evaluate((m) => [...m.children].reduce((h, c) => h + c.offsetHeight, 0) - m.clientHeight)).toBeLessThanOrEqual(0);
+  // Both players' counters are on screen, above the hand.
+  const hand = await page.getByRole('list', { name: 'p1 hand' }).boundingBox();
+  for (const seat of ['p1', 'p2']) {
+    const bar = await page.getByRole('group', { name: `${seat} counters` }).boundingBox();
+    expect(bar.y, `${seat} counters on screen`).toBeGreaterThanOrEqual(0);
+    expect(bar.y + bar.height, `${seat} counters above the hand`).toBeLessThanOrEqual(hand.y + 1);
   }
 });
 

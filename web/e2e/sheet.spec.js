@@ -100,6 +100,17 @@ test('tapping the deck opens its actions with the deck and its text', async ({ p
   await expectCardAndText(page, 'deck', '40 cards left, face down', testInfo);
 });
 
+test('a tap whose click calls itself a mouse (iOS Safari) still opens the touch sheet', async ({ page }, testInfo) => {
+  test.skip(!isTouch(testInfo), 'touch screens');
+  await active(page).evaluate((el) => {
+    const at = { bubbles: true, cancelable: true, composed: true, clientX: 10, clientY: 10 };
+    el.dispatchEvent(new PointerEvent('pointerdown', { ...at, pointerType: 'touch', isPrimary: true }));
+    el.dispatchEvent(new PointerEvent('pointerup', { ...at, pointerType: 'touch', isPrimary: true }));
+    el.dispatchEvent(new PointerEvent('click', { ...at, pointerType: 'mouse' }));
+  });
+  await expect(sheet(page)).toHaveAttribute('data-mode', testInfo.project.name);
+});
+
 test('tapping a card in a pile view opens its moves with the card and its text', async ({ page }, testInfo) => {
   test.skip(!isTouch(testInfo), 'tapping is touch');
   await pile(page, 'Discard').tap();

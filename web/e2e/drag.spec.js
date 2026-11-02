@@ -165,7 +165,17 @@ test('while dragging, every drop place is outlined and the one under the pointer
   await expect(page.locator('.drop-lit')).toHaveCount(1);
   await expect(region(page, 'p1 bench 3')).toHaveClass(/\bdrop-lit\b/);
   // The ghost is a copy of the dragged card.
-  await expect(page.locator('.card.drag-ghost[title="Riolu (p1-2)"]')).toBeVisible();
+  const ghost = page.locator('.card.drag-ghost[title="Riolu (p1-2)"]');
+  await expect(ghost).toBeInViewport();
+  // It follows the pointer, aimed at the centre of bench 3: centred on a
+  // mouse, raised up to a card's height above a finger.
+  // (It moves once a frame, so wait for it to catch up.)
+  const slot = await region(page, 'p1 bench 3').boundingBox();
+  const [sx, sy] = [slot.x + slot.width / 2, slot.y + slot.height / 2];
+  await expect.poll(async () => { const g = await ghost.boundingBox(); return Math.abs(g.x + g.width / 2 - sx); }).toBeLessThan(4);
+  const g = await ghost.boundingBox();
+  expect(g.y + g.height / 2).toBeLessThanOrEqual(sy + 4);
+  expect(g.y + g.height / 2).toBeGreaterThanOrEqual(sy - g.height);
 
   // The light follows the pointer to the next zone.
   await h.move(region(page, 'p1 Active'));

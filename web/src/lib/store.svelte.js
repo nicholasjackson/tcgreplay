@@ -76,14 +76,17 @@ function setLayout() {
 for (const q of [narrow, coarse, sideways]) q.addEventListener('change', setLayout);
 setLayout();
 
-// lastPointer is the kind of pointer that last went down, for events that
-// do not say (a click is a PointerEvent only in newer browsers).
-let lastPointer = 'mouse';
-addEventListener('pointerdown', (ev) => (lastPointer = ev.pointerType), { capture: true });
+// lastPointer is the kind of pointer that last went down, and when. A
+// click's own pointerType can't be trusted: iOS Safari reports a tap's
+// click as "mouse", and older browsers report nothing.
+let lastPointer = { type: 'mouse', at: 0 };
+addEventListener('pointerdown', (ev) => (lastPointer = { type: ev.pointerType, at: ev.timeStamp }), { capture: true });
 
-// pointerTypeOf is the kind of pointer behind an event: mouse, pen or touch.
+// pointerTypeOf is the kind of pointer behind an event (mouse, pen or
+// touch): the pointer that just went down, else what the event says.
 export function pointerTypeOf(ev) {
-  return ev.pointerType || lastPointer;
+  if (ev.timeStamp - lastPointer.at < 1500) return lastPointer.type;
+  return ev.pointerType || 'mouse';
 }
 
 // openSheet opens a card's actions from the event that asked for them: a

@@ -93,7 +93,22 @@
     .hand { overflow-x: auto; justify-content: safe center; }
   }
   /* Phone: a flat strip of larger cards along the bottom. */
-  .hand.phone { --cw: 72px; min-height: calc(72px * 1.4 + 20px); padding: 8px 16px 18px; align-items: center; }
+  /* Your hand stays on screen along the bottom, the board scrolling above
+     it if it ever runs short of room. */
+  .hand.phone {
+    --cw: 64px;
+    min-height: 0;
+    height: calc(64px * 1.4 + 16px);
+    padding: 6px 12px 10px;
+    overflow-y: hidden;
+    align-items: center;
+    margin-top: auto;
+    flex: none;
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    background: var(--felt);
+  }
   .hand.phone .slot { transform: none; margin: 0 3px; }
   .slot {
     position: relative;

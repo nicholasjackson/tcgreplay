@@ -19,6 +19,34 @@
   // sheet opened from ☰ rather than a column beside the board.
   const phone = $derived(app.layout === 'phone');
   let timelineOpen = $state(false);
+  // fit is how many pixels the phone board gives up so it never scrolls:
+  // the cards shrink by fit / 6.6 when the board would run past the
+  // screen (a two-row strip, Pokémon with many attachments) and grow back
+  // as room returns.
+  let fit = $state(0);
+  function fitBoard(main) {
+    const measure = () => {
+      const used = [...main.children].reduce((h, c) => h + c.offsetHeight, 0);
+      const over = used - main.clientHeight;
+      if (over > 0) fit += over;
+      else if (over < -24 && fit > 0) fit = Math.max(0, fit + over);
+    };
+    const ro = new ResizeObserver(measure);
+    const watch = () => {
+      ro.disconnect();
+      ro.observe(main);
+      for (const c of main.children) ro.observe(c);
+      measure();
+    };
+    const mo = new MutationObserver(watch);
+    mo.observe(main, { childList: true });
+    watch();
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      fit = 0;
+    };
+  }
   const showTimeline = $derived(!app.landscapePhone && (phone ? timelineOpen : app.panelOpen));
   const bottom = $derived(!phone && app.panelOpen && app.panelAt === 'bottom');
   // menuOpen shows the header's menu of less frequent actions.
@@ -57,7 +85,7 @@
 
 <svelte:window onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
 
-<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:phone>
+<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:phone style:--fit="{fit}px">
   <header>
     <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
     {#if !phone}<strong>tcgreplay</strong>{/if}
@@ -76,17 +104,22 @@
         <label class="toggle reveal-toggle"><input type="checkbox" checked={app.reveal} onchange={setReveal} /> Reveal all</label>
       {/if}
     {/if}
-    {#if snap?.warnings?.length}
+    {#if snap?.warnings?.length && !phone}
       <span class="warn" title={snap.warnings.join('\n')}>⚠ {snap.warnings.length}</span>
     {/if}
     <div class="more">
-      <button class="burger" aria-label="Menu" aria-haspopup="menu" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>☰</button>
+      <button class="burger" aria-label="Menu" aria-haspopup="menu" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
+        ☰{#if phone && snap?.warnings?.length}<span class="badge" aria-label="{snap.warnings.length} warnings">{snap.warnings.length}</span>{/if}
+      </button>
       {#if menuOpen}
         <div class="backdrop" onclick={() => (menuOpen = false)} role="presentation"></div>
         <div class="dropdown" role="menu">
           {#if snap && phone}
             <!-- The header's controls, which a phone's header has no room for. -->
             <div class="account">{snap.game}</div>
+            {#each snap.warnings || [] as w, i (i)}
+              <div class="warning">⚠ {w}</div>
+            {/each}
             <label class="menu-check">
               Branch
               <select value={snap.branch} onchange={checkout} aria-label="branch">
@@ -137,7 +170,7 @@
         <p>Turn your phone upright to see the board.</p>
       </div>
     {:else}
-    <main>
+    <main {@attach phone && fitBoard}>
       {#if app.board}
         {#if !phone || app.opponent}
           <div class="seat-name top">
@@ -214,11 +247,46 @@
     height: 100vh;
     --cw: clamp(48px, min((100vh - 315px) / 11.1, (100vw - 40px) / 10), 240px);
   }
-  /* Phone: cards sized from the width, five and a bit across. */
+  /* Phone: the board fits the screen and never scrolls; only the hand, a
+     bench of more than five and the menus do. Cards are five and a bit
+     across, or smaller when the screen is short: the field (two benches
+     and two Active Spots) is about 6.6 card widths tall, beside about
+     372px of counters, strip, hand, padding and the Energy tucked under
+     each Active. */
   .app.phone {
-    --cw: calc((100vw - 32px) / 5.6);
+    --cw: max(40px, min(calc((100vw - 32px) / 5.6), calc((100dvh - 372px - var(--fit, 0px)) / 6.6)));
     --fs: 13px;
+    height: 100dvh;
+    min-height: 0;
   }
+  .app.phone main { justify-content: flex-start; overflow: hidden; }
+  /* No header bar on a phone: the dot and ☰ sit at the start of the
+     opponent's counters (CounterBar leaves room for them). */
+  .app.phone { position: relative; }
+  .app.phone header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 6;
+    gap: 6px;
+    padding: 2px 4px 2px 8px;
+    background: none;
+    border: 0;
+  }
+  .badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: #ffb300;
+    color: #222;
+    font: 700 11px/18px system-ui;
+  }
+  .burger { position: relative; }
+  .warning { padding: 6px 12px; font-size: 12px; color: var(--muted); max-width: 260px; }
   aside.sheet {
     position: fixed;
     inset: 0;
@@ -263,6 +331,9 @@
     border-radius: 8px;
     box-shadow: 0 6px 20px #0008;
   }
+  /* On a phone ☰ sits at the left, so its menu opens rightwards, and
+     scrolls if it is taller than the screen. */
+  .app.phone .dropdown { right: auto; left: 0; max-height: calc(100dvh - 60px); overflow-y: auto; max-width: calc(100vw - 16px); }
   .dropdown button { width: 100%; text-align: left; border-color: transparent; background: none; }
   .dropdown button:hover { background: var(--hover); }
   .dropdown form { margin: 0; }

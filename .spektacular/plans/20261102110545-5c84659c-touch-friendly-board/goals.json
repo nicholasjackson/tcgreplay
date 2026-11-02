@@ -1,0 +1,1019 @@
+{
+  "plan": "20261102110545-5c84659c-touch-friendly-board",
+  "items": [
+    {
+      "item": "37b4af36-4707-4337-905c-f9d98208a377",
+      "title": "Board test server and browser test harness",
+      "checks": [
+        {
+          "at": "2026-11-02T12:35:43Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "37b4af36-4707-4337-905c-f9d98208a377",
+            "title": "Board test server and browser test harness",
+            "criteria": [
+              "Running the project's test command builds the board and runs a browser suite at iPhone and iPad sizes by touch and at desktop size by mouse, after the existing Go checks.",
+              "Every browser test starts from the same known board, whatever earlier tests changed.",
+              "A smoke test in each profile loads the board and sees both players' names, the cards in hand and the Pokémon in play from the fixed position.",
+              "Any browser dialog opening during any test fails that test.",
+              "When the browsers Playwright needs are not installed, the test command says how to install them instead of failing obscurely.",
+              "The existing Go tests still pass, with the fake card pool shared from one place rather than copied.",
+              "Nothing in the shipped binary includes the test server or its reset endpoint."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "/home/nicj/code/github.com/nicholasjackson/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/fakedb.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/cmd/boardtest/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/position_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/package.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/package-lock.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/playwright.config.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "http://127.0.0.1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/fixtures.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/test/reset"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/smoke.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Makefile:29-33 defines test as go vet ./..., go test ./..., then $(MAKE) web, then cd web \u0026\u0026 npm run test:e2e, so the browser suite runs after the Go checks. Makefile:27-28 documents it. web/package.json:12 defines test:e2e as node scripts/check-browsers.js \u0026\u0026 playwright test. web/playwright.config.js:21-34 defines phone (iPhone 13, hasTouch via device descriptor), tablet (iPad gen 7 landscape, 1024x768) and desktop (Desktop Chrome, 1440x900, mouse) projects."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/e2e/fixtures.js:5-8 extends the page fixture so every test first POSTs /test/reset and asserts it succeeded, before page.goto('/') at line 16. internal/webui/webtest/cmd/boardtest/main.go:56-62 serves POST /test/reset by calling webtest.Reset, which discards the game and rebuilds the fixed position (internal/webui/webtest/webtest.go:84-146). web/e2e/harness.spec.js:24 runs serially and its second test checks the hand is back to 8 cards after the first test moved one. Only the fixture's test is used by the spec files (smoke.spec.js:2, harness.spec.js:3)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/e2e/smoke.spec.js:18-27 checks the seat names 'Alice · p1' and 'Bob · p2', the p1 hand cards Riolu, Lucario, Fighting Energy, Band, Iono, Deep Zone, Ultra Ball with an '8 in hand' count, and the p2 hand count. Lines 29-38 check the in-play Pokémon (Makuhita p1-5 Active, Riolu p1-1 and Makuhita p1-6 on the bench, Makuhita p2-5 Active, Riolu p2-1 bench). The file has no project filter, so it runs in phone, tablet and desktop. The position matches webtest.go:57-70. Test 1 in smoke.spec.js also checks the touch/mouse profile media queries."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "web/e2e/fixtures.js:9-15 registers page.on('dialog') and records each dialog, dismissing it to unblock the page. Line 19 asserts after the test body that the dialogs list is empty, so any dialog fails the test that opened it. web/e2e/harness.spec.js:36-40 checks this with a test.fail() case that opens an alert."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "web/scripts/check-browsers.js:7-11 checks existsSync(chromium.executablePath()). If the browser is missing it prints \"Playwright's Chromium browser is not installed.\" and \"Run: cd web \u0026\u0026 npx playwright install chromium\", then exits 1. web/package.json:12 runs this check before playwright test in test:e2e. The verify step output shows this message with PLAYWRIGHT_BROWSERS_PATH set to an empty directory."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The fake pool is now one definition in internal/cards/cardstest/cardstest.go:14-51 (FakeDB and New). internal/webui/webtest/webtest.go:12 and :78 use it. webui_test.go:22, usergames/board_test.go:17, usergames/usergames_test.go:12, game/game_test.go:13, game/manager_test.go:9 and game/presence_respond_test.go:10 import it. A grep of the code root for newFakeDB or a local fakeDB type finds none left in tests; the only mentions are in .spektacular/plans docs. The diff shows the old per-package fakeDB copies removed. Test code is not recompiled here, so this rests on the verify step's go test pass."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "The test server is confined to internal/webui/webtest/cmd/boardtest/main.go, which only the Playwright webServer runs (playwright.config.js:36). The reset route is registered only there (main.go:56). cmd/tcgreplay imports neither webtest nor cardstest (grep of the code root). webtest_test.go:140-152 (TestNotInShippedBinary) runs go list -deps on cmd/tcgreplay and fails if any package ends in /webtest or /cardstest or contains /webtest. The test has not been run here; the verify step reports go test passing 12 packages."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "1cefbf09-35c1-47fd-a334-03cdf2c3bac6",
+      "title": "Touch dragging through one pointer layer",
+      "checks": [
+        {
+          "at": "2026-11-02T13:01:14Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "1cefbf09-35c1-47fd-a334-03cdf2c3bac6",
+            "title": "Touch dragging through one pointer layer",
+            "criteria": [
+              "By touch at iPhone and iPad sizes, dragging a Pokémon from the hand to an empty bench slot benches it, and the timeline shows the same line a mouse drag produces.",
+              "By touch, a card can be dropped on the Active Spot, a bench slot, a Pokémon in play, the discard pile, the deck, the Lost Zone, the Stadium, the play area and the hand, each with the same result as the same mouse drop.",
+              "Dragging a benched Pokémon onto the Active Spot switches them, by touch and by mouse, as a stack drag does today.",
+              "While a card is being dragged, every drop place is outlined and the one under the pointer is highlighted. Releasing over none leaves the board and timeline unchanged.",
+              "On a phone-sized screen with an overflowing hand, a sideways swipe scrolls the hand and moves no card, while an upward drag from a card lifts it.",
+              "Mouse dragging on the desktop behaves as before, and the play area still appears while a card is being dragged.",
+              "A tap that barely moves is treated as a tap, not a drag."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/pointer.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Strip.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Stack.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".over"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Hand.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Side.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/app.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/drag.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/e2e/drag.spec.js:29-35 drags p1-2 Riolu from the hand to 'p1 bench 3' with the fixture drag(), which uses touch in the phone and tablet projects (web/e2e/fixtures.js:125-128, playwright.config.js:23-29 iPhone 13 at 390x844 and iPad landscape at 1024x768), and expects the line 'p1 moved p1-2 Riolu p1:hand → p1:bench:2', the same line the mouse run expects. The drop path is pointer.svelte.js:118-131 (up) into the bench slot's dropZone handler."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "drag.spec.js:39-113 has one touch-capable case per place with the same expected line in every profile: Active (energy, lines 43-46), bench slot (tool, 48-53), Pokémon in play (evolve onto bench 1, 55-63, checks the chain count), discard (65-70), deck (72-77), Lost Zone (79-84), Stadium (86-91), play area (93-102), hand (104-112). Each drop wires through dropZone in Side.svelte, Strip.svelte, Stack.svelte and Hand.svelte, which call the same dropOnZone/dropOnStack handlers as before (diff of actions.js keeps them unchanged)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "drag.spec.js:124-130 drags the benched stack from 'p1 bench 1' onto 'p1 Active' and expects 'p1 swapped p1:bench:0 (Riolu) with p1:active (Makuhita)'. This runs in every profile, touch and mouse. Stack.svelte in the diff attaches draggable({kind:'stack', from: spec}) to the .pile and the Active slot's dropZone(spec, dropOnStack); the stack payload path in dropOnStack is unchanged."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "drag.spec.js:132-167 checks before the drag that no [data-drop] has an outline, then during the drag that body has class 'dragging', that all nine specs (p1:active, p1:bench:0, p1:bench:2, discard, deck, lost, stadium, play, hand) have a non-none outline, that exactly one .drop-lit exists and sits under the pointer, and that moving to the seat-name releases with no .drop-lit. It then checks the ghost is gone and the timeline and hand count are unchanged (expectUnchanged). Implementation: app.css (diff lines 428-446) styles .dragging [data-drop] outline and .drop-lit; pointer.svelte.js:101-116 lights the zone under the pointer and 124-131 calls a handler only when a zone is found."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "drag.spec.js:178-197 on the phone project overflows the hand (overflowHand, 171-176, asserts scrollWidth \u003e clientWidth), swipes Lucario sideways 150px, asserts no drag-ghost and no body.dragging, asserts scrollLeft \u003e 0, the timeline is unchanged and Lucario stays attached. drag.spec.js:199-207 checks an upward drag lifts Riolu to bench 3. Implementation: pointer.svelte.js:60-65 ends the gesture without a drag when the move in a [data-scroll-x] row is sideways or down, and lets the upward move start a drag; Hand.svelte (diff) sets data-scroll-x, touch-action pan-x and overflow-x auto under 639px."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Mouse drag is covered by the desktop project in every drop test and the switch test. drag.spec.js:209-223 checks the 'Play area' region is absent before a drag, visible while a Iono card is dragged with the mouse, and gone after release, with the discard count updated. drag.spec.js:225-234 checks hover-enlarged hand cards still drop where the pointer is. Mouse presses are limited to button 0 at pointer.svelte.js:44. Strip.svelte (diff) keeps the play area under {#if app.dragging?.kind === 'card'}, and start() at pointer.svelte.js:94-95 sets app.dragging for it."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "drag.spec.js:236-248 moves 3px, under the 8px THRESHOLD, and asserts body is not 'dragging', that the Riolu dialog opens (the tap's click), and that the timeline is unchanged. Implementation: pointer.svelte.js:9 THRESHOLD = 8, 59 returns early below it, and 120-122 ends the gesture without a ghost so the click handler runs."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "74c41358-d09b-4a53-ad85-e86aaae51763",
+      "title": "Grouped actions in one action sheet",
+      "checks": [
+        {
+          "at": "2026-11-02T13:23:21Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "74c41358-d09b-4a53-ad85-e86aaae51763",
+            "title": "Grouped actions in one action sheet",
+            "criteria": [
+              "By touch, tapping a card in hand, a Pokémon in play, an attached card, the deck and a card in a pile view each opens its actions, showing the card and offering its text.",
+              "At 390×844 by touch, the sheet covers the screen, and a group whose actions overflow scrolls sideways and shows that more are off screen.",
+              "At 1024×768 by touch, the card is on the left and the actions on the right, and only the actions scroll when they are taller than the panel.",
+              "With a mouse, hovering over a card enlarges it, clicking shows it enlarged with its text, and right-clicking opens the grouped actions at the pointer. A device with both touch and a mouse behaves each way as it is used.",
+              "The actions are grouped in the design's order, with the common action first and Knock Out last. An Active Pokémon with two attacks and no Ability shows no Ability group.",
+              "Damage can be raised by 10, 30 or 50, lowered by 10, or typed as a total, and the board shows the new damage.",
+              "Each Special Condition on an Active Pokémon toggles on and off with one tap, and the toggle shows its state.",
+              "For every kind of card, the touch sheet offers the same actions as the desktop popover, and both offer every action today's menus do, apart from Zoom."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/ActionSheet.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "app.sheet"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "info.text"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Zoom.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/ContextMenu.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "mobile-board/mockups.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Stack.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Hand.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Side.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/sheet.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Taps are wired for a hand card (Hand.svelte:70 onmenu, Card.svelte:496 touch routes to onmenu), a Pokémon in play (Stack.svelte menu), an attached card (Stack.svelte attachment onmenu) and a pile card (Modal.svelte cardMenu). The deck is the gap: actions.js deckMenu returns card: null, so ActionSheet.svelte:105-117 shows no card and no text for it. sheet.spec.js:93-98 checks only the dialog and the Draw group for the deck. The deck has no visible card to show, but the criterion as written asks for the card and its text, and the deck tap shows neither."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "ActionSheet.svelte:240 `.sheet.phone { inset: 0 }` fills the screen; ActionSheet.svelte:245 `.phone .row { overflow-x: auto }` scrolls a group sideways; ActionSheet.svelte:74-84 fade() toggles the `more` class while scrollLeft + clientWidth \u003c scrollWidth, and ActionSheet.svelte:246 masks the edge. sheet.spec.js:112-135 asserts the 390x844 box, the overflow, the `more` class, and the sideways scroll."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "ActionSheet.svelte:105-117 places the card in `.side` (340px, left) before `.main` (right) in the tablet layout; ActionSheet.svelte:249-253 `.sheet.tablet` fixes the height with overflow hidden, and ActionSheet.svelte:193 `.body { overflow-y: auto }` sits inside `.main` under a fixed header. sheet.spec.js:137-168 checks the side-by-side boxes and that only the body's scrollTop changes."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Hover: Card.svelte:530-541 enlarges `.card.lift:not(.back):hover` outside drags. Click: Card.svelte:493-499 sets app.zoom for a mouse click, and the Zoom component is used unchanged. Right-click: Card.svelte:500-508 calls onmenu(ev,'mouse'), and openSheet (store.svelte.js:1429) picks the popover with the pointer position (ActionSheet.svelte:38, 98-99). Mixed device: pointerTypeOf (store.svelte.js:1423) decides per event. sheet.spec.js:170-224 covers both."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "actions.js stackMenu returns sections in the order Attack, Ability, Move, Damage, Conditions, Other; sections() (actions.js:1075-1077) drops empty groups, so an Active with two attacks and no Ability has no Ability group. Knock Out is last in Other (actions.js:1247, the last item). handMenu puts the primary Play item first (actions.js:1123). sheet.spec.js:226-255 asserts the order and the absent Ability group."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "actions.js:1266-1275 gives the Damage stepper step 10, quick [30, 50], min 0, and a set that sends place_damage with amount v - damage. ActionSheet.svelte:145-157 renders the −10, +10, +30, +50 buttons and a typed input (typed() at :60-64, committed on change/Enter). The model rebuilds from app.board, so the board updates. sheet.spec.js:257-286 checks the steps and the 80/80 HP display."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "actions.js:1277-1286 gives each of the five conditions a toggle on the Active only (slot === 'active'), with on from stack.conditions and set sending set_condition with on flipped. ActionSheet.svelte:161 renders aria-pressed and the `on` class per toggle, and Card-level markers come from the board. sheet.spec.js:288-313 checks the toggle on and off, the aria-pressed state and the board marker."
+            },
+            {
+              "criterion": 8,
+              "verdict": "met",
+              "evidence": "The touch and popover containers render the same model (ActionSheet.svelte:11-12, mode only changes the container). Comparing against the removed ContextMenu.svelte and the old handMenu, stackMenu, attachmentMenu and deckMenu in the diff: every old item is present (Set as Active, Bench, Evolve, Attach to, Play, Discard, To deck top/bottom, Lost Zone, Reveal, Attack, Attack…, Ability, Retreat, Switch, Promote/Switch into Active, the damage steps and Set damage, Set/Clear conditions, Knock Out, Return, Devolve, Move to, To hand, Draw 1, Draw N…, Look at top N…, Search…, Deck list…, Shuffle). Only Zoom is dropped. sheet.spec.js:315-398 checks the kinds."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-02T13:26:41Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "74c41358-d09b-4a53-ad85-e86aaae51763",
+            "title": "Grouped actions in one action sheet",
+            "criteria": [
+              "By touch, tapping a card in hand, a Pokémon in play, an attached card, the deck and a card in a pile view each opens its actions, showing the card and offering its text.",
+              "At 390×844 by touch, the sheet covers the screen, and a group whose actions overflow scrolls sideways and shows that more are off screen.",
+              "At 1024×768 by touch, the card is on the left and the actions on the right, and only the actions scroll when they are taller than the panel.",
+              "With a mouse, hovering over a card enlarges it, clicking shows it enlarged with its text, and right-clicking opens the grouped actions at the pointer. A device with both touch and a mouse behaves each way as it is used.",
+              "The actions are grouped in the design's order, with the common action first and Knock Out last. An Active Pokémon with two attacks and no Ability shows no Ability group.",
+              "Damage can be raised by 10, 30 or 50, lowered by 10, or typed as a total, and the board shows the new damage.",
+              "Each Special Condition on an Active Pokémon toggles on and off with one tap, and the toggle shows its state.",
+              "For every kind of card, the touch sheet offers the same actions as the desktop popover, and both offer every action today's menus do, apart from Zoom."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/ActionSheet.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "app.sheet"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "info.text"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Zoom.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/ContextMenu.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "mobile-board/mockups.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Stack.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Hand.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Side.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/sheet.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Card.svelte click() (around lines 35-40) calls onmenu for any non-mouse pointer. Hand.svelte:65 passes onmenu=openSheet(handMenu(c)); Stack.svelte:51 passes onmenu=menu for the Pokémon in play (menu at ~line 915 calls openSheet(stackMenu)); Stack.svelte:41,46 pass attachmentMenu for tools and energy; Side.svelte:71 (deck Card onclick=deck) and Side.svelte:64 (deck div onclick=deck) call deckMenu, which returns card {iid:'deck',hidden:true}, the text naming the cards left, and title 'Your deck'; Modal.svelte:113,138,158 pass cardMenu(c, zone) to pile and deck-list cards. ActionSheet.svelte:105-117 (tablet) and 125-127 (phone) render Card plus a Text/Card text switch that shows model.text or info.text. web/e2e/sheet.spec.js:71-113 tests each kind by tap."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "ActionSheet.svelte:12 selects mode 'phone' when app.layout==='phone'; store.svelte.js:1410-1415 sets layout phone for max-width 639px. CSS ActionSheet.svelte:240 '.sheet.phone { inset: 0 }' covers the viewport, and sheet.spec.js:118 asserts the bounding box is 390x844 at phone size. A group that overflows is a .row with overflow-x:auto (ActionSheet.svelte:245) and the 'more' class set by fade() (lines 73-84, 159/165 attachment), with the mask-image at line 246. sheet.spec.js:115-138 tests the scroll and the fade clearing at the far end."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "ActionSheet.svelte:249-258: .sheet.tablet is a centred panel with .side (340px, card) on the left and .main on the right; .body has overflow-y:auto (line 193) and .main has min-height:0, so only .main .body scrolls while the header and card stay fixed. sheet.spec.js:140-171 checks left.x+width \u003c= right.x, scrollTop\u003e0 and that the sheet and card boxes do not move."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Hover: Card.svelte CSS ':global(body:not(.dragging)) .card.lift:not(.back):hover { --hs: 1.8 }' (~line 530) enlarges a face-up card. Click: Card.svelte click() (~35-40) with a mouse pointer falls to onclick or app.zoom=card, and Zoom.svelte:14-31 shows the art and info.text in a '.zoom' dialog. Right-click: Card.svelte contextmenu() (~41-47) calls onmenu(ev,'mouse'), and store.svelte.js:1426-1433 pointerTypeOf/openSheet pick 'popover' for mouse, placed at ev.clientX/Y (ActionSheet.svelte:37-39, width 264 at line 282). Mixed devices: pointerTypeOf(ev) uses ev.pointerType on each event, so a touch tap gets the sheet and a mouse click gets zoom or popover. sheet.spec.js:173-227 tests both."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "actions.js sections() (~1075-1077) drops empty groups. handMenu (~1125-1141) orders Play (primary first item), Move, Other. stackMenu (~1262-1288) orders Attack, Ability, Move, Damage, Conditions, Other, with Knock Out last in 'other' (line 1247, danger:true). An active with no abilities has abilities=[] and so no Ability section (line 1187-1189). ActionSheet.svelte:158-175 renders the sections in model order. sheet.spec.js:229-258 checks the order and the absence of Ability. I did not have the design document, so 'design's order' is judged from the code and the spec's stated order."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "actions.js stackMenu damage stepper (~1266-1275): value=damage, step 10, quick [30,50], set calls act('place_damage', {amount: v - damage}), giving +10, +30, +50 and -10 buttons. ActionSheet.svelte:145-157 renders −step, +step and the quick buttons. Typed total: ActionSheet.svelte:60-64 typed() clamps and calls st.set on change/Enter/blur (input at line 150). The board updates from the server via act(); the Stack hp_left display is at Stack.svelte ~line 19. sheet.spec.js:260-289 checks the HP text for each step."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "actions.js stackMenu (~1276-1286): Conditions toggles only for slot==='active', each with on=conds.includes(c) and set(on) calling act('set_condition', {condition: c, on}). ActionSheet.svelte:161 renders a button with aria-pressed and class .on; line 215 adds a check mark. The board marker and rotation tests are in sheet.spec.js:291-316, which checks one tap on and one tap off with the board state."
+            },
+            {
+              "criterion": 8,
+              "verdict": "met",
+              "evidence": "Touch and popover share one model (ActionSheet.svelte:11-12, mode switches only the container). Per kind: hand actions Set as Active, Bench, Evolve, Play, Attach, Discard, Deck top/bottom, Lost Zone, Reveal (actions.js handMenu); Pokémon actions Attack, Ability, Retreat/Switch, Promote/Switch into Active, Damage, Conditions, Return to hand, Devolve, Knock Out (stackMenu); attachment Move to X, To hand, Discard (attachmentMenu); deck Draw 1, Draw N, Look at top N, Search, Deck list, Shuffle (deckMenu); pile card Move (Modal cardMenu). Zoom is removed from every menu (grep of actions.js shows none). Set damage… is now the typed total. ContextMenu.svelte is deleted and replaced by ActionSheet in App.svelte. sheet.spec.js:318-401 asserts identical menus by touch and mouse for each kind. I ran no tests (read-only); the verify line reports 116 passed."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "46ddd96f-8e7f-416b-bb51-174dfb66facb",
+      "title": "Choose targets on the board",
+      "checks": [
+        {
+          "at": "2026-11-02T13:37:18Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "46ddd96f-8e7f-416b-bb51-174dfb66facb",
+            "title": "Choose targets on the board",
+            "criteria": [
+              "Choosing Attach for an Energy in hand shows a banner naming the Energy, highlights every Pokémon the player has in play, and attaches it to the one tapped.",
+              "Cancelling, or tapping anything other than a highlighted candidate, attaches nothing and adds nothing to the timeline.",
+              "Evolve, Retreat, Switch (no cost), Tool attach and moving an attached card each pick their destination on the board, offering the same candidates today's menus list.",
+              "With exactly one Pokémon on the bench, the Active Pokémon's Retreat names that Pokémon and retreats to it straight away.",
+              "With a full bench, attaching an Energy to a benched Pokémon takes three taps: the Energy, Attach and the Pokémon.",
+              "Board selection works the same way with a mouse on the desktop."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/target.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "app.target"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/TargetBanner.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/pointer.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "app.target.card.iid"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/target.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/lib/actions.js handMenu: the Energy's Attach item is built by targetItem with prompt `Attach ${card.name}`, hint 'Tap one of your Pokémon' and candidates ownStacks(seat), which covers active and every bench slot. web/src/lib/target.js startTarget sets app.highlight to those candidate iids, and Card.svelte `lit` reads app.highlight. web/src/components/TargetBanner.svelte renders t.prompt and t.hint, and the energy card is faded via `.target-source` in Card.svelte. web/src/lib/target.js click handler runs the candidate's run(spec), which calls act('attach', ...). web/e2e/target.spec.js:45-61 asserts the banner text, the lit list of the three own Pokémon, and the attach line in the timeline."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/src/lib/target.js capture-phase click listener: a click outside the banner calls endTarget() and runs only if the tapped [data-drop] spec is in t.candidates, so any other tap attaches nothing and stops propagation. Cancel calls endTarget (TargetBanner.svelte) and Escape is handled at target.js keydown. Contextmenu also cancels. pointer.svelte.js press() returns early while app.target is set, so no drag starts. web/e2e/target.spec.js:63-90 covers Cancel, a non-candidate tap, and Escape, asserting no new timeline lines."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Evolve: actions.js handMenu targetItem with candidates ownStacks(seat), the same list the old per-candidate Evolve items used. Tool attach and Energy attach: attach() helper with candidates ownStacks(seat). Retreat and Switch, no cost: stackMenu in actions.js uses benchStacks(seat), the same bench-only list as the old loop. Move attached card: attachmentMenu targetItem with candidates ownStacks(seat), matching the old 'Move to' list. ActionSheet.svelte choose() calls startTarget(item.target) for these items. web/e2e/target.spec.js:95-162 exercises each destination action and its lit set."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "web/src/lib/target.js targetItem returns a direct item labelled one(name) with run(candidates[0].spec) when there is exactly one candidate, so with one bench Pokémon stackMenu's Retreat becomes 'Retreat to Riolu' and runs act('retreat', {to_slot}) at once with no target mode. actions.js stackMenu passes benchStacks(seat) to Retreat. web/e2e/target.spec.js:164-177 benches nothing else, opens the Active's actions, asserts no plain 'Retreat' item, taps 'Retreat to Riolu' and checks the swap and no banner."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "With five benched Pokémon the candidates are six, so Attach is a target item. Tapping the Energy opens the sheet (Card.svelte click calls onmenu on touch), tapping Attach runs choose() in ActionSheet.svelte, which closes the sheet and calls startTarget, and tapping the benched Pokémon runs the attach via the target.js click handler. web/e2e/target.spec.js:179-188 is the three-tap test on the touch profile with a full bench of five (p1-2, p1-3, p1-4 moved to bench:2-4), asserting the Energy lands on bench 5."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Card.svelte contextmenu: a mouse right-click calls onmenu(ev, 'mouse'), which openSheet in store.svelte.js turns into a popover (ActionSheet.svelte mode 'popover'). The target click handler in target.js is a window capture listener and is pointer-type agnostic, so a mouse click on a lit candidate runs the action. pointer.svelte.js press() only starts drags for button 0 and is inert while app.target is set. web/e2e/target.spec.js open() and press() use right-click and click on the desktop profile, and every test in the file runs on both profiles except the touch-only three-tap test."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "bee420d0-abcb-4806-92f9-5b24f8d94e70",
+      "title": "Touch-friendly controls across the board",
+      "checks": [
+        {
+          "at": "2026-11-02T13:47:18Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "bee420d0-abcb-4806-92f9-5b24f8d94e70",
+            "title": "Touch-friendly controls across the board",
+            "criteria": [
+              "At iPhone and iPad sizes by touch, every button, toggle and card target the board shows measures at least 44×44 CSS pixels.",
+              "By touch, cards do not enlarge or reveal hover-only buttons when touched. With a mouse on the desktop, hover still enlarges cards and shows the Pokémon's quick damage buttons.",
+              "By touch, the timeline's rewind and play-from-here buttons are visible and work.",
+              "By touch, tapping a card in a discard, search, look or deck-list view shows its large preview.",
+              "Cards are marked so that touching and holding one selects no text and opens no system callout."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Hand.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Stack.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Timeline.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".rw"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".acts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/app.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "label.toggle"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".card.xs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/touch.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/app.css:102-108 sets min-height and min-width 44px on button, select and non-checkbox input, and on a checkbox's label, under @media (pointer: coarse). web/src/components/Card.svelte:112-116 sets --w to max(44px, ...) for .card, .card.sm and .card.xs under pointer: coarse. Side.svelte:166-169 gives .pile min 44px and a 44px-minimum card width. Timeline.svelte:218-228 and the .sec button rule in ActionSheet.svelte:202-204 give 44px targets. Stack.svelte's quick damage buttons are display:none on hover:none (Stack.svelte:156-158), so they are not shown on touch. web/e2e/touch.spec.js:16-50 asserts no sub-44px button, [role=button], select, input, checkbox label or card on the board, the action sheet and a pile view. Caveat: the verify line reports 166 passed and 35 skipped without naming the touch tests, so I could not confirm from the run output that these touch tests executed."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Card.svelte:117-131 wraps every enlarging :hover rule (.card.lift, .lg, .sm, .xs) in @media (hover: hover), so a touch screen with hover:none gets no enlargement. Hand.svelte:103-111 does the same for the hand slot hover scale. Stack.svelte:152-160 gates the quick damage controls (.main:hover .controls) on hover:hover and hides .controls on hover:none. With a mouse (hover:hover), the card lift and .controls reveal rules are still present (Card.svelte:122-130, Stack.svelte:153-155). touch.spec.js:60-78 covers both the touch no-enlarge case and the mouse hover case."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Timeline.svelte:216-229: under @media (pointer: coarse), .rw and .acts get opacity:1 (overriding the base opacity:0 at Timeline.svelte:175 and :191, and the later block wins at equal specificity). .acts is made static and floated right, and its buttons get min 44px. The per-line rewind (jump(l.id)) and play-from-here (playFrom(l.id)) buttons at Timeline.svelte:116-117 are unchanged and wired to act('rewind') and startReplay. touch.spec.js:80-99 taps rewind, checks the branch picker gains an option, and taps play to see .line.now."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Modal.svelte:30-43 cardMenu passes onmenu to the Card in the pile (Modal.svelte:118), search (:143) and look (:163) views. Card.svelte:36-41 calls onmenu on any non-mouse pointer, which opens the action sheet (ActionSheet.svelte: tablet mode shows the card art at up to 280px, phone mode shows it at 104px). Modal.svelte:95-97 means the mouse-only preview is never set on touch. The deck list rows (Modal.svelte:191-194) pass no onmenu, so Card.svelte:40 falls through to app.zoom = card, which opens the large zoom view. touch.spec.js:101-126 covers the pile, search and deck-list taps."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Card.svelte:103-106 sets user-select:none, -webkit-user-select:none and -webkit-touch-callout:none on .card. Card.svelte:46-48 also stops a touch long-press from opening the action menu. touch.spec.js:128-138 checks computed userSelect is none and that the built stylesheet carries -webkit-touch-callout:none for .card."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c78d2ada-7f25-4611-b6d3-1a2c4faa588c",
+      "title": "Panels replace the browser dialogs",
+      "checks": [
+        {
+          "at": "2026-11-02T13:55:55Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c78d2ada-7f25-4611-b6d3-1a2c4faa588c",
+            "title": "Panels replace the browser dialogs",
+            "criteria": [
+              "Choosing an attack shows its printed damage. The player can change the damage, keep the opponent's Active or pick another opposing Pokémon on the board, and confirm. The timeline then records that attack with that damage and target.",
+              "A Pokémon with no attack data offers a way to name an attack and its damage inside the sheet.",
+              "From the deck's actions, the player can draw 3 cards and look at the top 4 by choosing the count on screen, and cannot choose more than the cards left in the deck.",
+              "No browser dialog opens anywhere on the board, at any size, by touch or by mouse."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/AttackPanel.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/CountPanel.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/ActionSheet.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "app.sheet.panel"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/panels.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/components/AttackPanel.svelte:17 sets damage from the printed attack; :58-60 is a Stepper with a ×2 button for Weakness; :19 defaults target to `${opp}:active`; :27-37 change() hides the sheet and starts target mode over the opponent's candidates, :34 sets the chosen spec, :35 restores the sheet; :39-43 confirm() sends {name, damage, target} via act('attack'). Server side web/../internal/webui/actions.go:233-240 passes target and a.Damage to g.Attack. web/e2e/panels.spec.js:30-57 covers the printed 60 → adjusted 140, the bench target Riolu, and the timeline lines 'p1 used attack Body Slam from p1:active (Makuhita)' and 'p1 set damage on p2:bench:0 (Riolu): 0 → 140'."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/src/lib/actions.js:219-220 adds an 'Attack…' item with a null attack panel when the active Pokémon has no attack data; AttackPanel.svelte:46-54 shows an 'Attack name' text input when no attack is passed, and :58-60 gives the damage stepper. web/e2e/panels.spec.js:86-101 exercises it: names Tackle, sets +10, confirms 'Attack Makuhita for 10' and checks the timeline."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/src/lib/actions.js:358-360 offers 'Draw N…' and 'Look at top N…' as CountPanel panels from the deck menu. web/src/components/CountPanel.svelte:12 sets the default to 1 for draw and 3 for look, :13 caps the count with Math.min(n, max) where max is the deck_count (:11), and :27 passes max to Stepper. web/src/components/Stepper.svelte:7-10 clamps every set to max. :16-31 send act('draw', {n}) or act('look_top', {n}) and open the look modal. web/e2e/panels.spec.js:103-127 checks Draw 3 and Look at the top 4 on screen; :129-139 checks that a typed 500 becomes 40 and '+1' is disabled at the deck size."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "No window.alert, confirm or prompt call exists in web/src (grep over web/src finds only the AttackPanel confirm() function name and comments). The only dialog-like elements are in-page role=\"dialog\" divs (ActionSheet.svelte:105, Zoom.svelte:16, Modal.svelte:112). The clipboard fallback at web/src/lib/actions.js:427-429 sets app.modal, not a browser prompt. The ActionSheet is used in all three layouts (phone, tablet, popover; ActionSheet.svelte:14). Enforcement is by web/e2e/fixtures.js:9-19, which fails any test that sees a 'dialog' event, and panels.spec.js:141-145 scans the built bundle for prompt(/confirm(/alert(. Both the touch and mouse projects use this fixture (the verify run passed). Not checked by running: the built bundle, and the scan regex is not run here."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "a2ce16fe-f973-448a-ae28-39f1c9be3bbc",
+      "title": "Compact phone board",
+      "checks": [
+        {
+          "at": "2026-11-02T14:30:15Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a2ce16fe-f973-448a-ae28-39f1c9be3bbc",
+            "title": "Compact phone board",
+            "criteria": [
+              "At 390×844 in portrait, the page has no horizontal scroll, and cards in play and in hand are large enough to read and tap.",
+              "Both players' deck, discard, Lost Zone and prize counts are visible, and tapping each opens that pile, the deck's actions or the prize view.",
+              "With 8 Pokémon on a bench (Area Zero Underdepths in play), all 8 can be reached by scrolling the bench row.",
+              "The branch selector, review mode, reveal all, the timeline, the deck list and, on the hosted playmat, sign out can each be reached and used on a phone.",
+              "At 844×390 on a phone, the board is replaced by a notice to turn the phone upright, and turning it back shows the board with nothing lost.",
+              "At tablet and desktop sizes, the board looks and behaves as before this task.",
+              "The touch drag, action sheet, target selection and panel tests all still pass at phone size."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/app.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/CounterBar.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Side.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Hand.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Strip.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "App.svelte"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/App.svelte:218-221 sets --cw to (100vw - 32px)/5.6 (about 65px at 390px) for .app.phone; web/src/components/Hand.svelte (.hand.phone, --cw: 72px) and Side.svelte (.side.phone, .bench overflow-x: auto) keep the board inside the width; Hand.svelte:87-89 gives .hand overflow-x auto under 640px. web/src/app.css:628-634 and Card.svelte (@media (pointer: coarse) max(44px, ...)) set minimum tap sizes. web/e2e/phone.spec.js:12-21 asserts documentElement and main scrollWidth within 390 and named cards at least 60px wide. The phone project ran this spec in the verify step."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/src/components/CounterBar.svelte:17-26 renders per-seat chips Deck, Discard, Lost and Prizes, with the opponent's hand count as a static chip. Deck opens openSheet(deckMenu(seat)), Discard and Lost open the pile modal (open('pile', zone)), and Prizes opens open('prizes'). Modal.svelte adds the m.kind === 'prizes' view with Take buttons (diff hunk at Modal.svelte around line 134). web/e2e/phone.spec.js:23-60 checks the counter labels and taps each one."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/src/components/Side.svelte phone branch (diff hunk ~line 1135-1151) renders slots from side.bench in a .row.bench with data-scroll-x; CSS '.phone .bench' sets flex-wrap nowrap and overflow-x auto (Side.svelte diff ~1216-1223). slots adds a null slot when the Area Zero stadium text allows 8 (Side.svelte:17-18). web/e2e/phone.spec.js:62-91 benches 8 Pokémon, checks scrollWidth \u003e clientWidth, swipes the row with CDP touch events, and asserts the eighth slot is within 0-390px."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "web/src/App.svelte:87-103: on phone the ☰ dropdown carries the branch select (aria-label 'branch'), Review mode and, in review, Reveal all. Lines 104-111 add Deck list and Show timeline (timelineOpen, rendered as aside.sheet at lines 167-173 with a Close button). Lines 118-122 render the account and the Sign out form (POST /auth/logout) when app.account is set, with no phone gate, so the hosted sign out is in the same menu. web/e2e/phone.spec.js:93-128 exercises branch, reveal, review, deck list and timeline through ☰. Sign out is not exercised by any test, since the test board is not hosted, but the code path is present."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "web/src/lib/store.svelte.js:71 defines the sideways matchMedia '(orientation: landscape) and (max-height: 499px) and (pointer: coarse)' and sets app.landscapePhone. App.svelte:133-138 shows the role=status 'Turn your phone upright to see the board.' notice in place of \u003cmain\u003e. The timeline is hidden while landscapePhone (App.svelte:22). The board state lives in the store, not in the component, so it survives. web/e2e/phone.spec.js:130-143 resizes to 844x390 and back, checks the notice and main removal, then checks the bench card and the Deck chip are still there."
+            },
+            {
+              "criterion": 6,
+              "verdict": "not_met",
+              "evidence": "The tablet project uses an iPad profile with touch (playwright.config.js:27-29), so the coarse and hover:none rules apply to tablet as well as phone. Those shared rules change tablet's look and behaviour: web/src/components/Stack.svelte:156-158 (@media (hover: none) { .controls { display: none } }) removes the quick damage buttons on tablet; web/src/app.css:628-634 forces 44px minimum sizes on all buttons, selects and inputs; Card.svelte @media (pointer: coarse) forces card min-width 44px; Side.svelte:235-238 and Timeline.svelte:218-232 change pile and timeline-button sizing and visibility on coarse pointers. The diff also changes tablet and desktop code outside this item's listed files (Card.svelte, Stack.svelte, Modal.svelte, Timeline.svelte, lib/actions.js, lib/store.svelte.js, deleted ContextMenu.svelte), and there is no before/after comparison showing tablet and desktop are unchanged. web/e2e/phone.spec.js:145-158 only checks structure (no counters, mat present) at non-phone sizes, not appearance or behaviour."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "The phone project runs the touch, sheet, target, panels and drag specs: none of the skips for these specs (drag.spec.js:198,220; sheet.spec.js:85,94,104,116,141,396,404,427; target.spec.js:180; touch.spec.js:32-132) exclude the phone project, and fixtures.js:191-193 defines isPhone as project name 'phone'. The verify step reports 201 passed, 48 skipped, with the phone project included. Phone-specific branches in sheet.spec.js:51 and drag.spec.js:126 are exercised at phone size. Verification output is the basis for the pass; the source does not show a per-test result."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-02T14:34:29Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "a2ce16fe-f973-448a-ae28-39f1c9be3bbc",
+            "title": "Compact phone board",
+            "criteria": [
+              "At 390×844 in portrait, the page has no horizontal scroll, and cards in play and in hand are large enough to read and tap.",
+              "Both players' deck, discard, Lost Zone and prize counts are visible, and tapping each opens that pile, the deck's actions or the prize view.",
+              "With 8 Pokémon on a bench (Area Zero Underdepths in play), all 8 can be reached by scrolling the bench row.",
+              "The branch selector, review mode, reveal all, the timeline, the deck list and, on the hosted playmat, sign out can each be reached and used on a phone.",
+              "At 844×390 on a phone, the board is replaced by a notice to turn the phone upright, and turning it back shows the board with nothing lost.",
+              "At tablet and desktop sizes, the board looks and behaves as before this task.",
+              "The touch drag, action sheet, target selection and panel tests all still pass at phone size."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/app.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/CounterBar.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Side.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Hand.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Strip.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "App.svelte"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/e2e/phone.spec.js:12-21 asserts documentElement and main scrollWidth stay within 390px and that the Makuhita, Riolu and Band cards are at least 60px wide. The sizing is in web/src/App.svelte (.app.phone sets --cw: calc((100vw - 32px) / 5.6)) and web/src/components/Hand.svelte (.hand.phone { --cw: 72px }). The verify run reports the phone project passing."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/src/components/CounterBar.svelte:17-26 renders Deck, Discard, Lost and Prizes chips for each seat. Deck opens openSheet(deckMenu(seat)), Discard and Lost call app.modal = {kind:'pile'}, and Prizes opens kind 'prizes'. web/src/components/Modal.svelte:991-1004 is the prize view with a Take action. phone.spec.js:23-60 checks the counts and taps each chip."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/src/components/Side.svelte:1135-1151 renders the phone bench as a .row.bench with overflow-x: auto, one Stack per slot including the expansion slot. Side.svelte:1146 adds a '+n ›' hint for slots off the right edge. web/e2e/phone.spec.js:62-91 fills 8 benches under Area Zero Underdepths, checks scrollWidth \u003e clientWidth, swipes with CDP touch events and checks the 8th slot is on screen."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "On phone, the header dropdown (web/src/App.svelte:476-506, not gated off on phone) holds the branch select, Review mode and Reveal all. Its menu items include Deck list and Show timeline, which opens the full-screen aside.sheet with a 44px close button (App.svelte:553-555, 578-585). Sign out is at App.svelte:118-121 inside the same dropdown when app.account is set. The dropdown is reached via the menu button, and phone.spec.js:93-128 exercises branch, reveal, review, deck list and timeline. Sign out is a plain form POST that no test clicks, so 'used' rests on the markup, not an executed test."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "web/src/lib/store.svelte.js (new sideways media query, landscapePhone) feeds App.svelte:133-138, which replaces \u003cmain\u003e with a role=status 'Turn your phone upright' notice. The board state lives in the app store, so nothing is lost when main remounts. phone.spec.js:130-143 checks the notice at 844x390, its absence on return to 390x844, and that the bench card and Deck chip are still there."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Phone-only changes are gated: App.svelte .app.phone, .side.phone, .hand.phone, .strip.phone, and the @media (max-width: 639px) hand overflow. Tablet and desktop render the original markup (App.svelte:520-541 else branches). phone.spec.js:145-198 asserts no counters, the piles and prizes beside the mat, the aside not having the sheet class, the --cw size formula, and a 1024x560 tablet not showing the upright notice. Caveat: web/src/app.css and Side.svelte carry global @media (pointer: coarse) 44px rules and a global .card touch-action that also reach tablets; these are cumulative from earlier tasks in the diff, so this check cannot isolate them. Verify reports the tablet and desktop projects passing."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "The phone project does not skip the touch, drag, sheet, target or panel specs: touch.spec.js gates on isTouch (true for phone), sheet.spec.js:96 and 427 expect the phone sheet, drag.spec.js:198 and 220 run the phone-only hand-scroll tests, and fixtures.js:192-194 defines isPhone as project.name === 'phone'. The verify line reports 203 passed, 49 skipped with no failures, and the skips are the profile-specific gates listed above."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    }
+  ]
+}

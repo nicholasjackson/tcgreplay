@@ -1,7 +1,7 @@
 <script>
   // The middle of the mat: Stadium, turn, coin, a play area to drop
   // Trainers on, lingering effects and the turn buttons.
-  import { app, canAct, oppActing } from '../lib/store.svelte.js';
+  import { app, canAct, oppActing, ownerOf } from '../lib/store.svelte.js';
   import { dropOnZone, endTurn, seatArgs } from '../lib/actions.js';
   import { dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
@@ -22,8 +22,14 @@
   const review = $derived(snap?.mode === 'review');
   const actor = $derived(review && b.current ? b.current : app.human);
   const nameOf = (seat) => b.sides?.[seat]?.name || (seat === app.human ? 'You' : app.assistant);
+  // A phone's strip is one row, so its turn label is short: "T2 · You".
+  const phone = $derived(app.layout === 'phone');
+  // On a phone the Stadium sits on the side of whoever played it: left of
+  // your Active, or right of the opponent's.
+  const theirs = $derived(!!b.stadium && ownerOf(b.stadium.iid) !== app.human);
   function whoseTurn() {
     if (setup) return 'Setup';
+    if (phone) return `T${b.turn} · ${b.current === app.human ? 'You' : nameOf(b.current)}`;
     const who = b.current === app.human ? 'Your turn' : `${nameOf(b.current)}'s turn`;
     return `Turn ${b.turn} · ${who}`;
   }
@@ -32,7 +38,7 @@
 <!-- No bar: a thin midline between the halves. The Stadium straddles it
      left of the Active Spots, the turn controls float on the right. -->
 <div class="strip" class:phone={app.layout === 'phone'}>
-  <div class="stadium" {@attach zone('stadium')} role="region" aria-label="Stadium">
+  <div class="stadium" class:theirs {@attach zone('stadium')} role="region" aria-label="Stadium">
     {#if b.stadium}
       <Card card={b.stadium} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
     {:else}
@@ -52,10 +58,10 @@
       {#if setup}
         <button onclick={() => act('mulligan')}>Mulligan</button>
         <button class="primary" onclick={() => act('start_game', { first: app.human })}>I go first</button>
-        <button onclick={() => act('start_game', { first: app.claude })}>{app.assistant} goes first</button>
+        <button onclick={() => act('start_game', { first: app.claude })}>{app.assistant} {phone ? 'first' : 'goes first'}</button>
       {:else}
         {#if snap?.open_action}
-          <button onclick={() => act('end_action')} title="Close the open compound action" disabled={oppActing()}>End action {snap.open_action}</button>
+          <button onclick={() => act('end_action')} title="Close the open compound action ({snap.open_action})" disabled={oppActing()}>End action</button>
         {/if}
         <button onclick={() => act('draw', { n: 1, ...seatArgs(actor) })} disabled={!canAct()}>
           {actor === app.human ? 'Draw' : `Draw for ${nameOf(actor)}`}
@@ -170,11 +176,21 @@
     height: auto;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 8px;
-    font-size: 13px;
+    justify-content: center;
+    padding: 2px 6px;
+    font-size: 12px;
   }
-  .phone .stadium { position: static; transform: none; width: auto; min-width: 48px; min-height: 0; padding: 2px; }
-  .phone .controls { position: static; transform: none; flex-direction: row; flex-wrap: wrap; align-items: center; max-width: none; flex: 1; gap: 6px; }
+  /* One row: the turn, the coin and the turn buttons. The Stadium sits in
+     the empty felt beside an Active: left of yours, just below the row,
+     when it is yours; right of the opponent's, just above, when theirs. */
+  .phone .turn { padding: 0.5em 0.7em; }
+  .phone .coin { width: 40px; height: 40px; font-size: 0.85em; }
+  .phone .status { gap: 5px; }
+  .phone .buttons { flex-wrap: nowrap; gap: 5px; }
+  .phone .buttons button { padding: 0 8px; font-size: 12px; white-space: nowrap; }
+  .phone .stadium { position: absolute; left: 8px; top: calc(100% + 6px); bottom: auto; right: auto; transform: none; width: auto; min-width: 48px; min-height: 0; padding: 2px; }
+  .phone .stadium.theirs { left: auto; right: 8px; top: auto; bottom: calc(100% + 6px); }
+  .phone .controls { position: static; transform: none; flex-direction: row; flex-wrap: nowrap; align-items: center; max-width: none; gap: 5px; }
+  .phone .effects { position: absolute; top: 100%; left: 8px; right: 8px; z-index: 3; }
   .phone .play { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; }
 </style>

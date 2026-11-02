@@ -61,7 +61,7 @@
   <!-- The phone board: counters for the piles and prizes, the Active
        centred, and a bench row that scrolls sideways. -->
   <section class="side phone" class:mirrored aria-label="{seat} side">
-    <CounterBar {seat} {name} />
+    <CounterBar {seat} {name} inset={mirrored} />
     <div class="bench-wrap">
       <div class="row bench" data-scroll-x {@attach offscreen}>
         {#each slots as b, i (i)}

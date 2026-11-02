@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["dev"],
+      "port": 7778,
+      "url": "http://127.0.0.1:7778"
+    },
+    {
+      "name": "dev-lan",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd web && TCGREPLAY_LAN=1 TCGREPLAY_ADDR=127.0.0.1:7778 npm run dev"],
+      "port": 5173,
+      "autoPort": false
+    }
+  ]
+}
