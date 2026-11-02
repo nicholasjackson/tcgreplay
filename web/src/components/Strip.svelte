@@ -2,7 +2,8 @@
   // The middle of the mat: Stadium, turn, coin, a play area to drop
   // Trainers on, lingering effects and the turn buttons.
   import { app, canAct, oppActing } from '../lib/store.svelte.js';
-  import { dropOnZone, endTurn, readDrag, seatArgs } from '../lib/actions.js';
+  import { dropOnZone, endTurn, seatArgs } from '../lib/actions.js';
+  import { dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
 
@@ -10,23 +11,8 @@
   const snap = $derived(app.snap);
   const setup = $derived(b.phase === 'setup');
   const myTurn = $derived(b.turn_open && b.current === app.human);
-  let over = $state('');
-
-  function zone(name) {
-    return {
-      ondragover: (ev) => {
-        ev.preventDefault();
-        over = name;
-      },
-      ondragleave: () => (over = ''),
-      ondrop: async (ev) => {
-        ev.preventDefault();
-        over = '';
-        const data = readDrag(ev);
-        if (data) await dropOnZone(data, name);
-      },
-    };
-  }
+  // zone makes the Stadium or the play area a drop zone.
+  const zone = (name) => dropZone(name, (data) => dropOnZone(data, name));
   async function flip() {
     const r = await act('coin_flip', { n: 1 });
     if (Array.isArray(r)) app.caption = `Coin: ${r.join(', ')}`;
@@ -45,10 +31,10 @@
 
 <!-- No bar: a thin midline between the halves. The Stadium straddles it
      left of the Active Spots, the turn controls float on the right. -->
-<div class="strip">
-  <div class="stadium" class:over={over === 'stadium'} {...zone('stadium')} role="region" aria-label="Stadium">
+<div class="strip" class:phone={app.layout === 'phone'}>
+  <div class="stadium" {@attach zone('stadium')} role="region" aria-label="Stadium">
     {#if b.stadium}
-      <Card card={b.stadium} size="lg" from="stadium" />
+      <Card card={b.stadium} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
     {:else}
       <span>Stadium</span>
     {/if}
@@ -81,7 +67,7 @@
     </div>
 
     {#if app.dragging?.kind === 'card'}
-      <div class="play" class:over={over === 'play'} {...zone('play')} role="region" aria-label="Play area">
+      <div class="play" {@attach zone('play')} role="region" aria-label="Play area">
         Drop here to play
       </div>
     {/if}
@@ -144,7 +130,6 @@
     background: #0006;
     font-size: 0.85em;
   }
-  .over { background: var(--drop); border-color: var(--accent); color: var(--text); }
   .turn {
     font-weight: 700;
     padding: 0.45em 0.9em;
@@ -177,4 +162,19 @@
   .effect button { background: none; border: none; color: inherit; cursor: pointer; padding: 0 0 0 4px; }
   .buttons { display: flex; gap: 6px; flex-wrap: wrap; }
   .buttons button { font-size: 0.95em; padding: 0.4em 0.8em; }
+
+  /* Phone: one compact row between the halves: the Stadium, the turn, the
+     coin and the turn buttons. The play area covers the row while a card
+     is dragged. */
+  .strip.phone {
+    height: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+  .phone .stadium { position: static; transform: none; width: auto; min-width: 48px; min-height: 0; padding: 2px; }
+  .phone .controls { position: static; transform: none; flex-direction: row; flex-wrap: wrap; align-items: center; max-width: none; flex: 1; gap: 6px; }
+  .phone .play { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; }
 </style>

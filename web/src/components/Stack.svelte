@@ -1,14 +1,14 @@
 <script>
   // A Pokémon slot: the evolution chain's top card, attachments tucked
   // underneath, damage, HP left and Special Conditions.
-  import { app, cardInfo } from '../lib/store.svelte.js';
-  import { dropOnStack, readDrag, stackMenu, attachmentMenu, startDrag, endDrag } from '../lib/actions.js';
+  import { app, cardInfo, openSheet } from '../lib/store.svelte.js';
+  import { dropOnStack, stackMenu, attachmentMenu } from '../lib/actions.js';
+  import { draggable, dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
 
   let { seat, slot, stack, label = '' } = $props();
 
-  let over = $state(false);
   const spec = $derived(`${seat}:${slot}`);
   const top = $derived(stack?.pokemon?.at(-1));
   const conds = $derived(stack?.conditions || []);
@@ -19,48 +19,31 @@
   const hp = $derived(stack?.hp || info?.hp || 0);
   const left = $derived(stack?.hp_left ?? (hp ? hp - (stack?.damage || 0) : null));
 
-  function menu(ev) {
-    if (!stack) return;
-    app.menu = { x: ev.clientX, y: ev.clientY, ...stackMenu(seat, slot, stack) };
-  }
-  function dragover(ev) {
-    ev.preventDefault();
-    over = true;
-  }
-  async function drop(ev) {
-    ev.preventDefault();
-    over = false;
-    const data = readDrag(ev);
-    if (data) await dropOnStack(data, seat, slot, !!stack);
-  }
-  function dragStack(ev) {
-    startDrag(ev, { kind: 'stack', from: spec });
+  function menu(ev, pointerType) {
+    if (stack) openSheet(ev, () => stackMenu(seat, slot, stack), pointerType);
   }
   const dmg = (amount) => act('place_damage', { target: spec, amount });
 </script>
 
 <div
   class="slot"
-  class:over
   class:empty={!stack}
   class:active={slot === 'active'}
-  ondragover={dragover}
-  ondragleave={() => (over = false)}
-  ondrop={drop}
+  {@attach dropZone(spec, (data) => dropOnStack(data, seat, slot, !!stack))}
   role="region"
   aria-label={label || spec}
 >
   {#if stack}
-    <div class="pile" draggable={app.opponent !== 'acting'} ondragstart={dragStack} ondragend={endDrag} role="group">
+    <div class="pile" {@attach draggable(app.opponent !== 'acting' && { kind: 'stack', from: spec })} role="group">
       <div class="attachments">
         {#each stack.tools || [] as t (t.iid)}
           <div class="att tool">
-            <Card card={t} size="xs" from={spec} role="tool" onmenu={(ev) => (app.menu = { x: ev.clientX, y: ev.clientY, ...attachmentMenu(t, 'tool') })} />
+            <Card card={t} size="xs" from={spec} role="tool" onmenu={(ev, type) => openSheet(ev, () => attachmentMenu(t, 'tool'), type)} />
           </div>
         {/each}
         {#each stack.energy || [] as e (e.iid)}
           <div class="att">
-            <Card card={e} size="xs" from={spec} role="energy" onmenu={(ev) => (app.menu = { x: ev.clientX, y: ev.clientY, ...attachmentMenu(e, 'energy') })} />
+            <Card card={e} size="xs" from={spec} role="energy" onmenu={(ev, type) => openSheet(ev, () => attachmentMenu(e, 'energy'), type)} />
           </div>
         {/each}
       </div>
@@ -101,9 +84,8 @@
   }
   .slot.active { width: calc(var(--cw) * 1.45); min-height: calc(var(--cw) * 1.25 * 1.4 + 8px); border-style: solid; }
   .slot:not(.empty) { border-color: transparent; }
-  .slot.over { background: var(--drop); border-color: var(--accent); }
   .hint { color: var(--muted); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.1em; }
-  .pile { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: grab; }
+  .pile { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: grab; touch-action: none; }
   .main { position: relative; z-index: 1; order: 0; }
   /* Energy and Tools tuck over the bottom of the Pokémon, as at a table,
      instead of taking a row of their own. */
@@ -118,7 +100,6 @@
   }
   .att { margin-left: calc(var(--cw) * -0.12); }
   .att:first-child { margin-left: 0; }
-  .att:hover { z-index: 3; }
   .chain {
     position: absolute;
     top: -6px;
@@ -166,7 +147,15 @@
     transition: opacity 0.15s;
     z-index: 50; /* above the card while it is enlarged on hover */
   }
-  .main:hover .controls { opacity: 1; }
+  /* The quick damage buttons need a hover; on a touch screen the action
+     sheet's Damage stepper does their job. */
+  @media (hover: hover) {
+    .main:hover .controls { opacity: 1; }
+    .att:hover { z-index: 3; }
+  }
+  @media (hover: none) {
+    .controls { display: none; }
+  }
   .controls button {
     font: 600 0.8em system-ui;
     padding: 0.2em 0.45em;

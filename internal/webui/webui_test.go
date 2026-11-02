@@ -19,45 +19,10 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 )
-
-// fakeDB serves a tiny card pool with set code TST (copied from the game
-// package tests).
-type fakeDB map[string]*cards.Card
-
-func newFakeDB() fakeDB {
-	return fakeDB{
-		"tst-1":   {ID: "tst-1", Name: "Riolu", Category: "Pokemon", Stage: "Basic", HP: 70, Image: "https://assets.tcgdex.net/en/x/tst/1"},
-		"tst-2":   {ID: "tst-2", Name: "Lucario", Category: "Pokemon", Stage: "Stage1", EvolveFrom: "Riolu", HP: 130},
-		"tst-3":   {ID: "tst-3", Name: "Ultra Ball", Category: "Trainer", TrainerType: "Item"},
-		"sve-006": {ID: "sve-006", Name: "Fighting Energy", Category: "Energy", EnergyType: "Normal"},
-	}
-}
-
-func (f fakeDB) Card(_ context.Context, id string) (*cards.Card, error) {
-	if c, ok := f[id]; ok {
-		return c, nil
-	}
-	return nil, fmt.Errorf("%s: %w", id, cards.ErrNotFound)
-}
-func (f fakeDB) Cached(id string) *cards.Card { return f[id] }
-func (f fakeDB) ByName(_ context.Context, name string, _ ...string) (string, error) {
-	for id, c := range f {
-		if c.Name == name {
-			return id, nil
-		}
-	}
-	return "", cards.ErrNotFound
-}
-func (f fakeDB) Resolve(_ context.Context, set, num string) (string, error) {
-	if set != "TST" {
-		return "", cards.ErrNotFound
-	}
-	return "tst-" + num, nil
-}
 
 const testDeck = `Pokémon: 8
 4 Riolu TST 1
@@ -90,7 +55,7 @@ func setup(t *testing.T) (*httptest.Server, *game.Manager) {
 // desktop), also returning the server so tests can inspect its hub.
 func setupServer(t *testing.T, public *url.URL) (*httptest.Server, *game.Manager, *Server) {
 	t.Helper()
-	m := game.NewManager(t.TempDir(), newFakeDB())
+	m := game.NewManager(t.TempDir(), cardstest.New())
 	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-1", DeckP1: testDeck, DeckP2: testDeck}); err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +119,7 @@ func send(t *testing.T, c *websocket.Conn, id int, verb string, args map[string]
 // TestNoGameOpen: with no game the state message has a null snapshot and
 // no list of stored games, and the old stored-game verbs are refused.
 func TestNoGameOpen(t *testing.T) {
-	m := game.NewManager(t.TempDir(), newFakeDB())
+	m := game.NewManager(t.TempDir(), cardstest.New())
 	s := New(m, state.P1)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -547,7 +512,7 @@ type limitKey struct{}
 // error, word for word, and the action does not run. Allowed, the action
 // runs as before.
 func TestLimitHook(t *testing.T) {
-	m := game.NewManager(t.TempDir(), newFakeDB())
+	m := game.NewManager(t.TempDir(), cardstest.New())
 	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-1", DeckP1: testDeck, DeckP2: testDeck}); err != nil {
 		t.Fatal(err)
 	}
@@ -720,7 +685,7 @@ func TestExpiryNotice(t *testing.T) {
 // TestNoNoticeWithoutExpiry: a board with no game that never expired has
 // no notice key, and board actions give the usual no game open error.
 func TestNoNoticeWithoutExpiry(t *testing.T) {
-	m := game.NewManager(t.TempDir(), newFakeDB())
+	m := game.NewManager(t.TempDir(), cardstest.New())
 	s := New(m, state.P1)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)

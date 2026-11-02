@@ -1,7 +1,7 @@
 <script>
   // Modals: a pile (discard, Lost Zone), a deck search, the top N cards and
   // the end-of-turn prompt when the clipboard is unavailable.
-  import { app, cardInfo } from '../lib/store.svelte.js';
+  import { app, cardInfo, openSheet } from '../lib/store.svelte.js';
   import { openDeckList, openSearch, pileCardActions } from '../lib/actions.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
@@ -14,6 +14,14 @@
   });
 
   const pileCards = $derived(m?.kind === 'pile' ? app.board?.sides[m.seat]?.[m.zone] || [] : []);
+  // The prize view (the phone's Prizes counter): each slot, taken or not.
+  const prizes = $derived(m?.kind === 'prizes' ? app.board?.sides[m.seat]?.prizes || [] : []);
+  const mayTake = $derived(m?.seat === app.human || app.snap?.mode === 'review');
+  function takePrize(p) {
+    const args = { slot: p.slot };
+    if (m.seat !== app.human) args.seat = m.seat;
+    act('take_prize', args);
+  }
 
   async function run(fn) {
     await fn();
@@ -26,6 +34,20 @@
   }
   function close() {
     app.modal = null;
+  }
+  // cardMenu opens a listed card's actions, the same moves as its buttons.
+  function cardMenu(c, from) {
+    return (ev, type) =>
+      openSheet(
+        ev,
+        () => ({
+          title: c.name || c.iid,
+          card: c,
+          summary: `In ${m.seat}'s ${from === 'lost' ? 'Lost Zone' : from}`,
+          sections: [{ label: 'Move', items: pileCardActions(c, m.seat, from).map((a) => ({ label: a.label, run: () => run(a.run) })) }],
+        }),
+        type,
+      );
   }
   // Deck list: rows grouped like a decklist, filtered by name.
   let listFilter = $state('');
@@ -76,6 +98,11 @@
   // The card under the mouse, shown large beside the modal: enlarging it
   // in place would be clipped by the modal's scrolling.
   let preview = $state(null);
+  // The large preview beside the view follows the mouse. A tap opens the
+  // card's actions with the card (or, in the deck list, the card itself).
+  function hover(ev, c) {
+    if (ev.pointerType === 'mouse') preview = c;
+  }
   const previewInfo = $derived(preview?.def ? cardInfo(preview.def) : null);
   $effect(() => {
     if (!m) preview = null;
@@ -95,8 +122,8 @@
       <header><h2>{m.seat} {m.zone === 'lost' ? 'Lost Zone' : 'discard'} · {pileCards.length}</h2><button onclick={close}>Close</button></header>
       <div class="grid">
         {#each pileCards as c (c.iid)}
-          <div class="entry" onmouseenter={() => (preview = c)} onmouseleave={() => (preview = null)}>
-            <Card card={c} size="sm" from="{m.seat}:{m.zone}" lift={false} />
+          <div class="entry" onpointerenter={(ev) => hover(ev, c)} onpointerleave={() => (preview = null)}>
+            <Card card={c} size="sm" from="{m.seat}:{m.zone}" lift={false} onmenu={cardMenu(c, m.zone)} />
             <div class="acts">
               {#each pileCardActions(c, m.seat, m.zone) as a}
                 <button onclick={() => run(a.run)}>{a.label}</button>
@@ -105,6 +132,20 @@
           </div>
         {:else}
           <p class="empty">Empty.</p>
+        {/each}
+      </div>
+    {:else if m.kind === 'prizes'}
+      <header><h2>{m.seat} prizes · {prizes.filter((p) => p.card).length} left</h2><button onclick={close}>Close</button></header>
+      <div class="grid">
+        {#each prizes as p (p.slot)}
+          <div class="entry">
+            {#if p.card}
+              <Card card={p.card} size="sm" draggable={false} lift={false} onclick={() => mayTake && takePrize(p)} />
+              {#if mayTake}<div class="acts"><button onclick={() => takePrize(p)}>Take</button></div>{/if}
+            {:else}
+              <span class="empty">Taken</span>
+            {/if}
+          </div>
         {/each}
       </div>
     {:else if m.kind === 'search'}
@@ -120,8 +161,8 @@
       <p class="note">Sorted by category and name, never in deck order. Remember to shuffle.</p>
       <div class="list">
         {#each m.cards as c (c.iid)}
-          <div class="row" onmouseenter={() => (preview = c)} onmouseleave={() => (preview = null)}>
-            <Card card={c} size="xs" from="{m.seat}:deck" lift={false} />
+          <div class="row" onpointerenter={(ev) => hover(ev, c)} onpointerleave={() => (preview = null)}>
+            <Card card={c} size="xs" from="{m.seat}:deck" lift={false} onmenu={cardMenu(c, 'deck')} />
             <span class="name">{c.name}</span>
             <span class="kind">{kindOf(c)}</span>
             <span class="acts">
@@ -139,9 +180,9 @@
       <p class="note">Top card first.</p>
       <div class="grid">
         {#each m.cards as c, i (c.iid)}
-          <div class="entry" onmouseenter={() => (preview = c)} onmouseleave={() => (preview = null)}>
+          <div class="entry" onpointerenter={(ev) => hover(ev, c)} onpointerleave={() => (preview = null)}>
             <span class="pos">{i + 1}</span>
-            <Card card={c} size="sm" from="{m.seat}:deck" lift={false} />
+            <Card card={c} size="sm" from="{m.seat}:deck" lift={false} onmenu={cardMenu(c, 'deck')} />
             <div class="acts">
               {#each pileCardActions(c, m.seat, 'deck') as a}
                 <button onclick={() => run(a.run)}>{a.label}</button>
@@ -170,7 +211,7 @@
         <h3 class="section">{s.title} · {total(s.rows)}</h3>
         <div class="grid">
           {#each s.rows as r (r.name)}
-            <div class="entry dl" onmouseenter={() => (preview = r)} onmouseleave={() => (preview = null)} role="presentation">
+            <div class="entry dl" onpointerenter={(ev) => hover(ev, r)} onpointerleave={() => (preview = null)} role="presentation">
               <span class="count">×{r.count}</span>
               <Card card={{ iid: r.iid, name: r.name, def: r.def }} size="sm" draggable={false} lift={false} />
               <div class="where">
@@ -196,6 +237,12 @@
 
 <style>
   .backdrop { position: fixed; inset: 0; background: #0009; z-index: 30; }
+  /* A card dragged out of a view lands on the board: the view lets the
+     pointer through and fades while the drag lasts. Its cards still let a
+     finger scroll the list. */
+  :global(.dragging) .backdrop,
+  :global(.dragging) .modal { pointer-events: none; opacity: 0.2; }
+  .modal :global(.card) { touch-action: pan-y; }
   .modal, .preview { --mw: min(1000px, 94vw); }
   .modal {
     position: fixed;

@@ -213,4 +213,19 @@
     font-style: italic;
   }
   .empty { color: var(--muted); }
+  /* The timeline is the only place to rewind or play from, so on a touch
+     screen its buttons show without a hover, at a fingertip's size. */
+  @media (pointer: coarse) {
+    .rw,
+    .acts { opacity: 1; }
+    .line { display: flow-root; }
+    .acts { position: static; float: right; margin-left: 6px; }
+    .acts button { min-width: 44px; min-height: 44px; }
+    h3 .turn,
+    h4 .turn,
+    h3 .play,
+    h4 .play { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; }
+    h3 .play,
+    h4 .play { opacity: 1; }
+  }
 </style>

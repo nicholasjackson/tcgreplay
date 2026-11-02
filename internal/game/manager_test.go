@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 )
 
 const testNotice = "Your game expired after an hour idle: import its saved record again with import_log."
@@ -12,7 +14,7 @@ const testNotice = "Your game expired after an hour idle: import its saved recor
 // TestFreshManagerHasNoNotice: a manager whose game never expired reports
 // the usual no-game error, which does not match ErrExpired, and no notice.
 func TestFreshManagerHasNoNotice(t *testing.T) {
-	m := NewManager(t.TempDir(), newFakeDB())
+	m := NewManager(t.TempDir(), cardstest.New())
 	if n := m.Notice(); n != "" {
 		t.Errorf("Notice() = %q, want empty", n)
 	}
@@ -80,7 +82,7 @@ func TestExpireReportsNotice(t *testing.T) {
 // TestExpireWithNoGame: expiring a manager with no game still sets the
 // notice and tells the OnClear listeners.
 func TestExpireWithNoGame(t *testing.T) {
-	m := NewManager(t.TempDir(), newFakeDB())
+	m := NewManager(t.TempDir(), cardstest.New())
 	cleared := 0
 	m.OnClear(func() { cleared++ })
 	m.Expire(testNotice)

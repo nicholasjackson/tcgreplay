@@ -30,7 +30,16 @@ export const app = $state({
   // Where the timeline sits: 'side' (right of the board) or 'bottom'
   // (below it, for tall screens). Remembered in this browser.
   panelAt: 'side',
-  menu: null, // {x, y, title, items}
+  // The open action sheet: build() returns the menu model (see
+  // actions.js), re-run as the board changes; pointerType picks its
+  // container and x, y place the desktop popover.
+  sheet: null, // {build, pointerType, x, y}
+  // An action waiting for its destination to be tapped (lib/target.js).
+  target: null, // {prompt, hint, card, candidates, run}
+  // The screen: 'phone' (narrower than 640px), 'tablet' (a touch screen)
+  // or 'desktop'; landscapePhone is a phone held sideways.
+  layout: 'desktop',
+  landscapePhone: false,
   modal: null, // {kind, ...}
   zoom: null, // card view
   dragging: null,
@@ -53,6 +62,34 @@ try {
   if (localStorage.getItem('panelAt') === 'bottom') app.panelAt = 'bottom';
 } catch {
   // storage unavailable: keep the default
+}
+
+// The layout follows the viewport's width and the primary pointer.
+const narrow = matchMedia('(max-width: 639px)');
+const coarse = matchMedia('(pointer: coarse)');
+// A phone held sideways is under 500px tall; a tablet never is.
+const sideways = matchMedia('(orientation: landscape) and (max-height: 499px) and (pointer: coarse)');
+function setLayout() {
+  app.layout = narrow.matches ? 'phone' : coarse.matches ? 'tablet' : 'desktop';
+  app.landscapePhone = sideways.matches;
+}
+for (const q of [narrow, coarse, sideways]) q.addEventListener('change', setLayout);
+setLayout();
+
+// lastPointer is the kind of pointer that last went down, for events that
+// do not say (a click is a PointerEvent only in newer browsers).
+let lastPointer = 'mouse';
+addEventListener('pointerdown', (ev) => (lastPointer = ev.pointerType), { capture: true });
+
+// pointerTypeOf is the kind of pointer behind an event: mouse, pen or touch.
+export function pointerTypeOf(ev) {
+  return ev.pointerType || lastPointer;
+}
+
+// openSheet opens a card's actions from the event that asked for them: a
+// tap gets the phone sheet or tablet panel, a mouse the popover.
+export function openSheet(ev, build, pointerType = pointerTypeOf(ev)) {
+  app.sheet = { build, pointerType, x: ev.clientX, y: ev.clientY };
 }
 
 // setPanelAt moves the timeline to the side or the bottom.

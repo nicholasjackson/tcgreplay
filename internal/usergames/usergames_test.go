@@ -2,7 +2,6 @@ package usergames
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"os"
 	"regexp"
@@ -10,47 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
-
-// fakeDB serves a tiny card pool with set code TST (copied from the webui
-// package tests).
-type fakeDB map[string]*cards.Card
-
-func newFakeDB() fakeDB {
-	return fakeDB{
-		"tst-1":   {ID: "tst-1", Name: "Riolu", Category: "Pokemon", Stage: "Basic", HP: 70},
-		"tst-2":   {ID: "tst-2", Name: "Lucario", Category: "Pokemon", Stage: "Stage1", EvolveFrom: "Riolu", HP: 130},
-		"tst-3":   {ID: "tst-3", Name: "Ultra Ball", Category: "Trainer", TrainerType: "Item"},
-		"sve-006": {ID: "sve-006", Name: "Fighting Energy", Category: "Energy", EnergyType: "Normal"},
-	}
-}
-
-func (f fakeDB) Card(_ context.Context, id string) (*cards.Card, error) {
-	if c, ok := f[id]; ok {
-		return c, nil
-	}
-	return nil, fmt.Errorf("%s: %w", id, cards.ErrNotFound)
-}
-func (f fakeDB) Cached(id string) *cards.Card { return f[id] }
-func (f fakeDB) ByName(_ context.Context, name string, _ ...string) (string, error) {
-	for id, c := range f {
-		if c.Name == name {
-			return id, nil
-		}
-	}
-	return "", cards.ErrNotFound
-}
-func (f fakeDB) Resolve(_ context.Context, set, num string) (string, error) {
-	if set != "TST" {
-		return "", cards.ErrNotFound
-	}
-	return "tst-" + num, nil
-}
 
 const testDeck = `Pokémon: 8
 4 Riolu TST 1
@@ -75,7 +39,7 @@ var (
 // DB, with the given clock (nil for time.Now).
 func newRegistry(t *testing.T, dir string, now func() time.Time) *Registry {
 	t.Helper()
-	db := newFakeDB()
+	db := cardstest.New()
 	public, _ := url.Parse("https://playmat.example.com")
 	return New(Config{
 		NewManager: func() *game.Manager { return game.NewManager(dir, db) },

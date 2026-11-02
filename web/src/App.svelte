@@ -8,13 +8,19 @@
   import Strip from './components/Strip.svelte';
   import Timeline from './components/Timeline.svelte';
   import PlaybackBar from './components/PlaybackBar.svelte';
-  import ContextMenu from './components/ContextMenu.svelte';
+  import ActionSheet from './components/ActionSheet.svelte';
+  import TargetBanner from './components/TargetBanner.svelte';
   import Modal from './components/Modal.svelte';
   import Zoom from './components/Zoom.svelte';
 
   const snap = $derived(app.snap);
   const review = $derived(snap?.mode === 'review');
-  const bottom = $derived(app.panelOpen && app.panelAt === 'bottom');
+  // On a phone the board is compact, and the timeline is a full-screen
+  // sheet opened from ☰ rather than a column beside the board.
+  const phone = $derived(app.layout === 'phone');
+  let timelineOpen = $state(false);
+  const showTimeline = $derived(!app.landscapePhone && (phone ? timelineOpen : app.panelOpen));
+  const bottom = $derived(!phone && app.panelOpen && app.panelAt === 'bottom');
   // menuOpen shows the header's menu of less frequent actions.
   let menuOpen = $state(false);
   function menu(run) {
@@ -51,11 +57,11 @@
 
 <svelte:window onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
 
-<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom}>
+<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:phone>
   <header>
     <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
-    <strong>tcgreplay</strong>
-    {#if snap}
+    {#if !phone}<strong>tcgreplay</strong>{/if}
+    {#if snap && !phone}
       <span class="game">{snap.game}</span>
       <label class="branch">
         branch
@@ -69,20 +75,41 @@
       {#if review}
         <label class="toggle reveal-toggle"><input type="checkbox" checked={app.reveal} onchange={setReveal} /> Reveal all</label>
       {/if}
-      {#if snap.warnings?.length}
-        <span class="warn" title={snap.warnings.join('\n')}>⚠ {snap.warnings.length}</span>
-      {/if}
+    {/if}
+    {#if snap?.warnings?.length}
+      <span class="warn" title={snap.warnings.join('\n')}>⚠ {snap.warnings.length}</span>
     {/if}
     <div class="more">
       <button class="burger" aria-label="Menu" aria-haspopup="menu" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>☰</button>
       {#if menuOpen}
         <div class="backdrop" onclick={() => (menuOpen = false)} role="presentation"></div>
         <div class="dropdown" role="menu">
+          {#if snap && phone}
+            <!-- The header's controls, which a phone's header has no room for. -->
+            <div class="account">{snap.game}</div>
+            <label class="menu-check">
+              Branch
+              <select value={snap.branch} onchange={checkout} aria-label="branch">
+                {#each snap.branches as b (b.name)}
+                  <option value={b.name}>{b.name} (#{b.head})</option>
+                {/each}
+              </select>
+            </label>
+            <label class="menu-check"><input type="checkbox" checked={review} onchange={setMode} /> Review mode</label>
+            {#if review}
+              <label class="menu-check"><input type="checkbox" checked={app.reveal} onchange={setReveal} /> Reveal all</label>
+            {/if}
+            <div class="sep"></div>
+          {/if}
           {#if snap}
             <button role="menuitem" onclick={() => menu(() => openDeckList(app.human))} title="Every card in your deck and where each copy is">Deck list</button>
           {/if}
-          <button role="menuitem" onclick={() => menu(() => (app.panelOpen = !app.panelOpen))}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
-          {#if app.panelOpen}
+          {#if phone}
+            <button role="menuitem" onclick={() => menu(() => (timelineOpen = true))}>Show timeline</button>
+          {:else}
+            <button role="menuitem" onclick={() => menu(() => (app.panelOpen = !app.panelOpen))}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
+          {/if}
+          {#if app.panelOpen && !phone}
             <button role="menuitem" onclick={() => menu(() => setPanelAt(bottom ? 'side' : 'bottom'))}>Move timeline {bottom ? 'beside' : 'below'} the board</button>
           {/if}
           <label class="menu-check" title="Play the assistant's moves on the board as they arrive">
@@ -102,19 +129,28 @@
     <div class="reveal-banner">REVEAL VIEW: both hands, prizes and decks are face up. Post-mortem only.</div>
   {/if}
 
-  <div class="body" class:panel={app.panelOpen} class:bottom>
+  <div class="body" class:panel={showTimeline && !phone} class:bottom>
+    {#if app.landscapePhone}
+      <!-- A phone held sideways is too short for the board. -->
+      <div class="upright" role="status">
+        <span class="phone-icon" aria-hidden="true">📱</span>
+        <p>Turn your phone upright to see the board.</p>
+      </div>
+    {:else}
     <main>
       {#if app.board}
-        <div class="seat-name top">
-          {nameOf(app.claude)} · {app.claude}
-          {#if app.opponent}<span class="opp-status {app.opponent}">{oppStatus[app.opponent]}</span>{/if}
-        </div>
-        <Hand seat={app.claude} small />
-        <Side seat={app.claude} mirrored />
+        {#if !phone || app.opponent}
+          <div class="seat-name top">
+            {#if !phone}{nameOf(app.claude)} · {app.claude}{/if}
+            {#if app.opponent}<span class="opp-status {app.opponent}">{oppStatus[app.opponent]}</span>{/if}
+          </div>
+        {/if}
+        {#if !phone}<Hand seat={app.claude} small />{/if}
+        <Side seat={app.claude} name={nameOf(app.claude)} mirrored />
         <Strip />
-        <Side seat={app.human} />
+        <Side seat={app.human} name={nameOf(app.human)} />
         <Hand seat={app.human} />
-        <div class="seat-name">{nameOf(app.human)} · {app.human}</div>
+        {#if !phone}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
       {:else}
         <div class="landing">
           <h1>No game open</h1>
@@ -127,9 +163,11 @@
         </div>
       {/if}
     </main>
-    {#if app.panelOpen}
-      <aside>
+    {/if}
+    {#if showTimeline}
+      <aside class:sheet={phone}>
         <h2>Timeline</h2>
+        {#if phone}<button class="close" aria-label="Close the timeline" onclick={() => (timelineOpen = false)}>✕</button>{/if}
         <Timeline />
       </aside>
     {/if}
@@ -150,7 +188,8 @@
     {/each}
   </div>
 
-  <ContextMenu />
+  <TargetBanner />
+  <ActionSheet />
   <Modal />
   <Zoom />
 </div>
@@ -175,6 +214,21 @@
     height: 100vh;
     --cw: clamp(48px, min((100vh - 315px) / 11.1, (100vw - 40px) / 10), 240px);
   }
+  /* Phone: cards sized from the width, five and a bit across. */
+  .app.phone {
+    --cw: calc((100vw - 32px) / 5.6);
+    --fs: 13px;
+  }
+  aside.sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    max-height: none;
+    border: 0;
+  }
+  aside.sheet .close { position: absolute; top: 4px; right: 8px; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+  .upright { background: var(--felt); color: #f2f6f3; font-size: 16px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
+  .phone-icon { font-size: 40px; display: inline-block; transform: rotate(90deg); }
   header {
     display: flex;
     align-items: center;

@@ -70,3 +70,39 @@ code { background: #0005; padding: 1px 5px; border-radius: 4px; }
   position: relative;
   z-index: 30;
 }
+
+/* Dragging (lib/pointer.svelte.js): a touch on a card drags it
+   rather than scrolling; while a drag is on, every drop zone is outlined
+   and the one under the pointer lit, and a ghost follows the pointer. */
+.card { touch-action: none; }
+.dragging [data-drop] { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.dragging [data-drop].drop-lit { background: var(--drop); border-color: var(--accent); outline-style: solid; }
+.dragging, .dragging * { cursor: grabbing !important; }
+.drag-source { opacity: 0.35; pointer-events: none; }
+.drag-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  margin: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: none;
+  box-shadow: 0 12px 30px #000b;
+}
+
+/* Target mode (lib/target.js): the candidates glow through the highlight
+   and every other card dims; the card being played is faded. */
+.targeting .card:not(.lit) { filter: brightness(0.45); }
+.targeting .card.target-source { opacity: 0.35; }
+.targeting [data-drop]:has(.card.lit) { cursor: pointer; }
+
+/* On a touch screen every control is at least a fingertip's 44px. A
+   checkbox's label is its target. */
+@media (pointer: coarse) {
+  button,
+  select,
+  input:not([type='checkbox']),
+  label:has(> input[type='checkbox']) { min-height: 44px; min-width: 44px; }
+  label:has(> input[type='checkbox']) { display: inline-flex; align-items: center; }
+}
