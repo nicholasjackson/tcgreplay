@@ -16,6 +16,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/oauth2"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cacheadmin"
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
@@ -108,7 +109,8 @@ func envDuration(key string, def time.Duration) (time.Duration, error) {
 // TCGREPLAY_GOOGLE_CLIENT_SECRET, so it never shows in a process listing),
 // the signing key that keeps sign-ins across restarts (only from
 // TCGREPLAY_SIGNING_KEY, for the same reason), the request limit and the
-// public URL. places keeps the user cap (nil for
+// public URL, and the cache admins (TCGREPLAY_ADMINS, a comma-separated
+// list of Google account emails). places keeps the user cap (nil for
 // none). Hosted mode must not run open, so missing credentials are an
 // error. google is Google's endpoints; the zero value means the real
 // Google.
@@ -125,7 +127,29 @@ func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostau
 		RateLimit:      c.rateLimit,
 		Places:         places,
 		Google:         google,
+		Admins:         strings.Split(os.Getenv("TCGREPLAY_ADMINS"), ","),
 	})
+}
+
+// adminText describes the cache admins for the start-up log: how many,
+// never who.
+func adminText(n int) string {
+	if n == 0 {
+		return "no cache admins (TCGREPLAY_ADMINS)"
+	}
+	return fmt.Sprintf("%d cache admins", n)
+}
+
+// hostedAdmin builds the cache admin page's service over the card
+// database and, when the shared store is on, the image cache. The caller
+// runs it.
+func hostedAdmin(db *cards.Client, images *cards.ImageCache) *cacheadmin.Service {
+	svc := &cacheadmin.Service{Cards: db}
+	// A nil *ImageCache in the interface would not be nil.
+	if images != nil {
+		svc.Images = images
+	}
+	return svc
 }
 
 // signInText describes, for the start-up log, whether sign-ins outlast a
@@ -150,8 +174,9 @@ func idleText(d time.Duration) string {
 // front: its own routes (metadata, client registration, authorize, token,
 // Google's callback, /healthz) are open, /mcp needs an access token and
 // the board needs a session. The board goes through reg's front door to
-// the signed-in account's own board.
-func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth) http.Handler {
+// the signed-in account's own board. The card cache admin page, admin,
+// is served at /admin to admins only (see hostauth.RequireAdmin).
+func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service) http.Handler {
 	mux := http.NewServeMux()
 	a.Routes(mux)
 	mux.Handle("/mcp", a.RequireToken(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
@@ -159,6 +184,9 @@ func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth) h
 		// Hosted mode is public; the request's Host is the proxy's business.
 		DisableLocalhostProtection: true,
 	})))
+	adminPage := a.RequireAdmin(admin.Handler())
+	mux.Handle("/admin", adminPage)
+	mux.Handle("/admin/", adminPage)
 	mux.Handle("/", a.RequireSession(reg.Board()))
 	return mux
 }
@@ -229,27 +257,39 @@ func hostedBoard(m *game.Manager, human state.Seat, public *url.URL, limit func(
 // With the shared store on, images is the card image cache on the same
 // bucket: card images are copied there and boards load them from its
 // public (CDN) address. It is nil otherwise, and boards load images from
-// the card source. The caller runs it.
+// the card source. The caller runs it. With TCGREPLAY_SPACES_CDN_TOKEN
+// set too, an admin's clear also purges the bucket's CDN; the token is
+// ignored without the shared store.
 func hostedCardDB(c config) (db *cards.Client, shared bool, images *cards.ImageCache) {
 	db = newCardDB(c)
 	if c.cardBase != "" {
 		db.Base = c.cardBase
 	}
+	token := strings.TrimSpace(os.Getenv("TCGREPLAY_SPACES_CDN_TOKEN"))
+	ignored := func() {
+		if token != "" {
+			log.Printf("card cache: TCGREPLAY_SPACES_CDN_TOKEN ignored without the shared store")
+		}
+	}
 	cfg, set, err := spaces.FromEnv(os.Getenv)
 	switch {
 	case !set:
 		log.Printf("card cache: local only, in %s (no TCGREPLAY_SPACES_* settings)", c.cacheDir)
+		ignored()
 		return db, false, nil
 	case err != nil:
 		log.Printf("warning: card cache: %s; using the local cache only", strings.ReplaceAll(err.Error(), "\n", "; "))
+		ignored()
 		return db, false, nil
 	case c.offline:
 		log.Printf("card cache: offline, shared store %s not used", cfg)
+		ignored()
 		return db, false, nil
 	}
 	sc, err := spaces.New(cfg)
 	if err != nil {
 		log.Printf("warning: card cache: %v; using the local cache only", err)
+		ignored()
 		return db, false, nil
 	}
 	db.Store = cards.NewTieredStore(db.Store, cards.NewSpacesStore(sc))
@@ -259,6 +299,16 @@ func hostedCardDB(c config) (db *cards.Client, shared bool, images *cards.ImageC
 		images.Source = c.imageBase
 	}
 	log.Printf("card images: copied from the card source to the shared store, served from %s/%s", images.Public, cards.ImagePrefix)
+	if token != "" {
+		cdn := spaces.NewCDN(cfg, token)
+		if c.cdnAPI != "" {
+			cdn.API = c.cdnAPI
+		}
+		images.CDN = cdn
+		log.Printf("card images: CDN purge on clear: on")
+	} else {
+		log.Printf("card images: CDN purge on clear: off (no TCGREPLAY_SPACES_CDN_TOKEN)")
+	}
 	return db, true, images
 }
 
@@ -302,6 +352,8 @@ func runHosted(ctx context.Context, c config) error {
 	if images != nil {
 		go images.Run(ctx)
 	}
+	admin := hostedAdmin(db, images)
+	go admin.Run(ctx)
 	if shared {
 		go warmCatalog(ctx, db)
 	}
@@ -310,9 +362,9 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, %s, %d requests a minute per account, %d users, %s, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
-	hs := &http.Server{Handler: hostedHandler(srv, reg, a), ReadHeaderTimeout: 10 * time.Second}
+	hs := &http.Server{Handler: hostedHandler(srv, reg, a, admin), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)

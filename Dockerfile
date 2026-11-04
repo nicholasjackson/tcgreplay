@@ -7,7 +7,10 @@
 # and optionally TCGREPLAY_SPACES_ENDPOINT, TCGREPLAY_SPACES_BUCKET,
 # TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET (all four: keep the card
 # cache in a DigitalOcean Spaces bucket across deploys, and copy card
-# images there to serve them from the bucket's CDN).
+# images there to serve them from the bucket's CDN), TCGREPLAY_ADMINS (the
+# Google accounts that may clear the card cache at /admin) and
+# TCGREPLAY_SPACES_CDN_TOKEN (a DigitalOcean API token, so a clear also
+# purges the bucket's CDN).
 
 # Build the board UI into the Go package (see web/vite.config.js).
 FROM node:22 AS web

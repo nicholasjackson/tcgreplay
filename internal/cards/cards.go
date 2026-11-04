@@ -192,6 +192,11 @@ type Client struct {
 	flight   flightGroup          // one source request (or catalog build) per key at a time
 	tracker  refreshTracker       // recent failures and refreshes
 	bgwg     sync.WaitGroup       // background refreshes in flight
+	// gen is the clear generation: Clear moves it on. A load remembers the
+	// generation it started under and keeps its result in memory (or
+	// publishes its catalog) only if no clear happened meanwhile, so a
+	// fetch begun before a clear never puts pre-clear data back.
+	gen uint64
 }
 
 // NewClient returns a client caching under dir.
@@ -211,6 +216,11 @@ func NewClient(dir string) *Client {
 type cardEntry struct {
 	card    *Card
 	fetched time.Time
+	// cleared marks a card a clear covered. Card treats it as a miss and
+	// fetches it again, keeping this copy only if the card source fails;
+	// Cached still returns it, so open games keep their cards, and warms
+	// it in the background.
+	cleared bool
 }
 
 func (c *Client) store() Store {
@@ -256,18 +266,30 @@ func (c *Client) now() time.Time {
 }
 
 // remember keeps a decoded card in memory, unless memory already holds a
-// copy fetched later, and returns the copy memory holds.
-func (c *Client) remember(id string, card *Card, fetched time.Time) cardEntry {
+// copy fetched later or a clear happened since the load began under gen,
+// and returns the copy memory holds (the decoded card itself when a clear
+// intervened). A cleared copy always gives way to a fetched one.
+func (c *Client) remember(id string, card *Card, fetched time.Time, gen uint64) cardEntry {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.gen != gen {
+		return cardEntry{card: card, fetched: fetched}
+	}
 	if c.mem == nil {
 		c.mem = map[string]cardEntry{}
 	}
-	if old, ok := c.mem[id]; ok && old.fetched.After(fetched) {
+	if old, ok := c.mem[id]; ok && !old.cleared && old.fetched.After(fetched) {
 		return old
 	}
-	c.mem[id] = cardEntry{card, fetched}
+	c.mem[id] = cardEntry{card: card, fetched: fetched}
 	return c.mem[id]
+}
+
+// generation returns the current clear generation.
+func (c *Client) generation() uint64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.gen
 }
 
 // DefaultCacheDir returns $XDG_CACHE_HOME/tcgreplay or ~/.cache/tcgreplay.
@@ -326,7 +348,9 @@ func decodeEntry(key string, e Entry, out any) error {
 // another caller stored meanwhile is used instead of fetching again. The
 // outcome of fetching a card is remembered (see recentlyFailed).
 func (c *Client) shared(ctx context.Context, key string, recheck bool) (Entry, error) {
-	v, err := c.flight.do(ctx, key, c.timeout(), func(fctx context.Context) (any, error) {
+	// A lookup after a clear never joins a fetch begun before it.
+	fkey := fmt.Sprintf("%s#%d", key, c.generation())
+	v, err := c.flight.do(ctx, fkey, c.timeout(), func(fctx context.Context) (any, error) {
 		if recheck {
 			// Another caller's write lands in the local tier first, so
 			// that is all the recheck reads: the caller has just missed
@@ -424,12 +448,28 @@ func (c *Client) Card(ctx context.Context, id string) (*Card, error) {
 		return nil, fmt.Errorf("empty card id: %w", ErrNotFound)
 	}
 	c.mu.Lock()
-	if e, ok := c.mem[id]; ok {
-		c.mu.Unlock()
-		c.refreshCardIfStale(id, e)
-		return e.card, nil
-	}
+	gen := c.gen
+	old, ok := c.mem[id]
 	c.mu.Unlock()
+	if ok && (!old.cleared || c.Offline) {
+		c.refreshCardIfStale(id, old)
+		return old.card, nil
+	}
+	// A miss, or a card a clear covered: the store, then the card source.
+	// A cleared card's old copy stands in if neither can answer.
+	card, err := c.loadCard(ctx, id, gen)
+	if err != nil {
+		if ok {
+			return old.card, nil
+		}
+		return nil, err
+	}
+	return card, nil
+}
+
+// loadCard loads card id from the store or else the card source, keeps it
+// in memory (subject to the clear generation gen) and returns it.
+func (c *Client) loadCard(ctx context.Context, id string, gen uint64) (*Card, error) {
 	key := "cards/" + id
 	e, err := c.readStore().Get(ctx, key)
 	if err != nil {
@@ -448,7 +488,7 @@ func (c *Client) Card(ctx context.Context, id string) (*Card, error) {
 		return nil, err
 	}
 	energyArt(&card)
-	ce := c.remember(id, &card, e.Fetched)
+	ce := c.remember(id, &card, e.Fetched, gen)
 	c.refreshCardIfStale(id, ce)
 	return ce.card, nil
 }
@@ -458,10 +498,15 @@ func (c *Client) Card(ctx context.Context, id string) (*Card, error) {
 // lookup brings it to local disk.
 func (c *Client) Cached(id string) *Card {
 	c.mu.Lock()
+	gen := c.gen
 	e, ok := c.mem[id]
 	c.mu.Unlock()
 	if ok {
-		c.refreshCardIfStale(id, e)
+		if e.cleared {
+			c.warmCleared(id)
+		} else {
+			c.refreshCardIfStale(id, e)
+		}
 		return e.card
 	}
 	se, err := c.localStore().Get(context.Background(), "cards/"+id)
@@ -473,7 +518,7 @@ func (c *Client) Cached(id string) *Card {
 		return nil
 	}
 	energyArt(&cc)
-	ce := c.remember(id, &cc, se.Fetched)
+	ce := c.remember(id, &cc, se.Fetched, gen)
 	c.refreshCardIfStale(id, ce)
 	return ce.card
 }
@@ -597,10 +642,7 @@ func (c *Client) setFetched(ctx context.Context, id string) (*setDetail, time.Ti
 
 // Resolve implements DB.
 func (c *Client) Resolve(ctx context.Context, setCode, number string) (string, error) {
-	code := strings.ToUpper(strings.TrimSpace(setCode))
-	if a, ok := codeAliases[code]; ok {
-		code = a
-	}
+	code := normCode(setCode)
 	var cat *catalog
 	setID, ok := setAliases[code]
 	if ok {
@@ -645,6 +687,17 @@ func (c *Client) Resolve(ctx context.Context, setCode, number string) (string, e
 		}
 	}
 	return "", fmt.Errorf("no card %s %s in set %s: %w", setCode, number, setID, ErrNotFound)
+}
+
+// normCode normalises a set code as decklists print it: upper case, with
+// TCG Live's own codes mapped to TCGdex abbreviations (codeAliases). The
+// result is looked up in setAliases, then the catalog's code index.
+func normCode(setCode string) string {
+	code := strings.ToUpper(strings.TrimSpace(setCode))
+	if a, ok := codeAliases[code]; ok {
+		code = a
+	}
+	return code
 }
 
 // findNumber finds a collector number in a set's card list: exactly, or

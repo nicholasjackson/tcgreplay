@@ -48,12 +48,14 @@ type Server struct {
 
 // ImageSource decides where the board loads a card image from. Image is
 // given the card's TCGdex image base address and returns the base address
-// to load (to which the board appends /low.webp or /high.webp) and, when
-// that differs from src, the address to fall back to. Implementations
+// to load (to which the board appends /low.webp or /high.webp), when that
+// differs from src the address to fall back to, and the content version of
+// the image at that address ("" when there is none), which changes
+// whenever its bytes do. Implementations
 // must never block or touch the network: the card endpoint answers on the
 // board's critical path.
 type ImageSource interface {
-	Image(src string) (image, fallback string)
+	Image(src string) (image, fallback, version string)
 }
 
 // New returns a server for m with the UI playing human.
@@ -150,7 +152,12 @@ type CardInfo struct {
 	// ImageFallback is the TCGdex base address, set only when Image
 	// differs from it; the board loads it if Image fails.
 	ImageFallback string `json:"image_fallback,omitempty"`
-	Text          string `json:"text"`
+	// ImageVersion is the content version of the copy at Image, set only
+	// when Image is a copy. The board appends ?v=<image_version> to the
+	// Image address with its size (never to the fallback), so a browser or
+	// CDN holding an old copy fetches changed art again.
+	ImageVersion string `json:"image_version,omitempty"`
+	Text         string `json:"text"`
 }
 
 func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
@@ -166,11 +173,14 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	img, fb := c.Image, ""
+	img, fb, ver := c.Image, "", ""
 	if s.Images != nil && c.Image != "" {
-		img, fb = s.Images.Image(c.Image)
+		img, fb, ver = s.Images.Image(c.Image)
 		if fb == img {
 			fb = ""
+		}
+		if img == c.Image {
+			ver = "" // a version only ever names a copy
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -181,6 +191,6 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		ID: c.ID, Name: c.Name, Category: c.Category, Stage: c.Stage,
 		TrainerType: c.TrainerType, EnergyType: c.EnergyType, HP: c.HP,
 		Types: c.Types, EvolveFrom: c.EvolveFrom, Retreat: c.Retreat,
-		Attacks: c.Attacks, Abilities: c.Abilities, Image: img, ImageFallback: fb, Text: c.Text(),
+		Attacks: c.Attacks, Abilities: c.Abilities, Image: img, ImageFallback: fb, ImageVersion: ver, Text: c.Text(),
 	})
 }

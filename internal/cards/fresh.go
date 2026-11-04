@@ -112,13 +112,25 @@ func (c *Client) refreshCardIfStale(id string, e cardEntry) {
 	if !cardStale(e, c.now()) {
 		return
 	}
+	c.refreshCard(id)
+}
+
+// warmCleared starts a background fetch of a card a clear covered, which
+// replaces the cleared copy in memory once it arrives.
+func (c *Client) warmCleared(id string) { c.refreshCard(id) }
+
+// refreshCard starts a background fetch of card id from the card source
+// (see maybeRefresh); the fetched card replaces the copy in memory, unless
+// a clear happened since the fetch began.
+func (c *Client) refreshCard(id string) {
+	gen := c.generation()
 	c.maybeRefresh("cards/"+id, func(ne Entry) {
 		var card Card
 		if json.Unmarshal(ne.Data, &card) != nil {
 			return
 		}
 		energyArt(&card)
-		c.remember(id, &card, ne.Fetched)
+		c.remember(id, &card, ne.Fetched, gen)
 	})
 }
 

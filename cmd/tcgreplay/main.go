@@ -66,6 +66,9 @@ type config struct {
 	cardBase string
 	// imageBase, if set, is the card image source's prefix (tests).
 	imageBase string
+	// cdnAPI, if set, is the DigitalOcean API base the CDN purge client
+	// calls (tests).
+	cdnAPI string
 }
 
 // args renders the config as flags for spawning the daemon. Unset wait

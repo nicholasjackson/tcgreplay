@@ -102,3 +102,32 @@ func (t *tieredStore) Put(ctx context.Context, key string, e Entry) error {
 	}
 	return lerr
 }
+
+// Clear implements clearer: it clears the shared tier, then the local
+// one, and returns both reports.
+//
+// Shared comes first so that a lookup running during the clear cannot
+// miss on a freshly cleared local tier, find an old entry still in shared,
+// and copy it back down. Clears are admin actions that must report a
+// shared store failure rather than skip it, so the shared tier is cleared
+// whether or not lookups are skipping it, with the clear's own bounds; a
+// success shows the store is back and lifts the skip, while a failure is
+// reported to the admin and does not make lookups skip it.
+func (t *tieredStore) Clear(ctx context.Context, s Scope) []TierReport {
+	var reports []TierReport
+	if c, ok := t.shared.(clearer); ok {
+		rs := c.Clear(ctx, s)
+		failed := false
+		for _, r := range rs {
+			failed = failed || r.Err != nil
+		}
+		if !failed {
+			t.ok()
+		}
+		reports = append(reports, rs...)
+	}
+	if c, ok := t.local.(clearer); ok {
+		reports = append(reports, c.Clear(ctx, s)...)
+	}
+	return reports
+}

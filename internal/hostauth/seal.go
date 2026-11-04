@@ -99,10 +99,15 @@ type grantClaims struct {
 	Client string `json:"c,omitempty"`
 	Sub    string `json:"u"`
 	Email  string `json:"e"`
-	Exp    int64  `json:"x"`
+	// Verified is Account.EmailVerified; absent in grants sealed before it
+	// was kept, which therefore open as unverified.
+	Verified bool  `json:"v,omitempty"`
+	Exp      int64 `json:"x"`
 }
 
-func (g grantClaims) account() Account { return Account{ID: g.Sub, Email: g.Email} }
+func (g grantClaims) account() Account {
+	return Account{ID: g.Sub, Email: g.Email, EmailVerified: g.Verified}
+}
 
 // clientKey is a short stand-in for a client ID inside its tokens.
 func clientKey(id string) string { return key(id)[:32] }

@@ -15,6 +15,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -47,6 +48,10 @@ type Config struct {
 	Now func() time.Time
 	// HTTPClient makes the calls to Google; nil means http.DefaultClient.
 	HTTPClient *http.Client
+	// Admins are the Google account emails RequireAdmin lets through,
+	// compared without regard to case and only for an email Google marked
+	// verified. Empty means nobody is an admin.
+	Admins []string
 }
 
 // Places is the server's user cap, kept by whoever tracks what each
@@ -66,6 +71,10 @@ type Account struct {
 	ID string
 	// Email is the account's email address, for display and logs.
 	Email string
+	// EmailVerified is whether Google marked Email verified
+	// (email_verified). It is sealed into the board cookie; a cookie from
+	// before it was kept opens as unverified.
+	EmailVerified bool
 }
 
 // Auth is the hosted playmat's sign-in service.
@@ -76,6 +85,7 @@ type Auth struct {
 	now    func() time.Time
 	client *http.Client
 	st     *store
+	admins map[string]bool // lower-cased admin emails
 }
 
 // New returns a sign-in service for cfg. It fails when the public address
@@ -102,6 +112,12 @@ func New(cfg Config) (*Auth, error) {
 	}
 	if a.now == nil {
 		a.now = time.Now
+	}
+	a.admins = map[string]bool{}
+	for _, e := range cfg.Admins {
+		if e = strings.ToLower(strings.TrimSpace(e)); e != "" {
+			a.admins[e] = true
+		}
 	}
 	a.st = newStore(seal, a.now)
 	if cfg.Places != nil {

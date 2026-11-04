@@ -227,7 +227,7 @@ func rel(n int) string { return fmt.Sprintf("en/sv/sv1/%d", n) }
 func (f *imageFixture) image(t *testing.T, src string) (string, string) {
 	t.Helper()
 	start := time.Now()
-	img, fb := f.ic.Image(src)
+	img, fb, _ := f.ic.Image(src)
 	if d := time.Since(start); d > 50*time.Millisecond {
 		t.Errorf("Image(%q) took %v, want under 50ms", src, d)
 	}
@@ -703,7 +703,7 @@ func TestImageFullQueueNeverBlocksAndRequeuesOnTheNextView(t *testing.T) {
 	// Run is not started, so nothing drains the queue.
 	start := time.Now()
 	for i := range n {
-		if img, fb := f.ic.Image(f.src(i)); img != f.src(i) || fb != "" {
+		if img, fb, _ := f.ic.Image(f.src(i)); img != f.src(i) || fb != "" {
 			t.Errorf("Image(%q) = (%q, %q), want the source address", f.src(i), img, fb)
 		}
 	}

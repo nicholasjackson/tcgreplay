@@ -4,6 +4,9 @@
 package spacestest
 
 import (
+	"crypto/md5"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -29,11 +32,20 @@ const (
 type object struct {
 	body   []byte
 	header http.Header
+	etag   string // hex MD5 of body, as S3 reports a single-part upload
+}
+
+// newObject stores body with its ETag.
+func newObject(body []byte, h http.Header) object {
+	sum := md5.Sum(body)
+	return object{body: body, header: h, etag: hex.EncodeToString(sum[:])}
 }
 
 // Server is a stand-in for the Spaces S3 API: GET and PUT of whole
-// objects in one bucket, path-style, and listing the bucket (ListObjectsV2,
-// counted as method "LIST" with the prefix as key). It checks each
+// objects in one bucket, path-style, listing the bucket (ListObjectsV2,
+// counted as method "LIST" with the prefix as key, each object with its
+// ETag, the hex MD5 of its bytes) and deleting objects in batches
+// (DeleteObjects, counted as method "POST" with key "?delete"). It checks each
 // request's signature with the real verifier, counts requests per method
 // and key, and can be made to fail, refuse credentials, hang or become
 // unreachable. Like Spaces and its CDN, it serves an object put with
@@ -50,6 +62,10 @@ type Server struct {
 	hang    chan struct{}
 	closed  bool
 	page    int // listing page size; 0 means 1000
+
+	denyDelete map[string]bool // keys DeleteObjects refuses one by one
+	noETag     map[string]bool // keys listed without an ETag
+	badMD5     bool            // check Content-MD5 against altered bytes
 }
 
 // New starts a Server, closed when the test ends.
@@ -92,14 +108,18 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	list := r.Method == http.MethodGet && key == "" && r.URL.Query().Get("list-type") == "2"
+	del := r.Method == http.MethodPost && key == "" && r.URL.Query().Has("delete")
 	// An unsigned read is an anonymous one, as a browser makes through the
 	// CDN: credentials do not apply to it.
 	anonymous := r.Header.Get("Authorization") == "" && r.Method == http.MethodGet && key != ""
 
 	s.mu.Lock()
-	if list {
+	switch {
+	case list:
 		s.counts["LIST "+r.URL.Query().Get("prefix")]++
-	} else {
+	case del:
+		s.counts["POST ?delete"]++
+	default:
 		s.counts[r.Method+" "+key]++
 	}
 	fail, deny, hang := s.fail, s.deny && !anonymous, s.hang
@@ -137,6 +157,10 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		s.serveList(w, r)
 		return
 	}
+	if del {
+		s.serveDelete(w, r, payload)
+		return
+	}
 
 	switch r.Method {
 	case http.MethodGet:
@@ -159,7 +183,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		s.mu.Lock()
-		s.objects[key] = object{body: payload, header: h}
+		s.objects[key] = newObject(payload, h)
 		s.mu.Unlock()
 		w.WriteHeader(http.StatusOK)
 	default:
@@ -198,6 +222,7 @@ type listResult struct {
 type listObject struct {
 	XMLName xml.Name `xml:"Contents"`
 	Key     string   `xml:"Key"`
+	ETag    string   `xml:"ETag,omitempty"`
 	Size    int      `xml:"Size"`
 }
 
@@ -211,10 +236,14 @@ func (s *Server) serveList(w http.ResponseWriter, r *http.Request) {
 	size := s.page
 	var keys []string
 	sizes := map[string]int{}
+	etags := map[string]string{}
 	for k, o := range s.objects {
 		if strings.HasPrefix(k, prefix) && k > token {
 			keys = append(keys, k)
 			sizes[k] = len(o.body)
+			if !s.noETag[k] {
+				etags[k] = `"` + o.etag + `"`
+			}
 		}
 	}
 	s.mu.Unlock()
@@ -233,8 +262,62 @@ func (s *Server) serveList(w http.ResponseWriter, r *http.Request) {
 	}
 	res.KeyCount = len(keys)
 	for _, k := range keys {
-		res.Contents = append(res.Contents, listObject{Key: k, Size: sizes[k]})
+		res.Contents = append(res.Contents, listObject{Key: k, ETag: etags[k], Size: sizes[k]})
 	}
+	w.Header().Set("Content-Type", "application/xml")
+	io.WriteString(w, xml.Header)
+	xml.NewEncoder(w).Encode(res)
+}
+
+// serveDelete answers DeleteObjects: it checks Content-MD5 against the
+// body, as S3 requires, removes every listed key that exists (a missing
+// key succeeds) except those DenyDelete names, which are reported as
+// AccessDenied, and answers the errors only (quiet mode).
+func (s *Server) serveDelete(w http.ResponseWriter, r *http.Request, payload []byte) {
+	s.mu.Lock()
+	bad := s.badMD5
+	s.mu.Unlock()
+	digest := payload
+	if bad {
+		digest = append(append([]byte(nil), payload...), '!')
+	}
+	sum := md5.Sum(digest)
+	if r.Header.Get("Content-Md5") != base64.StdEncoding.EncodeToString(sum[:]) {
+		writeError(w, http.StatusBadRequest, "InvalidDigest", "the Content-MD5 you specified did not match what was received")
+		return
+	}
+	var req struct {
+		Objects []struct {
+			Key string `xml:"Key"`
+		} `xml:"Object"`
+	}
+	if err := xml.Unmarshal(payload, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "MalformedXML", err.Error())
+		return
+	}
+	if len(req.Objects) > 1000 {
+		writeError(w, http.StatusBadRequest, "MalformedXML", "more than 1000 keys")
+		return
+	}
+	type deleteError struct {
+		XMLName xml.Name `xml:"Error"`
+		Key     string   `xml:"Key"`
+		Code    string   `xml:"Code"`
+		Message string   `xml:"Message"`
+	}
+	res := struct {
+		XMLName xml.Name `xml:"DeleteResult"`
+		Errors  []deleteError
+	}{}
+	s.mu.Lock()
+	for _, o := range req.Objects {
+		if s.denyDelete[o.Key] {
+			res.Errors = append(res.Errors, deleteError{Key: o.Key, Code: "AccessDenied", Message: "access denied"})
+			continue
+		}
+		delete(s.objects, o.Key)
+	}
+	s.mu.Unlock()
 	w.Header().Set("Content-Type", "application/xml")
 	io.WriteString(w, xml.Header)
 	xml.NewEncoder(w).Encode(res)
@@ -268,7 +351,60 @@ func (s *Server) Header(key string) http.Header {
 func (s *Server) SetObject(key string, body []byte) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.objects[key] = object{body: append([]byte(nil), body...), header: http.Header{}}
+	s.objects[key] = newObject(append([]byte(nil), body...), http.Header{})
+}
+
+// Keys returns the keys of the objects stored under prefix, sorted.
+func (s *Server) Keys(prefix string) []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var keys []string
+	for k := range s.objects {
+		if strings.HasPrefix(k, prefix) {
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// ETag is the ETag listings report for the object under key: the hex MD5
+// of its bytes, unquoted.
+func (s *Server) ETag(key string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.objects[key].etag
+}
+
+// DenyDelete makes DeleteObjects refuse keys one by one with AccessDenied,
+// leaving them in place, while it deletes the others. With no keys it
+// clears the list.
+func (s *Server) DenyDelete(keys ...string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.denyDelete = map[string]bool{}
+	for _, k := range keys {
+		s.denyDelete[k] = true
+	}
+}
+
+// OmitETag makes listings leave out the ETag of keys. With no keys it
+// clears the list.
+func (s *Server) OmitETag(keys ...string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.noETag = map[string]bool{}
+	for _, k := range keys {
+		s.noETag[k] = true
+	}
+}
+
+// CorruptMD5 makes DeleteObjects check Content-MD5 against altered bytes,
+// so every delete is refused with 400 InvalidDigest.
+func (s *Server) CorruptMD5(on bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.badMD5 = on
 }
 
 // Public reports whether the object under key was put public-read, so

@@ -151,7 +151,9 @@ export function cardInfo(def) {
   return null;
 }
 
-// A card image is tried in stages: 0 loads info.image, 1 loads
+// A card image is tried in stages: 0 loads info.image (with
+// ?v=<info.image_version> when the server gives a copy's content version,
+// so changed art gets a new address past browser and CDN caches), 1 loads
 // info.image_fallback (the card source, when the image is a CDN copy), and
 // 2 means both failed, so the board shows its text stand-in or Energy
 // token. Each image spot keeps its own stage and resets it to 0 when it
@@ -161,7 +163,10 @@ export function cardInfo(def) {
 // info at stage, or null when the stage has nothing to load.
 export function imageSrc(info, size, stage) {
   if (!info?.image) return null;
-  if (stage === 0) return `${info.image}/${size}`;
+  if (stage === 0) {
+    const v = info.image_version ? `?v=${encodeURIComponent(info.image_version)}` : '';
+    return `${info.image}/${size}${v}`;
+  }
   if (stage === 1 && info.image_fallback) return `${info.image_fallback}/${size}`;
   return null;
 }

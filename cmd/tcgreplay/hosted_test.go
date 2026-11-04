@@ -659,11 +659,12 @@ func startHostedWith(t *testing.T, public string, mod func(*config)) *hostedServ
 	if mod != nil {
 		mod(&c)
 	}
-	reg, srv, a, err := newHosted(c, newCardDB(c), nil, u, g.Endpoint())
+	db := newCardDB(c)
+	reg, srv, a, err := newHosted(c, db, nil, u, g.Endpoint())
 	if err != nil {
 		t.Fatal(err)
 	}
-	ts := httptest.NewServer(hostedHandler(srv, reg, a))
+	ts := httptest.NewServer(hostedHandler(srv, reg, a, hostedAdmin(db, nil)))
 	t.Cleanup(ts.Close)
 	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String()}
 }
