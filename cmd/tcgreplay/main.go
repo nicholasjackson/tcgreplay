@@ -62,6 +62,8 @@ type config struct {
 	timingErr error
 	// now, if set, is the per-account registry's clock (tests).
 	now func() time.Time
+	// cardBase, if set, is the card source's base URL (tests).
+	cardBase string
 }
 
 // args renders the config as flags for spawning the daemon. Unset wait

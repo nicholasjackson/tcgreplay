@@ -3,7 +3,10 @@
 # /mcp and the board on every other path, on port 8080 (or $PORT).
 # Settings: TCGREPLAY_PUBLIC_URL (the address users reach it at), PORT,
 # TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET (required:
-# users sign in with Google), TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS.
+# users sign in with Google), TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS,
+# and optionally TCGREPLAY_SPACES_ENDPOINT, TCGREPLAY_SPACES_BUCKET,
+# TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET (all four: keep the card
+# cache in a DigitalOcean Spaces bucket across deploys).
 
 # Build the board UI into the Go package (see web/vite.config.js).
 FROM node:22 AS web
