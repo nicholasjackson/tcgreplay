@@ -148,3 +148,30 @@ test('a long touch on a card selects nothing and opens no callout', async ({ pag
   });
   expect(css).toMatch(/\.card\.svelte-[a-z0-9]+\{[^}]*-webkit-touch-callout:none/);
 });
+
+test('on a touch screen the pile and deck views close with a round ✕, full screen on a phone', async ({ page }, testInfo) => {
+  test.skip(!isTouch(testInfo), 'touch screens');
+  const modal = page.locator('.modal');
+  for (const open of [() => pile(page, 'Discard').tap(), () => openSearch(page)]) {
+    await open();
+    await expect(modal).toBeVisible();
+    // One close, the round ✕: no Close or Done text button.
+    await expect(modal.getByRole('button', { name: /^(Close|Done)$/ })).toHaveCount(1);
+    await expect(modal.getByRole('button', { name: 'Close' })).toHaveText('✕');
+    if (isPhone(testInfo)) expect(await modal.boundingBox()).toEqual({ x: 0, y: 0, width: 390, height: 844 });
+    await modal.getByRole('button', { name: 'Close' }).tap();
+    await expect(modal).toHaveCount(0);
+  }
+});
+
+test('with a mouse the pile view keeps its Close button', async ({ page }, testInfo) => {
+  test.skip(isTouch(testInfo), 'mouse');
+  await pile(page, 'Discard').click();
+  await expect(page.locator('.modal').getByRole('button', { name: 'Close' })).toHaveText('Close');
+});
+
+// openSearch opens the deck search from the deck's actions.
+async function openSearch(page) {
+  await pile(page, 'Deck').tap();
+  await sheet(page).getByRole('button', { name: 'Search…', exact: true }).tap();
+}

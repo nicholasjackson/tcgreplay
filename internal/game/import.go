@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/deck"
 	"github.com/nicholasjackson/tcgreplay/internal/importer"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
@@ -88,6 +89,14 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 		opts.DefOf = func(name string, moves []string) string {
 			if id, ok := deck.BasicEnergyDef(name); ok {
 				return id
+			}
+			// A log with card codes names the exact print.
+			for _, code := range importer.LogCodes(req.Log, name) {
+				if id, ok := cards.LogCodeID(code); ok {
+					if c, err := m.DB.Card(ctx, id); err == nil && cards.SameName(c.Name, name) {
+						return id
+					}
+				}
 			}
 			id, _ := m.DB.ByName(ctx, name, moves...)
 			return id

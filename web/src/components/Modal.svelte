@@ -7,6 +7,10 @@
   import Card from './Card.svelte';
 
   const m = $derived(app.modal);
+  // On a touch screen a view closes like the action sheet, with a round ✕
+  // in the corner; on a phone it fills the screen.
+  const touch = $derived(app.layout !== 'desktop');
+  const phone = $derived(app.layout === 'phone');
   let filter = $state('');
 
   $effect(() => {
@@ -117,9 +121,10 @@
 
 {#if m}
   <div class="backdrop" onclick={close} role="presentation"></div>
-  <div class="modal" role="dialog" aria-modal="true">
+  <div class="modal" class:touch class:phone role="dialog" aria-modal="true">
+    {#if touch}<button class="x" aria-label="Close" onclick={close}>✕</button>{/if}
     {#if m.kind === 'pile'}
-      <header><h2>{m.seat} {m.zone === 'lost' ? 'Lost Zone' : 'discard'} · {pileCards.length}</h2><button onclick={close}>Close</button></header>
+      <header><h2>{m.seat} {m.zone === 'lost' ? 'Lost Zone' : 'discard'} · {pileCards.length}</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
       <div class="grid">
         {#each pileCards as c (c.iid)}
           <div class="entry" onpointerenter={(ev) => hover(ev, c)} onpointerleave={() => (preview = null)}>
@@ -135,7 +140,7 @@
         {/each}
       </div>
     {:else if m.kind === 'prizes'}
-      <header><h2>{m.seat} prizes · {prizes.filter((p) => p.card).length} left</h2><button onclick={close}>Close</button></header>
+      <header><h2>{m.seat} prizes · {prizes.filter((p) => p.card).length} left</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
       <div class="grid">
         {#each prizes as p (p.slot)}
           <div class="entry">
@@ -156,7 +161,7 @@
           <button type="submit">Filter</button>
         </form>
         <button onclick={() => run(() => act('shuffle', { whose: m.seat }))}>Shuffle</button>
-        <button onclick={close}>Done</button>
+        {#if !touch}<button onclick={close}>Done</button>{/if}
       </header>
       <p class="note">Sorted by category and name, never in deck order. Remember to shuffle.</p>
       <div class="list">
@@ -176,7 +181,7 @@
         {/each}
       </div>
     {:else if m.kind === 'look'}
-      <header><h2>Top {m.n} of {m.seat} deck</h2><button onclick={close}>Done</button></header>
+      <header><h2>Top {m.n} of {m.seat} deck</h2>{#if !touch}<button onclick={close}>Done</button>{/if}</header>
       <p class="note">Top card first.</p>
       <div class="grid">
         {#each m.cards as c, i (c.iid)}
@@ -201,7 +206,7 @@
         </select>
         <input bind:value={listFilter} placeholder="Find a card, e.g. meowth" />
         <button onclick={() => openDeckList(m.seat)}>Refresh</button>
-        <button onclick={close}>Done</button>
+        {#if !touch}<button onclick={close}>Done</button>{/if}
       </header>
       <p class="note">
         Every card and where each copy is now.
@@ -226,7 +231,7 @@
         <p class="empty">No matching cards.</p>
       {/each}
     {:else if m.kind === 'prompt'}
-      <header><h2>Paste this to {app.assistant}</h2><button onclick={close}>Close</button></header>
+      <header><h2>Paste this to {app.assistant}</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
       <textarea readonly rows="3" onfocus={(ev) => ev.target.select()}>{m.text}</textarea>
     {/if}
   </div>
@@ -244,6 +249,31 @@
   :global(.dragging) .modal { pointer-events: none; opacity: 0.2; }
   .modal :global(.card) { touch-action: pan-y; }
   .modal, .preview { --mw: min(1000px, 94vw); }
+  /* The touch close: round, in the top-right corner, staying in view as
+     the view scrolls. */
+  .x {
+    position: sticky;
+    top: 0;
+    float: right;
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    margin: -6px -8px 0 8px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #ffffff12;
+    font-size: 18px;
+  }
+  .modal.phone {
+    inset: 0;
+    transform: none;
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
   .modal {
     position: fixed;
     z-index: 31;

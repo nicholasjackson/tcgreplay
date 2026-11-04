@@ -342,7 +342,8 @@ func buildHandlers(a, b string) []handler {
 			}
 			return r.addDamage(seat, l, count(m[3]))
 		}),
-		h(`{P}'s (.+) healed (\d+) damage\.`, func(r *replay, m []string, n, _ *Node) error {
+		// Newer logs say "was healed for 30 damage".
+		h(`{P}'s (.+?) (?:was )?healed (?:for )?(\d+) damage\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[1])
 			// Only a copy carrying at least that much damage can heal it,
 			// which settles identical copies the log can't tell apart.
@@ -639,8 +640,24 @@ func buildHandlers(a, b string) []handler {
 		h(`{P} flipped a coin and it landed on (heads|tails)\.`, func(r *replay, m []string, n, _ *Node) error {
 			return r.emit(r.seat(m[1]), state.EvCoin, state.CoinPayload{Results: []string{m[2]}})
 		}),
+		h(`{P} flipped (\d+) coins, and (\d+) landed on heads\.`, func(r *replay, m []string, n, _ *Node) error {
+			flips, heads := count(m[2]), count(m[3])
+			if heads > flips {
+				return fmt.Errorf("%d heads from %d coins", heads, flips)
+			}
+			res := make([]string, flips)
+			for i := range res {
+				res[i] = "tails"
+				if i < heads {
+					res[i] = "heads"
+				}
+			}
+			return r.emit(r.seat(m[1]), state.EvCoin, state.CoinPayload{Results: res})
+		}),
 		h(`{P} chose (.+)`, noop),
 		h(`(.+) was activated\.`, noop),
+		// A Stadium or Tool (Battle Cage) stopping damage changes nothing.
+		h(`Damage to (.+) was prevented\.`, noop),
 		h(`Damage breakdown:`, noop),
 		h(`{P} ended their turn\.`, func(r *replay, m []string, n, _ *Node) error {
 			return r.endTurn()

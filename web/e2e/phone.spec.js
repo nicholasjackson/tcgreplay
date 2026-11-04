@@ -153,7 +153,7 @@ test('the header keeps the dot, warnings and ☰, and ☰ reaches every other co
   // The deck list.
   await page.getByRole('menuitem', { name: 'Deck list' }).tap();
   await expect(page.locator('.modal h2')).toContainText('Your deck');
-  await page.locator('.modal').getByRole('button', { name: 'Done' }).tap();
+  await page.locator('.modal').getByRole('button', { name: 'Close' }).tap();
 
   // The timeline opens full screen and closes.
   await menu(page).tap();

@@ -53,8 +53,9 @@ var (
 	totalRe   = regexp.MustCompile(`(?i)^Total Cards\s*:\s*(\d+)\s*$`)
 	// Set codes are upper case (SVI, PR-SV) and numbers hold a digit (113,
 	// TG05), so a name-only line like "4 Lillie's Clefairy ex" is not
-	// mistaken for name "Lillie's", set "Clefairy", number "ex".
-	lineRe = regexp.MustCompile(`^(\d+)\s+(.+?)\s+([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)?)\s+([A-Za-z]*\d+[A-Za-z]?)$`)
+	// mistaken for name "Lillie's", set "Clefairy", number "ex". A code
+	// may also start with digits (30th, 30TH, 30C for 30th Celebration).
+	lineRe = regexp.MustCompile(`^(\d+)\s+(.+?)\s+([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)?|\d+[A-Za-z]+)\s+([A-Za-z]*\d+[A-Za-z]?)$`)
 	// Some exports omit set and number, e.g. "8 Basic Fighting Energy".
 	bareRe = regexp.MustCompile(`^(\d+)\s+(.+)$`)
 )

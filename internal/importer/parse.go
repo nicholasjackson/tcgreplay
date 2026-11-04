@@ -7,6 +7,7 @@ package importer
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -38,9 +39,29 @@ type Section struct {
 	Lines  []*Node
 }
 
-// Normalize folds the typographic variants the client mixes.
+// logCodeRe matches the card code TCG Live puts before each card name, e.g.
+// "(me3_121) Meowth ex" or "(me2_85_ph) Battle Cage".
+var logCodeRe = regexp.MustCompile(`\(([a-z][a-z0-9-]*_\d+(?:_[a-z0-9]+)*)\) `)
+
+// Normalize folds the typographic variants the client mixes and drops the
+// card codes, so cards are matched by name as in logs without them.
 func Normalize(s string) string {
-	return strings.NewReplacer("\u2019", "'", "\u2018", "'", "\r", "", "\ufeff", "").Replace(s)
+	s = strings.NewReplacer("\u2019", "'", "\u2018", "'", "\r", "", "\ufeff", "").Replace(s)
+	return logCodeRe.ReplaceAllString(s, "")
+}
+
+// LogCodes returns the card codes the log gives for name, in order of
+// first appearance; nil for a log without codes.
+func LogCodes(text, name string) []string {
+	text = strings.NewReplacer("\u2019", "'", "\u2018", "'").Replace(text)
+	re := regexp.MustCompile(`\(([a-z][a-z0-9-]*_\d+(?:_[a-z0-9]+)*)\) ` + regexp.QuoteMeta(name))
+	var out []string
+	for _, m := range re.FindAllStringSubmatch(text, -1) {
+		if !slices.Contains(out, m[1]) {
+			out = append(out, m[1])
+		}
+	}
+	return out
 }
 
 var turnRe = regexp.MustCompile(`^(.+)'s Turn$`)

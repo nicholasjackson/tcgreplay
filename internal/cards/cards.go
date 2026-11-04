@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -337,6 +338,59 @@ var codeAliases = map[string]string{
 	"PR-SW": "SWSHP",
 }
 
+// setAliases maps set codes straight to a TCGdex set id, for sets whose
+// official abbreviation is shared (30th Celebration and its Classic
+// Collection are both "30C") or that exports spell their own way.
+var setAliases = map[string]string{
+	"30TH": "30th",
+	"M30":  "30th",
+}
+
+// logCodePrefix maps the set part of a TCG Live log code that does not
+// follow the series+number pattern to a TCGdex set id.
+var logCodePrefix = map[string]string{
+	"mebsp": "mep",
+	"svbsp": "svp",
+}
+
+var logCodeRe = regexp.MustCompile(`^([a-z]+?)(\d+)?(?:-(\d+))?_(\d+)(?:_[a-z0-9]+)*$`)
+
+// LogCodeID turns a TCG Live log card code into the TCGdex id it most
+// likely names: me3_121 is me03-121, me2-5_172 me02.5-172, zsv10-5_79
+// sv10.5b-079 (Black Bolt) and mebsp_33 mep-033. Callers should check the
+// card exists and has the expected name.
+func LogCodeID(code string) (string, bool) {
+	m := logCodeRe.FindStringSubmatch(strings.ToLower(code))
+	if m == nil {
+		return "", false
+	}
+	prefix, major, half, num := m[1], m[2], m[3], m[4]
+	n, _ := strconv.Atoi(num)
+	var set string
+	switch {
+	case major == "":
+		set = prefix
+		if s, ok := logCodePrefix[prefix]; ok {
+			set = s
+		}
+	default:
+		suffix := ""
+		switch prefix {
+		case "zsv": // Zekrom: Black Bolt
+			prefix, suffix = "sv", "b"
+		case "rsv": // Reshiram: White Flare
+			prefix, suffix = "sv", "w"
+		}
+		mj, _ := strconv.Atoi(major)
+		set = fmt.Sprintf("%s%02d", prefix, mj)
+		if half != "" {
+			set += "." + half
+		}
+		set += suffix
+	}
+	return fmt.Sprintf("%s-%03d", set, n), true
+}
+
 func (c *Client) set(ctx context.Context, id string) (*setDetail, error) {
 	var s setDetail
 	err := c.getJSON(ctx, "/sets/"+url.PathEscape(id), filepath.Join(c.CacheDir, "sets", safeName(id)+".json"), &s)
@@ -346,7 +400,8 @@ func (c *Client) set(ctx context.Context, id string) (*setDetail, error) {
 // buildIndex maps set codes to TCGdex set ids. It fetches every set once and
 // caches the result.
 func (c *Client) buildIndex(ctx context.Context, refresh bool) error {
-	indexFile := filepath.Join(c.CacheDir, "set-index.json")
+	// v2: shared codes now keep the main set; older indexes may not.
+	indexFile := filepath.Join(c.CacheDir, "set-index-v2.json")
 	if !refresh {
 		if b, err := os.ReadFile(indexFile); err == nil {
 			idx := map[string]string{}
@@ -386,8 +441,15 @@ func (c *Client) buildIndex(ctx context.Context, refresh bool) error {
 				return
 			}
 			for _, code := range []string{d.Abbreviation.Official, d.TCGOnline} {
-				if code != "" {
-					idx[strings.ToUpper(code)] = d.ID
+				if code == "" {
+					continue
+				}
+				// Sets sharing a code (30th and 30th-c, cel25 and
+				// cel25cc) keep the main set, whose id is shorter, so
+				// the pick does not depend on fetch order.
+				k := strings.ToUpper(code)
+				if old, ok := idx[k]; !ok || len(d.ID) < len(old) || (len(d.ID) == len(old) && d.ID < old) {
+					idx[k] = d.ID
 				}
 			}
 		}(s.ID)
@@ -412,12 +474,15 @@ func (c *Client) Resolve(ctx context.Context, setCode, number string) (string, e
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.setIndex == nil {
+	setID, ok := setAliases[code]
+	if !ok && c.setIndex == nil {
 		if err := c.buildIndex(ctx, false); err != nil {
 			return "", err
 		}
 	}
-	setID, ok := c.setIndex[code]
+	if !ok {
+		setID, ok = c.setIndex[code]
+	}
 	if !ok && !c.indexed && !c.Offline {
 		// The cached index may predate a new set.
 		c.indexed = true
@@ -453,6 +518,10 @@ func nameKey(name string) string {
 	name = strings.NewReplacer("’", "'", "‘", "'").Replace(name)
 	return strings.ToLower(strings.Join(strings.Fields(name), " "))
 }
+
+// SameName reports whether two card names match, ignoring case, spacing
+// and apostrophe style.
+func SameName(a, b string) bool { return nameKey(a) == nameKey(b) }
 
 // ByName implements DB. A name has many prints; it picks the newest one
 // with art (what Standard play uses), preferring the regular print over
