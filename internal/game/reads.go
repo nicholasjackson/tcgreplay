@@ -643,6 +643,36 @@ func (g *Game) Undo(n int) (int, error) {
 	return head, nil
 }
 
+// StepBackTo moves the current branch's head back to just after eventID,
+// an earlier event on it: undo to a point, with no new branch. The events
+// after it stay in the log. It refuses an event off the current line, the
+// head itself, or one before the game was set up.
+func (g *Game) StepBackTo(eventID int) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	path, err := g.log.PathTo(g.log.Head())
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(path, func(e state.Event) bool { return e.ID == eventID })
+	switch {
+	case i < 0:
+		return fmt.Errorf("event %d is not on the current branch", eventID)
+	case i == len(path)-1:
+		return errors.New("that is already the latest event")
+	}
+	for _, e := range path[i+1:] {
+		if e.Actor == state.ActorImport || e.Type == state.EvSetup {
+			return fmt.Errorf("can only step back over moves made on the playmat; event %d is part of the game itself", e.ID)
+		}
+	}
+	branch := g.log.Current()
+	if err := g.log.Branch(branch, eventID); err != nil {
+		return err
+	}
+	return g.checkoutLocked(branch, ChangeUndo)
+}
+
 // SetDrawsLikeMain makes the current branch's draws repeat main's, or
 // draw from the top again. Each draw then takes the card main drew at the
 // same point, matched by game turn and order within the turn, while that

@@ -42,6 +42,7 @@ var endReasons = map[string]string{
 	game.EndGameExpired:    "the game expired",
 	game.EndBranchSwitched: "the board switched to another branch",
 	game.EndRewound:        "the board was rewound",
+	game.EndGameOver:       "the game is over",
 }
 
 // waitForTurn runs the manager's turn wait on the seat handed to the
@@ -101,6 +102,10 @@ func (s *Server) waitForTurn(ctx context.Context, in WaitArg) (any, error) {
 			reason = o.Reason
 		}
 		r.Next = fmt.Sprintf("Stop waiting: %s. Wait again only after you hand the player a turn.", reason)
+		if o.Reason == game.EndGameOver && g != nil {
+			winner, why := g.State().Winner()
+			r.Next = fmt.Sprintf("Stop waiting: the game is over, %s wins (%s). Tell the player the result and offer a review of the game; do not wait again.", winner, why)
+		}
 	default:
 		r.Next = fmt.Sprintf("Call wait_for_turn again with since %d. Post nothing in chat.", o.Next)
 	}

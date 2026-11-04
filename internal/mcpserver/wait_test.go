@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -40,6 +41,13 @@ type waitOut struct {
 // (the player) to move.
 func waitGame(t *testing.T, cs *mcp.ClientSession, m *game.Manager) *game.Game {
 	t.Helper()
+	return waitGameBench(t, cs, m, false)
+}
+
+// waitGameBench is waitGame, with a Benched Pokémon for p2 when bench is
+// set, so a knock-out of its Active leaves it one to promote.
+func waitGameBench(t *testing.T, cs *mcp.ClientSession, m *game.Manager, bench bool) *game.Game {
+	t.Helper()
 	deck, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
 	if err != nil {
 		t.Fatal(err)
@@ -57,6 +65,15 @@ func waitGame(t *testing.T, cs *mcp.ClientSession, m *game.Manager) *game.Game {
 			g.Move(seat, state.ActorSystem, iid, state.Loc{Zone: state.Hand}, "", "")
 		}
 		if _, err := g.PlaceActive(seat, state.ActorSystem, iid); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if bench {
+		iid := state.IID("p2-2")
+		if l, _ := g.State().Find(iid); l.Zone != state.Hand {
+			g.Move(state.P2, state.ActorSystem, iid, state.Loc{Zone: state.Hand}, "", "")
+		}
+		if _, err := g.Bench(state.P2, state.ActorSystem, iid, -1); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -373,7 +390,7 @@ func TestInstructionsTeachTheLoop(t *testing.T) {
 func TestWaitForTurnRespondAndPromote(t *testing.T) {
 	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
 		m.Timing = game.Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute}
-		g := waitGame(t, cs, m)
+		g := waitGameBench(t, cs, m, true)
 		st := g.State()
 		card := st.Sides[state.P1].Hand[0]
 
@@ -400,6 +417,30 @@ func TestWaitForTurnRespondAndPromote(t *testing.T) {
 		want = fmt.Sprintf("Your Active Pokémon was Knocked Out: promote with switch (to_slot) if you have a Benched Pokémon, then call wait_for_turn with since %d.", w.Since)
 		if w.Outcome != "promote" || w.Next != want || len(w.Cards) != 0 {
 			t.Fatalf("after the knock-out: %+v", w)
+		}
+	})
+}
+
+// TestWaitForTurnGameOver: a knock-out that leaves the assistant no
+// Pokémon in play ends the game, and the wait ends with the result instead
+// of waiting on.
+func TestWaitForTurnGameOver(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
+		m.Timing = game.Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute}
+		g := waitGame(t, cs, m)
+		res, err := g.KnockOut(state.P1, state.ActorHuman, state.Loc{Seat: state.P2, Zone: state.Active})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.ContainsFunc(res.Warnings, func(w string) bool { return strings.HasPrefix(w, "Game over: p1 wins") }) {
+			t.Errorf("knock-out warnings %v lack the result", res.Warnings)
+		}
+		w := mustWait(t, cs, nil)
+		if w.Outcome != "ended" || w.Reason != "game_over" || !strings.Contains(w.Next, "p1 wins") {
+			t.Fatalf("wait after the last Pokémon fell: %+v", w)
+		}
+		if b := g.State().Project(state.ViewSeat, state.P2, nil); b.Winner != state.P1 {
+			t.Errorf("board winner %q, want p1", b.Winner)
 		}
 	})
 }

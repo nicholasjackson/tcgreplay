@@ -455,7 +455,7 @@ func (s *Server) register(srv *mcp.Server) {
 	})
 
 	// Game management.
-	add(s, srv, "new_game", "Start a new game from two TCG Live decklists. Loads, shuffles and draws opening hands; then place actives (place_active, bench), mulligan if needed, and start_game.", func(ctx context.Context, in NewGame) (any, error) {
+	add(s, srv, "new_game", "Start a new game from two TCG Live decklists. Loads, shuffles and draws opening hands, mulliganing any hand with no Basic Pokémon automatically: the warnings say how many times and how many extra cards the other player may draw (ask them, then draw). Then place actives (place_active, bench) and start_game, which refuses until both players have an Active Pokémon.", func(ctx context.Context, in NewGame) (any, error) {
 		names := map[state.Seat]string{state.P1: in.NameP1, state.P2: in.NameP2}
 		g, res, err := s.m(ctx).New(ctx, game.NewGameRequest{ID: in.ID, DeckP1: in.DeckP1, DeckP2: in.DeckP2, Names: names})
 		if err != nil {
@@ -702,7 +702,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.SetCondition(seat, actor, l, strings.ToLower(in.Condition), !in.Clear)
 		})
 	})
-	add(s, srv, "place_damage", "Add damage to a Pokémon (negative heals), e.g. damage counters from an effect or Pokémon Checkup.", func(ctx context.Context, in Damage) (any, error) {
+	add(s, srv, "place_damage", "Add damage to a Pokémon (negative heals), e.g. damage counters from an effect or Pokémon Checkup. Heal or place any amount in one call: to heal all of it, pass minus its current damage, never one call per 10.", func(ctx context.Context, in Damage) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			l, err := parseLoc(in.Target, seat)
 			if err != nil {

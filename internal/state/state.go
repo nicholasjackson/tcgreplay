@@ -122,6 +122,37 @@ func seatBit(s Seat) uint8 {
 	return 2
 }
 
+// Winner reports who has won once play has started, and why: a player who
+// has taken all their prize cards wins, and a player with no Pokémon in
+// play (none to promote after a Knock Out) loses. "" while play goes on.
+// Running out of cards to draw is left to the players to call.
+func (s *State) Winner() (Seat, string) {
+	if s.Phase != PhasePlaying {
+		return "", ""
+	}
+	for _, seat := range Seats {
+		if side := s.Sides[seat]; side != nil && len(side.Prizes) > 0 && side.PrizesLeft() == 0 {
+			return seat, "took all their prize cards"
+		}
+	}
+	for _, seat := range Seats {
+		side := s.Sides[seat]
+		if side == nil || !side.Active.Empty() {
+			continue
+		}
+		benched := false
+		for _, b := range side.Bench {
+			if !b.Empty() {
+				benched = true
+			}
+		}
+		if !benched {
+			return seat.Other(), string(seat) + " has no Pokémon in play"
+		}
+	}
+	return "", ""
+}
+
 // KnownTo reports whether seat can see card iid where it currently is.
 func (s *State) KnownTo(iid IID, seat Seat) bool {
 	loc, err := s.Find(iid)

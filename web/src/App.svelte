@@ -1,6 +1,6 @@
 <script>
   import { openDeckList } from './lib/actions.js';
-  import { app, setPanelAt } from './lib/store.svelte.js';
+  import { app, setPanelAt, setPrizeReminders } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
   import { setAutoplay } from './lib/playback.svelte.js';
   import Side from './components/Side.svelte';
@@ -142,6 +142,9 @@
           {:else}
             <button role="menuitem" onclick={() => menu(() => (app.panelOpen = !app.panelOpen))}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
           {/if}
+          <label class="menu-check" title="After a Knock Out, remind me how many prize cards to take">
+            <input type="checkbox" checked={app.prizeReminders} onchange={(ev) => setPrizeReminders(ev.target.checked)} /> Prize reminders
+          </label>
           <label class="menu-check" title="Play the assistant's moves on the board as they arrive">
             <input type="checkbox" checked={app.autoplay} onchange={(ev) => setAutoplay(ev.target.checked)} /> Autoplay {app.assistant}'s moves
           </label>
@@ -155,6 +158,9 @@
     </div>
   </header>
 
+  {#if app.board?.winner}
+    <div class="over-banner" role="status">Game over: {nameOf(app.board.winner)} wins ({app.board.win_reason})</div>
+  {/if}
   {#if app.reveal}
     <div class="reveal-banner">REVEAL VIEW: both hands, prizes and decks are face up. Post-mortem only.</div>
   {/if}
@@ -357,6 +363,13 @@
   .menu-check:hover { background: var(--hover); }
   .sep { height: 1px; background: var(--line); margin: 4px 0; }
   .account { color: var(--muted); padding: 4px 10px; font-size: 12px; }
+  .over-banner {
+    background: var(--accent);
+    color: #111;
+    font-weight: 800;
+    text-align: center;
+    padding: 4px;
+  }
   .reveal-banner {
     background: var(--reveal);
     color: #fff;

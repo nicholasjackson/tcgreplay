@@ -50,8 +50,61 @@ func (g *Game) Setup(cardsList []state.Card, opts Options) (*Result, error) {
 				return err
 			}
 		}
+		// A hand with no Basic Pokémon is a mulligan: reveal it, shuffle it
+		// back and draw again, until there is one. Each one lets the other
+		// player draw a card if they choose.
+		mulligans := map[state.Seat]int{}
+		for _, seat := range state.Seats {
+			for t.noBasic(seat) && mulligans[seat] < maxMulligans {
+				mulligans[seat]++
+				if err := t.mulligan(seat); err != nil {
+					return err
+				}
+			}
+			if t.noBasic(seat) {
+				t.warn = append(t.warn, fmt.Sprintf("%s still has no Basic Pokémon after %d mulligans: check the deck list", seat, mulligans[seat]))
+			}
+		}
+		for _, seat := range state.Seats {
+			if n := mulligans[seat]; n > 0 {
+				t.warn = append(t.warn, fmt.Sprintf("%s mulliganed %d time%s (no Basic Pokémon). %s may draw up to %d extra card%s: ask them, then use draw.", seat, n, plural(n), seat.Other(), n, plural(n)))
+			}
+		}
 		return nil
 	})
+}
+
+// maxMulligans stops automatic mulligans for a deck with no Basic
+// Pokémon at all.
+const maxMulligans = 10
+
+// noBasic reports whether seat's hand has no Basic Pokémon. A hand of
+// cards whose definitions are unknown is never taken for one with none.
+func (t *tx) noBasic(seat state.Seat) bool {
+	for _, iid := range t.st.Sides[seat].Hand {
+		c := t.g.card(t.st, iid)
+		if c == nil || c.IsBasic() {
+			return false
+		}
+	}
+	return true
+}
+
+// mulligan reveals seat's hand, shuffles it back and draws a new one.
+func (t *tx) mulligan(seat state.Seat) error {
+	hand := slices.Clone(t.st.Sides[seat].Hand)
+	if err := t.emit(seat, state.EvReveal, state.RevealPayload{IIDs: hand, To: state.Seats}); err != nil {
+		return err
+	}
+	for _, iid := range hand {
+		if err := t.move(iid, loc(seat, state.Deck), "", ""); err != nil {
+			return err
+		}
+	}
+	if err := t.shuffle(seat); err != nil {
+		return err
+	}
+	return t.draw(seat, HandSize)
 }
 
 // Mulligan shuffles seat's hand back and draws a new one.
@@ -60,15 +113,7 @@ func (g *Game) Mulligan(seat state.Seat, actor state.Actor) (*Result, error) {
 		if t.st.Phase != state.PhaseSetup {
 			t.warn = append(t.warn, "mulligan outside setup")
 		}
-		for _, iid := range slices.Clone(t.st.Sides[seat].Hand) {
-			if err := t.move(iid, loc(seat, state.Deck), "", ""); err != nil {
-				return err
-			}
-		}
-		if err := t.shuffle(seat); err != nil {
-			return err
-		}
-		return t.draw(seat, HandSize)
+		return t.mulligan(seat)
 	})
 }
 
@@ -124,11 +169,19 @@ func (g *Game) StartGame(first state.Seat, actor state.Actor) (*Result, error) {
 		if t.st.Phase != state.PhaseSetup {
 			return fmt.Errorf("the game has already started")
 		}
+		// Prizes are dealt only once both players have an Active Pokémon:
+		// a hand with no Basic must be mulliganed first.
+		for _, seat := range state.Seats {
+			if !t.st.Sides[seat].Active.Empty() {
+				continue
+			}
+			if t.noBasic(seat) {
+				return fmt.Errorf("%s has no Basic Pokémon in hand: mulligan first, then place an Active Pokémon", seat)
+			}
+			return fmt.Errorf("%s has no Active Pokémon: place one with place_active first", seat)
+		}
 		for _, seat := range state.Seats {
 			side := t.st.Sides[seat]
-			if side.Active.Empty() {
-				t.warn = append(t.warn, fmt.Sprintf("%s has no Active Pokémon", seat))
-			}
 			if side.PrizesLeft() > 0 {
 				continue
 			}
@@ -474,13 +527,39 @@ func (g *Game) KnockOut(seat state.Seat, actor state.Actor, target state.Loc) (*
 		if st.Empty() {
 			return fmt.Errorf("no Pokémon in %s", target)
 		}
+		name := t.st.Name(st.Top())
 		for _, iid := range st.Cards() {
 			if err := t.move(iid, loc(target.Seat, state.Discard), "", ""); err != nil {
 				return err
 			}
 		}
+		// A reminder, not a rule: effects can change how many are taken.
+		n := prizeValue(name)
+		t.warn = append(t.warn, fmt.Sprintf("Knocked Out: %s takes %d prize card%s for %s.", target.Seat.Other(), n, plural(n), name))
 		return nil
 	})
+}
+
+// prizeValue is how many prize cards a Knock Out of the named Pokémon
+// usually gives: 3 for a Mega Evolution ex or a VMAX, 2 for any other ex,
+// V, VSTAR, GX or EX, else 1.
+func prizeValue(name string) int {
+	switch {
+	case strings.HasPrefix(name, "Mega ") && strings.HasSuffix(name, " ex"),
+		strings.HasSuffix(name, " VMAX"), strings.HasSuffix(name, " V-UNION"):
+		return 3
+	case strings.HasSuffix(name, " ex"), strings.HasSuffix(name, " EX"), strings.HasSuffix(name, " GX"),
+		strings.HasSuffix(name, " V"), strings.HasSuffix(name, " VSTAR"):
+		return 2
+	}
+	return 1
+}
+
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }
 
 // TakePrize moves a prize card to seat's hand. slot < 0 takes the first
@@ -499,9 +578,6 @@ func (g *Game) TakePrize(seat state.Seat, actor state.Actor, slot int) (*Result,
 		}
 		if err := t.move(prizes[slot], loc(seat, state.Hand), "", ""); err != nil {
 			return err
-		}
-		if t.st.Sides[seat].PrizesLeft() == 0 {
-			t.warn = append(t.warn, fmt.Sprintf("%s has taken their last prize card and wins", seat))
 		}
 		return nil
 	})

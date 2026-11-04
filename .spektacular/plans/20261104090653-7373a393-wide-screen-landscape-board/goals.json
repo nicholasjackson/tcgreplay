@@ -1,0 +1,257 @@
+{
+  "plan": "20261104090653-7373a393-wide-screen-landscape-board",
+  "items": [
+    {
+      "item": "c2e07d78-2a6a-4bc3-b1ac-63523695f083",
+      "title": "Hand counts beside their hands",
+      "checks": [
+        {
+          "at": "2026-11-04T10:06:50Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c2e07d78-2a6a-4bc3-b1ac-63523695f083",
+            "title": "Hand counts beside their hands",
+            "criteria": [
+              "On today's mat at desktop and tablet sizes, each player's \"N in hand\" sits within one card width of that hand's nearest card.",
+              "The phone layout's hand and counts look and behave as before.",
+              "The existing browser suite passes on phone, tablet and desktop."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Hand.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".hand"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".count"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".copy"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/components/Hand.svelte:73 renders the count as the last flex child of .hand after the slots. The diff adds `.hand:not(.phone) .count { position: static; align-self: flex-end; margin-left: calc(var(--cw) * 0.7); white-space: nowrap; }` (Hand.svelte:154-159), and `.hand.small:not(.phone) .count { align-self: flex-start; }` (line 160). On desktop and tablet the count therefore sits directly after the hand's last card; the slots' -0.16cw margins leave a net gap of about 0.54cw before any rotation, inside one card width. --cw is defined for the mat in app.css:6 and App.svelte:259/264. Both hands are rendered on the mat (App.svelte:178 opponent small hand, App.svelte:182 human hand). The new test 'on the mat each \"N in hand\" sits right beside its hand' (web/e2e/phone.spec.js ~lines 30-43) measures gap against the last slot and one bench card width at default and 1920x1080 viewports for p1 and p2. Its pass is recorded in the verify summary; I did not re-run it."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The only Hand.svelte change is the appended rules at lines 152-160, and all are gated by :not(.phone). The phone path is unchanged: the phone class is set from app.layout==='phone' at Hand.svelte:51, and the original absolute .count rule (lines 145-151: right 12px, bottom 4px) still applies there. The phone's CSS (lines 95-112) is untouched. The new phone test 'on a phone the hand count stays in the strip's corner' (phone.spec.js ~lines 45-51) asserts position absolute and right offset 12px; the verify summary reports it passing."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The verify summary reports `cd web \u0026\u0026 npm run build \u0026\u0026 npx playwright test` at 217 passed, 62 skipped, 0 failed across the phone, tablet and desktop projects, and the targeted grep at 3 passed, 3 skipped, which matches the new tests' project-scoped skips. I did not re-run the suite (read-only). The staged diff touches only web/src/components/Hand.svelte and web/e2e/phone.spec.js, and the .status file lists no other changes, so nothing outside scope could break the suite."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": false
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "789415e5-a4f2-45e6-bfa4-d054d532a9f8",
+      "title": "Centre the playback controls on the board",
+      "checks": [
+        {
+          "at": "2026-11-04T10:11:22Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "789415e5-a4f2-45e6-bfa4-d054d532a9f8",
+            "title": "Centre the playback controls on the board",
+            "criteria": [
+              "During a replay, the playback bar's and caption's horizontal centres are within 2px of the board area's centre with the timeline beside the board, below it, and hidden.",
+              "The playback bar's controls and caption work as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".body.panel"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Geometry in web/src/App.svelte checks out for all three layouts. Beside: .app.panel-side sets --panel-w to --panel-col (App.svelte:259), so the overlay's left is calc(50% - panel-w/2) with translateX(-50%) (lines 411-412), centring it at W/2 - panel-col/2. main is the 1fr column of .body.panel (line 375), whose centre is (W - panel-col)/2. Same value. Below: .body gets class bottom (line 162) and panel-side is not set (line 259 requires !bottom), so panel-w is 0 and main spans the full width, matching the overlay at W/2. Hidden: showTimeline is false, so no panel-side and no .panel grid, giving panel-w 0 and main at full width. At max-width 900px the media rule (line 452) forces panel-w to 0 and the grid to one column. The bar is .overlay .bar from PlaybackBar.svelte:65, which has no asymmetric margin. The caption is .overlay .caption (App.svelte:423). web/e2e/desktop.spec.js:22-54 measures both against main's centre at beside, below and hidden with a tolerance of 2px. The reported run of that spec passed on tablet and desktop. I did not run it myself."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The diff touches only positioning CSS in App.svelte (the overlay and caption rules, lines 407-434, plus the --panel-w/--panel-col variables). The markup inside .overlay (PlaybackBar, then the caption div, App.svelte:227-232) is unchanged. PlaybackBar.svelte, playback.svelte.js and store.svelte.js are not in the diff, so the button behaviour and caption text are untouched. On a phone --panel-w is always 0 (panel-side requires !phone), so the phone overlay and caption widths are unchanged in effect. desktop.spec.js:50-53 also exercises Previous move and Live after the moves, and the reported run passed."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": false
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "7f86241a-c344-4969-a896-6e2be05777d4",
+      "title": "Larger text and a wider timeline on big screens",
+      "checks": [
+        {
+          "at": "2026-11-04T10:15:31Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "7f86241a-c344-4969-a896-6e2be05777d4",
+            "title": "Larger text and a wider timeline on big screens",
+            "criteria": [
+              "At 3840×2160 the timeline and header text are at least 1.5 times their size at 1920×1080.",
+              "At 1920×1080 and 1440×900 the timeline and header text are the same size as before.",
+              "At 3840×2160 with the timeline beside the board, the timeline is wider than 480px."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "app.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Timeline.svelte"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/components/Timeline.svelte:139-146 sets .timeline font-size max(12px, 0.625vw), h3 at line 155 max(12px, 0.625vw), h4 at line 164 max(11px, 0.573vw), .acts button at line 198 max(12px, 0.625vw). web/src/App.svelte:330-331 sets header font-size max(13px, 0.677vw), and line 333 makes header button/select inherit it (overriding the global 13px in app.css:54). At 3840px (1vw=38.4px) the header is 26px vs 13px at 1920 (2.0x), .timeline 24px vs 12px (2.0x), h4 22px vs 11px (2.0x). web/e2e/desktop.spec.js:65-75 asserts header/timeline/line/heading \u003e= 1.5x at 3840 and passed in the verify run."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "At 1920 (1vw=19.2px): header max(13px, 12.998px)=13px; .timeline and h3 max(12px, 12px)=12px; .acts button 12px; aside h2 max(13px, 13.0px)=13px. At 1440 (1vw=14.4px): header 13px, timeline 12px, h4 11px, all unchanged. Same values as the pre-diff 13px/12px/11px/12px. Test desktop.spec.js:65-71 pins header 13, timeline 12, line 12, heading 13 at both 1440 and 1920. Caveat: h4 at 1920 computes to max(11px, 11.0016px)=11.0016px, a 0.0016px difference from 11px that is not visible and is not asserted by any test; the file's comment says 'today's size' which is true to within that margin. Also --panel-col clamp(320px,18vw,960px) (App.svelte:256) gives 345.6px at 1920 and 320px at 1440, matching the old clamp(320px,18vw,480px) at both sizes."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "App.svelte:162 applies class panel to .body when showTimeline \u0026\u0026 !phone, and App.svelte:377 sets .body.panel grid-template-columns: 1fr var(--panel-col). At 3840 the column is clamp(320px, 18vw, 960px) = 691.2px, so the aside (a grid child stretched to the column) is 691.2px wide, above 480px. The timeline (.timeline, flex child of aside) fills that width. The default is panelOpen: true and panelAt: 'side' (web/src/lib/store.svelte.js:29,32), so the timeline is beside the board by default. The @media (max-width: 900px) rule (App.svelte:452) does not apply at 3840. desktop.spec.js:77-86 asserts aside.width \u003e 480 at 3840 and passed in the verify run."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": false
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "e4a89366-902b-4ede-b752-60044fa291b3",
+      "title": "Wide-screen layout switch and test profile",
+      "checks": [
+        {
+          "at": "2026-11-04T10:21:15Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "e4a89366-902b-4ede-b752-60044fa291b3",
+            "title": "Wide-screen layout switch and test profile",
+            "criteria": [
+              "The board knows it is wide at 2560×1440 with the timeline beside, and not at 1440×900. It changes with no reload when the window is resized, or the timeline is hidden or moved below the board at a width where that makes the board area wide enough.",
+              "A 2560×1440 test profile runs with the rest of the browser suite, and the whole suite passes on all four profiles."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/playwright.config.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/fixtures.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "app.wide"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/App.svelte:50-60 adds measureBoard, a ResizeObserver on main that sets app.wide = main.clientWidth \u003e= 1600 and resets it to false on teardown. It is attached at App.svelte:181 for non-phone layouts. App.svelte:99 exposes it as class:landscape={app.wide} and data-wide={app.wide}. web/src/lib/store.svelte.js:43-47 declares wide: false. With the store defaults (panelOpen: true, panelAt: 'side', store.svelte.js:29-32) the timeline column at 2560 is clamp(320px,18vw,960px), about 461px, so main is about 2099px and wide; at 1440 the column is 320px, so main is about 1120px and not wide. Because the observer watches main itself, hiding the timeline or moving it below (main becomes full width) and window resizes all re-fire it, with no reload. web/e2e/desktop.spec.js:91-122 asserts these transitions. Tests were not re-run; this is judged from the code."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/playwright.config.js:34-39 adds a 'wide' project at 2560x1440 (Desktop Chrome), alongside phone, tablet and desktop. There is no per-project testMatch or testIgnore and testDir is './e2e', so every spec runs on all four profiles. web/e2e/desktop.spec.js:124-126 checks only the wide profile starts wide, and phone.spec.js:185 and :268 add isWide guards. The supplied full-run result (294 passed, 98 skipped, 0 failed across phone, tablet, desktop, wide) is accepted as evidence that the suite passes on all four profiles; not re-run. Minor: the skip reason at web/e2e/phone.spec.js:185 cites 'wide.spec.js', which does not exist in the worktree."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": false
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    }
+  ]
+}

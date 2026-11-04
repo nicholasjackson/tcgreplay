@@ -39,8 +39,12 @@ func newTestGame(t *testing.T) (*Manager, *Game) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(res.Warnings) > 0 {
-		t.Fatalf("setup warnings: %v", res.Warnings)
+	// Automatic mulligans are reported as warnings; anything else is not
+	// expected.
+	for _, w := range res.Warnings {
+		if !strings.Contains(w, " mulliganed ") {
+			t.Fatalf("setup warnings: %v", res.Warnings)
+		}
 	}
 	return m, g
 }

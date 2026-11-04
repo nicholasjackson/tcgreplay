@@ -89,7 +89,10 @@ export async function act(verb, args = {}) {
       toast(r.error || `${verb} failed`, 'error');
       return undefined;
     }
-    for (const w of r.warnings || []) toast(w, 'warn');
+    for (const w of r.warnings || []) {
+      if (!app.prizeReminders && w.startsWith('Knocked Out:')) continue;
+      toast(w, 'warn');
+    }
     return r.data ?? true;
   } catch (e) {
     toast(e.message, 'error');

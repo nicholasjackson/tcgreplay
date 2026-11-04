@@ -152,7 +152,7 @@ No server, wire-format or persisted data changes: the board's snapshot and actio
 
 **Validation point**: The existing browser suite passes on phone, tablet and desktop. New checks confirm the hand counts sit beside their hands, the playback bar is centred over the board area in all three timeline positions, the text scales at 3840×2160 and is unchanged at 1920×1080 and 1440×900, and the timeline exceeds 480px at 3840×2160.
 
-#### - [ ] Task: Hand counts beside their hands
+#### - [x] Task: Hand counts beside their hands
 **Id:** c2e07d78-2a6a-4bc3-b1ac-63523695f083
 **Repo:** tcgreplay
 **Depends on:** none
@@ -163,11 +163,11 @@ Moves each "N in hand" count from the far right edge of the board area to sit ri
 *Technical detail:* [context.md#task-hand-counts-beside-their-hands](./context.md#task-hand-counts-beside-their-hands)
 
 **Acceptance criteria**:
-- [ ] On today's mat at desktop and tablet sizes, each player's "N in hand" sits within one card width of that hand's nearest card.
-- [ ] The phone layout's hand and counts look and behave as before.
-- [ ] The existing browser suite passes on phone, tablet and desktop.
+- [x] On today's mat at desktop and tablet sizes, each player's "N in hand" sits within one card width of that hand's nearest card.
+- [x] The phone layout's hand and counts look and behave as before.
+- [x] The existing browser suite passes on phone, tablet and desktop.
 
-#### - [ ] Task: Centre the playback controls on the board
+#### - [x] Task: Centre the playback controls on the board
 **Id:** 789415e5-a4f2-45e6-bfa4-d054d532a9f8
 **Repo:** tcgreplay
 **Depends on:** none
@@ -178,10 +178,10 @@ Centres the playback bar and its move caption over the board area instead of the
 *Technical detail:* [context.md#task-centre-the-playback-controls-on-the-board](./context.md#task-centre-the-playback-controls-on-the-board)
 
 **Acceptance criteria**:
-- [ ] During a replay, the playback bar's and caption's horizontal centres are within 2px of the board area's centre with the timeline beside the board, below it, and hidden.
-- [ ] The playback bar's controls and caption work as before.
+- [x] During a replay, the playback bar's and caption's horizontal centres are within 2px of the board area's centre with the timeline beside the board, below it, and hidden.
+- [x] The playback bar's controls and caption work as before.
 
-#### - [ ] Task: Larger text and a wider timeline on big screens
+#### - [x] Task: Larger text and a wider timeline on big screens
 **Id:** 7f86241a-c344-4969-a896-6e2be05777d4
 **Repo:** tcgreplay
 **Depends on:** none
@@ -192,9 +192,9 @@ Makes the header and timeline text grow with the screen on screens wider than 19
 *Technical detail:* [context.md#task-larger-text-and-a-wider-timeline-on-big-screens](./context.md#task-larger-text-and-a-wider-timeline-on-big-screens)
 
 **Acceptance criteria**:
-- [ ] At 3840×2160 the timeline and header text are at least 1.5 times their size at 1920×1080.
-- [ ] At 1920×1080 and 1440×900 the timeline and header text are the same size as before.
-- [ ] At 3840×2160 with the timeline beside the board, the timeline is wider than 480px.
+- [x] At 3840×2160 the timeline and header text are at least 1.5 times their size at 1920×1080.
+- [x] At 1920×1080 and 1440×900 the timeline and header text are the same size as before.
+- [x] At 3840×2160 with the timeline beside the board, the timeline is wider than 480px.
 
 ### Milestone 2: The landscape mat on wide screens
 
@@ -208,7 +208,7 @@ The board switches back and forth live as the window resizes or the timeline mov
 
 **Validation point**: On a new 2560×1440 test profile, checks confirm every landscape acceptance criterion: zone placement, the prize fan, the hand peek, card size, fit at 2560×1440 and 3840×2160, every action, and the live switching. The full suite still passes on phone, tablet and desktop.
 
-#### - [ ] Task: Wide-screen layout switch and test profile
+#### - [x] Task: Wide-screen layout switch and test profile
 **Id:** e4a89366-902b-4ede-b752-60044fa291b3
 **Repo:** tcgreplay
 **Depends on:** none
@@ -219,8 +219,8 @@ Adds the board's knowledge of whether it is on a wide screen: true when the boar
 *Technical detail:* [context.md#task-wide-screen-layout-switch-and-test-profile](./context.md#task-wide-screen-layout-switch-and-test-profile)
 
 **Acceptance criteria**:
-- [ ] The board knows it is wide at 2560×1440 with the timeline beside, and not at 1440×900. It changes with no reload when the window is resized, or the timeline is hidden or moved below the board at a width where that makes the board area wide enough.
-- [ ] A 2560×1440 test profile runs with the rest of the browser suite, and the whole suite passes on all four profiles.
+- [x] The board knows it is wide at 2560×1440 with the timeline beside, and not at 1440×900. It changes with no reload when the window is resized, or the timeline is hidden or moved below the board at a width where that makes the board area wide enough.
+- [x] A 2560×1440 test profile runs with the rest of the browser suite, and the whole suite passes on all four profiles.
 
 #### - [ ] Task: Landscape mat rows and sizing
 **Id:** 0e01e2b6-d75d-489f-bd4b-8b3f2b1f6523
@@ -297,3 +297,58 @@ Adds browser checks covering every landscape acceptance criterion on the wide pr
 - **Changing today's mat beyond the desktop-wide fixes:** the 2×3 prize grid, the pile column and the stacked actives stay as they are below 1600px.
 - **Automated Firefox, Safari or real-iPad checks:** the suite is Chromium-only. No iPad reaches the 1600px board-area width.
 - **The other items in the 2026-11-04 bug report:** the opponent as a fresh sub-agent, a revealed card staying face-up, automatic mulligans, heal-all, undo branches, game-over detection and prize reminders. They're tracked outside this plan, pending the user's choice of spec or direct fixes.
+
+## Changelog
+
+### 2026-11-04 — Task: Hand counts beside their hands
+
+**What was done**: On every non-phone layout, each hand's "N in hand" count is now an in-flow item at the end of the hand's flex row, so it sits right after the hand's last card instead of being pinned to the board area's right edge. The phone keeps its absolutely positioned count.
+
+**Deviations**: The count's left margin is `calc(var(--cw) * 0.7)`, not the plan's `0.15`: the fanned last card is rotated, so its rendered box overhangs its layout box, and a smaller margin let the count overlap it. The new tests sit in `web/e2e/phone.spec.js` beside the other mat checks, as the plan suggested. Work happens in a manually created git worktree (`/home/nicj/code/github.com/nicholasjackson/tcgreplay-wide-board`, branch `spek/20261104090653-7373a393-wide-screen-landscape-board`), because `implement new` did not create one; the orchestrator approved this.
+
+**Files changed**:
+- `web/src/components/Hand.svelte`
+- `web/e2e/phone.spec.js`
+
+**Discoveries**: A fanned hand's last card is rotated about a point below the card, so its bounding box reaches past its layout box; anything placed after the hand needs about 0.5–0.7 card widths of clearance. The opponent's small hand aligns its count to the top (`align-self: flex-start`), because that hand hangs down from the top edge.
+
+### 2026-11-04 — Task: Centre the playback controls on the board
+
+**What was done**: The timeline column's width is now one CSS variable, `--panel-col` on `.app`, used by the `.body.panel` grid. A `panel-side` class (timeline shown beside the board, not on a phone) sets `--panel-w` to it, and it is `0px` otherwise, including below 900px, where the timeline stacks. The fixed playback overlay's `left` is `calc(50% - var(--panel-w) / 2)`, so the bar and caption centre on the board area. Their max widths also leave out the timeline.
+
+**Deviations**: `--panel-w` is set by a class, not by `style:--panel-w`, so the existing `max-width: 900px` media rule can zero it. The overlay uses `50%`/`100%` of the fixed containing block rather than `100vw`, so a page scrollbar can't shift it. The test is in a new `web/e2e/desktop.spec.js`, for the desktop-wide chrome checks.
+
+**Files changed**:
+- `web/src/App.svelte`
+- `web/e2e/desktop.spec.js`
+
+**Discoveries**: Starting a replay from a timeline line ("Play from here") autoplays it. Tests pause it, then step once with "Next move", so the caption shows and holds still while they measure.
+
+### 2026-11-04 — Task: Larger text and a wider timeline on big screens
+
+**What was done**: Header text is now `max(13px, 0.677vw)`, and the header's buttons and branch select inherit it. The ☰ button is `max(16px, 0.833vw)`, and the menu's check items and the timeline heading are `max(13px, 0.677vw)`. The timeline's 12px text is `max(12px, 0.625vw)` and its 11px turn headings are `max(11px, 0.5729vw)`, so all of it is unchanged at 1920px and below and doubles by 3840px. The timeline column, `--panel-col`, is now capped at 960px instead of 480px.
+
+**Deviations**: The ☰ glyph and the menu's check items scale too, so the whole header grows together. The 11px headings use `0.5729vw`, not `0.573vw`, so they are exactly 11px at 1920px; the goal reviewer noticed the 0.0016px difference, and I changed it after the check. The tests are in `web/e2e/desktop.spec.js`.
+
+**Files changed**:
+- `web/src/App.svelte`
+- `web/src/components/Timeline.svelte`
+- `web/e2e/desktop.spec.js`
+
+**Discoveries**: `app.css` sets every button to 13px, so header controls only follow the header's size through an explicit `font-size: inherit`. That rule must exclude `.burger`, because `header button` outranks the scoped `.burger` class.
+
+### 2026-11-04 — Task: Wide-screen layout switch and test profile
+
+**What was done**: `app.wide` was added to the board's layout state. App attaches a `measureBoard` ResizeObserver to `<main>` on non-phone layouts (the phone keeps `fitBoard`). It sets `app.wide` when the board area is at least 1600px wide and resets it on detach. `.app` carries `class:landscape` and `data-wide` for styles and tests. A `wide` Playwright project at 2560×1440 and an `isWide` fixture were added. Switch tests in `web/e2e/desktop.spec.js` cover 2560×1440 (wide), 1440×900 (not wide), resizing live on the same page, and, at 1800×1000, moving the timeline below or hiding it.
+
+**Deviations**: No existing test failed on `wide` yet, because nothing visible changes until the landscape markup lands. Two of today's mat checks were made wide-aware ahead of it: "tablets and desktops keep the mat" skips on `wide`, and the `--cw` probe in "tablets and desktops use none of the phone board" returns early on `wide`. No `test.fixme` markers were needed.
+
+**Files changed**:
+- `web/src/lib/store.svelte.js`
+- `web/src/App.svelte`
+- `web/playwright.config.js`
+- `web/e2e/fixtures.js`
+- `web/e2e/phone.spec.js`
+- `web/e2e/desktop.spec.js`
+
+**Discoveries**: At 1800px the timeline column is 324px, so the board area is about 1476px: under the threshold beside the timeline, and over it with the timeline below or hidden. That makes it a good width to test the timeline-driven switch.

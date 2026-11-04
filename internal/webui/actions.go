@@ -170,6 +170,12 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 		v, err := g.Replay(viewer, a.From, a.Until)
 		return v, nil, err
 	case "rewind":
+		// In play mode, going back is an undo on the game's own line: a
+		// branch per step back only clutters the branch list. Review mode
+		// keeps a branch per position, to explore lines side by side.
+		if g.Mode() == game.ModePlay && a.Name == "" && g.OnCurrentBranch(a.Event) {
+			return g.Branch(), nil, g.StepBackTo(a.Event)
+		}
 		base := a.Name
 		if base == "" {
 			base = fmt.Sprintf("at-%d", a.Event)

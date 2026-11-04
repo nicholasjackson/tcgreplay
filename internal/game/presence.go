@@ -57,6 +57,7 @@ const (
 	EndGameExpired    = "game_expired"
 	EndBranchSwitched = "branch_switched"
 	EndRewound        = "rewound"
+	EndGameOver       = "game_over"
 )
 
 // WaitRequest asks to wait while the player plays Seat's turn. A nil
@@ -594,6 +595,16 @@ func (m *Manager) Wait(ctx context.Context, req WaitRequest) (out WaitOutcome, e
 		p.mu.Unlock()
 
 		v := s.game.waitView(cursor, s.seat)
+		if winner, _ := s.game.State().Winner(); winner != "" && v.onPath {
+			p.mu.Lock()
+			if p.session == s {
+				p.session = nil
+			}
+			p.mu.Unlock()
+			s.game.setResponder("")
+			out.Kind, out.Reason, out.Next = WaitEnded, EndGameOver, v.head
+			return out, nil
+		}
 		switch {
 		case !v.onPath:
 			// The board moved off the cursor's line between notices.

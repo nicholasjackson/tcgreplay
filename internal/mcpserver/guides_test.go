@@ -17,9 +17,9 @@ import (
 )
 
 // The six guides, in the order players meet them.
-var guideNames = []string{"import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
+var guideNames = []string{"play-game", "import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
 
-// TestGuideList: guide with no name lists the six guides in order, each with
+// TestGuideList: guide with no name lists the guides in order, each with
 // a one-line "use when".
 func TestGuideList(t *testing.T) {
 	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
@@ -94,8 +94,9 @@ func checkGuideInstructions(t *testing.T, ins string) {
 			t.Errorf("instructions do not list %s: want %q", g.Name, line)
 		}
 	}
-	if n := strings.Count(guideInstructions(), "\n"); n > 7 {
-		t.Errorf("guide block is %d lines, want at most 7", n)
+	// A heading and one line per guide.
+	if n, max := strings.Count(guideInstructions(), "\n"), len(guideNames)+1; n > max {
+		t.Errorf("guide block is %d lines, want at most %d", n, max)
 	}
 }
 

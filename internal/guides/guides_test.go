@@ -9,8 +9,8 @@ import (
 	"testing"
 )
 
-// The six guides, in the order players meet them.
-var wantNames = []string{"import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
+// The seven guides, in the order players meet them.
+var wantNames = []string{"play-game", "import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
 
 // rawGuides returns every embedded guide file's contents, keyed by file name.
 func rawGuides(t *testing.T) map[string]string {

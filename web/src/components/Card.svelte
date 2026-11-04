@@ -63,10 +63,12 @@
     onkeydown={(ev) => ev.key === 'Enter' && click(ev)}
     role="button"
     tabindex="-1"
-    title={card.hidden ? card.iid : unknown ? `Unknown card (${card.iid}): never revealed` : `${card.name} (${card.iid})`}
+    title={card.hidden ? (card.known ? `Known: ${card.known} (${card.iid})` : card.iid) : unknown ? `Unknown card (${card.iid}): never revealed` : `${card.name} (${card.iid})`}
   >
     {#if card.hidden}
       <div class="back-art"><span></span></div>
+      <!-- A revealed card in another player's hand stays face down, marked. -->
+      {#if card.known}<span class="known" aria-label="known: {card.known}">{card.known}</span>{/if}
     {:else if unknown}
       <div class="back-art unknown"><span>?</span></div>
     {:else if info?.category === 'Energy' && (!info.image || broken)}
@@ -139,6 +141,22 @@
     border-radius: inherit;
     display: block;
     object-fit: cover;
+    pointer-events: none;
+  }
+  .known {
+    position: absolute;
+    left: 50%;
+    bottom: 6%;
+    translate: -50% 0;
+    max-width: 92%;
+    padding: 0.05em 0.45em;
+    border-radius: 1em;
+    background: var(--accent);
+    color: #111;
+    font: 700 max(9px, calc(var(--w, var(--cw)) * 0.11)) system-ui;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     pointer-events: none;
   }
   .back-art {

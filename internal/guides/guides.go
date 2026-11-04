@@ -14,7 +14,7 @@ var files embed.FS
 
 // order is the order players meet the workflows in, and the order List
 // returns them in.
-var order = []string{"import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
+var order = []string{"play-game", "import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
 
 // Guide is one coaching workflow.
 type Guide struct {

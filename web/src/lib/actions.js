@@ -264,6 +264,8 @@ export function stackMenu(seat, slot, stack) {
     other.push({ label: 'Return to hand', run: () => act('move', { iid: top.iid, to: 'hand', ...sa }) });
     other.push({ label: 'Devolve', run: () => act('move', { iid: top.iid, to: 'discard', ...sa }) });
   }
+  // One step for "heal all damage" (Wally's Compassion), not one per 10.
+  if (damage) other.push({ label: `Heal all (${damage} damage)`, run: () => act('place_damage', { target: spec, amount: -damage }) });
   other.push({ label: 'Knock Out', danger: true, run: () => act('knock_out', { target: spec }) });
   const where = slot === 'active' ? 'Active' : `Bench ${Number(slot.split(':')[1]) + 1}`;
   const hp = stack.hp || info?.hp;

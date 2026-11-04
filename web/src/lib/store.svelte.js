@@ -53,6 +53,9 @@ export const app = $state({
   // Play the assistant's moves on the board as they arrive, rather than
   // holding them for the playback bar. Remembered in this browser.
   autoplay: true,
+  // Show "Knocked Out: take N prize cards" after a knock-out. Off for
+  // practising without the hint. Remembered in this browser.
+  prizeReminders: true,
   acting: false, // a request of the viewer's own is in flight
   deckListShow: 'all', // deck list filter: all, unplayed or undrawn
   lastLog: 0, // highest log id seen, to mark new lines
@@ -60,6 +63,7 @@ export const app = $state({
 
 try {
   if (localStorage.getItem('panelAt') === 'bottom') app.panelAt = 'bottom';
+  if (localStorage.getItem('prizeReminders') === 'off') app.prizeReminders = false;
 } catch {
   // storage unavailable: keep the default
 }
@@ -93,6 +97,16 @@ export function pointerTypeOf(ev) {
 // tap gets the phone sheet or tablet panel, a mouse the popover.
 export function openSheet(ev, build, pointerType = pointerTypeOf(ev)) {
   app.sheet = { build, pointerType, x: ev.clientX, y: ev.clientY };
+}
+
+// setPrizeReminders turns the knock-out prize reminder on or off.
+export function setPrizeReminders(on) {
+  app.prizeReminders = on;
+  try {
+    localStorage.setItem('prizeReminders', on ? 'on' : 'off');
+  } catch {
+    // storage unavailable: the choice lasts for this page only
+  }
 }
 
 // setPanelAt moves the timeline to the side or the bottom.

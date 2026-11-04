@@ -405,6 +405,7 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 			}
 		}
 		before := g.st
+		wasOver, _ := before.Winner()
 		if err := g.log.Append(t.events); err != nil {
 			// The file and memory may now disagree; reload from disk truth.
 			g.refold()
@@ -416,6 +417,9 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 			res.Delta = append(res.Delta, describe(&e, before, g.st, ""))
 		}
 		res.ActionID = action.ID
+		if winner, why := g.st.Winner(); winner != "" && wasOver == "" {
+			res.Warnings = append(res.Warnings, fmt.Sprintf("Game over: %s wins (%s).", winner, why))
+		}
 	} else if spec.opener {
 		res.ActionID = action.ID
 	}
