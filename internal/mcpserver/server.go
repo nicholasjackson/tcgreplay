@@ -258,6 +258,9 @@ func (s *Server) verb(ctx context.Context, seatArg string, f func(g *game.Game, 
 	if err != nil {
 		return nil, err
 	}
+	if r, err = s.redact(g, r); err != nil {
+		return nil, err
+	}
 	// A write on its own turn in play mode locks the board while the
 	// assistant plays, even when no wait came first.
 	if g.Mode() == game.ModePlay && g.State().Current == s.ClaudeSeat {
@@ -460,6 +463,9 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
 			res.Warnings = append(res.Warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
+		}
+		if res, err = s.redact(g, res); err != nil {
+			return nil, err
 		}
 		return s.withBoard(ctx, map[string]any{"game": g.ID, "result": compact(res)}), nil
 	})
@@ -941,6 +947,22 @@ func (s *Server) viewer(g *game.Game, view, seatArg string) (state.Seat, error) 
 		return "", nil
 	}
 	return "", fmt.Errorf("unknown view %q", view)
+}
+
+// redact rewrites a write's delta for Claude's seat in play mode, so a
+// result never names a card that seat cannot see (the player's opening
+// hand, their draws). Review mode shows everything, as get_log does.
+func (s *Server) redact(g *game.Game, r *game.Result) (*game.Result, error) {
+	if r == nil || g.Mode() != game.ModePlay {
+		return r, nil
+	}
+	delta, err := g.DeltaFor(r, s.ClaudeSeat)
+	if err != nil {
+		return nil, err
+	}
+	c := *r
+	c.Delta = delta
+	return &c, nil
 }
 
 // compact trims a result for setup, whose delta lists 100+ events.

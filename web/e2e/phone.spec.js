@@ -210,8 +210,10 @@ test('tablets and desktops use none of the phone board', async ({ page }, testIn
   await expect(header.getByLabel('Reveal all')).toBeVisible();
   await page.getByRole('button', { name: 'Menu' }).click();
   await expect(page.getByRole('menuitem', { name: 'Hide timeline' })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: /^Move timeline/ })).toBeVisible();
+  // Moving the timeline is the dock button on the timeline, not ☰.
+  await expect(page.getByRole('menuitem', { name: /^Move timeline/ })).toHaveCount(0);
   await page.keyboard.press('Escape');
+  await expect(page.locator('aside').getByRole('button', { name: 'Move timeline below the board' })).toBeVisible();
 
   // The timeline sits beside the board, and the cards keep the mat's
   // size: --cw from the root rule (timeline beside, width less 360px).
@@ -233,4 +235,29 @@ test('tablets and desktops use none of the phone board', async ({ page }, testIn
   await page.setViewportSize({ width: 1024, height: 560 });
   await expect(page.getByRole('status').filter({ hasText: 'Turn your phone upright' })).toHaveCount(0);
   await expect(page.locator('main')).toBeVisible();
+});
+
+test('the timeline\'s dock button moves it below the board and back', async ({ page }, testInfo) => {
+  test.skip(isPhone(testInfo), 'the phone timeline is a sheet');
+  const aside = page.locator('aside');
+  await aside.getByRole('button', { name: 'Move timeline below the board' }).click();
+  await expect(page.locator('.body')).toHaveClass(/\bbottom\b/);
+  let [a, m] = [await aside.boundingBox(), await page.locator('main').boundingBox()];
+  expect(a.y).toBeGreaterThanOrEqual(m.y + m.height - 1);
+  await aside.getByRole('button', { name: 'Move timeline beside the board' }).click();
+  await expect(page.locator('.body')).not.toHaveClass(/\bbottom\b/);
+  [a, m] = [await aside.boundingBox(), await page.locator('main').boundingBox()];
+  expect(a.x).toBeGreaterThanOrEqual(m.x + m.width - 1);
+});
+
+test('the last timeline entry has no rewind button: rewinding there would change nothing', async ({ page }, testInfo) => {
+  test.skip(isPhone(testInfo), 'the phone timeline is a sheet');
+  const lines = page.locator('aside .line');
+  await expect(lines.last().getByTitle(/^Rewind to just after/)).toHaveCount(0);
+  await expect(lines.last().getByTitle('Play from here')).toHaveCount(1);
+  await expect(lines.nth(-2).getByTitle(/^Rewind to just after/)).toHaveCount(1);
+  // A new event moves the missing button to the new last entry.
+  await act(page, 'move', { iid: 'p1-2', to: 'discard' });
+  await expect(lines.last().getByTitle(/^Rewind to just after/)).toHaveCount(0);
+  await expect(lines.nth(-2).getByTitle(/^Rewind to just after/)).toHaveCount(1);
 });

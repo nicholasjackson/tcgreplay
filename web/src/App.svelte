@@ -142,9 +142,6 @@
           {:else}
             <button role="menuitem" onclick={() => menu(() => (app.panelOpen = !app.panelOpen))}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
           {/if}
-          {#if app.panelOpen && !phone}
-            <button role="menuitem" onclick={() => menu(() => setPanelAt(bottom ? 'side' : 'bottom'))}>Move timeline {bottom ? 'beside' : 'below'} the board</button>
-          {/if}
           <label class="menu-check" title="Play the assistant's moves on the board as they arrive">
             <input type="checkbox" checked={app.autoplay} onchange={(ev) => setAutoplay(ev.target.checked)} /> Autoplay {app.assistant}'s moves
           </label>
@@ -199,8 +196,27 @@
     {/if}
     {#if showTimeline}
       <aside class:sheet={phone}>
-        <h2>Timeline</h2>
-        {#if phone}<button class="close" aria-label="Close the timeline" onclick={() => (timelineOpen = false)}>✕</button>{/if}
+        {#if phone}
+          <h2>Timeline</h2>
+          <button class="close" aria-label="Close the timeline" onclick={() => (timelineOpen = false)}>✕</button>
+        {:else}
+          <!-- Like a dev tools dock button: the icon shows where the
+               timeline goes next. -->
+          {@const where = bottom ? 'beside' : 'below'}
+          <div class="aside-head">
+            <h2>Timeline</h2>
+            <button class="dock" aria-label="Move timeline {where} the board" title="Move timeline {where} the board" onclick={() => setPanelAt(bottom ? 'side' : 'bottom')}>
+              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" />
+                {#if bottom}
+                  <rect x="10" y="3" width="4" height="10" fill="currentColor" />
+                {:else}
+                  <rect x="2" y="9.5" width="12" height="3.5" fill="currentColor" />
+                {/if}
+              </svg>
+            </button>
+          </div>
+        {/if}
         <Timeline />
       </aside>
     {/if}
@@ -370,6 +386,12 @@
     position: static;
   }
   aside h2 { font-size: 13px; margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
+  .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: 8px; }
+  aside .dock {
+    display: grid; place-items: center; width: 26px; height: 22px; padding: 0; margin-top: 8px;
+    background: none; border: 1px solid transparent; border-radius: 4px; color: var(--muted); cursor: pointer;
+  }
+  aside .dock:hover, aside .dock:focus-visible { color: var(--text); border-color: var(--line); }
   .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
   .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: 999px; border: 1px solid var(--line); color: var(--text); }
   .opp-status.acting { border-color: var(--accent); color: var(--accent); }

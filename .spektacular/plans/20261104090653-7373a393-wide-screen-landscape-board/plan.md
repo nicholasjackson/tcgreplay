@@ -1,0 +1,299 @@
+---
+created_date: "2026-11-04"
+document_status: final
+closed_date: "2026-11-04"
+---
+
+# Plan: 20261104090653-7373a393-wide-screen-landscape-board
+
+<!-- Metadata -->
+<!-- Created: 2026-11-04T09:28:55Z -->
+<!-- Commit: be81383 -->
+<!-- Branch: main -->
+<!-- Repository: tcgreplay (/home/nicj/code/github.com/nicholasjackson/tcgreplay) -->
+
+## Overview
+
+On wide desktop screens (a board area 1600px wide or more), the board switches to a landscape mat. Both Active Pokémon sit side by side in the middle, each player's bench, fanned prizes and piles share one row, and the opponent's hand peeks from the top edge, so cards come out at least 1.6 times today's width. Alongside it, every desktop and tablet board gets hand counts beside their hands, playback controls centred over the board, and text and a timeline that grow on big screens. Players reviewing or playing on a big monitor can read every card at a glance; smaller screens and the phone keep today's layout.
+
+## Conventions
+
+No project conventions apply to this feature. The only always-applied convention (guide text and packaging in `internal/guides`) covers the assistant guides, which this work does not touch.
+
+## Architecture & Design Decisions
+
+All changes land in the `tcgreplay` repo's board UI (`web/src`) and its browser suite (`web/e2e`, `web/playwright.config.js`). The landscape mat follows the settled design `wide-board/design.md` (source `design`). This plan only decides how to build that shape inside the existing Svelte board.
+
+**A measured `wide` flag, branched in the existing components.** A new `app.wide` flag in `web/src/lib/store.svelte.js` is true when the layout is not `phone` and the board area (`<main>`) is at least 1600px wide. `App.svelte` measures `<main>` with a `ResizeObserver`, as `fitBoard` already does for the phone. Because it measures the board area itself, resizing, moving the timeline and hiding it all flip the flag with no reload. `Side.svelte`, `Strip.svelte` and `Hand.svelte` each gain a `wide` branch, as they already have a `phone` branch:
+- `Side` renders one row: piles, then bench, then a fanned prize row, mirrored for the opponent. It does not render the Active.
+- `Strip` renders the Stadium, the player's Active, "vs", the opponent's Active, then the turn controls.
+- The opponent's `Hand` is pinned to the top edge of the board and overlaps it, so only a strip of each card shows.
+
+Every pile, prize, drop zone and sheet keeps its current handler, because the branches reuse the same `Stack`, `Card`, `dropZone` and `act` calls. That is what makes "Nothing is lost" cheap to keep true. Drop targets keep working wherever they move, because drags find zones by `data-drop` and `elementFromPoint` (`mobile-board/design.md`).
+
+**One card size from the board area's own dimensions.** In the wide layout, `--cw` is set on a wrapper inside `<main>` from container units (`main` gets `container-type: size`). It is the smaller of what fits four rows in the height and the widest row (8 bench slots plus the prize fan and piles) in the width, so every zone scales together and nothing scrolls. Today's mat keeps its existing `--cw` formulas untouched. Prize and pile cards stay fractions of `--cw`, as today.
+
+**Desktop-wide fixes are small, targeted CSS changes that leave today's mat otherwise unchanged:**
+- **Hand counts:** they become a flex item after the hand's last card, instead of `position: absolute; right: 12px`.
+- **UI text:** header and timeline text use `max(<today's px>, <vw>)`, so it is exactly today's size at 1920px and below and grows above.
+- **Timeline width:** the `clamp` cap rises from 480px, so the column only widens above about 2670px.
+- **Playback overlay:** it stays `position: fixed`, but its centre becomes the board area's centre. `App.svelte` exposes the timeline column's width as a variable when the timeline is beside the board (0 when it is below or hidden), and the overlay's `left` subtracts half of it.
+
+**Why this beats the alternatives:**
+- A CSS-only rearrangement would have to flatten three nested component levels and re-order the mirrored halves by grid areas.
+- A separate landscape component tree would duplicate the pile, prize and deck behaviour.
+- A window-width media query can't tell the timeline beside, below or hidden apart.
+
+See `research.md#alternatives-considered-and-rejected`. The browser suite gains a `wide` Playwright project at 2560×1440, which runs the landscape checks. Existing tests that assert today's mat geometry skip on it, the way they skip on the phone profile today.
+
+## Component Breakdown
+
+- **Board layout state (store), changed.** It owns the `wide` flag beside the existing `layout` and `landscapePhone`. `wide` is true when the layout is not phone and the board area is at least 1600px wide. Every board component reads it to pick its markup, as they read `layout` for the phone today.
+- **App shell, changed.** It measures the board area and sets `wide`, applies the landscape card size (container-based `--cw`) in place of today's formulas when wide, and lays out the board's rows in the landscape order:
+  - the opponent's hand peeking from the top edge;
+  - the opponent's name and status in the top-left corner;
+  - the opponent's row, the middle strip and the player's row;
+  - the player's hand.
+
+  It also exposes the timeline column's width so the playback overlay centres on the board area, scales header text on big screens, and raises the timeline's width cap.
+- **Side (one player's half), changed.** Today it owns prizes, the Active with the bench, and piles. In the landscape branch it owns one row of piles, bench and a fanned prize row that closes up as prizes are taken, mirrored for the opponent. It hands the Active to the strip. Every pile, prize and drop behaviour is shared with today's mat.
+- **Strip (the midline), changed.** Today it owns the Stadium and turn controls. In the landscape branch it also owns both Active Spots, side by side and each labelled with whose it is, with "vs" between them. It renders them through the same Stack component the sides use, so damage, attachments, drops and sheets behave the same.
+- **Hand, changed.** On every non-phone layout it places "N in hand" right after the hand's cards. In the landscape branch the opponent's (small) hand is pinned to the board's top edge with only a strip of each card showing, and keeps its accessible list and count.
+- **Timeline, changed.** Its text scales on screens wider than 1920px. Content and behaviour are unchanged.
+- **Playback overlay (bar and caption), changed position only.** It is centred on the board area rather than the window, with the timeline beside, below or hidden.
+- **Browser test suite, changed.** A new `wide` desktop profile at 2560×1440 runs the landscape checks. Existing checks that assert today's mat geometry skip on it, and new checks cover the spec's acceptance criteria.
+
+## Data Structures & Interfaces
+
+No server, wire-format or persisted data changes: the board's snapshot and actions are unchanged. The new contracts are all client-side:
+
+- **`app.wide: boolean`** (board layout state). It is true when `app.layout !== 'phone'` and the measured board area is 1600px wide or more. App sets it and every board component reads it. It sits beside the existing `app.layout` and `app.landscapePhone`.
+
+  ```js
+  app = { ..., layout: 'phone' | 'tablet' | 'desktop', landscapePhone: false, wide: false }
+  ```
+
+- **CSS custom properties** (the contract between App and the board components):
+  - `--cw` (card width): in the wide layout it comes from the board area's container size. Today's formulas are unchanged elsewhere. `--fs` keeps deriving from it.
+  - `--panel-w`: the timeline column's width when it sits beside the board, otherwise `0px`. The playback overlay uses it to centre on the board area.
+  - `--ui-scale` text sizes: header and timeline fonts are expressed as `max(<today's px>, <vw equivalent>)`, so they are unchanged at 1920px and below.
+
+- **Component props:** no new props. Side, Strip and Hand read `app.wide` directly, as they read `app.layout`. Strip renders both Active Spots through the existing `Stack` component with today's `seat`, `slot` and `label` props (`slot="active"`, `label="<seat> Active"`), so accessibility labels and test selectors keep their names.
+
+## Implementation Detail
+
+**Patterns followed.**
+- The landscape mat is a third layout branch beside the phone one. A developer reading Side, Strip or Hand sees `{#if app.layout === 'phone'} … {:else if app.wide} … {:else} … {/if}`: three markups over the same data, the same `Stack`/`Card` components and the same action helpers.
+- Measuring the board area follows the phone's existing `fitBoard` attachment (a `ResizeObserver` on `<main>`, cleaned up on detach). The flag is a plain store field, like `layout`.
+
+**Patterns introduced.**
+- **Container-sized cards.** The wide layout is the first to size cards from the board area rather than the viewport. `<main>` becomes a size container, and a wrapper inside it sets `--cw` from container units. This keeps the timeline beside, below or hidden correct with no JS sizing maths. Today's mat and the phone keep viewport-based sizing.
+- **Text that grows only above 1920px.** Header and timeline font sizes become `max(<today's px>, <vw>)`, so nothing changes at today's sizes.
+- **An overlay anchored to the board area.** The fixed playback overlay subtracts half the timeline column's width (`--panel-w`) from its centre. `--panel-w` is set once on the app shell from the same state that places the timeline.
+
+**Code-shape changes.**
+- The Active Spot moves out of each side in the wide branch: `Side` stops rendering it, and `Strip` renders both, in the order the design fixes. On today's mat and the phone, Side still owns its Active, so the move is confined to the wide branch.
+- The prize area gets a fanned-row variant that renders only remaining prizes, so it closes up. The 2×3 grid with dashed taken slots stays for today's mat.
+- The opponent's small hand gets a "peek" variant: it is pinned to the top edge of the board, partly off it, with the board's top clipping the rest. Its list role and "N in hand" text stay for screen readers.
+- The hand count moves from absolute positioning to the end of the hand's flex row on every non-phone layout.
+
+**Tests.** A `wide` Playwright project at 2560×1440 joins phone, tablet and desktop, with an `isWide(testInfo)` helper beside `isPhone`. A new spec file covers the landscape acceptance criteria. Existing tests that assert today's mat geometry gain an `isWide` skip, as they already skip on the phone.
+
+## Dependencies
+
+- **`wide-board/design.md` from the `design` design source:** the settled landscape mat this plan implements, covering when it applies, the arrangement of zones, the sizing rule and the desktop-wide changes. No changes needed.
+- **`mobile-board/design.md` from the `design` design source:** the phone layout and the shared drag model (Pointer Events, `data-drop` zones found by `elementFromPoint`). It must stay unchanged; this plan relies on its drag model so moved drop zones keep working.
+- **Svelte 5 (runes) board UI**, already in use: per-layout branches, `$derived` flags and `{@attach}` attachments. No version change.
+- **Browser CSS container queries and container units** (`container-type: size`, `cqw`/`cqh`): supported by current Chromium, Firefox and Safari, which the board already targets. No new library.
+- **Playwright (`@playwright/test`)**, already used by `web/e2e`: gains a `wide` project. No version change.
+- **The board test server** (`internal/webui/webtest`): serves the fixed position every e2e test starts from. Not expected to change. If the fixed position lacks a state a landscape check needs, tests set it up with `act()`.
+- **Upstream work:** none needs to land first. The timeline dock button and the hidden rewind on the last timeline entry are already in the working tree and are compatible.
+
+## Testing Approach
+
+**Test types.** The work is presentational, so it is verified end to end in the board's existing Playwright suite against the board test server: real layout, real input, real game state. There are no new Go tests, because the server, wire format and game state don't change. No unit tests are added for the `wide` flag either: the flag only matters through what the board renders, and the end-to-end checks assert that directly at the sizes that matter.
+
+**A new `wide` profile.** A fourth Playwright project, a 2560×1440 desktop, runs the landscape checks. The landscape behaviour gets the most coverage because it is the new layout, and its every action must match today's mat.
+
+**What the new checks guarantee** (one or more per acceptance criterion):
+- **The switch:** landscape at 2560×1440 with the timeline beside; today's mat at 1440×900; the phone layout at 390×844. The layout switches live, with no reload, on resize, on hiding the timeline, and on moving it from beside to below.
+- **Zone placement**, asserted from element positions:
+  - both Actives share one row, with the Stadium on one side and the turn controls on the other;
+  - each player's bench, prizes and piles share a row, above or below the actives;
+  - the prizes and piles sit at opposite ends in the two rows;
+  - the opponent's name and status sit in a corner, and no bar spans the board.
+- **Prizes:** the fan shows every remaining prize, countable and takeable, at 6, 3 and 1 left.
+- **Opponent's hand peek:** 6 card backs at the top edge, each only partly in view, with the hand still exposed as a list with its count.
+- **Card size:** a benched card at 2560×1440 is at least 1.6 times the width it had on today's mat at 2560×1440. The baseline is computed from today's `--cw` formula at that size, as the existing phone/desktop check already probes.
+- **Fit:** at 2560×1440 and 3840×2160, no scroll bars and nothing cut off apart from the peek.
+- **Nothing lost:** in the landscape layout, open each pile, take a prize, drag hand to bench, open a card's action sheet, Draw, End turn.
+- **Hand counts:** within one card width of the hand's nearest card, on today's mat and in the landscape layout.
+- **Text scales:** timeline and header text at 3840×2160 are at least 1.5× their size at 1920×1080, and unchanged at 1920×1080 and 1440×900.
+- **Timeline width:** wider than 480px at 3840×2160.
+- **Playback centred:** during a replay, the bar's and caption's horizontal centres are within 2px of the board area's centre, with the timeline beside, below and hidden.
+
+**Regression.** The full existing suite keeps running on phone, tablet and desktop unchanged. That is the guarantee that today's mat and the phone layout are otherwise untouched. On the `wide` profile, existing tests that assert today's mat geometry skip, as they skip on the phone today. Every behavioural test (drag, sheet, target mode, panels) runs there too.
+
+**Success metrics:**
+- **"Every existing board e2e check passes on today's mat, and the equivalent checks pass on the landscape mat":** behavioural test. The full suite passes on all four profiles.
+- **"The player's own 3840-wide monitor shows the whole game, timeline included, without zooming the browser":** the fit check at 3840×2160 covers it automatically. The real monitor is **Manual — captured in the implementation test plan**.
+
+**Manual reviews:**
+- **Visual review of the landscape mat against mockup C** on a large monitor: arrangement, peek, labels and readability. **Manual — captured in the implementation test plan.**
+- **A replay on the landscape mat with the playback bar over the board**, checking it reads well where it covers cards. **Manual — captured in the implementation test plan.**
+
+**Deliberate gaps.** Real iPad Safari is not re-tested for this change, because no iPad reaches the 1600px board-area width. Firefox and Safari desktop are not automated, because the suite is Chromium-only (see the knowledge entry on Playwright touch tests).
+
+## Milestones & Tasks
+
+### Milestone 1: Every desktop board reads better on big screens
+
+**What changes**: On today's mat, at any desktop or tablet size, each "N in hand" count sits right beside its hand instead of at the far edge of the board. During a replay, the playback bar and caption are centred over the board, not the window, whether the timeline is beside, below or hidden. On screens wider than 1920px, the header and timeline text grow with the screen, and the timeline column can widen past 480px. At 1920px and below, today's sizes are unchanged. Nothing about the mat's arrangement changes yet.
+
+**Validation point**: The existing browser suite passes on phone, tablet and desktop. New checks confirm the hand counts sit beside their hands, the playback bar is centred over the board area in all three timeline positions, the text scales at 3840×2160 and is unchanged at 1920×1080 and 1440×900, and the timeline exceeds 480px at 3840×2160.
+
+#### - [ ] Task: Hand counts beside their hands
+**Id:** c2e07d78-2a6a-4bc3-b1ac-63523695f083
+**Repo:** tcgreplay
+**Depends on:** none
+**Execution:** agent
+
+Moves each "N in hand" count from the far right edge of the board area to sit right after the hand's last card, on every desktop and tablet layout. The count stays readable and keeps its text. The phone layout's hand is unchanged.
+
+*Technical detail:* [context.md#task-hand-counts-beside-their-hands](./context.md#task-hand-counts-beside-their-hands)
+
+**Acceptance criteria**:
+- [ ] On today's mat at desktop and tablet sizes, each player's "N in hand" sits within one card width of that hand's nearest card.
+- [ ] The phone layout's hand and counts look and behave as before.
+- [ ] The existing browser suite passes on phone, tablet and desktop.
+
+#### - [ ] Task: Centre the playback controls on the board
+**Id:** 789415e5-a4f2-45e6-bfa4-d054d532a9f8
+**Repo:** tcgreplay
+**Depends on:** none
+**Execution:** agent
+
+Centres the playback bar and its move caption over the board area instead of the whole window, so they no longer sit off to one side when the timeline is beside the board. They stay at the top and may still cover the board. This also works with the timeline below the board or hidden.
+
+*Technical detail:* [context.md#task-centre-the-playback-controls-on-the-board](./context.md#task-centre-the-playback-controls-on-the-board)
+
+**Acceptance criteria**:
+- [ ] During a replay, the playback bar's and caption's horizontal centres are within 2px of the board area's centre with the timeline beside the board, below it, and hidden.
+- [ ] The playback bar's controls and caption work as before.
+
+#### - [ ] Task: Larger text and a wider timeline on big screens
+**Id:** 7f86241a-c344-4969-a896-6e2be05777d4
+**Repo:** tcgreplay
+**Depends on:** none
+**Execution:** agent
+
+Makes the header and timeline text grow with the screen on screens wider than 1920px, so it stays readable next to the larger cards. At 1920px and below it stays exactly as today. The timeline column may now grow past today's 480px limit on very wide screens, in step with its text.
+
+*Technical detail:* [context.md#task-larger-text-and-a-wider-timeline-on-big-screens](./context.md#task-larger-text-and-a-wider-timeline-on-big-screens)
+
+**Acceptance criteria**:
+- [ ] At 3840×2160 the timeline and header text are at least 1.5 times their size at 1920×1080.
+- [ ] At 1920×1080 and 1440×900 the timeline and header text are the same size as before.
+- [ ] At 3840×2160 with the timeline beside the board, the timeline is wider than 480px.
+
+### Milestone 2: The landscape mat on wide screens
+
+**What changes**: When the board area is 1600px wide or more, the board switches to the landscape mat:
+- Both Active Pokémon sit side by side in the middle with "vs" between them, the Stadium on one side and the turn controls on the other.
+- Each player's bench, fanned prizes and piles share one row, mirrored like a real mat.
+- The opponent's hand peeks in from the top edge, and their name and status sit in the top-left corner.
+- Cards come out at least 1.6 times today's width at 2560×1440.
+
+The board switches back and forth live as the window resizes or the timeline moves or hides. Every action works as it does on today's mat.
+
+**Validation point**: On a new 2560×1440 test profile, checks confirm every landscape acceptance criterion: zone placement, the prize fan, the hand peek, card size, fit at 2560×1440 and 3840×2160, every action, and the live switching. The full suite still passes on phone, tablet and desktop.
+
+#### - [ ] Task: Wide-screen layout switch and test profile
+**Id:** e4a89366-902b-4ede-b752-60044fa291b3
+**Repo:** tcgreplay
+**Depends on:** none
+**Execution:** agent
+
+Adds the board's knowledge of whether it is on a wide screen: true when the board area beside or above the timeline is 1600px wide or more, on any layout but the phone. It updates live as the window resizes or the timeline moves or hides. It also adds a 2560×1440 browser test profile. Existing checks that assert today's mat geometry skip on that profile, so the suite stays green while the landscape mat is built.
+
+*Technical detail:* [context.md#task-wide-screen-layout-switch-and-test-profile](./context.md#task-wide-screen-layout-switch-and-test-profile)
+
+**Acceptance criteria**:
+- [ ] The board knows it is wide at 2560×1440 with the timeline beside, and not at 1440×900. It changes with no reload when the window is resized, or the timeline is hidden or moved below the board at a width where that makes the board area wide enough.
+- [ ] A 2560×1440 test profile runs with the rest of the browser suite, and the whole suite passes on all four profiles.
+
+#### - [ ] Task: Landscape mat rows and sizing
+**Id:** 0e01e2b6-d75d-489f-bd4b-8b3f2b1f6523
+**Repo:** tcgreplay
+**Depends on:**
+- e4a89366-902b-4ede-b752-60044fa291b3 — Wide-screen layout switch and test profile
+- c2e07d78-2a6a-4bc3-b1ac-63523695f083 — Hand counts beside their hands
+**Execution:** agent
+
+On wide screens, lays the board out as the landscape mat:
+- each player's piles, bench and a fanned prize row share one row, mirrored for the opponent;
+- both Active Pokémon sit side by side in the middle, labelled with whose they are, with "vs" between them, the Stadium on one side and the turn controls on the other;
+- cards are sized from the board area so the four rows fill it without scrolling.
+
+Every pile, prize, drop target, action sheet and turn control works as it does on today's mat.
+
+*Technical detail:* [context.md#task-landscape-mat-rows-and-sizing](./context.md#task-landscape-mat-rows-and-sizing)
+
+**Acceptance criteria**:
+- [ ] At 2560×1440, both Actives sit in one middle row with the Stadium on one side and the turn controls on the other, each labelled with whose it is.
+- [ ] Each player's bench, prizes and piles share one row above or below the Actives, with prizes and piles at opposite ends in the two rows.
+- [ ] With 6, 3 and 1 prizes left, every remaining prize is visible in one overlapping row and can be taken.
+- [ ] A benched card at 2560×1440 is at least 1.6 times the width it had on today's mat at that size.
+- [ ] At 2560×1440 and 3840×2160 the board fits with no scroll bars.
+- [ ] Opening each pile, taking a prize, dragging from hand to bench, opening a card's action sheet, Draw and End turn all work in the landscape mat.
+
+#### - [ ] Task: Opponent's hand peeks from the top edge
+**Id:** 9f912ef7-0eac-473e-bb0f-eca5c24f3be0
+**Repo:** tcgreplay
+**Depends on:**
+- 0e01e2b6-d75d-489f-bd4b-8b3f2b1f6523 — Landscape mat rows and sizing
+**Execution:** agent
+
+On the landscape mat, the opponent's hand hangs off the top edge of the board, with only a strip of each card showing, enough to count them, instead of taking a row. Their name and status move to the board's top-left corner with no bar across the board. Screen readers still get the hand and its count.
+
+*Technical detail:* [context.md#task-opponents-hand-peeks-from-the-top-edge](./context.md#task-opponents-hand-peeks-from-the-top-edge)
+
+**Acceptance criteria**:
+- [ ] With the opponent holding 6 cards, 6 card backs show at the top edge, each only partly in view.
+- [ ] The opponent's hand is still announced as a list with its count.
+- [ ] The opponent's name and status sit in a corner of the board, and no bar spans the board's width.
+- [ ] Apart from the peek, nothing on the landscape board is cut off at 2560×1440 or 3840×2160.
+
+#### - [ ] Task: Landscape mat acceptance checks
+**Id:** df3fc6d9-10c4-45c8-9114-5b86ad0e4e07
+**Repo:** tcgreplay
+**Depends on:**
+- 0e01e2b6-d75d-489f-bd4b-8b3f2b1f6523 — Landscape mat rows and sizing
+- 9f912ef7-0eac-473e-bb0f-eca5c24f3be0 — Opponent's hand peeks from the top edge
+- 789415e5-a4f2-45e6-bfa4-d054d532a9f8 — Centre the playback controls on the board
+**Execution:** agent
+
+Adds browser checks covering every landscape acceptance criterion on the wide profile, so the layout can't regress. They cover:
+- the switch, live, on resize and on moving or hiding the timeline;
+- zone placement, the prize fan, the hand peek and the corner name;
+- card size and fit, and every action;
+- hand counts and playback centring on the landscape mat.
+
+*Technical detail:* [context.md#task-landscape-mat-acceptance-checks](./context.md#task-landscape-mat-acceptance-checks)
+
+**Acceptance criteria**:
+- [ ] Every acceptance criterion of the landscape spec has at least one browser check that passes on the wide profile.
+- [ ] The full browser suite passes on phone, tablet, desktop and wide.
+
+## Open Questions
+
+- **Can the 1.6× card-size target be met at 2560×1440 with the timeline beside, with a 5-card bench, without crowding the row?** With the timeline beside, the board area is about 2100px wide. Today's `--cw` there is about 119px, so the target is about 191px. A player row of 3 piles, 5 bench slots and the prize fan with today's gaps is roughly 10.7 card widths, which gives about 196px: feasible, but with little margin. The answer depends on the real rendered widths of piles, gaps and the prize fan. **If the target can't be met without shrinking gaps or piles below what reads well, STOP and ask the user** whether to relax the target or compact the piles (for example, a 2×2 pile block), rather than quietly missing it.
+
+## Out of Scope
+
+- **Phone layout changes:** the phone keeps its own settled design (`mobile-board/design.md`).
+- **New board actions, or changes to what the timeline shows:** spec non-goal.
+- **A setting to choose between the landscape mat and today's mat:** spec non-goal. The layout follows the board area's width.
+- **Changing today's mat beyond the desktop-wide fixes:** the 2×3 prize grid, the pile column and the stacked actives stay as they are below 1600px.
+- **Automated Firefox, Safari or real-iPad checks:** the suite is Chromium-only. No iPad reaches the 1600px board-area width.
+- **The other items in the 2026-11-04 bug report:** the opponent as a fresh sub-agent, a revealed card staying face-up, automatic mulligans, heal-all, undo branches, game-over detection and prize reminders. They're tracked outside this plan, pending the user's choice of spec or direct fixes.

@@ -159,6 +159,41 @@ func (l LogLine) String() string {
 
 // Log renders events on the current branch after event since, redacted for
 // viewer ("" for none).
+// DeltaFor renders a write's events as viewer may see them, hiding cards
+// that seat cannot see, the way the log does. viewer "" hides nothing.
+// Events no longer on the current branch are skipped.
+func (g *Game) DeltaFor(res *Result, viewer state.Seat) ([]string, error) {
+	if res == nil || len(res.Events) == 0 {
+		return []string{}, nil
+	}
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	want := map[int]bool{}
+	for _, id := range res.Events {
+		want[id] = true
+	}
+	path, err := g.log.PathTo(g.log.Head())
+	if err != nil {
+		return nil, err
+	}
+	st := state.New()
+	out := []string{}
+	for i := range path {
+		e := &path[i]
+		before := st
+		if want[e.ID] {
+			before = st.Clone()
+		}
+		if err := st.Apply(e); err != nil {
+			return nil, err
+		}
+		if want[e.ID] {
+			out = append(out, describe(e, before, st, viewer))
+		}
+	}
+	return out, nil
+}
+
 func (g *Game) Log(since int, viewer state.Seat, tool string, actor string) ([]LogLine, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()

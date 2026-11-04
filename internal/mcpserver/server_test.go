@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -114,6 +115,14 @@ func testMCPRoundTrip(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
 	out, isErr := call(t, cs, "new_game", map[string]any{"deck_p1": string(deck), "deck_p2": string(deck), "id": "mcp-1"})
 	if isErr {
 		t.Fatal(out)
+	}
+	// In play mode the result is the assistant's (p2's) view: the player's
+	// opening hand stays hidden, as in get_log; p2's own draws are named.
+	if named := regexp.MustCompile(`p1 drew p1-\d+ [^(]`).FindString(out); named != "" {
+		t.Fatalf("new_game names a p1 card in play mode: %q in %s", named, out)
+	}
+	if !regexp.MustCompile(`p1 drew p1-\d+ \(hidden\)`).MatchString(out) || !regexp.MustCompile(`p2 drew p2-\d+ [A-Z]`).MatchString(out) {
+		t.Fatalf("new_game delta should hide p1's draws and name p2's: %s", out)
 	}
 	// A new_game game was not imported, so it has no record.
 	if out, isErr := call(t, cs, "get_record", nil); !isErr || !strings.Contains(out, "no record") {

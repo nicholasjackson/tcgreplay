@@ -1,68 +1,96 @@
-# Working context: touch-friendly board
+# Working context: wide-screen-landscape-board
 
-## Problem and motivation
+## Problem
+On large screens (the user's monitor is about 3840 wide; reproduced at 2560×1340
+and 3840×2050), the desktop board is sized by height: card width comes from
+the viewport height divided by the roughly 11 card heights the board stacks
+(opponent's hand, opponent's bench, opponent's active, strip, my active, my
+bench, my hand). The board fills about half its column, leaving wide empty
+felt on both sides. Other measured problems:
+- The "6 in hand" / "8 in hand" counts are pinned to the far right edge of
+  the board area, far from their hands.
+- Header, timeline and pile labels stay at 12–13px while the cards scale.
+- The timeline width is capped at 480px.
+- The playback overlay ("Claude is playing 2/2 · Skip to end · Speed") and
+  its caption sit fixed at the top centre, covering the opponent's name,
+  status and hand. In the user's words: "we need to check the positions".
 
-- The user's words: "we should have a mobile friendly ui. If I use my iPad things work as long as I am using the trackpad on the keyboard. But I can not do anything with touch".
-- Cause:
-  - The board moves cards with HTML5 drag and drop.
-  - Menus open only on right-click (`contextmenu`).
-  - Cards enlarge on hover, and pile previews use `mouseenter`.
-  - Numbers are entered through `window.prompt`.
-  - On an iPhone the mat overflows: `--cw` floors at 48px and the mat is about 10 card widths wide.
+User's words: "I would like to fix the layout a bit on large screens too".
 
-## The user's direction on menus
+## Mockups
+Canvas: https://claude.ai/artifact/HK5VjHeETLarQsFE5d5p5n (four artboards at
+2560×1440, drawn at 1600×900)
+- Main = today
+- A = same mat, tidied and scaled
+- B = opponent's hand folded into a name bar (cards about 40% bigger)
+- C = landscape mat (cards nearly twice today's size)
 
-- The user's words: "On iPhone you would need the whole screen to show the menu and the items would probably need to scroll across the screen. On iPad you could probably show the card and the menu to the right of it. But again, some menus are really large so you would probably need to scroll".
-- I proposed shrinking the menus as well as giving them new containers:
-  - per-target items become one action plus a tap on the board (target mode);
-  - damage becomes a stepper and conditions become toggles;
-  - items are grouped into sections.
-- The user accepted that and asked for a design with mockups.
+The user chose C: "I think my preference is on C but I would actually put my
+opponents hand off the screen rather into the tile bar, just show the top of
+the card so I can roughly see how many cards they have". After the revision:
+"Yes this is a better layout."
 
-## The design (settled, stored)
+Mockup C as revised:
+- The opponent's hand hangs off the top edge of the board; only about 40px of
+  each card back shows.
+- The opponent's name and status are small, top-left.
+- Opponent row: piles (Lost, Discard, Deck), then the bench of 5, then the
+  prizes as a fanned, overlapping row.
+- Middle row: Stadium, then Alice's Active, "vs", Bob's Active, then the turn
+  pill and controls (Draw, End turn).
+- Player row: the prizes as a fanned row, then the bench, then the piles
+  (Deck, Discard, Lost).
+- The player's hand along the bottom, with "8 in hand" beside it, and a name
+  bar along the bottom.
+- The timeline is about 400px at the 1600 scale (wider than today), with
+  larger text.
 
-- Design source `design`:
-  - `mobile-board/design.md` (authored, draft, 2026-11-02);
-  - `mobile-board/mockups.html` (frames A–H, stored byte for byte).
-- The user said "I think the designs look fantastic".
-- The spec references the design as a constraint and does not repeat it.
-- Choices I made in the design that the user didn't push back on:
-  - phone landscape shows a "turn upright" notice;
-  - 640px breakpoint between the phone sheet and the tablet panel;
-  - Playwright as a new dev dependency for touch tests.
+## User decisions
+- Use layout C only on wide screens: when the board area beside the timeline
+  is about 1600px or wider. Tablets and smaller laptops keep today's mat;
+  phones are unchanged.
+- The playback bar and caption must never cover the opponent's hand, name or
+  status.
+- Capture as a spec, with mockup C stored as its design document (spek-design).
+- Already done separately: the timeline dock icon (it moves the timeline
+  between beside and below) replaced the ☰ "Move timeline" item. The rewind
+  button is hidden on the last timeline entry.
 
-## Decisions on this spec
+## Related
+- Design source "design" holds mobile-board/design.md and
+  mobile-board/mockups.html (the touch-friendly board spec).
+- The beside position for the timeline is on the right of the board.
 
-- One spec, no epic (the user answered "No epic"; they asked to "draft the spec").
-- The user will review the spec when it's complete, so drive the workflow with minimal interruptions.
-- Suggested order of work, all within this one spec:
-  1. Pointer-events drag and target mode;
-  2. the sections menu model and the three containers;
-  3. panels that retire `window.prompt`;
-  4. the compact phone layout;
-  5. Playwright touch tests.
+## Interview answers (2026-11-04)
+- The playback bar may cover the board but must be centred over it ("I don't
+  mind them covering, they should just be centered"). This also applies on
+  today's mat.
+- Also on today's mat: hand counts beside their hands, and text that scales
+  on big screens.
+- The user reviews the final spec as a whole (same as the cache spec): draft
+  the sections without per-section stops.
 
-## Codebase facts
+## Progress
+- Every section is drafted and the spec is staged at
+  .spektacular/tmp/spec_template.md. A fresh-eyes review is running.
+- The design document draft is at .spektacular/tmp/wide-board-design.md
+  (target: source `design`, path `wide-board/design.md`, authored with
+  --spec). Waiting on the user's explicit OK before `design author`, then
+  `design ref add`, then `spec file write`. Constraints already point at
+  wide-board/design.md.
+- Layout review: 18 findings, all applied: the switch at exactly 1600px; text
+  scales only above 1920px; cards at least 1.6x; new criteria for the corner
+  name and for moving the timeline; a constraint that today's mat is
+  otherwise unchanged; duplicate metrics and non-goals dropped.
+- Hidden-info bug report (~/Downloads/hidden-info-bug.md): bug 1 is FIXED.
+  In play mode, MCP write results and new_game deltas are redacted for
+  ClaudeSeat via Game.DeltaFor plus Server.redact; there is a test in
+  server_test. Still open, waiting on the user: bug 2 (the opponent runs as a
+  fresh sub-agent; a guide change), bug 3 (a revealed card stays face-up in
+  the hand), automatic mulligans, and the UX notes (heal all, undo branches,
+  game-over detection, prize reminders).
 
-- Single repo, `tcgreplay`, root `/home/nicj/code/github.com/nicholasjackson/tcgreplay`. The web app is Svelte 5 in `web/`.
-- Menu builders live in `web/src/lib/actions.js`: `handMenu`, `stackMenu`, `attachmentMenu`, `deckMenu`, `pileCardActions`.
-- `ContextMenu.svelte` renders the popover; `Zoom.svelte`, `Modal.svelte`, `Card.svelte`, `Stack.svelte`, `Hand.svelte`, `Side.svelte` and `Strip.svelte` make up the board.
-- `MaxBench = 8` (Area Zero Underdepths), added in this session and still uncommitted.
-- There is no frontend test suite today; `make test` runs only Go vet and tests.
-
-## Review mode for this spec
-
-The user said "draft the spec, I will review it when complete". Each section is drafted into its working file and the workflow advances without stopping for confirmation. The user reviews everything together at the verification step.
-
-## Spec status
-
-- The spec `20261102110545-5c84659c-touch-friendly-board` is written to the store. The user approved it ("This looks great").
-- The design and mockups are attached as references.
-- At the split check, no offer was made. Earlier the user chose one spec over the three-spec epic I'd suggested (input, menus, phone layout).
-- The user asked to plan straight after the spec.
-
-## Plan status
-
-- The plan for the touch-friendly board is written: 4 milestones, 7 agent tasks, all in `tcgreplay`.
-- The walkthrough is pending. The user must sign off before the plan workflow finishes.
-- Flagged to the user: the uncommitted bench-of-8 change (and the decklist-required change) must be committed before implementing, because implement worktrees branch from HEAD.
+## Plan (2026-11-04)
+The plan for 20261104090653-7373a393-wide-screen-landscape-board is committed
+(plan, context, research), with 2 milestones and 7 agent tasks. It is at the
+walkthrough step, waiting on the user's sign-off.

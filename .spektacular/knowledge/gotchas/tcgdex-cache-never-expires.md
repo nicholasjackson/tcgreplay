@@ -7,7 +7,8 @@ tags: [cards, tcgdex, cache, images, hosting]
 `internal/cards` caches every TCGdex response on disk the first time it is
 fetched and never re-fetches it: `sets.json` (the set list), `sets/<id>.json`
 (each set's card list, which feeds the by-name index and its "has art"
-preference), `set-index.json` (set codes to set ids) and `cards/<id>.json` (each
+preference), `set-index-v2.json` (set codes to set ids; the version
+suffix is bumped when the index format changes, forcing a rebuild) and `cards/<id>.json` (each
 print). `getJSON` returns the cached file whenever it exists; there is no
 max-age, ETag or refresh.
 
@@ -20,6 +21,11 @@ and corrects text. A cache built before then keeps the old answer, so:
 - a print first cached without an image keeps showing the board's text
   stand-in after TCGdex adds the art;
 - by-name resolution keeps preferring whichever print had art at index time.
+
+The one refresh there is doesn't fix this. An unknown set code makes `Resolve`
+rebuild the set index once per process. That rebuild refetches only
+`sets.json`: each set's card list still comes from its cached file, and the
+by-name index already built in memory is not rebuilt.
 
 Where it bites: the desktop and dev builds keep the cache in
 `cards.DefaultCacheDir()` (`~/.cache/tcgreplay`), so it lasts until someone

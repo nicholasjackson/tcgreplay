@@ -8,6 +8,7 @@
 
   let list = $state();
   const log = $derived(app.snap?.log || []);
+  const lastId = $derived(log.at(-1)?.id);
   const turns = $derived.by(() => {
     const out = [];
     for (const l of log) {
@@ -114,7 +115,8 @@
           >
             <span class="acts">
               <button onclick={() => playFrom(l.id)} title="Play from here">▶</button>
-              <button onclick={() => jump(l.id)} title="Rewind to just after #{l.id}">↺</button>
+              <!-- Rewinding to just after the last event would change nothing. -->
+              {#if l.id !== lastId}<button onclick={() => jump(l.id)} title="Rewind to just after #{l.id}">↺</button>{/if}
             </span>
             <span class="id">#{l.id}</span>
             {#if l.label}<span class="label">{l.label}</span>{/if}
