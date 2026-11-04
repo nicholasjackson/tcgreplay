@@ -171,12 +171,27 @@ type Client struct {
 	HTTP     *http.Client
 	// Offline disables network access; only cached data is used.
 	Offline bool
+	// Store holds the card source's responses. NewClient sets a disk
+	// store under CacheDir; a nil Store means the same.
+	Store Store
+	// Timeout bounds each request to the card source. NewClient sets 5
+	// seconds.
+	Timeout time.Duration
+	// Now is the clock that stamps fetched entries. NewClient sets
+	// time.Now; a nil Now means the same.
+	Now func() time.Time
 
+	// mu guards the in-memory maps and the catalog pointer only. It is
+	// never held across disk or network I/O, so a lookup of a cached card
+	// never waits behind a fetch or a catalog build.
 	mu       sync.Mutex
-	mem      map[string]*Card
-	setIndex map[string]string // upper set code -> set id
-	indexed  bool
-	byName   map[string][]string // nameKey -> card ids, preferred print first
+	mem      map[string]cardEntry // card id -> card and when it was fetched
+	cat      *catalog             // set data and indexes; nil until first used
+	catMu    sync.Mutex           // serialises catalog updates; held for CPU work only
+	sweeping bool                 // a background sweep of the catalog is running
+	flight   flightGroup          // one source request (or catalog build) per key at a time
+	tracker  refreshTracker       // recent failures and refreshes
+	bgwg     sync.WaitGroup       // background refreshes in flight
 }
 
 // NewClient returns a client caching under dir.
@@ -185,8 +200,53 @@ func NewClient(dir string) *Client {
 		Base:     "https://api.tcgdex.net/v2/en",
 		CacheDir: dir,
 		HTTP:     &http.Client{Timeout: 20 * time.Second},
-		mem:      map[string]*Card{},
+		Store:    NewDiskStore(dir),
+		Timeout:  5 * time.Second,
+		Now:      time.Now,
+		mem:      map[string]cardEntry{},
 	}
+}
+
+// cardEntry is a card held in memory with the time it was fetched.
+type cardEntry struct {
+	card    *Card
+	fetched time.Time
+}
+
+func (c *Client) store() Store {
+	if c.Store == nil {
+		return NewDiskStore(c.CacheDir)
+	}
+	return c.Store
+}
+
+func (c *Client) timeout() time.Duration {
+	if c.Timeout <= 0 {
+		return 5 * time.Second
+	}
+	return c.Timeout
+}
+
+func (c *Client) now() time.Time {
+	if c.Now == nil {
+		return time.Now()
+	}
+	return c.Now()
+}
+
+// remember keeps a decoded card in memory, unless memory already holds a
+// copy fetched later, and returns the copy memory holds.
+func (c *Client) remember(id string, card *Card, fetched time.Time) cardEntry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.mem == nil {
+		c.mem = map[string]cardEntry{}
+	}
+	if old, ok := c.mem[id]; ok && old.fetched.After(fetched) {
+		return old
+	}
+	c.mem[id] = cardEntry{card, fetched}
+	return c.mem[id]
 }
 
 // DefaultCacheDir returns $XDG_CACHE_HOME/tcgreplay or ~/.cache/tcgreplay.
@@ -201,89 +261,195 @@ func safeName(id string) string {
 	return strings.NewReplacer("/", "_", "\\", "_", "..", "_").Replace(id)
 }
 
-// getJSON fetches path relative to Base, caching the raw body at cacheFile.
-func (c *Client) getJSON(ctx context.Context, path, cacheFile string, out any) error {
-	if b, err := os.ReadFile(cacheFile); err == nil {
-		return json.Unmarshal(b, out)
-	}
-	if c.Offline {
-		return fmt.Errorf("%s: not cached and offline: %w", path, ErrNotFound)
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.Base+path, nil)
+// loadEntry is the one path every lookup loads a card source response
+// through: the store, then the card source. With out set, the body is
+// decoded into it.
+func (c *Client) loadEntry(ctx context.Context, key string, out any) (Entry, error) {
+	e, err := c.store().Get(ctx, key)
 	if err != nil {
-		return err
-	}
-	resp, err := c.HTTP.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("tcgdex %s: %w", path, ErrNotFound)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("tcgdex %s: %s", path, resp.Status)
-	}
-	b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(b, out); err != nil {
-		return fmt.Errorf("tcgdex %s: %w", path, err)
-	}
-	if err := os.MkdirAll(filepath.Dir(cacheFile), 0o755); err == nil {
-		tmp := cacheFile + ".tmp"
-		if os.WriteFile(tmp, b, 0o644) == nil {
-			os.Rename(tmp, cacheFile)
+		if c.Offline {
+			return Entry{}, fmt.Errorf("%s: not cached and offline: %w", key, ErrNotFound)
 		}
+		if e, err = c.shared(ctx, key, true); err != nil {
+			return Entry{}, err
+		}
+	}
+	return e, decodeEntry(key, e, out)
+}
+
+// fetchEntry fetches key from the card source, whatever the store holds,
+// and stores it with its fetch time.
+func (c *Client) fetchEntry(ctx context.Context, key string, out any) (Entry, error) {
+	e, err := c.shared(ctx, key, false)
+	if err != nil {
+		return Entry{}, err
+	}
+	return e, decodeEntry(key, e, out)
+}
+
+func decodeEntry(key string, e Entry, out any) error {
+	if out == nil {
+		return nil
+	}
+	if err := json.Unmarshal(e.Data, out); err != nil {
+		return fmt.Errorf("%s: %w", key, err)
 	}
 	return nil
 }
 
-// Card implements DB.
+// shared fetches key from the card source through the single-flight
+// group, so simultaneous requests for one key make one request. The fetch
+// is bounded by the client's timeout and runs on a context of its own, so
+// a caller giving up does not fail the others. A body that does not decode
+// as its kind is refused, and a good one is stored. With recheck, an entry
+// another caller stored meanwhile is used instead of fetching again. The
+// outcome of fetching a card is remembered (see recentlyFailed).
+func (c *Client) shared(ctx context.Context, key string, recheck bool) (Entry, error) {
+	v, err := c.flight.do(ctx, key, c.timeout(), func(fctx context.Context) (any, error) {
+		if recheck {
+			if e, err := c.store().Get(fctx, key); err == nil {
+				return e, nil
+			}
+		}
+		e, err := c.fetch(fctx, key)
+		if err == nil {
+			err = validateEntry(key, e.Data)
+		}
+		if id, ok := strings.CutPrefix(key, "cards/"); ok {
+			c.noteCard(id, err)
+		}
+		if err != nil {
+			return Entry{}, err
+		}
+		c.store().Put(fctx, key, e) // a cache write failure only costs a refetch
+		return e, nil
+	})
+	if err != nil {
+		return Entry{}, err
+	}
+	return v.(Entry), nil
+}
+
+// validateEntry checks a fetched body decodes as the kind its key names.
+func validateEntry(key string, b []byte) error {
+	var out any
+	switch {
+	case key == "sets":
+		out = &[]setSummary{}
+	case strings.HasPrefix(key, "sets/"):
+		out = &setDetail{}
+	case strings.HasPrefix(key, "cards/"):
+		out = &Card{}
+	default:
+		return nil
+	}
+	if err := json.Unmarshal(b, out); err != nil {
+		return fmt.Errorf("tcgdex %s: %w", key, err)
+	}
+	return nil
+}
+
+// sourcePath maps a key to its card source path: "sets" is /sets and
+// "<kind>/<id>" is /<kind>/<escaped id>.
+func sourcePath(key string) string {
+	kind, id, ok := strings.Cut(key, "/")
+	if !ok {
+		return "/" + key
+	}
+	return "/" + kind + "/" + url.PathEscape(id)
+}
+
+// fetch requests key from the card source and stamps it with the time it
+// answered.
+func (c *Client) fetch(ctx context.Context, key string) (Entry, error) {
+	path := sourcePath(key)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.Base+path, nil)
+	if err != nil {
+		return Entry{}, err
+	}
+	hc := c.HTTP
+	if hc == nil {
+		hc = http.DefaultClient
+	}
+	resp, err := hc.Do(req)
+	if err != nil {
+		return Entry{}, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return Entry{}, fmt.Errorf("tcgdex %s: %w", path, ErrNotFound)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return Entry{}, fmt.Errorf("tcgdex %s: %s", path, resp.Status)
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
+	if err != nil {
+		return Entry{}, err
+	}
+	if !json.Valid(b) {
+		return Entry{}, fmt.Errorf("tcgdex %s: response is not JSON", path)
+	}
+	return Entry{Data: b, Fetched: c.now()}, nil
+}
+
+// Card implements DB. A card the card source failed to return (unknown,
+// error or timeout) is not asked for again for RetryAfter: lookups in
+// between fail at once.
 func (c *Client) Card(ctx context.Context, id string) (*Card, error) {
 	if id == "" {
 		return nil, fmt.Errorf("empty card id: %w", ErrNotFound)
 	}
 	c.mu.Lock()
-	if card, ok := c.mem[id]; ok {
+	if e, ok := c.mem[id]; ok {
 		c.mu.Unlock()
-		return card, nil
+		c.refreshCardIfStale(id, e)
+		return e.card, nil
 	}
 	c.mu.Unlock()
-	var card Card
-	err := c.getJSON(ctx, "/cards/"+url.PathEscape(id), filepath.Join(c.CacheDir, "cards", safeName(id)+".json"), &card)
+	key := "cards/" + id
+	e, err := c.store().Get(ctx, key)
 	if err != nil {
+		switch {
+		case c.Offline:
+			return nil, fmt.Errorf("%s: not cached and offline: %w", key, ErrNotFound)
+		case c.recentlyFailed(id):
+			return nil, fmt.Errorf("%s: recently failed: %w", id, ErrNotFound)
+		}
+		if e, err = c.shared(ctx, key, true); err != nil {
+			return nil, err
+		}
+	}
+	var card Card
+	if err := decodeEntry(key, e, &card); err != nil {
 		return nil, err
 	}
 	energyArt(&card)
-	c.mu.Lock()
-	c.mem[id] = &card
-	c.mu.Unlock()
-	return &card, nil
+	ce := c.remember(id, &card, e.Fetched)
+	c.refreshCardIfStale(id, ce)
+	return ce.card, nil
 }
 
 // Cached implements DB.
 func (c *Client) Cached(id string) *Card {
 	c.mu.Lock()
-	card, ok := c.mem[id]
+	e, ok := c.mem[id]
 	c.mu.Unlock()
 	if ok {
-		return card
+		c.refreshCardIfStale(id, e)
+		return e.card
 	}
-	b, err := os.ReadFile(filepath.Join(c.CacheDir, "cards", safeName(id)+".json"))
+	se, err := c.store().Get(context.Background(), "cards/"+id)
 	if err != nil {
 		return nil
 	}
 	var cc Card
-	if json.Unmarshal(b, &cc) != nil {
+	if json.Unmarshal(se.Data, &cc) != nil {
 		return nil
 	}
 	energyArt(&cc)
-	c.mu.Lock()
-	c.mem[id] = &cc
-	c.mu.Unlock()
-	return &cc
+	ce := c.remember(id, &cc, se.Fetched)
+	c.refreshCardIfStale(id, ce)
+	return ce.card
 }
 
 // basicEnergyArt is Crown Zenith's Basic Energy art. TCGdex has no images
@@ -392,78 +558,15 @@ func LogCodeID(code string) (string, bool) {
 }
 
 func (c *Client) set(ctx context.Context, id string) (*setDetail, error) {
-	var s setDetail
-	err := c.getJSON(ctx, "/sets/"+url.PathEscape(id), filepath.Join(c.CacheDir, "sets", safeName(id)+".json"), &s)
-	return &s, err
+	s, _, err := c.setFetched(ctx, id)
+	return s, err
 }
 
-// buildIndex maps set codes to TCGdex set ids. It fetches every set once and
-// caches the result.
-func (c *Client) buildIndex(ctx context.Context, refresh bool) error {
-	// v2: shared codes now keep the main set; older indexes may not.
-	indexFile := filepath.Join(c.CacheDir, "set-index-v2.json")
-	if !refresh {
-		if b, err := os.ReadFile(indexFile); err == nil {
-			idx := map[string]string{}
-			if json.Unmarshal(b, &idx) == nil {
-				c.setIndex = idx
-				return nil
-			}
-		}
-	}
-	if c.Offline {
-		return fmt.Errorf("set index not cached and offline: %w", ErrNotFound)
-	}
-	var sets []setSummary
-	// Always refetch the set list when rebuilding.
-	os.Remove(filepath.Join(c.CacheDir, "sets.json"))
-	if err := c.getJSON(ctx, "/sets", filepath.Join(c.CacheDir, "sets.json"), &sets); err != nil {
-		return err
-	}
-	idx := map[string]string{}
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, 8)
-	var firstErr error
-	for _, s := range sets {
-		wg.Add(1)
-		go func(id string) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			d, err := c.set(ctx, id)
-			mu.Lock()
-			defer mu.Unlock()
-			if err != nil {
-				if firstErr == nil && !errors.Is(err, ErrNotFound) {
-					firstErr = err
-				}
-				return
-			}
-			for _, code := range []string{d.Abbreviation.Official, d.TCGOnline} {
-				if code == "" {
-					continue
-				}
-				// Sets sharing a code (30th and 30th-c, cel25 and
-				// cel25cc) keep the main set, whose id is shorter, so
-				// the pick does not depend on fetch order.
-				k := strings.ToUpper(code)
-				if old, ok := idx[k]; !ok || len(d.ID) < len(old) || (len(d.ID) == len(old) && d.ID < old) {
-					idx[k] = d.ID
-				}
-			}
-		}(s.ID)
-	}
-	wg.Wait()
-	if len(idx) == 0 && firstErr != nil {
-		return firstErr
-	}
-	c.setIndex = idx
-	if b, err := json.Marshal(idx); err == nil {
-		os.MkdirAll(c.CacheDir, 0o755)
-		os.WriteFile(indexFile, b, 0o644)
-	}
-	return nil
+// setFetched loads a set's card list with the time it was fetched.
+func (c *Client) setFetched(ctx context.Context, id string) (*setDetail, time.Time, error) {
+	var s setDetail
+	e, err := c.loadEntry(ctx, "sets/"+id, &s)
+	return &s, e.Fetched, err
 }
 
 // Resolve implements DB.
@@ -472,44 +575,67 @@ func (c *Client) Resolve(ctx context.Context, setCode, number string) (string, e
 	if a, ok := codeAliases[code]; ok {
 		code = a
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	var cat *catalog
 	setID, ok := setAliases[code]
-	if !ok && c.setIndex == nil {
-		if err := c.buildIndex(ctx, false); err != nil {
+	if ok {
+		c.mu.Lock()
+		cat = c.cat // an alias needs no catalog, but uses one already built
+		c.mu.Unlock()
+	} else {
+		var err error
+		if cat, err = c.ensureCatalog(ctx); err != nil {
 			return "", err
 		}
+		setID, ok = cat.setIndex[code]
 	}
-	if !ok {
-		setID, ok = c.setIndex[code]
-	}
-	if !ok && !c.indexed && !c.Offline {
-		// The cached index may predate a new set.
-		c.indexed = true
-		if err := c.buildIndex(ctx, true); err != nil {
-			return "", err
+	if !ok && c.missAllowed("code:"+code) {
+		// The cached set list may predate a new set.
+		if fresh, err := c.refreshSetList(ctx, cat); err == nil && fresh != nil {
+			cat = fresh
+			setID, ok = cat.setIndex[code]
 		}
-		setID, ok = c.setIndex[code]
 	}
 	if !ok {
 		return "", fmt.Errorf("unknown set code %q: %w", setCode, ErrNotFound)
 	}
-	s, err := c.set(ctx, setID)
-	if err != nil {
-		return "", err
-	}
-	want, numErr := strconv.Atoi(number)
-	for _, card := range s.Cards {
-		if strings.EqualFold(card.LocalID, number) {
-			return card.ID, nil
+	var s *setDetail
+	if e, ok := cat.setEntry(setID); ok {
+		s = e.d
+	} else {
+		var err error
+		if s, err = c.set(ctx, setID); err != nil {
+			return "", err
 		}
-		if numErr == nil {
-			if n, err := strconv.Atoi(card.LocalID); err == nil && n == want {
-				return card.ID, nil
+	}
+	if id, ok := findNumber(s, number); ok {
+		return id, nil
+	}
+	if c.missAllowed("num:" + setID + ":" + strings.ToUpper(number)) {
+		// The cached card list may predate a card added to the set.
+		if _, fresh, err := c.refreshSet(ctx, setID); err == nil {
+			if id, ok := findNumber(fresh, number); ok {
+				return id, nil
 			}
 		}
 	}
 	return "", fmt.Errorf("no card %s %s in set %s: %w", setCode, number, setID, ErrNotFound)
+}
+
+// findNumber finds a collector number in a set's card list: exactly, or
+// as the same number without leading zeros.
+func findNumber(s *setDetail, number string) (string, bool) {
+	want, numErr := strconv.Atoi(number)
+	for _, card := range s.Cards {
+		if strings.EqualFold(card.LocalID, number) {
+			return card.ID, true
+		}
+		if numErr == nil {
+			if n, err := strconv.Atoi(card.LocalID); err == nil && n == want {
+				return card.ID, true
+			}
+		}
+	}
+	return "", false
 }
 
 // nameKey normalises a card name for lookup: case and apostrophe style
@@ -555,19 +681,16 @@ func (c *Client) ByName(ctx context.Context, name string, moves ...string) (stri
 
 // prints lists the prints of name, preferred first.
 func (c *Client) prints(ctx context.Context, name string) ([]string, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.byName == nil {
-		if err := c.buildNameIndex(ctx); err != nil {
-			return nil, err
-		}
+	cat, err := c.ensureCatalog(ctx)
+	if err != nil {
+		return nil, err
 	}
 	key := nameKey(name)
-	if ids, ok := c.byName[key]; ok {
+	if ids, ok := cat.byName[key]; ok {
 		return ids, nil
 	}
 	if k, ok := strings.CutPrefix(key, "basic "); ok {
-		if ids, ok := c.byName[k]; ok {
+		if ids, ok := cat.byName[k]; ok {
 			return ids, nil
 		}
 	}
@@ -584,76 +707,4 @@ func (c *Card) hasMoves(moves []string) int {
 		}
 	}
 	return n
-}
-
-// buildNameIndex reads every set (cached after the first time) and keeps
-// every print of each name, preferred first. The caller holds c.mu.
-func (c *Client) buildNameIndex(ctx context.Context) error {
-	var sets []setSummary
-	if err := c.getJSON(ctx, "/sets", filepath.Join(c.CacheDir, "sets.json"), &sets); err != nil {
-		return err
-	}
-	type pick struct {
-		id, release string
-		art         bool
-		num         int
-	}
-	better := func(a, b pick) bool { // is a preferred to b?
-		if a.art != b.art {
-			return a.art
-		}
-		if a.release != b.release {
-			return a.release > b.release
-		}
-		return a.num < b.num
-	}
-	all := map[string][]pick{}
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, 8)
-	for _, s := range sets {
-		wg.Add(1)
-		go func(id string) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			d, err := c.set(ctx, id)
-			if err != nil {
-				return // offline or gone: its prints are simply not offered
-			}
-			if d.Serie.ID == "tcgp" {
-				return // Pokémon TCG Pocket, a different game
-			}
-			mu.Lock()
-			defer mu.Unlock()
-			for _, card := range d.Cards {
-				num, err := strconv.Atoi(card.LocalID)
-				if err != nil {
-					num = 1 << 30 // lettered prints (TG05) after numbered ones
-				}
-				p := pick{card.ID, d.ReleaseDate, card.Image != "", num}
-				k := nameKey(card.Name)
-				all[k] = append(all[k], p)
-			}
-		}(s.ID)
-	}
-	wg.Wait()
-	c.byName = make(map[string][]string, len(all))
-	for k, ps := range all {
-		slices.SortFunc(ps, func(a, b pick) int {
-			switch {
-			case better(a, b):
-				return -1
-			case better(b, a):
-				return 1
-			}
-			return strings.Compare(a.id, b.id)
-		})
-		ids := make([]string, len(ps))
-		for i, p := range ps {
-			ids[i] = p.id
-		}
-		c.byName[k] = ids
-	}
-	return nil
 }

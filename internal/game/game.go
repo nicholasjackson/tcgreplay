@@ -85,6 +85,9 @@ type Game struct {
 	// turn wait opens and closes it; ending the turn, a mode switch and a
 	// branch move close it too.
 	responder state.Seat
+	// warming holds the card defs being fetched in the background because
+	// card found them uncached; it keeps one fetch per def at a time.
+	warming sync.Map
 }
 
 // Options configure a new game.
@@ -478,7 +481,9 @@ func (g *Game) setResponder(seat state.Seat) {
 	g.responder = seat
 }
 
-// card returns a card's definition if it can be found, else nil.
+// card returns a card's definition if it is cached, else nil. It is
+// called with g.mu held, so it never waits on the card source: a def not
+// cached yet is fetched in the background, and later calls see it.
 func (g *Game) card(st *state.State, iid state.IID) *cards.Card {
 	c, ok := st.Cards[iid]
 	if !ok || c.Def == "" || g.db == nil {
@@ -487,13 +492,22 @@ func (g *Game) card(st *state.State, iid state.IID) *cards.Card {
 	if cc := g.db.Cached(c.Def); cc != nil {
 		return cc
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	cc, err := g.db.Card(ctx, c.Def)
-	if err != nil {
-		return nil
+	g.warm(c.Def)
+	return nil
+}
+
+// warm fetches def into the card cache in the background, unless a fetch
+// of it is already running. It never touches g.mu.
+func (g *Game) warm(def string) {
+	if _, running := g.warming.LoadOrStore(def, true); running {
+		return
 	}
-	return cc
+	go func() {
+		defer g.warming.Delete(def)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		g.db.Card(ctx, def)
+	}()
 }
 
 // hp is a Pokémon's maximum HP: printed HP plus what its Tools add.
