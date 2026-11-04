@@ -52,7 +52,10 @@ dev-ui: web/node_modules
 # TCGREPLAY_GOOGLE_CLIENT_SECRET first (redirect URI
 # $(PUBLIC_URL)/auth/google/callback). To keep the card cache in a Spaces
 # bucket, also export TCGREPLAY_SPACES_ENDPOINT, TCGREPLAY_SPACES_BUCKET,
-# TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET (optional).
+# TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET (optional). To use the
+# card cache admin page at /admin, export TCGREPLAY_ADMINS (Google account
+# emails), and TCGREPLAY_SPACES_CDN_TOKEN for clears to purge the CDN
+# (both optional).
 IMAGE ?= tcgreplay
 PUBLIC_URL ?= http://localhost:8080
 
@@ -64,7 +67,8 @@ docker-run:
 		-e TCGREPLAY_GOOGLE_CLIENT_ID -e TCGREPLAY_GOOGLE_CLIENT_SECRET \
 		-e TCGREPLAY_RATE_LIMIT -e TCGREPLAY_MAX_USERS \
 		-e TCGREPLAY_SPACES_ENDPOINT -e TCGREPLAY_SPACES_BUCKET \
-		-e TCGREPLAY_SPACES_KEY -e TCGREPLAY_SPACES_SECRET $(IMAGE)
+		-e TCGREPLAY_SPACES_KEY -e TCGREPLAY_SPACES_SECRET \
+		-e TCGREPLAY_ADMINS -e TCGREPLAY_SPACES_CDN_TOKEN $(IMAGE)
 
 clean:
 	rm -rf bin internal/webui/dist/app

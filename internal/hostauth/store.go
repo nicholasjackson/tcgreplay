@@ -182,7 +182,7 @@ func (s *store) addSession(now time.Time, acct Account) string {
 	exp := now.Add(sessionLifetime)
 	s.sessions[id] = &session{account: acct, expires: exp, done: make(chan struct{})}
 	s.holdLocked(acct)
-	return s.seal.seal(sealSession, grantClaims{ID: id, Sub: acct.ID, Email: acct.Email, Exp: exp.Unix()})
+	return s.seal.seal(sealSession, grantClaims{ID: id, Sub: acct.ID, Email: acct.Email, Verified: acct.EmailVerified, Exp: exp.Unix()})
 }
 
 // session returns the board session for a cookie value, or nil. A cookie

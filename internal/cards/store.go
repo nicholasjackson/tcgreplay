@@ -153,3 +153,54 @@ func (s diskStore) Put(_ context.Context, key string, e Entry) error {
 	}
 	return werr
 }
+
+// Clear implements clearer: it removes the entry files in scope and
+// reports how many it removed as the "disk" tier. Only files this store
+// owns are touched: sets.json, sets/, cards/ and the retired
+// set-index-v2.json, never anything else under the directory. A missing
+// file or directory is not an error; other errors are reported after
+// removing what can be removed.
+func (s diskStore) Clear(_ context.Context, sc Scope) []TierReport {
+	r := TierReport{Tier: "disk"}
+	note := func(err error) {
+		if err != nil && !errors.Is(err, os.ErrNotExist) && r.Err == nil {
+			r.Err = err
+		}
+	}
+	remove := func(p string) {
+		err := os.Remove(p)
+		if err == nil && strings.HasSuffix(p, ".json") {
+			r.Removed++
+		}
+		note(err)
+	}
+	if sc.All() {
+		remove(filepath.Join(s.dir, "sets.json"))
+		remove(filepath.Join(s.dir, "set-index-v2.json"))
+		for _, kind := range []string{"sets", "cards"} {
+			dir := filepath.Join(s.dir, kind)
+			entries, err := os.ReadDir(dir)
+			note(err)
+			for _, e := range entries {
+				if !e.IsDir() {
+					remove(filepath.Join(dir, e.Name()))
+				}
+			}
+			note(os.RemoveAll(dir))
+		}
+		return []TierReport{r}
+	}
+	remove(filepath.Join(s.dir, "sets", safeName(sc.Set)+".json"))
+	// Matched by prefix rather than by glob, so an id holding glob
+	// metacharacters cannot widen the match.
+	prefix := safeName(sc.Set) + "-"
+	dir := filepath.Join(s.dir, "cards")
+	entries, err := os.ReadDir(dir)
+	note(err)
+	for _, e := range entries {
+		if n := e.Name(); !e.IsDir() && strings.HasPrefix(n, prefix) && strings.HasSuffix(n, ".json") {
+			remove(filepath.Join(dir, n))
+		}
+	}
+	return []TierReport{r}
+}

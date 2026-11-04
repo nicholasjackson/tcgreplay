@@ -754,9 +754,10 @@ type stubImages struct {
 	asked  []string
 }
 
-func (s *stubImages) Image(src string) (string, string) {
+func (s *stubImages) Image(src string) (string, string, string) {
 	s.asked = append(s.asked, src)
-	return s.answer(src)
+	img, fb := s.answer(src)
+	return img, fb, ""
 }
 
 // cardJSON fetches /api/card for def and decodes it into a map, so a test
@@ -838,6 +839,56 @@ func TestCardImageSource(t *testing.T) {
 		s.Images = &stubImages{answer: func(s string) (string, string) { return s, s }}
 		if _, ok := cardJSON(t, ts, "tst-1")["image_fallback"]; ok {
 			t.Fatal("image_fallback equal to image was not dropped")
+		}
+	})
+}
+
+// versionedImages is an ImageSource answering every address with a copy
+// at cdn and a fixed content version, or, with keep, the address itself
+// (and the version anyway, which the server must drop).
+type versionedImages struct {
+	cdn, version string
+	keep         bool
+}
+
+func (v versionedImages) Image(src string) (string, string, string) {
+	if v.keep {
+		return src, "", v.version
+	}
+	return v.cdn, src, v.version
+}
+
+func TestCardImageVersion(t *testing.T) {
+	const src = "https://assets.tcgdex.net/en/sv/sv1/1"
+	const cdn = "https://cdn.example/images/en/sv/sv1/1"
+	db := cardstest.New()
+	db["tst-1"].Image = src // Riolu has art; Lucario (tst-2) has none
+	m := game.NewManager(t.TempDir(), db)
+	s := New(m, state.P1)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+
+	t.Run("a versioned copy carries its version", func(t *testing.T) {
+		s.Images = versionedImages{cdn: cdn, version: "abc123def456"}
+		got := cardJSON(t, ts, "tst-1")
+		if got["image"] != cdn || got["image_fallback"] != src || got["image_version"] != "abc123def456" {
+			t.Fatalf("card = %v; want image %s, fallback %s, version abc123def456", got, cdn, src)
+		}
+		if _, ok := cardJSON(t, ts, "tst-2")["image_version"]; ok {
+			t.Fatal("imageless card has a version")
+		}
+	})
+
+	t.Run("no version without a versioned copy", func(t *testing.T) {
+		for name, src := range map[string]ImageSource{
+			"no image source":      nil,
+			"copy with no version": versionedImages{cdn: cdn},
+			"address kept":         versionedImages{keep: true, version: "abc123def456"},
+		} {
+			s.Images = src
+			if _, ok := cardJSON(t, ts, "tst-1")["image_version"]; ok {
+				t.Errorf("%s: image_version present", name)
+			}
 		}
 	})
 }

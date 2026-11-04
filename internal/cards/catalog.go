@@ -53,8 +53,11 @@ func (c *Client) ensureCatalog(ctx context.Context) (*catalog, error) {
 		return cat, nil
 	}
 	// Each request the build makes is bounded on its own, so the build as a
-	// whole is not.
-	v, err := c.flight.do(ctx, "catalog", 0, func(fctx context.Context) (any, error) {
+	// whole is not. A use after a clear never joins a build begun before
+	// it, and a build that a clear overtook is returned to its callers but
+	// not published.
+	gen := c.generation()
+	v, err := c.flight.do(ctx, fmt.Sprintf("catalog#%d", gen), 0, func(fctx context.Context) (any, error) {
 		c.mu.Lock()
 		cat := c.cat
 		c.mu.Unlock()
@@ -65,7 +68,7 @@ func (c *Client) ensureCatalog(ctx context.Context) (*catalog, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.publish(cat)
+		c.publish(cat, gen)
 		return cat, nil
 	})
 	if err != nil {
@@ -76,10 +79,13 @@ func (c *Client) ensureCatalog(ctx context.Context) (*catalog, error) {
 	return cat, nil
 }
 
-// publish swaps cat in as the current catalog.
-func (c *Client) publish(cat *catalog) {
+// publish swaps cat in as the current catalog, unless a clear happened
+// since the work that built it began under gen.
+func (c *Client) publish(cat *catalog, gen uint64) {
 	c.mu.Lock()
-	c.cat = cat
+	if c.gen == gen {
+		c.cat = cat
+	}
 	c.mu.Unlock()
 }
 
@@ -241,20 +247,21 @@ type listUpdate struct {
 }
 
 // update merges freshly fetched set data into the current catalog and
-// publishes the result (nil, publishing nothing, before the first build).
+// publishes the result (nil, publishing nothing, before the first build or
+// when a clear happened since the fetch began under gen).
 // An entry older than the one the catalog holds is
 // ignored, so updates racing each other keep the newest data. The indexes
 // are recomputed only when a body or the list of sets changed. Updates
 // are serialised by c.catMu, which is held for this CPU work only, never
 // across I/O.
-func (c *Client) update(list *listUpdate, fresh map[string]setEntry) *catalog {
+func (c *Client) update(gen uint64, list *listUpdate, fresh map[string]setEntry) *catalog {
 	c.catMu.Lock()
 	defer c.catMu.Unlock()
 	c.mu.Lock()
-	cur := c.cat
+	cur, cleared := c.cat, c.gen != gen
 	c.mu.Unlock()
-	if cur == nil {
-		return nil // nothing built yet: the first build loads fresh data
+	if cur == nil || cleared {
+		return nil // nothing built yet (or since the clear): the next build loads fresh data
 	}
 	ids, listFetched := cur.setIDs, cur.listFetched
 	changed := false
@@ -292,7 +299,7 @@ func (c *Client) update(list *listUpdate, fresh map[string]setEntry) *catalog {
 	} else {
 		cat = withStaleAt(&catalog{listFetched: listFetched, setIDs: ids, sets: sets, setIndex: cur.setIndex, byName: cur.byName})
 	}
-	c.publish(cat)
+	c.publish(cat, gen)
 	return cat
 }
 
@@ -300,6 +307,7 @@ func (c *Client) update(list *listUpdate, fresh map[string]setEntry) *catalog {
 // lists, and publishes the updated catalog. Misses use it to check an
 // unknown set code against fresh data.
 func (c *Client) refreshSetList(ctx context.Context, old *catalog) (*catalog, error) {
+	gen := c.generation()
 	var list []setSummary
 	le, err := c.fetchEntry(ctx, "sets", &list)
 	if err != nil {
@@ -314,7 +322,7 @@ func (c *Client) refreshSetList(ctx context.Context, old *catalog) (*catalog, er
 		}
 	}
 	fresh, _ := c.loadSets(ctx, newIDs, nil, false)
-	return c.update(&listUpdate{ids, le.Fetched}, fresh), nil
+	return c.update(gen, &listUpdate{ids, le.Fetched}, fresh), nil
 }
 
 // refreshSet fetches one set's card list afresh and publishes the updated
@@ -322,12 +330,13 @@ func (c *Client) refreshSetList(ctx context.Context, old *catalog) (*catalog, er
 // fresh data. It returns the fetched card list, which a set the set list
 // does not name (an alias) needs, since the catalog leaves it out.
 func (c *Client) refreshSet(ctx context.Context, id string) (*catalog, *setDetail, error) {
+	gen := c.generation()
 	var d setDetail
 	e, err := c.fetchEntry(ctx, "sets/"+id, &d)
 	if err != nil {
 		return nil, nil, err
 	}
-	cat := c.update(nil, map[string]setEntry{id: {d: &d, raw: e.Data, fetched: e.Fetched}})
+	cat := c.update(gen, nil, map[string]setEntry{id: {d: &d, raw: e.Data, fetched: e.Fetched}})
 	return cat, &d, nil
 }
 
@@ -367,6 +376,7 @@ func (c *Client) maybeSweep(cat *catalog) {
 // SetMaxAge, each key at most once per RetryAfter. A refresh that fails
 // keeps the stale copy.
 func (c *Client) sweep(cat *catalog) {
+	gen := c.generation()
 	ctx := context.Background()
 	now := c.now()
 	ids := cat.setIDs
@@ -394,7 +404,7 @@ func (c *Client) sweep(cat *catalog) {
 		fresh[id] = e
 	}
 	if list != nil || len(fresh) > 0 {
-		c.update(list, fresh)
+		c.update(gen, list, fresh)
 	}
 }
 
