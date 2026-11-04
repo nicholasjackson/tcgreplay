@@ -10,14 +10,17 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/oauth2"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
+	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 	"github.com/nicholasjackson/tcgreplay/internal/usergames"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
@@ -168,9 +171,9 @@ func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth) h
 // live connections. The registry keeps the user cap, so a place follows
 // activity. Every MCP request and board action counts against its
 // account's request limit, and tool calls, board actions and board page
-// loads count as the account's activity. google is as for hostedAuth.
-func newHosted(c config, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
-	db := newCardDB(c)
+// loads count as the account's activity. db is the card database every
+// account shares (see hostedCardDB). google is as for hostedAuth.
+func newHosted(c config, db *cards.Client, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
 	human := state.Seat(c.seat).Other()
 	var reg *usergames.Registry
 	var a *hostauth.Auth // set below, before any board is built
@@ -202,6 +205,57 @@ func newHosted(c config, public *url.URL, google oauth2.Endpoint) (*usergames.Re
 	return reg, srv, a, nil
 }
 
+// hostedCardDB builds hosted mode's card database. With all four
+// TCGREPLAY_SPACES_* settings present and the playmat online, its cache is
+// local disk backed by the shared store in DigitalOcean Spaces, so it
+// outlasts a deploy, and shared reports true. With none set it caches on
+// local disk only, as the desktop does. Partial or invalid settings are a
+// warning, not an error: the cache is optional and must never stop play.
+// Only hosted mode reads these settings.
+func hostedCardDB(c config) (db *cards.Client, shared bool) {
+	db = newCardDB(c)
+	if c.cardBase != "" {
+		db.Base = c.cardBase
+	}
+	cfg, set, err := spaces.FromEnv(os.Getenv)
+	switch {
+	case !set:
+		log.Printf("card cache: local only, in %s (no TCGREPLAY_SPACES_* settings)", c.cacheDir)
+		return db, false
+	case err != nil:
+		log.Printf("warning: card cache: %s; using the local cache only", strings.ReplaceAll(err.Error(), "\n", "; "))
+		return db, false
+	case c.offline:
+		log.Printf("card cache: offline, shared store %s not used", cfg)
+		return db, false
+	}
+	sc, err := spaces.New(cfg)
+	if err != nil {
+		log.Printf("warning: card cache: %v; using the local cache only", err)
+		return db, false
+	}
+	db.Store = cards.NewTieredStore(db.Store, cards.NewSpacesStore(sc))
+	log.Printf("card cache: %s backed by shared store %s", c.cacheDir, cfg)
+	return db, true
+}
+
+// catalogWarmTimeout bounds the start-up catalog warm.
+const catalogWarmTimeout = 2 * time.Minute
+
+// warmCatalog builds the card catalog in the background at start-up, so
+// the first import after a deploy does not wait for it, and logs how it
+// went.
+func warmCatalog(ctx context.Context, db *cards.Client) {
+	start := time.Now()
+	wctx, cancel := context.WithTimeout(ctx, catalogWarmTimeout)
+	defer cancel()
+	if err := db.Warm(wctx); err != nil {
+		log.Printf("card cache: catalog warm failed after %s: %v", time.Since(start).Round(time.Millisecond), err)
+		return
+	}
+	log.Printf("card cache: catalog warmed in %s", time.Since(start).Round(time.Millisecond))
+}
+
 // runHosted serves MCP and the playmat over one plain-HTTP listener until
 // ctx is done, for running in a container behind an HTTPS proxy.
 func runHosted(ctx context.Context, c config) error {
@@ -216,11 +270,15 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	reg, srv, a, err := newHosted(c, public, oauth2.Endpoint{})
+	db, shared := hostedCardDB(c)
+	reg, srv, a, err := newHosted(c, db, public, oauth2.Endpoint{})
 	if err != nil {
 		return err
 	}
 	go reg.Run(ctx)
+	if shared {
+		go warmCatalog(ctx, db)
+	}
 
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {

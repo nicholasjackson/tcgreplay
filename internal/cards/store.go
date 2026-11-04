@@ -43,20 +43,60 @@ func NewDiskStore(dir string) Store { return diskStore{dir: dir} }
 
 type diskStore struct{ dir string }
 
-// path maps a key to its file: "sets" is <dir>/sets.json and "<kind>/<id>"
-// is <dir>/<kind>/<safe id>.json.
-func (s diskStore) path(key string) string {
+// relPath maps a key to its slash-separated path relative to a store's
+// root: "sets" is sets.json and "<kind>/<id>" is <kind>/<safe id>.json.
+// The disk store and the Spaces store share it, so both tiers name an
+// entry alike.
+func relPath(key string) string {
 	kind, id, ok := strings.Cut(key, "/")
 	if !ok {
-		return filepath.Join(s.dir, safeName(key)+".json")
+		return safeName(key) + ".json"
 	}
-	return filepath.Join(s.dir, safeName(kind), safeName(id)+".json")
+	return safeName(kind) + "/" + safeName(id) + ".json"
 }
 
-// envelope is the file format for entries written by this release.
+// path maps a key to its file under the store's directory.
+func (s diskStore) path(key string) string {
+	return filepath.Join(s.dir, filepath.FromSlash(relPath(key)))
+}
+
+// envelope is the format of entries written by this release, on disk and
+// in the shared store alike.
 type envelope struct {
 	Fetched *time.Time      `json:"fetched"`
 	Data    json.RawMessage `json:"data"`
+}
+
+// encodeEnvelope encodes e as an envelope. It is written by hand rather
+// than marshalled, so the body is kept byte for byte.
+func encodeEnvelope(key string, e Entry) ([]byte, error) {
+	if !json.Valid(e.Data) {
+		return nil, fmt.Errorf("%s: entry body is not JSON", key)
+	}
+	ts, err := e.Fetched.UTC().MarshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", key, err)
+	}
+	var buf bytes.Buffer
+	buf.WriteString(`{"fetched":`)
+	buf.Write(ts)
+	buf.WriteString(`,"data":`)
+	buf.Write(e.Data)
+	buf.WriteString("}\n")
+	return buf.Bytes(), nil
+}
+
+// decodeEnvelope decodes an envelope, reporting false when b is not one
+// (both fields must be present).
+func decodeEnvelope(b []byte) (Entry, bool) {
+	if t := bytes.TrimLeft(b, " \t\r\n"); len(t) == 0 || t[0] != '{' {
+		return Entry{}, false
+	}
+	var env envelope
+	if json.Unmarshal(b, &env) != nil || env.Fetched == nil || env.Data == nil {
+		return Entry{}, false
+	}
+	return Entry{Data: env.Data, Fetched: *env.Fetched}, true
 }
 
 // Get implements Store. A file without the envelope was written by an
@@ -71,11 +111,8 @@ func (s diskStore) Get(_ context.Context, key string) (Entry, error) {
 	if err != nil {
 		return Entry{}, err
 	}
-	if t := bytes.TrimLeft(b, " \t\r\n"); len(t) > 0 && t[0] == '{' {
-		var env envelope
-		if json.Unmarshal(b, &env) == nil && env.Fetched != nil && env.Data != nil {
-			return Entry{Data: env.Data, Fetched: *env.Fetched}, nil
-		}
+	if e, ok := decodeEnvelope(b); ok {
+		return e, nil
 	}
 	fi, err := os.Stat(p)
 	if err != nil {
@@ -87,21 +124,10 @@ func (s diskStore) Get(_ context.Context, key string) (Entry, error) {
 // Put implements Store. The file is written to a temporary name and
 // renamed into place, so a crash never leaves a half-written entry.
 func (s diskStore) Put(_ context.Context, key string, e Entry) error {
-	if !json.Valid(e.Data) {
-		return fmt.Errorf("%s: entry body is not JSON", key)
-	}
-	ts, err := e.Fetched.UTC().MarshalJSON()
+	b, err := encodeEnvelope(key, e)
 	if err != nil {
-		return fmt.Errorf("%s: %w", key, err)
+		return err
 	}
-	// Written by hand rather than marshalled, so the body is kept byte
-	// for byte.
-	var buf bytes.Buffer
-	buf.WriteString(`{"fetched":`)
-	buf.Write(ts)
-	buf.WriteString(`,"data":`)
-	buf.Write(e.Data)
-	buf.WriteString("}\n")
 
 	p := s.path(key)
 	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
@@ -112,7 +138,7 @@ func (s diskStore) Put(_ context.Context, key string, e Entry) error {
 		return err
 	}
 	tmp := f.Name()
-	_, werr := f.Write(buf.Bytes())
+	_, werr := f.Write(b)
 	if cerr := f.Close(); werr == nil {
 		werr = cerr
 	}

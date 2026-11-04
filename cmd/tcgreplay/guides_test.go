@@ -81,8 +81,8 @@ func TestHostedGuidesMatchDesktop(t *testing.T) {
 
 	want := servedGuides(t, desktop)
 	names := guideNames(t, want["guide list"])
-	if len(names) != 6 {
-		t.Fatalf("desktop lists %d guides %v, want 6", len(names), names)
+	if len(names) != 7 {
+		t.Fatalf("desktop lists %d guides %v, want 7", len(names), names)
 	}
 	for _, name := range names {
 		if want["guide "+name] == "" || want["prompt "+name+" text"] == "" {

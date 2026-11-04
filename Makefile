@@ -50,7 +50,9 @@ dev-ui: web/node_modules
 # starts it on port 8080, with board links at PUBLIC_URL. Hosted mode needs
 # a Google sign-in client: export TCGREPLAY_GOOGLE_CLIENT_ID and
 # TCGREPLAY_GOOGLE_CLIENT_SECRET first (redirect URI
-# $(PUBLIC_URL)/auth/google/callback).
+# $(PUBLIC_URL)/auth/google/callback). To keep the card cache in a Spaces
+# bucket, also export TCGREPLAY_SPACES_ENDPOINT, TCGREPLAY_SPACES_BUCKET,
+# TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET (optional).
 IMAGE ?= tcgreplay
 PUBLIC_URL ?= http://localhost:8080
 
@@ -60,7 +62,9 @@ docker-build:
 docker-run:
 	docker run --rm -p 8080:8080 -e TCGREPLAY_PUBLIC_URL=$(PUBLIC_URL) \
 		-e TCGREPLAY_GOOGLE_CLIENT_ID -e TCGREPLAY_GOOGLE_CLIENT_SECRET \
-		-e TCGREPLAY_RATE_LIMIT -e TCGREPLAY_MAX_USERS $(IMAGE)
+		-e TCGREPLAY_RATE_LIMIT -e TCGREPLAY_MAX_USERS \
+		-e TCGREPLAY_SPACES_ENDPOINT -e TCGREPLAY_SPACES_BUCKET \
+		-e TCGREPLAY_SPACES_KEY -e TCGREPLAY_SPACES_SECRET $(IMAGE)
 
 clean:
 	rm -rf bin internal/webui/dist/app

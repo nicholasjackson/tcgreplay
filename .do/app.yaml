@@ -7,8 +7,10 @@
 #
 # Users sign in with Google (see TCGREPLAY_GOOGLE_CLIENT_ID below). Each
 # Google account has its own game, held in memory; games left idle are
-# dropped (TCGREPLAY_IDLE_TIMEOUT). Games, the card cache and every
-# sign-in are lost on every deploy or restart.
+# dropped (TCGREPLAY_IDLE_TIMEOUT). Games and sign-ins are lost on every
+# deploy or restart. The card cache is kept in a DigitalOcean Spaces
+# bucket when the TCGREPLAY_SPACES_* settings below are set; without them
+# it is lost too.
 name: tcgreplay
 region: lon
 services:
@@ -66,6 +68,27 @@ services:
       - key: TCGREPLAY_IDLE_TIMEOUT
         value: "60m"
         scope: RUN_TIME
+      # The shared card cache: a private DigitalOcean Spaces bucket that
+      # keeps the cached TCGdex card data (under tcgdex/) across deploys
+      # and restarts. The endpoint is https://<region>.digitaloceanspaces.com;
+      # the key is a Spaces access key limited to that bucket with read and
+      # write. Leave all four unset to keep a local-only cache (lost on
+      # every deploy); setting only some logs a warning and also runs
+      # local-only. The endpoint and bucket are not secret, but are
+      # declared without values so all four are set together in the
+      # control panel (encrypted), like the Google client.
+      - key: TCGREPLAY_SPACES_ENDPOINT
+        scope: RUN_TIME
+        type: SECRET
+      - key: TCGREPLAY_SPACES_BUCKET
+        scope: RUN_TIME
+        type: SECRET
+      - key: TCGREPLAY_SPACES_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: TCGREPLAY_SPACES_SECRET
+        scope: RUN_TIME
+        type: SECRET
 ingress:
   rules:
     - component:

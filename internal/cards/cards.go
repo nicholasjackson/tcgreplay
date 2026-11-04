@@ -220,6 +220,27 @@ func (c *Client) store() Store {
 	return c.Store
 }
 
+// localStore is the store's local tier: the store itself, unless it puts
+// a local tier in front of a shared one (see NewTieredStore). Cached runs
+// under the game lock and offline mode must never touch the network, so
+// both read only this tier.
+func (c *Client) localStore() Store {
+	s := c.store()
+	if t, ok := s.(interface{ Local() Store }); ok {
+		return t.Local()
+	}
+	return s
+}
+
+// readStore is the store a lookup reads before asking the card source:
+// the whole store online, the local tier alone offline.
+func (c *Client) readStore() Store {
+	if c.Offline {
+		return c.localStore()
+	}
+	return c.store()
+}
+
 func (c *Client) timeout() time.Duration {
 	if c.Timeout <= 0 {
 		return 5 * time.Second
@@ -265,7 +286,7 @@ func safeName(id string) string {
 // through: the store, then the card source. With out set, the body is
 // decoded into it.
 func (c *Client) loadEntry(ctx context.Context, key string, out any) (Entry, error) {
-	e, err := c.store().Get(ctx, key)
+	e, err := c.readStore().Get(ctx, key)
 	if err != nil {
 		if c.Offline {
 			return Entry{}, fmt.Errorf("%s: not cached and offline: %w", key, ErrNotFound)
@@ -307,7 +328,10 @@ func decodeEntry(key string, e Entry, out any) error {
 func (c *Client) shared(ctx context.Context, key string, recheck bool) (Entry, error) {
 	v, err := c.flight.do(ctx, key, c.timeout(), func(fctx context.Context) (any, error) {
 		if recheck {
-			if e, err := c.store().Get(fctx, key); err == nil {
+			// Another caller's write lands in the local tier first, so
+			// that is all the recheck reads: the caller has just missed
+			// in the shared tier.
+			if e, err := c.localStore().Get(fctx, key); err == nil {
 				return e, nil
 			}
 		}
@@ -407,7 +431,7 @@ func (c *Client) Card(ctx context.Context, id string) (*Card, error) {
 	}
 	c.mu.Unlock()
 	key := "cards/" + id
-	e, err := c.store().Get(ctx, key)
+	e, err := c.readStore().Get(ctx, key)
 	if err != nil {
 		switch {
 		case c.Offline:
@@ -429,7 +453,9 @@ func (c *Client) Card(ctx context.Context, id string) (*Card, error) {
 	return ce.card, nil
 }
 
-// Cached implements DB.
+// Cached implements DB. It reads memory and the local tier only, never the
+// network: a card held only in a shared store is nil here until a Card
+// lookup brings it to local disk.
 func (c *Client) Cached(id string) *Card {
 	c.mu.Lock()
 	e, ok := c.mem[id]
@@ -438,7 +464,7 @@ func (c *Client) Cached(id string) *Card {
 		c.refreshCardIfStale(id, e)
 		return e.card
 	}
-	se, err := c.store().Get(context.Background(), "cards/"+id)
+	se, err := c.localStore().Get(context.Background(), "cards/"+id)
 	if err != nil {
 		return nil
 	}
