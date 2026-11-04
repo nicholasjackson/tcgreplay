@@ -6,7 +6,8 @@
 # users sign in with Google), TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS,
 # and optionally TCGREPLAY_SPACES_ENDPOINT, TCGREPLAY_SPACES_BUCKET,
 # TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET (all four: keep the card
-# cache in a DigitalOcean Spaces bucket across deploys).
+# cache in a DigitalOcean Spaces bucket across deploys, and copy card
+# images there to serve them from the bucket's CDN).
 
 # Build the board UI into the Go package (see web/vite.config.js).
 FROM node:22 AS web

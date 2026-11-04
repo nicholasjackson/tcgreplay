@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -30,9 +32,13 @@ type object struct {
 }
 
 // Server is a stand-in for the Spaces S3 API: GET and PUT of whole
-// objects in one bucket, path-style. It checks each request's signature
-// with the real verifier, counts requests per method and key, and can be
-// made to fail, refuse credentials, hang or become unreachable.
+// objects in one bucket, path-style, and listing the bucket (ListObjectsV2,
+// counted as method "LIST" with the prefix as key). It checks each
+// request's signature with the real verifier, counts requests per method
+// and key, and can be made to fail, refuse credentials, hang or become
+// unreachable. Like Spaces and its CDN, it serves an object put with
+// public-read access to an unsigned GET, and refuses an unsigned GET of a
+// private or missing object with 403 AccessDenied.
 type Server struct {
 	srv *httptest.Server
 
@@ -43,6 +49,7 @@ type Server struct {
 	deny    bool
 	hang    chan struct{}
 	closed  bool
+	page    int // listing page size; 0 means 1000
 }
 
 // New starts a Server, closed when the test ends.
@@ -84,9 +91,18 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	list := r.Method == http.MethodGet && key == "" && r.URL.Query().Get("list-type") == "2"
+	// An unsigned read is an anonymous one, as a browser makes through the
+	// CDN: credentials do not apply to it.
+	anonymous := r.Header.Get("Authorization") == "" && r.Method == http.MethodGet && key != ""
+
 	s.mu.Lock()
-	s.counts[r.Method+" "+key]++
-	fail, deny, hang := s.fail, s.deny, s.hang
+	if list {
+		s.counts["LIST "+r.URL.Query().Get("prefix")]++
+	} else {
+		s.counts[r.Method+" "+key]++
+	}
+	fail, deny, hang := s.fail, s.deny && !anonymous, s.hang
 	s.mu.Unlock()
 
 	if hang != nil {
@@ -104,6 +120,10 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusForbidden, "InvalidAccessKeyId", "the access key id does not exist")
 		return
 	}
+	if anonymous {
+		s.serveAnonymous(w, bucket, key)
+		return
+	}
 	if err := spaces.VerifyRequest(r, payload, AccessKey, SecretKey, Region); err != nil {
 		e := err.(*spaces.Error)
 		writeError(w, e.Status, e.Code, e.Message)
@@ -111,6 +131,10 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	}
 	if bucket != Bucket {
 		writeError(w, http.StatusNotFound, "NoSuchBucket", "the specified bucket does not exist")
+		return
+	}
+	if list {
+		s.serveList(w, r)
 		return
 	}
 
@@ -141,6 +165,79 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "MethodNotAllowed", "the method is not allowed")
 	}
+}
+
+// serveAnonymous answers an unsigned GET: the object when it was put
+// public-read, otherwise 403 AccessDenied, missing or not.
+func (s *Server) serveAnonymous(w http.ResponseWriter, bucket, key string) {
+	s.mu.Lock()
+	o, ok := s.objects[key]
+	s.mu.Unlock()
+	if bucket != Bucket || !ok || o.header.Get("X-Amz-Acl") != "public-read" {
+		writeError(w, http.StatusForbidden, "AccessDenied", "access denied")
+		return
+	}
+	for k, vs := range o.header {
+		w.Header()[k] = vs
+	}
+	w.Write(o.body)
+}
+
+// listResult is the ListObjectsV2 answer.
+type listResult struct {
+	XMLName               xml.Name `xml:"ListBucketResult"`
+	Name                  string   `xml:"Name"`
+	Prefix                string   `xml:"Prefix"`
+	KeyCount              int      `xml:"KeyCount"`
+	MaxKeys               int      `xml:"MaxKeys"`
+	IsTruncated           bool     `xml:"IsTruncated"`
+	Contents              []listObject
+	NextContinuationToken string `xml:"NextContinuationToken,omitempty"`
+}
+
+type listObject struct {
+	XMLName xml.Name `xml:"Contents"`
+	Key     string   `xml:"Key"`
+	Size    int      `xml:"Size"`
+}
+
+// serveList answers ListObjectsV2: the keys under prefix in key order,
+// after the continuation token (the last key of the previous page, opaque
+// to clients), at most max-keys or the page size at a time.
+func (s *Server) serveList(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	prefix, token := q.Get("prefix"), q.Get("continuation-token")
+	s.mu.Lock()
+	size := s.page
+	var keys []string
+	sizes := map[string]int{}
+	for k, o := range s.objects {
+		if strings.HasPrefix(k, prefix) && k > token {
+			keys = append(keys, k)
+			sizes[k] = len(o.body)
+		}
+	}
+	s.mu.Unlock()
+	if size <= 0 {
+		size = 1000
+	}
+	if n, err := strconv.Atoi(q.Get("max-keys")); err == nil && n > 0 && n < size {
+		size = n
+	}
+	sort.Strings(keys)
+	res := listResult{Name: Bucket, Prefix: prefix, MaxKeys: size}
+	if len(keys) > size {
+		keys = keys[:size]
+		res.IsTruncated = true
+		res.NextContinuationToken = keys[len(keys)-1]
+	}
+	res.KeyCount = len(keys)
+	for _, k := range keys {
+		res.Contents = append(res.Contents, listObject{Key: k, Size: sizes[k]})
+	}
+	w.Header().Set("Content-Type", "application/xml")
+	io.WriteString(w, xml.Header)
+	xml.NewEncoder(w).Encode(res)
 }
 
 func writeError(w http.ResponseWriter, status int, code, msg string) {
@@ -174,7 +271,25 @@ func (s *Server) SetObject(key string, body []byte) {
 	s.objects[key] = object{body: append([]byte(nil), body...), header: http.Header{}}
 }
 
+// Public reports whether the object under key was put public-read, so
+// anyone may read it unsigned.
+func (s *Server) Public(key string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	o, ok := s.objects[key]
+	return ok && o.header.Get("X-Amz-Acl") == "public-read"
+}
+
+// PageSize makes listings answer at most n keys a page (n <= 0 restores
+// the default of 1000).
+func (s *Server) PageSize(n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.page = n
+}
+
 // Requests is how many requests with method the server has had for key.
+// Listings count as method "LIST" with the prefix as key.
 func (s *Server) Requests(method, key string) int {
 	s.mu.Lock()
 	defer s.mu.Unlock()

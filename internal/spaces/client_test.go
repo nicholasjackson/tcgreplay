@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -249,5 +250,101 @@ func TestNewRejectsInvalidConfig(t *testing.T) {
 	}
 	if _, err := spaces.New(spaces.Config{Endpoint: "https://x", AccessKey: "k", SecretKey: "s"}); err == nil {
 		t.Error("New accepted a config with no bucket")
+	}
+}
+
+// listAll follows a listing of prefix to its last page.
+func listAll(t *testing.T, c *spaces.Client, prefix string) (keys []string, pages int) {
+	t.Helper()
+	token := ""
+	for {
+		page, err := c.List(context.Background(), prefix, token)
+		if err != nil {
+			t.Fatalf("List(%q, %q): %v", prefix, token, err)
+		}
+		pages++
+		keys = append(keys, page.Keys...)
+		if page.Next == "" {
+			return keys, pages
+		}
+		if pages > 10 {
+			t.Fatal("listing does not end")
+		}
+		token = page.Next
+	}
+}
+
+func TestListReturnsKeysUnderPrefixAcrossPages(t *testing.T) {
+	s := spacestest.New(t)
+	for _, k := range []string{
+		"images/en/sv/sv1/2/low.webp", "images/en/sv/sv1/1/low.webp", "images/en/sv/sv1/1/high.webp",
+		"images/en/swsh/swsh12.5/157/low.webp", "images/en/swsh/swsh12.5/157/high.webp",
+		"tcgdex/sets.json", "tcgdex/cards/sv1-1.json", "imagesque.json",
+	} {
+		s.SetObject(k, []byte(k))
+	}
+	s.PageSize(2)
+	keys, pages := listAll(t, s.Client(t), "images/")
+	want := []string{
+		"images/en/sv/sv1/1/high.webp", "images/en/sv/sv1/1/low.webp", "images/en/sv/sv1/2/low.webp",
+		"images/en/swsh/swsh12.5/157/high.webp", "images/en/swsh/swsh12.5/157/low.webp",
+	}
+	if strings.Join(keys, ",") != strings.Join(want, ",") {
+		t.Errorf("keys = %v, want %v", keys, want)
+	}
+	if pages != 3 {
+		t.Errorf("pages = %d, want 3", pages)
+	}
+	if n := s.Requests("LIST", "images/"); n != 3 {
+		t.Errorf("LIST requests = %d, want 3", n)
+	}
+}
+
+func TestListOnePageAndEmptyPrefix(t *testing.T) {
+	s := spacestest.New(t)
+	s.SetObject("tcgdex/sets.json", []byte("{}"))
+	c := s.Client(t)
+	page, err := c.List(context.Background(), "images/", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(page.Keys) != 0 || page.Next != "" {
+		t.Errorf("empty prefix listing = %+v, want no keys and no token", page)
+	}
+	page, err = c.List(context.Background(), "tcgdex/", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(page.Keys) != 1 || page.Keys[0] != "tcgdex/sets.json" || page.Next != "" {
+		t.Errorf("listing = %+v, want [tcgdex/sets.json] on one page", page)
+	}
+}
+
+func TestListAwkwardPrefixIsSigned(t *testing.T) {
+	s := spacestest.New(t)
+	s.SetObject("with space/and+plus=eq.json", []byte("x"))
+	s.SetObject("with spacer.json", []byte("x"))
+	keys, _ := listAll(t, s.Client(t), "with space/")
+	if len(keys) != 1 || keys[0] != "with space/and+plus=eq.json" {
+		t.Errorf("keys = %v", keys)
+	}
+}
+
+func TestListErrorsAreTyped(t *testing.T) {
+	s := spacestest.New(t)
+	c := s.Client(t)
+	s.SetDeny(true)
+	_, err := c.List(context.Background(), "images/", "")
+	wantError(t, err, http.StatusForbidden, "InvalidAccessKeyId")
+	s.SetDeny(false)
+	s.SetFail(true)
+	_, err = c.List(context.Background(), "images/", "")
+	wantError(t, err, http.StatusInternalServerError, "InternalError")
+	s.SetFail(false)
+	s.Close()
+	_, err = c.List(context.Background(), "images/", "")
+	var e *spaces.Error
+	if err == nil || errors.As(err, &e) || !strings.Contains(err.Error(), "spaces: list images/") {
+		t.Errorf("closed server: err = %v, want a transport error naming the listing", err)
 	}
 }

@@ -1,21 +1,22 @@
 <script>
   // Zoomed card with its full TCGdex text.
-  import { app, cardInfo } from '../lib/store.svelte.js';
+  import { app, cardInfo, imageSrc, nextImageStage } from '../lib/store.svelte.js';
 
   const card = $derived(app.zoom);
   const info = $derived(card ? cardInfo(card.def) : null);
-  let broken = $state(false);
+  // Which address the art is loaded from (see imageSrc); reset per card.
+  let stage = $state(0);
   $effect(() => {
     card;
-    broken = false;
+    stage = 0;
   });
 </script>
 
 {#if card}
   <div class="backdrop" onclick={() => (app.zoom = null)} role="presentation">
     <div class="zoom" role="dialog" aria-label={card.name}>
-      {#if info?.image && !broken}
-        <img src="{info.image}/high.webp" alt={card.name} onerror={() => (broken = true)} />
+      {#if info?.image && stage < 2}
+        <img src={imageSrc(info, 'high.webp', stage)} alt={card.name} onerror={() => (stage = nextImageStage(info, stage))} />
       {/if}
       <div class="text">
         <h2>{card.name || 'Unknown card'}</h2>

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -39,55 +38,24 @@ func NewTieredStore(local, shared Store) Store {
 		local:   local,
 		shared:  shared,
 		timeout: SharedTimeout,
-		retry:   SharedRetryAfter,
-		now:     time.Now,
-		logf:    log.Printf,
+		breaker: breaker{
+			retry:   SharedRetryAfter,
+			now:     time.Now,
+			logf:    log.Printf,
+			downMsg: "card cache: shared store unavailable (%v); using the local cache and the card source, retrying in %s",
+			upMsg:   "card cache: shared store reachable again",
+		},
 	}
 }
 
 type tieredStore struct {
 	local, shared Store
 	timeout       time.Duration
-	retry         time.Duration
-	now           func() time.Time
-	logf          func(string, ...any)
-
-	mu    sync.Mutex
-	down  bool      // a shared request failed and none has succeeded since
-	until time.Time // while down, shared is skipped until then
+	breaker       // skips shared after a failure; logs each outage once
 }
 
 // Local returns the local tier.
 func (t *tieredStore) Local() Store { return t.local }
-
-// skip reports whether shared is being skipped after a failure.
-func (t *tieredStore) skip() bool {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return t.down && t.now().Before(t.until)
-}
-
-// failed marks shared down for the retry window, logging only the first
-// failure of an outage.
-func (t *tieredStore) failed(op, key string, err error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if !t.down {
-		t.logf("card cache: shared store unavailable (%s %s: %v); using the local cache and the card source, retrying in %s", op, key, err, t.retry)
-	}
-	t.down = true
-	t.until = t.now().Add(t.retry)
-}
-
-// ok marks shared up, logging the recovery once.
-func (t *tieredStore) ok() {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if t.down {
-		t.logf("card cache: shared store reachable again")
-		t.down = false
-	}
-}
 
 // outcome records how a shared request ended. A caller that gave up (its
 // own context ended) says nothing about the shared store, so it neither
@@ -98,7 +66,7 @@ func (t *tieredStore) outcome(ctx context.Context, op, key string, err error) {
 		t.ok()
 	case ctx.Err() != nil:
 	default:
-		t.failed(op, key, err)
+		t.failed(fmt.Errorf("%s %s: %w", op, key, err))
 	}
 }
 
