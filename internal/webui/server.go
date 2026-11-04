@@ -39,7 +39,21 @@ type Server struct {
 	// with the live connection's request context; an error refuses the
 	// action with its message. Nil (the desktop) never refuses.
 	Limit func(ctx context.Context) error
-	hub   *hub
+	// Images, when set (hosted mode with the shared store only), decides
+	// where the board loads each card image from. Nil (the desktop, the
+	// daemon, dev and the board test server) keeps the TCGdex address.
+	Images ImageSource
+	hub    *hub
+}
+
+// ImageSource decides where the board loads a card image from. Image is
+// given the card's TCGdex image base address and returns the base address
+// to load (to which the board appends /low.webp or /high.webp) and, when
+// that differs from src, the address to fall back to. Implementations
+// must never block or touch the network: the card endpoint answers on the
+// board's critical path.
+type ImageSource interface {
+	Image(src string) (image, fallback string)
 }
 
 // New returns a server for m with the UI playing human.
@@ -129,9 +143,14 @@ type CardInfo struct {
 	Retreat     int             `json:"retreat,omitempty"`
 	Attacks     []cards.Attack  `json:"attacks,omitempty"`
 	Abilities   []cards.Ability `json:"abilities,omitempty"`
-	// Image is the TCGdex image base URL; append /low.webp or /high.webp.
+	// Image is the base address to load the card's image from (the CDN
+	// copy in hosted mode with the shared store, else TCGdex); append
+	// /low.webp or /high.webp.
 	Image string `json:"image,omitempty"`
-	Text  string `json:"text"`
+	// ImageFallback is the TCGdex base address, set only when Image
+	// differs from it; the board loads it if Image fails.
+	ImageFallback string `json:"image_fallback,omitempty"`
+	Text          string `json:"text"`
 }
 
 func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
@@ -147,6 +166,13 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+	img, fb := c.Image, ""
+	if s.Images != nil && c.Image != "" {
+		img, fb = s.Images.Image(c.Image)
+		if fb == img {
+			fb = ""
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	// Revalidate: what is served for a card (e.g. borrowed Energy art) can
 	// change between builds, and the server is local.
@@ -155,6 +181,6 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		ID: c.ID, Name: c.Name, Category: c.Category, Stage: c.Stage,
 		TrainerType: c.TrainerType, EnergyType: c.EnergyType, HP: c.HP,
 		Types: c.Types, EvolveFrom: c.EvolveFrom, Retreat: c.Retreat,
-		Attacks: c.Attacks, Abilities: c.Abilities, Image: c.Image, Text: c.Text(),
+		Attacks: c.Attacks, Abilities: c.Abilities, Image: img, ImageFallback: fb, Text: c.Text(),
 	})
 }

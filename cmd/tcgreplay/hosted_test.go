@@ -659,7 +659,7 @@ func startHostedWith(t *testing.T, public string, mod func(*config)) *hostedServ
 	if mod != nil {
 		mod(&c)
 	}
-	reg, srv, a, err := newHosted(c, newCardDB(c), u, g.Endpoint())
+	reg, srv, a, err := newHosted(c, newCardDB(c), nil, u, g.Endpoint())
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -39,6 +39,21 @@ func (c Config) String() string {
 	return strings.TrimSuffix(c.Endpoint, "/") + "/" + c.Bucket
 }
 
+// PublicBase is where the bucket's public-read objects are served, with
+// no trailing slash: https://<bucket>.<region>.cdn.digitaloceanspaces.com,
+// the bucket's CDN, for an endpoint https://<region>.digitaloceanspaces.com,
+// and otherwise <endpoint>/<bucket> (path style). The CDN serves an object
+// only once it is enabled on the bucket.
+func (c Config) PublicBase() string {
+	endpoint := strings.TrimRight(c.Endpoint, "/")
+	if u, err := url.Parse(endpoint); err == nil && u.Port() == "" {
+		if region, ok := strings.CutSuffix(u.Hostname(), ".digitaloceanspaces.com"); ok && region != "" && !strings.Contains(region, ".") {
+			return "https://" + c.Bucket + "." + region + ".cdn.digitaloceanspaces.com"
+		}
+	}
+	return endpoint + "/" + c.Bucket
+}
+
 // FromEnv reads the four TCGREPLAY_SPACES_* settings through getenv.
 // Values are trimmed and an empty value counts as unset. With none set it
 // returns set=false and no error. With some but not all set, or an invalid

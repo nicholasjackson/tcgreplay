@@ -64,6 +64,8 @@ type config struct {
 	now func() time.Time
 	// cardBase, if set, is the card source's base URL (tests).
 	cardBase string
+	// imageBase, if set, is the card image source's prefix (tests).
+	imageBase string
 }
 
 // args renders the config as flags for spawning the daemon. Unset wait

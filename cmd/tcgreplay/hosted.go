@@ -172,8 +172,10 @@ func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth) h
 // activity. Every MCP request and board action counts against its
 // account's request limit, and tool calls, board actions and board page
 // loads count as the account's activity. db is the card database every
-// account shares (see hostedCardDB). google is as for hostedAuth.
-func newHosted(c config, db *cards.Client, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
+// account shares (see hostedCardDB); images, when not nil, is where every
+// board loads card images from (see hostedCardDB). google is as for
+// hostedAuth.
+func newHosted(c config, db *cards.Client, images *cards.ImageCache, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
 	human := state.Seat(c.seat).Other()
 	var reg *usergames.Registry
 	var a *hostauth.Auth // set below, before any board is built
@@ -184,10 +186,7 @@ func newHosted(c config, db *cards.Client, public *url.URL, google oauth2.Endpoi
 			return m
 		},
 		NewBoard: func(m *game.Manager) *webui.Server {
-			ui := webui.New(m, human)
-			ui.Public = public
-			ui.Limit = reg.BoardLimit(a.BoardLimit)
-			return ui
+			return hostedBoard(m, human, public, reg.BoardLimit(a.BoardLimit), images)
 		},
 		Public:   public,
 		Idle:     c.idleTimeout,
@@ -205,6 +204,20 @@ func newHosted(c config, db *cards.Client, public *url.URL, google oauth2.Endpoi
 	return reg, srv, a, nil
 }
 
+// hostedBoard builds one account's board server: on the public address,
+// with the account's request limit, and loading card images through
+// images when it is not nil.
+func hostedBoard(m *game.Manager, human state.Seat, public *url.URL, limit func(context.Context) error, images *cards.ImageCache) *webui.Server {
+	ui := webui.New(m, human)
+	ui.Public = public
+	ui.Limit = limit
+	// A nil *ImageCache in the interface would not be nil.
+	if images != nil {
+		ui.Images = images
+	}
+	return ui
+}
+
 // hostedCardDB builds hosted mode's card database. With all four
 // TCGREPLAY_SPACES_* settings present and the playmat online, its cache is
 // local disk backed by the shared store in DigitalOcean Spaces, so it
@@ -212,7 +225,12 @@ func newHosted(c config, db *cards.Client, public *url.URL, google oauth2.Endpoi
 // local disk only, as the desktop does. Partial or invalid settings are a
 // warning, not an error: the cache is optional and must never stop play.
 // Only hosted mode reads these settings.
-func hostedCardDB(c config) (db *cards.Client, shared bool) {
+//
+// With the shared store on, images is the card image cache on the same
+// bucket: card images are copied there and boards load them from its
+// public (CDN) address. It is nil otherwise, and boards load images from
+// the card source. The caller runs it.
+func hostedCardDB(c config) (db *cards.Client, shared bool, images *cards.ImageCache) {
 	db = newCardDB(c)
 	if c.cardBase != "" {
 		db.Base = c.cardBase
@@ -221,22 +239,27 @@ func hostedCardDB(c config) (db *cards.Client, shared bool) {
 	switch {
 	case !set:
 		log.Printf("card cache: local only, in %s (no TCGREPLAY_SPACES_* settings)", c.cacheDir)
-		return db, false
+		return db, false, nil
 	case err != nil:
 		log.Printf("warning: card cache: %s; using the local cache only", strings.ReplaceAll(err.Error(), "\n", "; "))
-		return db, false
+		return db, false, nil
 	case c.offline:
 		log.Printf("card cache: offline, shared store %s not used", cfg)
-		return db, false
+		return db, false, nil
 	}
 	sc, err := spaces.New(cfg)
 	if err != nil {
 		log.Printf("warning: card cache: %v; using the local cache only", err)
-		return db, false
+		return db, false, nil
 	}
 	db.Store = cards.NewTieredStore(db.Store, cards.NewSpacesStore(sc))
 	log.Printf("card cache: %s backed by shared store %s", c.cacheDir, cfg)
-	return db, true
+	images = cards.NewImageCache(sc, cfg.PublicBase())
+	if c.imageBase != "" {
+		images.Source = c.imageBase
+	}
+	log.Printf("card images: copied from the card source to the shared store, served from %s/%s", images.Public, cards.ImagePrefix)
+	return db, true, images
 }
 
 // catalogWarmTimeout bounds the start-up catalog warm.
@@ -270,12 +293,15 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	db, shared := hostedCardDB(c)
-	reg, srv, a, err := newHosted(c, db, public, oauth2.Endpoint{})
+	db, shared, images := hostedCardDB(c)
+	reg, srv, a, err := newHosted(c, db, images, public, oauth2.Endpoint{})
 	if err != nil {
 		return err
 	}
 	go reg.Run(ctx)
+	if images != nil {
+		go images.Run(ctx)
+	}
 	if shared {
 		go warmCatalog(ctx, db)
 	}

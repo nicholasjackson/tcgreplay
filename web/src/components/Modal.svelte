@@ -1,7 +1,7 @@
 <script>
   // Modals: a pile (discard, Lost Zone), a deck search, the top N cards and
   // the end-of-turn prompt when the clipboard is unavailable.
-  import { app, cardInfo, openSheet } from '../lib/store.svelte.js';
+  import { app, cardInfo, imageSrc, nextImageStage, openSheet } from '../lib/store.svelte.js';
   import { openDeckList, openSearch, pileCardActions } from '../lib/actions.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
@@ -108,6 +108,13 @@
     if (ev.pointerType === 'mouse') preview = c;
   }
   const previewInfo = $derived(preview?.def ? cardInfo(preview.def) : null);
+  // Which address the preview's art is loaded from (see imageSrc); reset
+  // per card.
+  let previewStage = $state(0);
+  $effect(() => {
+    preview;
+    previewStage = 0;
+  });
   $effect(() => {
     if (!m) preview = null;
   });
@@ -235,8 +242,8 @@
       <textarea readonly rows="3" onfocus={(ev) => ev.target.select()}>{m.text}</textarea>
     {/if}
   </div>
-  {#if previewInfo?.image}
-    <img class="preview" src="{previewInfo.image}/high.webp" alt={preview.name} />
+  {#if previewInfo?.image && previewStage < 2}
+    <img class="preview" src={imageSrc(previewInfo, 'high.webp', previewStage)} alt={preview.name} onerror={() => (previewStage = nextImageStage(previewInfo, previewStage))} />
   {/if}
 {/if}
 

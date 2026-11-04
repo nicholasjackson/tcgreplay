@@ -151,6 +151,27 @@ export function cardInfo(def) {
   return null;
 }
 
+// A card image is tried in stages: 0 loads info.image, 1 loads
+// info.image_fallback (the card source, when the image is a CDN copy), and
+// 2 means both failed, so the board shows its text stand-in or Energy
+// token. Each image spot keeps its own stage and resets it to 0 when it
+// shows another card.
+
+// imageSrc is the address of an image file (low.webp or high.webp) for
+// info at stage, or null when the stage has nothing to load.
+export function imageSrc(info, size, stage) {
+  if (!info?.image) return null;
+  if (stage === 0) return `${info.image}/${size}`;
+  if (stage === 1 && info.image_fallback) return `${info.image_fallback}/${size}`;
+  return null;
+}
+
+// nextImageStage is the stage after the image at stage failed to load:
+// the fallback when there is one and it has not been tried, else broken.
+export function nextImageStage(info, stage) {
+  return stage === 0 && info?.image_fallback ? 1 : 2;
+}
+
 // ownerOf returns the seat that owns a card from its iid ("p1-12" -> p1).
 export function ownerOf(iid) {
   return String(iid).split('-')[0];

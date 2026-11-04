@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -14,8 +15,11 @@ import (
 	"time"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 	"github.com/nicholasjackson/tcgreplay/internal/spaces/spacestest"
+	"github.com/nicholasjackson/tcgreplay/internal/state"
+	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
 
 // syncLog is a log destination safe to read while background goroutines
@@ -140,7 +144,7 @@ func TestHostedCardDBNoSettingsIsLocalOnly(t *testing.T) {
 	src := newTinySource(t)
 	c := onlineConfig(t, src)
 
-	db, shared := hostedCardDB(c)
+	db, shared, _ := hostedCardDB(c)
 	if shared {
 		t.Error("shared store on with no settings")
 	}
@@ -169,7 +173,7 @@ func TestHostedCardDBSharedStoreOn(t *testing.T) {
 	src := newTinySource(t)
 	c := onlineConfig(t, src)
 
-	db, shared := hostedCardDB(c)
+	db, shared, _ := hostedCardDB(c)
 	if !shared {
 		t.Fatal("shared store off with all four settings")
 	}
@@ -216,7 +220,7 @@ func TestHostedCardDBPartialSettingsWarnAndRunLocal(t *testing.T) {
 			src := newTinySource(t)
 			c := onlineConfig(t, src)
 
-			db, shared := hostedCardDB(c)
+			db, shared, _ := hostedCardDB(c)
 			if shared {
 				t.Error("shared store on with partial settings")
 			}
@@ -254,7 +258,7 @@ func TestHostedCardDBWrongCredentialsStillServes(t *testing.T) {
 	src := newTinySource(t)
 	c := onlineConfig(t, src)
 
-	db, shared := hostedCardDB(c)
+	db, shared, _ := hostedCardDB(c)
 	if !shared {
 		t.Fatal("shared store off")
 	}
@@ -280,7 +284,7 @@ func TestHostedCardDBOfflineIgnoresSharedStore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	db, shared := hostedCardDB(c)
+	db, shared, _ := hostedCardDB(c)
 	if shared {
 		t.Error("shared store on in offline mode")
 	}
@@ -379,5 +383,264 @@ func TestRunHostedWarmsCatalogInBackground(t *testing.T) {
 	}
 	if out := logs.String(); strings.Contains(out, "warning") {
 		t.Errorf("log has a warning: %q", out)
+	}
+}
+
+// imageHost is a card image source serving any low.webp or high.webp and
+// counting requests.
+type imageHost struct {
+	*httptest.Server
+	mu   sync.Mutex
+	hits int
+}
+
+func newImageHost(t *testing.T) *imageHost {
+	t.Helper()
+	h := &imageHost{}
+	h.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.mu.Lock()
+		h.hits++
+		h.mu.Unlock()
+		if !strings.HasSuffix(r.URL.Path, "/low.webp") && !strings.HasSuffix(r.URL.Path, "/high.webp") {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "image/webp")
+		w.Write([]byte("RIFF....WEBP " + r.URL.Path))
+	}))
+	t.Cleanup(h.Close)
+	return h
+}
+
+func (h *imageHost) count() int {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.hits
+}
+
+// artSource is a card source with one card, "y", whose image is under
+// images.
+func artSource(t *testing.T, images string) *httptest.Server {
+	t.Helper()
+	card := `{"id":"y","localId":"1","name":"Ymon","category":"Pokemon","hp":60,"image":"` + images + `/en/sv/sv1/1"}`
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cards/y" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Write([]byte(card))
+	}))
+	t.Cleanup(s.Close)
+	return s
+}
+
+// boardCard asks a hosted board built over db and images for card y.
+func boardCard(t *testing.T, db *cards.Client, images *cards.ImageCache) map[string]any {
+	t.Helper()
+	m := game.NewManager(t.TempDir(), db)
+	ui := hostedBoard(m, state.P1, nil, nil, images)
+	ts := httptest.NewServer(ui.Handler())
+	defer ts.Close()
+	resp, err := http.Get(ts.URL + "/api/card?def=y")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("/api/card: %d", resp.StatusCode)
+	}
+	var got map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	return got
+}
+
+func TestHostedImagesCopiedAndServedFromSharedStore(t *testing.T) {
+	logs := captureSyncLog(t)
+	srv := spacestest.New(t)
+	setSpacesEnv(t, srv.Config())
+	host := newImageHost(t)
+	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", cardBase: artSource(t, host.URL).URL, imageBase: host.URL}
+
+	db, shared, images := hostedCardDB(c)
+	if !shared || images == nil {
+		t.Fatalf("shared = %v, images = %v; want both on", shared, images)
+	}
+	public := srv.Config().PublicBase()
+	if out := logs.String(); !strings.Contains(out, "card images: copied from the card source to the shared store, served from "+public+"/images/") {
+		t.Errorf("log %q does not name the public image address", out)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go images.Run(ctx)
+
+	src := host.URL + "/en/sv/sv1/1"
+	got := boardCard(t, db, images)
+	if got["image"] != src {
+		t.Errorf("first answer image = %v, want the card source %s", got["image"], src)
+	}
+	if _, ok := got["image_fallback"]; ok {
+		t.Errorf("first answer has a fallback: %v", got)
+	}
+
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		_, low := srv.Object("images/en/sv/sv1/1/low.webp")
+		_, high := srv.Object("images/en/sv/sv1/1/high.webp")
+		if low && high && srv.Public("images/en/sv/sv1/1/high.webp") {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("image not copied to the shared store")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	// The copy is marked known just after its last put lands.
+	for {
+		got = boardCard(t, db, images)
+		if got["image"] != src || time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if want := public + "/images/en/sv/sv1/1"; got["image"] != want || got["image_fallback"] != src {
+		t.Errorf("later answer = (%v, %v), want (%s, %s)", got["image"], got["image_fallback"], want, src)
+	}
+	if out := logs.String(); strings.Contains(out, "warning") {
+		t.Errorf("log has a warning: %q", out)
+	}
+}
+
+func TestHostedImagesOffWithoutTheSharedStore(t *testing.T) {
+	cases := map[string]struct {
+		env      func(t *testing.T, srv *spacestest.Server)
+		offline  bool
+		warnings int // warnings the shared card cache already logs
+	}{
+		"no settings": {env: func(t *testing.T, _ *spacestest.Server) { clearSpacesEnv(t) }},
+		"partial settings": {env: func(t *testing.T, srv *spacestest.Server) {
+			setSpacesEnv(t, srv.Config())
+			t.Setenv("TCGREPLAY_SPACES_SECRET", "")
+		}, warnings: 1},
+		"offline": {env: func(t *testing.T, srv *spacestest.Server) { setSpacesEnv(t, srv.Config()) }, offline: true},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			logs := captureSyncLog(t)
+			srv := spacestest.New(t)
+			tc.env(t, srv)
+			host := newImageHost(t)
+			c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", cardBase: artSource(t, host.URL).URL, imageBase: host.URL, offline: tc.offline}
+			if tc.offline {
+				// Offline never reaches the card source: have the card cached.
+				if err := cards.NewDiskStore(c.cacheDir).Put(context.Background(), "cards/y", cards.Entry{
+					Data: []byte(`{"id":"y","name":"Ymon","category":"Pokemon","image":"` + host.URL + `/en/sv/sv1/1"}`), Fetched: time.Now(),
+				}); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			db, _, images := hostedCardDB(c)
+			if images != nil {
+				t.Fatal("image cache built without the shared store")
+			}
+			got := boardCard(t, db, images)
+			if got["image"] != host.URL+"/en/sv/sv1/1" {
+				t.Errorf("image = %v, want the card source", got["image"])
+			}
+			if _, ok := got["image_fallback"]; ok {
+				t.Errorf("answer has a fallback: %v", got)
+			}
+			if n := host.count(); n != 0 {
+				t.Errorf("image source requests = %d, want 0", n)
+			}
+			if n := srv.Total(); n != 0 {
+				t.Errorf("shared store requests = %d, want 0", n)
+			}
+			out := logs.String()
+			if n := strings.Count(out, "warning"); n != tc.warnings {
+				t.Errorf("log has %d warnings, want %d: %q", n, tc.warnings, out)
+			}
+			if strings.Contains(out, "card images") {
+				t.Errorf("log mentions card images: %q", out)
+			}
+		})
+	}
+}
+
+// TestDesktopBoardHasNoImageSource: the desktop board is built without an
+// image source whatever the shared-store settings say, so its card
+// answers are as before.
+func TestDesktopBoardHasNoImageSource(t *testing.T) {
+	srv := spacestest.New(t)
+	setSpacesEnv(t, srv.Config())
+	host := newImageHost(t)
+	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2"}
+	db := newCardDB(c)
+	db.Base = artSource(t, host.URL).URL
+	m := game.NewManager(t.TempDir(), db)
+	ui := webui.New(m, state.P1) // as startUI builds it
+	if ui.Images != nil {
+		t.Fatal("desktop board has an image source")
+	}
+	ts := httptest.NewServer(ui.Handler())
+	defer ts.Close()
+	resp, err := http.Get(ts.URL + "/api/card?def=y")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	json.NewDecoder(resp.Body).Decode(&got)
+	resp.Body.Close()
+	if _, ok := got["image_fallback"]; ok || got["image"] != host.URL+"/en/sv/sv1/1" {
+		t.Errorf("desktop answer = %v", got)
+	}
+	if srv.Total() != 0 || host.count() != 0 {
+		t.Errorf("desktop reached the shared store (%d) or image host (%d)", srv.Total(), host.count())
+	}
+}
+
+// TestRunHostedAnswersWhileImageListingHangs: hosted mode answers its
+// health check while the image cache's start-up listing is still waiting
+// on the shared store.
+func TestRunHostedAnswersWhileImageListingHangs(t *testing.T) {
+	logs := captureSyncLog(t)
+	srv := spacestest.New(t)
+	release := srv.Hang()
+	defer release()
+	src := newTinySource(t)
+	base := "http://127.0.0.1:" + freePort(t)
+	c := hostedConfig(t, strings.TrimPrefix(base, "http://"), "https://play.example.com")
+	c.offline = false
+	c.cardBase = src.URL
+	setSpacesEnv(t, srv.Config())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- runHosted(ctx, c) }()
+
+	deadline := time.Now().Add(5 * time.Second)
+	for srv.Requests("LIST", cards.ImagePrefix) == 0 {
+		if time.Now().After(deadline) {
+			t.Fatalf("image listing never started: %q", logs.String())
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	waitHealthy(t, base, 2*time.Second, done, logs)
+	if strings.Contains(logs.String(), "copies found") {
+		t.Fatal("listing finished while the shared store was held")
+	}
+	release()
+
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("runHosted: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("runHosted did not return after cancel")
 	}
 }

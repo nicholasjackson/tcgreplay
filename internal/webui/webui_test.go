@@ -746,3 +746,98 @@ func TestModeSwitchRefreshesBoard(t *testing.T) {
 		t.Fatalf("state after mode switch: %+v", st.Snapshot)
 	}
 }
+
+// stubImages is an ImageSource answering with a fixed rule and recording
+// what it was asked.
+type stubImages struct {
+	answer func(src string) (string, string)
+	asked  []string
+}
+
+func (s *stubImages) Image(src string) (string, string) {
+	s.asked = append(s.asked, src)
+	return s.answer(src)
+}
+
+// cardJSON fetches /api/card for def and decodes it into a map, so a test
+// can tell an absent key from an empty one.
+func cardJSON(t *testing.T, ts *httptest.Server, def string) map[string]any {
+	t.Helper()
+	resp, err := http.Get(ts.URL + "/api/card?def=" + def)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("card %s: status %d", def, resp.StatusCode)
+	}
+	var m map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		t.Fatal(err)
+	}
+	return m
+}
+
+func TestCardImageSource(t *testing.T) {
+	const src = "https://assets.tcgdex.net/en/sv/sv1/1"
+	const cdn = "https://cdn.example/images/en/sv/sv1/1"
+	db := cardstest.New()
+	db["tst-1"].Image = src // Riolu has art; Lucario (tst-2) has none
+	m := game.NewManager(t.TempDir(), db)
+	s := New(m, state.P1)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+
+	t.Run("no image source", func(t *testing.T) {
+		s.Images = nil
+		got := cardJSON(t, ts, "tst-1")
+		if got["image"] != src {
+			t.Fatalf("image = %v, want %s", got["image"], src)
+		}
+		if _, ok := got["image_fallback"]; ok {
+			t.Fatalf("image_fallback present without an image source: %v", got)
+		}
+		got = cardJSON(t, ts, "tst-2")
+		if _, ok := got["image"]; ok {
+			t.Fatalf("imageless card has an image: %v", got)
+		}
+	})
+
+	t.Run("source gives another address", func(t *testing.T) {
+		stub := &stubImages{answer: func(s string) (string, string) { return cdn, s }}
+		s.Images = stub
+		got := cardJSON(t, ts, "tst-1")
+		if got["image"] != cdn || got["image_fallback"] != src {
+			t.Fatalf("image = %v, fallback = %v; want %s, %s", got["image"], got["image_fallback"], cdn, src)
+		}
+		if len(stub.asked) != 1 || stub.asked[0] != src {
+			t.Fatalf("source asked %v, want [%s]", stub.asked, src)
+		}
+		got = cardJSON(t, ts, "tst-2")
+		if _, ok := got["image"]; ok {
+			t.Fatalf("imageless card has an image: %v", got)
+		}
+		if _, ok := got["image_fallback"]; ok {
+			t.Fatalf("imageless card has a fallback: %v", got)
+		}
+		if len(stub.asked) != 1 {
+			t.Fatalf("source asked about an imageless card: %v", stub.asked)
+		}
+	})
+
+	t.Run("source keeps the address", func(t *testing.T) {
+		s.Images = &stubImages{answer: func(s string) (string, string) { return s, "" }}
+		got := cardJSON(t, ts, "tst-1")
+		if got["image"] != src {
+			t.Fatalf("image = %v, want %s", got["image"], src)
+		}
+		if _, ok := got["image_fallback"]; ok {
+			t.Fatalf("image_fallback present when the source keeps the address: %v", got)
+		}
+		// A source that echoes the address as its own fallback adds none.
+		s.Images = &stubImages{answer: func(s string) (string, string) { return s, s }}
+		if _, ok := cardJSON(t, ts, "tst-1")["image_fallback"]; ok {
+			t.Fatal("image_fallback equal to image was not dropped")
+		}
+	})
+}

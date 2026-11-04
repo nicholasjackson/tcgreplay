@@ -122,23 +122,81 @@ func (c *Client) do(ctx context.Context, method, key string, body []byte, h http
 	if err != nil {
 		return nil, fmt.Errorf("spaces: %s %s: %w", method, key, err)
 	}
+	resp, err := c.send(ctx, method, u, body, h)
+	if err != nil {
+		return nil, fmt.Errorf("spaces: %s %s: %w", method, key, err)
+	}
+	return resp, nil
+}
+
+// send signs and sends one request to u.
+func (c *Client) send(ctx context.Context, method string, u *url.URL, body []byte, h http.Header) (*http.Response, error) {
 	var rd io.Reader
 	if body != nil {
 		rd = bytes.NewReader(body)
 	}
 	req, err := http.NewRequestWithContext(ctx, method, u.String(), rd)
 	if err != nil {
-		return nil, fmt.Errorf("spaces: %s %s: %w", method, key, err)
+		return nil, err
 	}
 	for k, vs := range h {
 		req.Header[k] = vs
 	}
 	sign(req, payloadHash(body), c.cfg.AccessKey, c.cfg.SecretKey, c.cfg.Region, c.now())
-	resp, err := c.cfg.HTTP.Do(req)
+	return c.cfg.HTTP.Do(req)
+}
+
+// ListPage is one page of keys under a prefix (S3 ListObjectsV2).
+type ListPage struct {
+	Keys []string // full object keys, in key order
+	Next string   // continuation token; "" on the last page
+}
+
+// List returns the page of keys under prefix that follows token ("" for
+// the first page). Spaces decides the page size (up to 1,000 keys); the
+// caller bounds each page with its context. Any answer but success is an
+// *Error.
+func (c *Client) List(ctx context.Context, prefix, token string) (ListPage, error) {
+	u, err := url.Parse(c.cfg.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("spaces: %s %s: %w", method, key, err)
+		return ListPage{}, fmt.Errorf("spaces: list %s: %w", prefix, err)
 	}
-	return resp, nil
+	u.Path = "/" + c.cfg.Bucket
+	u.RawPath = canonicalURI(u.Path)
+	q := url.Values{"list-type": {"2"}}
+	if prefix != "" {
+		q.Set("prefix", prefix)
+	}
+	if token != "" {
+		q.Set("continuation-token", token)
+	}
+	u.RawQuery = q.Encode()
+	resp, err := c.send(ctx, http.MethodGet, u, nil, nil)
+	if err != nil {
+		return ListPage{}, fmt.Errorf("spaces: list %s: %w", prefix, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ListPage{}, responseError(resp)
+	}
+	var x struct {
+		Contents []struct {
+			Key string `xml:"Key"`
+		} `xml:"Contents"`
+		IsTruncated           bool   `xml:"IsTruncated"`
+		NextContinuationToken string `xml:"NextContinuationToken"`
+	}
+	if err := xml.NewDecoder(io.LimitReader(resp.Body, maxObject)).Decode(&x); err != nil {
+		return ListPage{}, fmt.Errorf("spaces: list %s: %w", prefix, err)
+	}
+	page := ListPage{Keys: make([]string, 0, len(x.Contents))}
+	for _, o := range x.Contents {
+		page.Keys = append(page.Keys, o.Key)
+	}
+	if x.IsTruncated {
+		page.Next = x.NextContinuationToken
+	}
+	return page, nil
 }
 
 // responseError reads an S3 error response into an *Error. A body that is

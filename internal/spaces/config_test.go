@@ -163,3 +163,17 @@ func assertNamesWithoutSecrets(t *testing.T, err error, name string) {
 		t.Errorf("error %q contains a credential", msg)
 	}
 }
+
+func TestPublicBase(t *testing.T) {
+	for _, tc := range []struct{ endpoint, bucket, want string }{
+		{"https://lon1.digitaloceanspaces.com", "b", "https://b.lon1.cdn.digitaloceanspaces.com"},
+		{"https://ams3.digitaloceanspaces.com/", "playmat-cache", "https://playmat-cache.ams3.cdn.digitaloceanspaces.com"},
+		{"http://127.0.0.1:9000", "b", "http://127.0.0.1:9000/b"},
+		{"http://127.0.0.1:9000/", "b", "http://127.0.0.1:9000/b"},
+		{"https://minio.example.com", "cards", "https://minio.example.com/cards"},
+	} {
+		if got := (Config{Endpoint: tc.endpoint, Bucket: tc.bucket}).PublicBase(); got != tc.want {
+			t.Errorf("PublicBase(%q, %q) = %q, want %q", tc.endpoint, tc.bucket, got, tc.want)
+		}
+	}
+}
