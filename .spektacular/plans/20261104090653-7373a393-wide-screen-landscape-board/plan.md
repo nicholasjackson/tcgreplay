@@ -222,7 +222,7 @@ Adds the board's knowledge of whether it is on a wide screen: true when the boar
 - [x] The board knows it is wide at 2560×1440 with the timeline beside, and not at 1440×900. It changes with no reload when the window is resized, or the timeline is hidden or moved below the board at a width where that makes the board area wide enough.
 - [x] A 2560×1440 test profile runs with the rest of the browser suite, and the whole suite passes on all four profiles.
 
-#### - [ ] Task: Landscape mat rows and sizing
+#### - [x] Task: Landscape mat rows and sizing
 **Id:** 0e01e2b6-d75d-489f-bd4b-8b3f2b1f6523
 **Repo:** tcgreplay
 **Depends on:**
@@ -240,14 +240,13 @@ Every pile, prize, drop target, action sheet and turn control works as it does o
 *Technical detail:* [context.md#task-landscape-mat-rows-and-sizing](./context.md#task-landscape-mat-rows-and-sizing)
 
 **Acceptance criteria**:
-- [ ] At 2560×1440, both Actives sit in one middle row with the Stadium on one side and the turn controls on the other, each labelled with whose it is.
-- [ ] Each player's bench, prizes and piles share one row above or below the Actives, with prizes and piles at opposite ends in the two rows.
-- [ ] With 6, 3 and 1 prizes left, every remaining prize is visible in one overlapping row and can be taken.
-- [ ] A benched card at 2560×1440 is at least 1.6 times the width it had on today's mat at that size.
-- [ ] At 2560×1440 and 3840×2160 the board fits with no scroll bars.
-- [ ] Opening each pile, taking a prize, dragging from hand to bench, opening a card's action sheet, Draw and End turn all work in the landscape mat.
+- [x] At 2560×1440, both Actives sit in one middle row with the Stadium on one side and the turn controls on the other, each labelled with whose it is.
+- [x] Each player's bench, prizes and piles share one row above or below the Actives, with prizes and piles at opposite ends in the two rows.
+- [x] With 6, 3 and 1 prizes left, every remaining prize is visible in one overlapping row and can be taken.
+- [x] At 2560×1440 and 3840×2160 the board fits with no scroll bars.
+- [x] Opening each pile, taking a prize, dragging from hand to bench, opening a card's action sheet, Draw and End turn all work in the landscape mat.
 
-#### - [ ] Task: Opponent's hand peeks from the top edge
+#### - [x] Task: Opponent's hand peeks from the top edge
 **Id:** 9f912ef7-0eac-473e-bb0f-eca5c24f3be0
 **Repo:** tcgreplay
 **Depends on:**
@@ -259,12 +258,13 @@ On the landscape mat, the opponent's hand hangs off the top edge of the board, w
 *Technical detail:* [context.md#task-opponents-hand-peeks-from-the-top-edge](./context.md#task-opponents-hand-peeks-from-the-top-edge)
 
 **Acceptance criteria**:
-- [ ] With the opponent holding 6 cards, 6 card backs show at the top edge, each only partly in view.
-- [ ] The opponent's hand is still announced as a list with its count.
-- [ ] The opponent's name and status sit in a corner of the board, and no bar spans the board's width.
-- [ ] Apart from the peek, nothing on the landscape board is cut off at 2560×1440 or 3840×2160.
+- [x] With the opponent holding 6 cards, 6 card backs show at the top edge, each only partly in view.
+- [x] The opponent's hand is still announced as a list with its count.
+- [x] The opponent's name and status sit in a corner of the board, and no bar spans the board's width.
+- [x] Apart from the peek, nothing on the landscape board is cut off at 2560×1440 or 3840×2160.
+- [x] A benched card at 2560×1440 with the timeline beside is at least 1.6 times the width it had on today's mat at that size (moved from "Landscape mat rows and sizing": height is the limit, and it only allows 1.6× once the opponent's hand stops taking a row).
 
-#### - [ ] Task: Landscape mat acceptance checks
+#### - [x] Task: Landscape mat acceptance checks
 **Id:** df3fc6d9-10c4-45c8-9114-5b86ad0e4e07
 **Repo:** tcgreplay
 **Depends on:**
@@ -282,8 +282,8 @@ Adds browser checks covering every landscape acceptance criterion on the wide pr
 *Technical detail:* [context.md#task-landscape-mat-acceptance-checks](./context.md#task-landscape-mat-acceptance-checks)
 
 **Acceptance criteria**:
-- [ ] Every acceptance criterion of the landscape spec has at least one browser check that passes on the wide profile.
-- [ ] The full browser suite passes on phone, tablet, desktop and wide.
+- [x] Every acceptance criterion of the landscape spec has at least one browser check that passes on the wide profile.
+- [x] The full browser suite passes on phone, tablet, desktop and wide.
 
 ## Open Questions
 
@@ -352,3 +352,60 @@ Adds browser checks covering every landscape acceptance criterion on the wide pr
 - `web/e2e/desktop.spec.js`
 
 **Discoveries**: At 1800px the timeline column is 324px, so the board area is about 1476px: under the threshold beside the timeline, and over it with the timeline below or hidden. That makes it a good width to test the timeline-driven switch.
+
+### 2026-11-04 — Task: Landscape mat rows and sizing
+
+**What was done**: On wide screens the board is now the landscape mat:
+- `Side.svelte` has a wide branch with one grid row: a prize fan (remaining prizes only, overlapping), the bench in the middle and the piles. The opponent's row is mirrored (`piles bench prizes`). The pile markup moved into a `piles()` snippet shared with today's mat.
+- `Strip.svelte` has a wide branch with the Stadium, both Active Spots (through `Stack`, with the same `slot`/`label` props) edged in their seat's colour and captioned "<name>'s Active" on their top edge, "vs" between them, and the turn controls.
+- `App.svelte` renders the board through a `board()` snippet. When wide, it wraps the snippet in a `.board` box inside `<main>`, which becomes a size container. `.board` sets `--cw` from container units: `min((100cqh - 90px) / 7.6, (100cqw - 80px) / (4.6 + 1.16 × bench slots))`.
+- A shared `benchSlots()` helper in the store gives the longer bench's slot count, so a bench of 8 shrinks the cards.
+- With the timeline below the board, the landscape layout gives the timeline a fixed-height row.
+
+**Deviations**: The 1.6× benched-card criterion moved from this task to "Opponent's hand peeks from the top edge" (orchestrator decision, option 1), and the plan was updated through `plan file write`. Height limits the card size, not width. With the opponent's hand still taking a row, a benched card at 2560×1440 is 171.8px (1.44×), while width alone would allow about 194px. A CSS experiment with the peek and corner name gave 192.2px with uncramped rows. The size test in `web/e2e/wide.spec.js` is `test.fixme` until the peek lands. `store.svelte.js` gained the `benchSlots` helper, which wasn't in the plan's file list. A sub-agent wrote the tests, as this task is High complexity.
+
+**Files changed**:
+- `web/src/components/Side.svelte`
+- `web/src/components/Strip.svelte`
+- `web/src/App.svelte`
+- `web/src/lib/store.svelte.js`
+- `web/e2e/wide.spec.js`
+
+**Discoveries**:
+- Container units in an unregistered custom property resolve where the property is used, against that element's nearest size container. An element's own `font-size: var(--fs)` therefore resolves against its ancestor's container, not its own, which is why `--cw` sits on a `.board` wrapper inside `main` rather than on `main`.
+- A size container in an `auto` grid row collapses to zero height, so the timeline-below layout needs explicit rows.
+- In the fan, each prize is mostly covered by the next, so tests click each prize's uncovered strip.
+
+### 2026-11-04 — Task: Opponent's hand peeks from the top edge
+
+**What was done**: On the landscape mat, the opponent's hand (`Hand.svelte`, `peek` class) is absolutely positioned and hangs off the board's top edge. About a third of each card shows, tightly overlapped, and `<main>` clips the rest. It keeps its list role and label, and its "N in hand" is visually hidden but still read. The opponent's name and status sit in the board's top-left corner. `.board` reserves a 0.3-card strip at the top for the peek. The card size was re-tuned to `min((100cqh - 50px - fit) / 6.9, width term)`: a benched card is 194px at 2560×1440 with the timeline beside (1.625× today's 119.4px). Width is now the limit, and the row gaps are unchanged. The previously `test.fixme` size test now passes.
+
+**Deviations**:
+- The 1.6× criterion came over from "Landscape mat rows and sizing" (orchestrator decision).
+- `fitBoard`, the phone's shrink-to-fit, now counts only in-flow rows plus padding, and is also attached to `.board`. A busy landscape board, with Energy and a Tool under benched Pokémon in both rows, shrinks a little instead of scrolling. A test covers this.
+- Two drag fixes outside the plan's file list, found while testing the landscape mat:
+  - `lib/pointer.svelte.js`: the drag ghost now takes `--cw` in pixels, because container units mean nothing on a ghost outside the board. With the timeline below, it was about 50% too big. It reads the computed width, because a fanned card's bounding box is narrowed by its rotation.
+  - `Strip.svelte`: the "Drop here to play" area floats under the controls on the landscape mat, so it no longer grows the middle row and resizes every card mid-drag.
+
+**Files changed**:
+- `web/src/components/Hand.svelte`
+- `web/src/App.svelte`
+- `web/src/components/Strip.svelte`
+- `web/src/lib/pointer.svelte.js`
+- `web/e2e/wide.spec.js`
+
+**Discoveries**:
+- `getBoundingClientRect` on an element inside a rotated ancestor returns the rotated box. Use the computed `width` to read a length.
+- Anything that appears in a landscape row during a drag changes the card size through the fit, so drag-only UI there must be out of flow.
+
+### 2026-11-04 — Task: Landscape mat acceptance checks
+
+**What was done**: Every spec acceptance criterion now has a browser check that passes on the `wide` profile. `web/e2e/wide.spec.js` covers the landscape-specific ones in 16 tests: the middle row, the mirrored rows, the prize fan at 6/3/1, the peek, the corner name, the card size, fit with the timeline beside/below/hidden, fit on a busy board, every action, the drag ghost's size, hand counts, and the switch between the landscape mat, today's mat and the phone board. The checks shared with today's mat also run on `wide`: hand counts in `phone.spec.js`, and the timeline-driven switch, playback centring and text/timeline scaling in `desktop.spec.js`. The header comment of `wide.spec.js` points to them. The full suite passes on phone, tablet, desktop and wide: 310 passed, 146 skipped (profile-scoped skips), 0 failed.
+
+**Deviations**: The opponent's "N in hand" on the landscape mat is now shown beside the peeking cards' visible ends, not visually hidden. "Counts beside hands" asks for each count to sit within one card width of its hand on the landscape mat too, and the visible text still serves screen readers. This touched `web/src/components/Hand.svelte`, which isn't in this task's file list. The plan suggested reusing Milestone 1's hand-count and playback assertions in `wide.spec.js`. Instead those tests already run on the `wide` profile, and `wide.spec.js` adds its own landscape hand-count check.
+
+**Files changed**:
+- `web/e2e/wide.spec.js`
+- `web/src/components/Hand.svelte`
+
+**Discoveries**: On the `wide` profile the shared mat checks in `phone.spec.js` resize to 1920×1080, which is below the 1600px board-area threshold with the timeline beside. They still exercise today's mat there.

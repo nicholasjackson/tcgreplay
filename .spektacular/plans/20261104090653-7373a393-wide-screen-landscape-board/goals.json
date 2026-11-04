@@ -252,6 +252,220 @@
       "decisions": [],
       "attempts": 1,
       "state": "accepted"
+    },
+    {
+      "item": "0e01e2b6-d75d-489f-bd4b-8b3f2b1f6523",
+      "title": "Landscape mat rows and sizing",
+      "checks": [
+        {
+          "at": "2026-11-04T10:37:46Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "0e01e2b6-d75d-489f-bd4b-8b3f2b1f6523",
+            "title": "Landscape mat rows and sizing",
+            "criteria": [
+              "At 2560×1440, both Actives sit in one middle row with the Stadium on one side and the turn controls on the other, each labelled with whose it is.",
+              "Each player's bench, prizes and piles share one row above or below the Actives, with prizes and piles at opposite ends in the two rows.",
+              "With 6, 3 and 1 prizes left, every remaining prize is visible in one overlapping row and can be taken.",
+              "At 2560×1440 and 3840×2160 the board fits with no scroll bars.",
+              "Opening each pile, taking a prize, dragging from hand to bench, opening a card's action sheet, Draw and End turn all work in the landscape mat."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Side.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".prize"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Strip.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "app.wide"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Side.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Strip.svelte:55-65 renders .actives only in the wide layout: the Stadium (grid column 1, Strip.svelte:203 justify-self end) sits left, both Active Spots are in the middle column with a 'vs' between them, and .controls (Strip.svelte:204 justify-self start) sit right in the same grid row (.strip.wide, Strip.svelte:194-202). Each spot has a figcaption from spotName (Strip.svelte:32, 61) giving 'Alice's Active' / 'Bob's Active' or 'Your Active' / '\u003cassistant\u003e's Active'. wide.spec.js:38-61 checks the shared row, the left/right placement, the captions and the Draw/End turn buttons at 2560x1440; the wide project run passed."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Side.svelte:127-142 renders the wide side as one section with prizes, bench and piles (the piles() snippet, Side.svelte:61-104, rendered at line 141). Side.svelte:236-254 puts them in one grid row with grid-template-areas 'prizes bench piles' for you and 'piles bench prizes' for the mirrored opponent, so prizes and piles are at opposite ends. The opponent's Side is rendered above the Strip and yours below (App.svelte board snippet, lines 162-165, 'the opponent's half, strip, your half'). wide.spec.js:63-91 checks row overlap, above/below the Actives and the opposite ends; passed."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Side.svelte:128-133 renders the fan from side.prizes.filter((p) =\u003e p.card), so only remaining prizes are drawn; each prize is clickable via prize(p) (Side.svelte:131). Side.svelte:249 overlaps each prize by -0.42cw (about 0.2cw of each shows) in one flex row (Side.svelte:246). The count stays in .prizes .count. wide.spec.js:93-154 runs expectFan at 6, 3 and 1 prizes (in view, one row, overlapping, each uncovered strip hits its own .prize) and takes prizes by clicking them, for both seats; the wide project run passed."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Sizing is in App.svelte:301-314: .app.landscape is 100vh, main is container-type: size (line 302), and .board takes --cw from 100cqh and 100cqw (line 304-306, a max/min formula) with min-height 100% and a column flex layout. wide.spec.js:176-203 measures main and page overflow in both directions at 2560x1440 and 3840x2160 with the timeline beside, below and hidden; the wide project run passed (9 passed, 1 skipped, the skipped one being the fixme card-size test). I did not run the suite myself; this rests on that run and the code."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Piles: Side.svelte:61-104 and the wide branch's piles() call (line 141) keep the same openPile/deck handlers, and wide.spec.js:205-225 opens the deck sheet, discard and Lost Zone for both seats. Prize taking: Side.svelte:131 uses the same prize() handler (lines 21-27). Hand-to-bench drag: the bench uses the same Stack slots (Side.svelte:136-139) and wide.spec.js:237-245 drags Riolu to bench 3 and the Energy to Discard. Action sheet: wide.spec.js:247-258 right-clicks three cards. Draw and End turn: Strip.svelte:84-89 and wide.spec.js:260-270. These paths are shared with the existing mat, and the wide project run passed these tests."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": false
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "9f912ef7-0eac-473e-bb0f-eca5c24f3be0",
+      "title": "Opponent's hand peeks from the top edge",
+      "checks": [
+        {
+          "at": "2026-11-04T10:48:52Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "9f912ef7-0eac-473e-bb0f-eca5c24f3be0",
+            "title": "Opponent's hand peeks from the top edge",
+            "criteria": [
+              "With the opponent holding 6 cards, 6 card backs show at the top edge, each only partly in view.",
+              "The opponent's hand is still announced as a list with its count.",
+              "The opponent's name and status sit in a corner of the board, and no bar spans the board's width.",
+              "Apart from the peek, nothing on the landscape board is cut off at 2560×1440 or 3840×2160.",
+              "A benched card at 2560×1440 with the timeline beside is at least 1.6 times the width it had on today's mat at that size (moved from \"Landscape mat rows and sizing\": height is the limit, and it only allows 1.6× once the opponent's hand stops taking a row)."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Hand.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".seat-name.top"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Hand.svelte:166-174 gives .hand.peek position:absolute with top calc(var(--cw)*0.62*1.4*-0.67), so a small card (sm, 0.62*cw wide, 1.4 aspect) starts about 0.58cw above the board's top edge and about a third of it shows inside \u003cmain\u003e (overflow:auto clips the rest). Hand.svelte:50-52 applies the class when app.wide \u0026\u0026 small, and the opponent's hand renders one slot per card with hidden backs (Hand.svelte:28-31). Test wide.spec.js:270-293 asserts 6 listitems and 6 .card elements, each with bottom past main.y+8, under half visible, and not covered at the top edge. The verification summary reports wide.spec.js passing (14/14). I did not run it."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Hand.svelte:55-56 keeps role=\"list\" and aria-label=\"{seat} hand\" for the opponent. Hand.svelte:74 keeps \u003cspan class=\"count\"\u003e{side.hand_count} in hand\u003c/span\u003e. Hand.svelte:176-183 hides the count visually (1px, clip-path inset 50%) without removing it from the accessibility tree. wide.spec.js:288 checks the text is '6 in hand'."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "App.svelte:107-111 renders the opponent's .seat-name.top with its opp-status span, and App.svelte:324 styles it position:absolute; top:8px; left:12px; padding:0; text-align:left, so it is a small top-left corner element rather than a full-width bar. wide.spec.js:295-307 checks it sits within 120px of the top-left corner, is narrower than half the board, and clears the peeking hand. Caveat: the human's name at App.svelte:117 (\u003cdiv class=\"seat-name\"\u003e) is still a full-width centred bar at the bottom. I read this criterion as being about the opponent's name, which is what the criterion names, so I did not count that bar against it."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "App.svelte:311-322 sizes .board from container units of \u003cmain\u003e (main is container-type:size at App.svelte:305): --cw = max(48px, min((100cqh - 50px - fit)/6.9, (100cqw - 80px)/(4.6+1.16*bench-n))), with height:100% and padding-top 0.3cw. App.svelte:275/app.css:44 set box-sizing:border-box globally, so the padding fits inside the height. fitBoard (App.svelte:28-52) counts only in-flow rows, so the absolute peek does not add to the overflow. wide.spec.js:309-340 checks that no .board part leaves \u003cmain\u003e's rect, excluding only .peek, at 2560x1440 and 3840x2160, including a busy board, and checks no scroll. The verification summary reports this suite passing. I did not run it, so this rests on the formula and the test passing."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Today's mat at 2560x1440 is app.css:6, --cw = clamp(48px, min((100vh-115px)/11.1, (100vw-360px)/10), 240px) = min(119.4, 220) = 119.4px. The new board at 2560x1440 with the timeline beside has panel-col 18vw = 460.8px (App.svelte:283), so main is about 2099px wide. Its height is about 1395px (1440 less a header of roughly 45px, which is my estimate). The width term is (2099-80)/(4.6+5.8) = about 194px at 5 bench slots, and the height term is about 195px, so --cw is about 194px. A benched card is Card.svelte:91-92 at width var(--cw) (md size), so about 194px, which is about 1.63x 119.4. The threshold is 1.6x = 191px. wide.spec.js:157-172 asserts this against the measured card, and the verification summary reports it passing. The margin is small and depends on the header height and bench size, which I estimated rather than measured."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": false
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "df3fc6d9-10c4-45c8-9114-5b86ad0e4e07",
+      "title": "Landscape mat acceptance checks",
+      "checks": [
+        {
+          "at": "2026-11-04T10:56:08Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "df3fc6d9-10c4-45c8-9114-5b86ad0e4e07",
+            "title": "Landscape mat acceptance checks",
+            "criteria": [
+              "Every acceptance criterion of the landscape spec has at least one browser check that passes on the wide profile.",
+              "The full browser suite passes on phone, tablet, desktop and wide."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/wide.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".seat-name.top"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "fixtures.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Each of the 13 landscape-spec criteria has a check that runs on the wide project (wide.spec.js and desktop.spec.js skip only for phone or non-wide, and the wide project runs them at 2560x1440). Mapping: Switches: wide.spec.js:379-396 (landscape at 2560, mat at 1440x900, phone at 390x844, live round trip) and desktop.spec.js:91-122. Middle row: wide.spec.js:44-67. Mirrored rows: wide.spec.js:69-97. Prizes 6/3/1: wide.spec.js:137-160 (expectFan, clicks, take_prize). Opponent hand peek: wide.spec.js:275-299 (6 cards, top edge, under half shown, list 'p2 hand' with '6 in hand' count inside it; the 6 are backs because web/src/components/Hand.svelte:28-29 fills backs from hand_count when no cards are known). Corner name: wide.spec.js:301-313. Bigger cards: wide.spec.js:162-177 (probe formula matches the unchanged root rule web/src/app.css:6 and gives 119.4px at 2560x1440). Fit at 2560 and 3840 with beside/below/hidden: wide.spec.js:179-206 and 329-346 (no clipping, no scroll). Piles, prize click, hand-to-bench drag, action sheet, Draw and End turn: wide.spec.js:208-273. Counts beside hands: wide.spec.js:398-411 (landscape) and phone.spec.js:61-74 (mat, run on wide at 1920x1080 where the board area is under 1600px). Text scale: desktop.spec.js:66-76. Timeline width above 480px at 3840: desktop.spec.js:78-87. Playback and caption centring beside/below/hidden: desktop.spec.js:24-56. Live switching on resize and on timeline move/hide at 1800: wide.spec.js:379-396 and desktop.spec.js:91-122. Caveat: the card-back and screen-reader wording is covered by the list name and count rather than an explicit back check; the verdict stands."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Verification summary reports 'npm run build \u0026\u0026 npx playwright test' as 310 passed, 146 skipped, 0 failed across phone, tablet, desktop and wide, and wide.spec.js alone as 16 passed. I could not re-run the suite (read-only). The source is consistent with those results: wide.spec.js has 16 tests (lines 44-379 region, each skipped off wide), playwright.config.js:21-40 defines all four projects with no per-project filtering, and the count of 93 literal test declarations plus loop-generated tests (drag.spec.js:123, sheet.spec.js:84 and 399, target.spec.js:151) is plausible for 456 project-runs but I could not reconcile the exact total from source. Scope note, not a criterion: the staged diff changes web/src/components/Hand.svelte (the .hand.small.peek .count rule and the peek class), which is not among this item's listed files (fixtures.js, phone.spec.js, wide.spec.js, and the malformed '.seat-name.top' entry)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": false
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
     }
   ]
 }

@@ -204,8 +204,25 @@ func (g *Game) StartGame(first state.Seat, actor state.Actor) (*Result, error) {
 	})
 }
 
+// EndTurnOptions relax EndTurn's checks.
+type EndTurnOptions struct {
+	// IgnorePrizes ends the turn even though prize cards are owed for this
+	// turn's Knock Outs (for players practising without the reminder).
+	IgnorePrizes bool
+	// Force ends the turn whatever the checks say.
+	Force bool
+}
+
 // EndTurn ends seat's turn and starts the opponent's, who draws a card.
 func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
+	return g.EndTurnWith(seat, actor, EndTurnOptions{})
+}
+
+// EndTurnWith is EndTurn with its checks relaxed by opts. It refuses while
+// a player with a Benched Pokémon has an empty Active Spot (they must
+// promote first) and while prize cards are owed for this turn's Knock
+// Outs.
+func (g *Game) EndTurnWith(seat state.Seat, actor state.Actor, opts EndTurnOptions) (*Result, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	// Even in review mode, where the turn lock is lifted, only the turn
@@ -213,6 +230,22 @@ func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 	if g.st.Phase == state.PhasePlaying && g.st.TurnOpen && g.st.Current != seat {
 		return nil, fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, state.Round(g.st.Turn), seat)
 	}
+	if g.st.Phase == state.PhasePlaying && !opts.Force {
+		if winner, _ := g.st.Winner(); winner == "" {
+			for _, s := range state.Seats {
+				side := g.st.Sides[s]
+				if side.Active.Empty() && slices.ContainsFunc(side.Bench, func(b *state.Stack) bool { return !b.Empty() }) {
+					return nil, fmt.Errorf("%s has no Active Pokémon: they must promote a Benched Pokémon (switch) before the turn ends", s)
+				}
+			}
+			if !opts.IgnorePrizes {
+				for _, o := range g.prizesOwedLocked() {
+					return nil, fmt.Errorf("%s is owed %d prize card%s for this turn's Knock Outs and took %d: take them (take_prize) before ending the turn", o.seat, o.owed, plural(o.owed), o.taken)
+				}
+			}
+		}
+	}
+	closing := g.unpaidLocked()
 	g.open = nil
 	g.responder = ""
 	res, err := g.runLocked(seat, actor, actionSpec{label: "End turn", kind: "turn"}, func(t *tx) error {
@@ -238,9 +271,73 @@ func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 	}
 	res.Events = append(res.Events, res2.Events...)
 	res.Delta = append(res.Delta, res2.Delta...)
-	res.Warnings = append(res.Warnings, res2.Warnings...)
+	res.Warnings = append(append(closing, res.Warnings...), res2.Warnings...)
 	g.notify(res)
 	return res, nil
+}
+
+type prizeDebt struct {
+	seat        state.Seat
+	owed, taken int
+}
+
+// prizesOwedLocked lists the players still owed prize cards for Knock
+// Outs during the turn in progress: each Knock Out owes its Pokémon's
+// prize value (see prizeValue) to the other player, and each prize card
+// taken this turn pays one. The caller holds g.mu.
+func (g *Game) prizesOwedLocked() []prizeDebt {
+	path, err := g.log.PathTo(g.log.Head())
+	if err != nil {
+		return nil
+	}
+	start := 0
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i].Type == state.EvTurn {
+			if p, err := path[i].Decode(); err == nil && p.(*state.TurnPayload).Phase == "start" {
+				start = i
+				break
+			}
+		}
+	}
+	owed, taken := map[state.Seat]int{}, map[state.Seat]int{}
+	ko := map[string]int{} // knock-out action -> its highest prize value
+	koSeat := map[string]state.Seat{}
+	for i := start; i < len(path); i++ {
+		e := &path[i]
+		if e.Type != state.EvMove {
+			continue
+		}
+		p, err := e.Decode()
+		if err != nil {
+			continue
+		}
+		mv := p.(*state.MovePayload)
+		if mv.From == nil {
+			continue
+		}
+		if mv.From.Zone == state.Prizes {
+			taken[mv.From.Seat]++
+			continue
+		}
+		if a := g.log.Action(e.Action); a != nil && a.Kind == "knockout" && mv.From.Zone.IsStack() {
+			if v := prizeValue(g.st.Cards[mv.IID].Name); v > ko[e.Action] {
+				ko[e.Action] = v
+			}
+			koSeat[e.Action] = mv.From.Seat.Other()
+		}
+	}
+	for a, v := range ko {
+		owed[koSeat[a]] += v
+	}
+	var out []prizeDebt
+	for _, s := range state.Seats {
+		// Never more than the prizes left to take.
+		o := min(owed[s], taken[s]+g.st.Sides[s].PrizesLeft())
+		if taken[s] < o {
+			out = append(out, prizeDebt{seat: s, owed: o, taken: taken[s]})
+		}
+	}
+	return out
 }
 
 // Draw draws n cards.
@@ -315,6 +412,12 @@ func (g *Game) Attach(seat state.Seat, actor state.Actor, iid state.IID, target 
 			if st, _ := t.st.Stack(target); st != nil && len(st.Tools) > 0 {
 				t.warn = append(t.warn, fmt.Sprintf("%s already has a Tool", t.st.Name(st.Top())))
 			}
+		}
+		// An attack or Ability that attaches "from your discard pile" (Aura
+		// Jab) takes the card from there, not the hand.
+		if o := t.g.open; o != nil && t.action == o.ID && t.g.openText != nil &&
+			strings.Contains(strings.ToLower(*t.g.openText), "from your discard pile") {
+			t.warn = append(t.warn, fmt.Sprintf("%s attaches cards from the discard pile, but %s came from the hand. Move a card from the discard pile onto the Pokémon instead (move with as energy).", o.Label, t.st.Name(iid)))
 		}
 		return t.move(iid, target, role, "")
 	})

@@ -11,16 +11,19 @@ import (
 // UISnapshot is the board and timeline as the playmat shows them. Unlike
 // View and Log it is not audited: it is the human's own view of the mat.
 type UISnapshot struct {
-	Game       string          `json:"game"`
-	Branch     string          `json:"branch"`
-	Mode       Mode            `json:"mode"`
-	Head       int             `json:"head"`
-	OpenAction string          `json:"open_action,omitempty"`
-	Board      state.BoardView `json:"board"`
-	Log        []LogLine       `json:"log"`
-	Branches   []BranchInfo    `json:"branches"`
-	Warnings   []string        `json:"warnings,omitempty"`
-	Frames     []Frame         `json:"frames,omitempty"`
+	Game       string `json:"game"`
+	Branch     string `json:"branch"`
+	Mode       Mode   `json:"mode"`
+	Head       int    `json:"head"`
+	OpenAction string `json:"open_action,omitempty"`
+	// OpenCost is the open action's discard cost, if its card asks for
+	// cards discarded from the hand.
+	OpenCost *OpenCost       `json:"open_cost,omitempty"`
+	Board    state.BoardView `json:"board"`
+	Log      []LogLine       `json:"log"`
+	Branches []BranchInfo    `json:"branches"`
+	Warnings []string        `json:"warnings,omitempty"`
+	Frames   []Frame         `json:"frames,omitempty"`
 }
 
 // Frame is the board right after one event, for step-by-step animation.
@@ -55,6 +58,7 @@ func (g *Game) UISnapshot(viewer state.Seat, frameEvents []int) (*UISnapshot, er
 	}
 	if g.open != nil {
 		snap.OpenAction = g.open.ID
+		snap.OpenCost = g.openCostLocked()
 	}
 	want := map[int]bool{}
 	for _, id := range frameEvents {

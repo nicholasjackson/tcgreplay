@@ -108,3 +108,130 @@ func TestSetupMulligansAndStartNeedsActives(t *testing.T) {
 		t.Fatalf("prizes dealt (%d) by a refused start", n)
 	}
 }
+
+// benchedGame is a test game in review mode, started with p1 going first:
+// each player has an Active Pokémon and p2 a Benched one.
+func benchedGame(t *testing.T) *Game {
+	t.Helper()
+	_, g := newTestGame(t)
+	if err := g.SetMode(ModeReview); err != nil {
+		t.Fatal(err)
+	}
+	basic := func(seat state.Seat) state.IID {
+		st := g.State()
+		for _, iid := range st.Sides[seat].Hand {
+			if c := g.card(st, iid); c != nil && c.IsBasic() {
+				return iid
+			}
+		}
+		for _, iid := range st.Sides[seat].Deck {
+			if c := g.card(st, iid); c != nil && c.IsBasic() {
+				must(t)(g.Move(seat, state.ActorSystem, iid, state.Loc{Seat: seat, Zone: state.Hand}, "", ""))
+				return iid
+			}
+		}
+		t.Fatalf("%s has no Basic Pokémon", seat)
+		return ""
+	}
+	for _, seat := range state.Seats {
+		must(t)(g.PlaceActive(seat, state.ActorSystem, basic(seat)))
+	}
+	must(t)(g.Bench(state.P2, state.ActorSystem, basic(state.P2), -1))
+	must(t)(g.StartGame(state.P1, state.ActorHuman))
+	return g
+}
+
+func handCard(t *testing.T, g *Game, seat state.Seat, name string) state.IID {
+	t.Helper()
+	st := g.State()
+	for _, iid := range st.Sides[seat].Hand {
+		if st.Name(iid) == name {
+			return iid
+		}
+	}
+	for _, iid := range st.Sides[seat].Deck {
+		if st.Name(iid) == name {
+			must(t)(g.Move(seat, state.ActorSystem, iid, state.Loc{Seat: seat, Zone: state.Hand}, "", ""))
+			return iid
+		}
+	}
+	t.Fatalf("no %s for %s", name, seat)
+	return ""
+}
+
+func hasWarning(ws []string, part string) bool {
+	for _, w := range ws {
+		if strings.Contains(w, part) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestCostNeed(t *testing.T) {
+	for text, want := range map[string]int{
+		"You can use this card only if you discard 2 other cards from your hand. Search your deck": 2,
+		"you may discard a Basic {F} Energy card from your hand in order to use this Ability.":     1,
+		"Discard your hand and draw 7 cards.":                                                      0,
+		"Draw 3 cards.":                                                                            0,
+	} {
+		if got := costNeed(text); got != want {
+			t.Errorf("%q: cost %d, want %d", text, got, want)
+		}
+	}
+}
+
+// A card played while Ultra Ball's cost is unpaid is a play, not a
+// discard: closing Ultra Ball warns. Paying the cost does not.
+func TestUnpaidCostWarns(t *testing.T) {
+	g := benchedGame(t)
+	ball := handCard(t, g, state.P1, "Ultra Ball")
+	must(t)(g.PlayTrainer(state.P1, state.ActorHuman, ball))
+	if snap, err := g.UISnapshot(state.P1, nil); err != nil || snap.OpenCost == nil || snap.OpenCost.Need != 2 || snap.OpenCost.Done != 0 {
+		t.Fatalf("snapshot open cost %+v (%v), want 0 of 2", snap.OpenCost, err)
+	}
+	iono := handCard(t, g, state.P1, "Iono")
+	res := must(t)(g.PlayTrainer(state.P1, state.ActorHuman, iono))
+	if !hasWarning(res.Warnings, "Ultra Ball asks for 2 cards discarded") {
+		t.Fatalf("playing Iono over an unpaid Ultra Ball warned %v", res.Warnings)
+	}
+	g.EndAction()
+
+	ball2 := handCard(t, g, state.P1, "Ultra Ball")
+	must(t)(g.PlayTrainer(state.P1, state.ActorHuman, ball2))
+	for _, iid := range g.State().Sides[state.P1].Hand[:2] {
+		must(t)(g.Move(state.P1, state.ActorHuman, iid, state.Loc{Seat: state.P1, Zone: state.Discard}, "", ""))
+	}
+	if _, warn := g.EndActionChecked(); len(warn) > 0 {
+		t.Fatalf("a paid Ultra Ball warned %v", warn)
+	}
+}
+
+// The turn cannot end while a player must promote or is owed prizes; taking
+// the last prize ends the game.
+func TestEndTurnChecksAndGameOver(t *testing.T) {
+	g := benchedGame(t)
+	must(t)(g.KnockOut(state.P1, state.ActorHuman, state.Loc{Seat: state.P2, Zone: state.Active}))
+	if _, err := g.EndTurn(state.P1, state.ActorHuman); err == nil || !strings.Contains(err.Error(), "promote") {
+		t.Fatalf("end turn with p2's Active empty: %v, want a refusal", err)
+	}
+	must(t)(g.Switch(state.P2, state.ActorHuman, 0))
+	if _, err := g.EndTurn(state.P1, state.ActorHuman); err == nil || !strings.Contains(err.Error(), "owed 1 prize card") {
+		t.Fatalf("end turn with a prize owed: %v, want a refusal", err)
+	}
+	if _, err := g.EndTurnWith(state.P1, state.ActorHuman, EndTurnOptions{IgnorePrizes: true}); err != nil {
+		t.Fatalf("end turn ignoring prizes: %v", err)
+	}
+
+	// Taking every prize ends the game.
+	var last *Result
+	for range g.State().Sides[state.P2].PrizesLeft() {
+		last = must(t)(g.TakePrize(state.P2, state.ActorHuman, -1))
+	}
+	if !hasWarning(last.Warnings, "Game over: p2 wins (took all their prize cards)") {
+		t.Fatalf("last prize warned %v", last.Warnings)
+	}
+	if w, _ := g.State().Winner(); w != state.P2 {
+		t.Fatalf("winner %q, want p2", w)
+	}
+}

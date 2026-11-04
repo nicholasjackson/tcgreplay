@@ -391,13 +391,16 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 	if err := fn(t); err != nil {
 		return nil, err
 	}
+	var closing []string
 	if spec.opener && !spec.system {
+		closing = g.unpaidLocked()
 		g.open, g.openText = &action, t.effect
 	} else if !joined && !spec.system && g.open != nil {
 		// A standalone verb from either seat closes any open action.
+		closing = g.unpaidLocked()
 		g.open = nil
 	}
-	res := &Result{Events: []int{}, Delta: []string{}, Data: t.data, Warnings: t.warn}
+	res := &Result{Events: []int{}, Delta: []string{}, Data: t.data, Warnings: append(closing, t.warn...)}
 	if len(t.events) > 0 {
 		if action.ID != "" && g.log.Action(action.ID) == nil {
 			if err := g.log.PutAction(action); err != nil {
@@ -540,14 +543,91 @@ func toolHP(effect string, p *cards.Card) int {
 
 // EndAction closes the open compound action.
 func (g *Game) EndAction() string {
+	id, _ := g.EndActionChecked()
+	return id
+}
+
+// EndActionChecked closes the open compound action, returning its id and
+// a warning if it closed with a discard cost unpaid.
+func (g *Game) EndActionChecked() (string, []string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	if g.open == nil {
-		return ""
+		return "", nil
 	}
 	id := g.open.ID
+	warn := g.unpaidLocked()
 	g.open = nil
-	return id
+	return id, warn
+}
+
+// costRe finds a cost of cards discarded from the hand in card text:
+// "discard 2 other cards from your hand" (Ultra Ball), "discard a Basic
+// {F} Energy card from your hand" (Lunar Cycle).
+var costRe = regexp.MustCompile(`(?i)\bdiscard (\d+|an?|one|two|three|four) (?:other )?(?:[\w{}'’é -]*? )?cards? from your hand`)
+
+var costWords = map[string]int{"a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4}
+
+// costNeed is how many cards an effect's text asks to discard from the
+// hand, 0 if none.
+func costNeed(effect string) int {
+	m := costRe.FindStringSubmatch(effect)
+	if m == nil {
+		return 0
+	}
+	if n, err := strconv.Atoi(m[1]); err == nil {
+		return n
+	}
+	return costWords[strings.ToLower(m[1])]
+}
+
+// OpenCost describes the open action's discard cost: the card or Ability
+// it is for, how many cards it asks for and how many have been discarded
+// from the hand within it so far.
+type OpenCost struct {
+	Source string `json:"source"`
+	Need   int    `json:"need"`
+	Done   int    `json:"done"`
+}
+
+// openCostLocked returns the open action's discard cost, nil if it has
+// none. The caller holds g.mu.
+func (g *Game) openCostLocked() *OpenCost {
+	if g.open == nil || g.openText == nil {
+		return nil
+	}
+	need := costNeed(*g.openText)
+	if need == 0 {
+		return nil
+	}
+	done := 0
+	if path, err := g.log.PathTo(g.log.Head()); err == nil {
+		for i := range path {
+			e := &path[i]
+			if e.Action != g.open.ID || e.Type != state.EvMove {
+				continue
+			}
+			p, err := e.Decode()
+			if err != nil {
+				continue
+			}
+			mv := p.(*state.MovePayload)
+			if mv.IID != g.open.Source && mv.From != nil && mv.From.Zone == state.Hand && mv.To.Zone == state.Discard {
+				done++
+			}
+		}
+	}
+	return &OpenCost{Source: g.open.Label, Need: need, Done: done}
+}
+
+// unpaidLocked warns when the open action is closing with its discard
+// cost unpaid. The caller holds g.mu.
+func (g *Game) unpaidLocked() []string {
+	c := g.openCostLocked()
+	if c == nil || c.Done >= c.Need {
+		return nil
+	}
+	return []string{fmt.Sprintf("%s asks for %d card%s discarded from the hand as its cost; %d %s. A card played or moved another way does not pay it: undo and discard it with move if that was the intent.", c.Source, c.Need, plural(c.Need), c.Done, map[bool]string{true: "was", false: "were"}[c.Done == 1])}
 }
 
 // OpenAction returns the open compound action id, if any.

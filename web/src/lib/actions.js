@@ -2,7 +2,7 @@
 // helpers only pick the verb a human most likely meant.
 import { app, cardInfo, ownerOf, toast } from './store.svelte.js';
 import { act } from './ws.js';
-import { targetItem } from './target.js';
+import { startTarget, targetItem } from './target.js';
 import AttackPanel from '../components/AttackPanel.svelte';
 import CountPanel from '../components/CountPanel.svelte';
 
@@ -95,6 +95,13 @@ export async function dropOnZone(data, zone) {
   }
   const sa = seatArgs(ownerOf(data.iid));
   const info = cardInfo(data.def);
+  // While an Item or Ability's discard cost is unpaid, a card dropped from
+  // the hand pays it rather than being played (Ultra Ball's two cards).
+  const cost = unpaidCost();
+  if (zone === 'play' && cost && data.from?.endsWith(':hand')) {
+    toast(`Discarded for ${cost.source}'s cost`, 'info');
+    return act('move', { iid: data.iid, to: 'discard', ...sa });
+  }
   if (zone === 'play') return act('play_trainer', { iid: data.iid, ...sa });
   if (zone === 'stadium') {
     if (data.from?.endsWith(':hand') && info?.trainer_type === 'Stadium') {
@@ -104,6 +111,13 @@ export async function dropOnZone(data, zone) {
   }
   if (zone === 'deck') return act('move', { iid: data.iid, to: 'deck:top', ...sa });
   return act('move', { iid: data.iid, to: zone, ...sa });
+}
+
+// unpaidCost is the open action's discard cost while cards are still to
+// be discarded for it, else null.
+export function unpaidCost() {
+  const c = app.snap?.open_cost;
+  return c && c.done < c.need ? c : null;
 }
 
 export function knockOut(spec) {
@@ -179,6 +193,9 @@ export function handMenu(card) {
     else play.push({ label: 'Play', run: () => act('play_trainer', { iid: card.iid, ...sa }) });
   }
   if (!cat || cat === 'Energy') play.push(attach('energy'));
+  // An unpaid discard cost (Ultra Ball, Lunar Cycle) comes first.
+  const cost = unpaidCost();
+  if (cost) play.unshift({ label: `Discard for ${cost.source}`, detail: `cost ${cost.done + 1} of ${cost.need}`, run: () => act('move', { iid: card.iid, to: 'discard', ...sa }) });
   const playable = play.filter(Boolean);
   if (playable.length) playable[0].primary = true;
   const move = (to) => () => act('move', { iid: card.iid, to, ...sa });
@@ -398,6 +415,24 @@ export function pileCardActions(card, seat, from) {
   const sa = seatArgs(seat);
   const info = cardInfo(card.def);
   const out = [{ label: 'Hand', run: () => act('move', { iid: card.iid, to: 'hand', ...sa }) }];
+  // Energy and Tools go straight from a pile onto a Pokémon (Aura Jab's
+  // "from your discard pile"), without passing through the hand.
+  if (info && (info.category === 'Energy' || info.trainer_type === 'Tool') && from !== 'deck') {
+    const as = info.category === 'Energy' ? 'energy' : 'tool';
+    out.push({
+      label: 'Attach',
+      run: () => {
+        app.modal = null;
+        startTarget({
+          prompt: `Attach ${card.name} from the ${from === 'lost' ? 'Lost Zone' : from}`,
+          hint: 'Tap one of your Pokémon',
+          card,
+          candidates: ownStacks(seat),
+          run: (target) => act('move', { iid: card.iid, to: target, as, ...sa }),
+        });
+      },
+    });
+  }
   if (!info || info.category === 'Pokemon') out.push({ label: 'Bench', run: () => act('move', { iid: card.iid, to: 'bench:' + firstEmptyBench(seat), ...sa }) });
   if (from !== 'discard') out.push({ label: 'Discard', run: () => act('move', { iid: card.iid, to: 'discard', ...sa }) });
   if (from !== 'deck') out.push({ label: 'Deck', run: () => act('move', { iid: card.iid, to: 'deck:top', ...sa }) });
@@ -417,7 +452,7 @@ function firstEmptyBench(seat) {
 // endTurn ends the human's turn and copies the prompt for the assistant,
 // unless the assistant is waiting and picks the turn up by itself.
 export async function endTurn(seat = app.human) {
-  const data = await act('end_turn', seatArgs(seat));
+  const data = await act('end_turn', { ...seatArgs(seat), ...(app.prizeReminders ? {} : { ignore_prizes: true }) });
   if (data?.waiting) {
     toast('Turn ended.', 'info');
     return;

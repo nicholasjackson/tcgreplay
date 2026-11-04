@@ -222,6 +222,12 @@ type SeatArg struct {
 	Seat string `json:"seat,omitempty" jsonschema:"acting seat, review mode only; defaults to the seat whose turn it is"`
 }
 
+// EndTurnArg is end_turn's input.
+type EndTurnArg struct {
+	Seat  string `json:"seat,omitempty" jsonschema:"seat whose turn ends (review mode); default the turn in progress"`
+	Force bool   `json:"force,omitempty" jsonschema:"end the turn even though an Active Spot is empty or prize cards are owed, when a card's effect allows it"`
+}
+
 // acting resolves the seat a verb acts for.
 func (s *Server) acting(g *game.Game, override string) (state.Seat, error) {
 	o := state.Seat(strings.ToLower(override))
@@ -711,8 +717,10 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.PlaceDamage(seat, actor, l, in.Amount)
 		})
 	})
-	add(s, srv, "end_turn", "End your turn. The opponent's turn starts and they draw a card.", func(ctx context.Context, in SeatArg) (any, error) {
-		r, err := s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.EndTurn(seat, actor) })
+	add(s, srv, "end_turn", "End your turn. The opponent's turn starts and they draw a card. Refused while a player with a Benched Pokémon has an empty Active Spot (promote first) or while prize cards are owed for this turn's Knock Outs (take them first); force overrides both when an effect changes the rules.", func(ctx context.Context, in EndTurnArg) (any, error) {
+		r, err := s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
+			return g.EndTurnWith(seat, actor, game.EndTurnOptions{Force: in.Force})
+		})
 		if err == nil {
 			s.m(ctx).AssistantDone()
 		}
@@ -723,7 +731,10 @@ func (s *Server) register(srv *mcp.Server) {
 		if err != nil {
 			return nil, err
 		}
-		if id := g.EndAction(); id != "" {
+		if id, warn := g.EndActionChecked(); id != "" {
+			if len(warn) > 0 {
+				return map[string]any{"closed": id, "warnings": warn}, nil
+			}
 			return "closed " + id, nil
 		}
 		return "no open action", nil

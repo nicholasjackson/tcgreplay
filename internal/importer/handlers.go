@@ -247,9 +247,16 @@ func buildHandlers(a, b string) []handler {
 		}),
 		h(`{P}'s (.+) is now in the Active Spot\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[1])
+			retreated := r.pendingRetreat[seat]
 			r.pendingRetreat[seat] = false
-			if _, err := r.stackNamed(seat, m[2], "active"); err == nil {
-				return nil // already there, e.g. after a switch subline
+			// After a retreat the new Active comes from the Bench, even when
+			// it has the retreating Pokémon's name: a fresh N's Zoroark ex
+			// replacing a damaged one. The retreating one keeps its damage,
+			// Energy and Tools as it goes to the Bench.
+			if !retreated {
+				if _, err := r.stackNamed(seat, m[2], "active"); err == nil {
+					return nil // already there, e.g. after a switch subline
+				}
 			}
 			b, err := r.stackNamed(seat, m[2], "bench")
 			if err != nil {

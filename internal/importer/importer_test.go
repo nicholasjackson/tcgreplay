@@ -638,3 +638,60 @@ func TestBenchPastFive(t *testing.T) {
 		t.Errorf("opponent's bench peaked at %d, want more than 5", most)
 	}
 }
+
+// TestRetreatToSameName: a Pokémon that retreats in favour of a benched
+// copy of itself goes to the Bench with its damage and Energy, and the
+// fresh copy comes in, rather than the damaged one staying Active.
+func TestRetreatToSameName(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	b, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-11_ledjo23_alakazam-donk.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Itchy Pollen has left the Active Solrock with 20 damage and an
+	// Energy; a second Solrock is drawn, benched and swapped in.
+	extra := "NicJackson drew Solrock.\n" +
+		"NicJackson played Solrock to the Bench.\n" +
+		"NicJackson retreated Solrock to the Bench.\n" +
+		"- NicJackson discarded Basic Fighting Energy.\n" +
+		"NicJackson's Solrock is now in the Active Spot.\n"
+	text := strings.Replace(string(b), "NicJackson drew Hariyama.\n", extra, 1)
+	res, err := Import(text, Options{MyDeck: entries, Seed: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Report.Problems {
+		if strings.Contains(p.Text, "Solrock") && p.Line < 50 {
+			t.Errorf("line %d not imported: %q: %s", p.Line, p.Text, p.Err)
+		}
+	}
+	st := state.New()
+	evs := res.Events()
+	for i := range evs {
+		e := &evs[i]
+		if err := st.Apply(e); err != nil {
+			t.Fatal(err)
+		}
+		if e.Type != state.EvSwap {
+			continue
+		}
+		if p, _ := e.Decode(); p.(*state.SwapPayload).A.Seat != MeSeat {
+			continue
+		}
+		active := st.Sides[MeSeat].Active
+		var benched *state.Stack
+		for _, s := range st.Sides[MeSeat].Bench {
+			if !s.Empty() && st.Name(s.Top()) == "Solrock" {
+				benched = s
+			}
+		}
+		if st.Name(active.Top()) != "Solrock" || benched == nil {
+			t.Fatalf("after the swap: Active %s, no benched Solrock", st.Name(active.Top()))
+		}
+		if active.Damage != 0 || benched.Damage != 20 {
+			t.Errorf("after the retreat the Active Solrock has %d damage and the benched one %d; want 0 and 20", active.Damage, benched.Damage)
+		}
+		return
+	}
+	t.Fatal("no swap event: the retreat was not replayed")
+}

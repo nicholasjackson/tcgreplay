@@ -118,8 +118,8 @@ test('tapping a card in a pile view opens its moves with the card and its text',
   await titled(view, 'Fighting Energy (p1-16)').tap();
   await expect(sheet(page)).toHaveAttribute('aria-label', 'Fighting Energy');
   // The sheet mirrors the view's buttons for the card.
-  expect(await menuOf(page)).toEqual([['Move', ['Hand', 'Deck', 'Lost']]]);
-  await expect(view.locator('.acts button')).toHaveText(['Hand', 'Deck', 'Lost']);
+  expect(await menuOf(page)).toEqual([['Move', ['Hand', 'Attach', 'Deck', 'Lost']]]);
+  await expect(view.locator('.acts button')).toHaveText(['Hand', 'Attach', 'Deck', 'Lost']);
   await expectCardAndText(page, 'Fighting Energy (p1-16)', 'Fighting Energy (sve-006)', testInfo);
 });
 
@@ -408,7 +408,7 @@ test('a card in a pile view offers the same moves by mouse', async ({ page }, te
   await pile(page, 'Discard').click();
   await titled(page.locator('.modal'), 'Fighting Energy (p1-16)').click({ button: 'right' });
   await expect(sheet(page)).toHaveAttribute('data-mode', 'popover');
-  expect(await menuOf(page)).toEqual([['Move', ['Hand', 'Deck', 'Lost']]]);
+  expect(await menuOf(page)).toEqual([['Move', ['Hand', 'Attach', 'Deck', 'Lost']]]);
 });
 
 test('the sheet closes with ✕, Escape and Back, and the tablet panel with its backdrop', async ({ page }, testInfo) => {

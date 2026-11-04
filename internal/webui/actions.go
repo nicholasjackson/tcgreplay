@@ -37,16 +37,19 @@ type args struct {
 	On        bool     `json:"on,omitempty"`
 	Whose     string   `json:"whose,omitempty"`
 	First     string   `json:"first,omitempty"`
-	Filter    string   `json:"filter,omitempty"`
-	Mode      string   `json:"mode,omitempty"`
-	Branch    string   `json:"branch,omitempty"`
-	Event     int      `json:"event,omitempty"`
-	From      int      `json:"from,omitempty"`
-	Until     int      `json:"until,omitempty"`
-	Text      string   `json:"text,omitempty"`
-	UntilTurn int      `json:"until_turn,omitempty"`
-	UntilSeat string   `json:"until_seat,omitempty"`
-	Reveal    bool     `json:"reveal,omitempty"`
+	// IgnorePrizes ends a turn with prize cards still owed (prize
+	// reminders turned off on the board).
+	IgnorePrizes bool   `json:"ignore_prizes,omitempty"`
+	Filter       string `json:"filter,omitempty"`
+	Mode         string `json:"mode,omitempty"`
+	Branch       string `json:"branch,omitempty"`
+	Event        int    `json:"event,omitempty"`
+	From         int    `json:"from,omitempty"`
+	Until        int    `json:"until,omitempty"`
+	Text         string `json:"text,omitempty"`
+	UntilTurn    int    `json:"until_turn,omitempty"`
+	UntilSeat    string `json:"until_seat,omitempty"`
+	Reveal       bool   `json:"reveal,omitempty"`
 }
 
 // response answers one request.
@@ -198,7 +201,8 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 		v, err := g.LookTop(seatOf(a.Whose, seat), max(a.N, 1), "ui:look_top", string(human))
 		return v, nil, err
 	case "end_action":
-		return g.EndAction(), nil, nil
+		id, warn := g.EndActionChecked()
+		return id, &game.Result{Warnings: warn}, nil
 	case "annotate":
 		return nil, nil, errors.New("annotations come from the assistant")
 	}
@@ -280,7 +284,7 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 	case "end_turn":
 		since := g.TurnStartedAt(seat)
 		waiting := s.M.Opponent() == "waiting"
-		if r, err = g.EndTurn(seat, human); err == nil && g.Mode() == game.ModePlay {
+		if r, err = g.EndTurnWith(seat, human, game.EndTurnOptions{IgnorePrizes: a.IgnorePrizes}); err == nil && g.Mode() == game.ModePlay {
 			// Hand the turn to Claude; in review either side is played here.
 			// A waiting assistant picks it up by itself, so the board need
 			// not ask for the prompt to be pasted.

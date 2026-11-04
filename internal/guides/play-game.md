@@ -31,6 +31,8 @@ If you cannot start sub-agents, decide the turn from `get_state` view `seat` alo
 - Call `wait_for_turn` and do what its `next` says, again and again until the turn ends.
 - A `respond` or `promote` outcome asks your seat to act now: Iono's draws, a promotion after a Knock Out. Decide it on `get_state` view `seat` only, as above.
 - After a Knock Out, the result reminds whose prizes to take. The player can turn the reminder off on the board.
+- `end_turn` refuses while a player with a Benched Pokémon has an empty Active Spot (promote first) or while prize cards are owed for the turn's Knock Outs (take them first). Pass `force` only when a card's effect changes the rule.
+- Costs count: an Item or Ability that asks for cards discarded from the hand (Ultra Ball, Lunar Cycle) warns when it closes unpaid. Discard them with `move` inside its action, never by playing them.
 
 ## Game over
 
