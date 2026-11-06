@@ -31,13 +31,13 @@ Admins of the hosted playmat can clear its card cache, all of it or one set at a
 -->
 ## Requirements
 
-- [ ] **Admins can clear the whole cache**
+- [x] **Admins can clear the whole cache**
   An admin signed in to the hosted playmat can clear, in one action, all card data and images in every cache the hosted playmat keeps. Afterwards, every lookup is answered from fresh data fetched from the card source, without a restart.
-- [ ] **Admins can clear one set**
+- [x] **Admins can clear one set**
   An admin can clear a single set, named either by its decklist set code (such as MEG) or by its card source set id (such as me01): its card list, its cards and their images. Other sets stay cached. A code or id that names no set is refused with a message, and nothing is cleared.
-- [ ] **Only admins can clear the cache**
+- [x] **Only admins can clear the cache**
   Anyone who is not signed in as an admin must be refused, both on the page and on any request that clears the cache, and nothing may be cleared.
-- [ ] **Clearing does not interrupt play**
+- [x] **Clearing does not interrupt play**
   Games open while the cache is cleared must keep working, with their cards refetched as needed.
 
 <!--
@@ -67,19 +67,19 @@ Admins of the hosted playmat can clear its card cache, all of it or one set at a
 -->
 ## Acceptance Criteria
 
-- [ ] **Admin clears everything**
+- [x] **Admin clears everything**
   Signed in with an account named as an admin, the admin uses the clear-all action. The shared store then holds no cached card data or images, the next card lookup makes a request to the card source, and the next import shows its cards correctly, with no restart.
-- [ ] **Admin clears one set by code**
+- [x] **Admin clears one set by code**
   An admin clears one set by its set code. The next lookup of a card in that set makes a request to the card source, while a lookup of a card in another cached set does not.
-- [ ] **Admin clears one set by id**
+- [x] **Admin clears one set by id**
   An admin clears one set by its set id, with the same result as clearing it by code.
-- [ ] **Unknown set refused**
+- [x] **Unknown set refused**
   An admin asks to clear a set code that names no set. The page reports it, and the shared store still holds the same data.
 - [ ] **Cleared images refreshed**
   After an admin clears a set, the board shows each of that set's card images as the card source currently has it within 1 hour.
-- [ ] **Non-admins refused**
+- [x] **Non-admins refused**
   Signed in with an account not named as an admin, or not signed in, the admin page is refused and a direct request to clear the cache is refused. Afterwards the shared store still holds the same data.
-- [ ] **Open game survives a clear**
+- [x] **Open game survives a clear**
   With a game open on the board, an admin clears all cached data. The board keeps showing the game, and playing on it works, with card text and art.
 
 <!--

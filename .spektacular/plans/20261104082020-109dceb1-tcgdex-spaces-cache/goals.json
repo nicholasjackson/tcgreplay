@@ -1,0 +1,1013 @@
+{
+  "plan": "20261104082020-109dceb1-tcgdex-spaces-cache",
+  "items": [
+    {
+      "item": "74466fe9-64c8-418d-b653-4c2a71bd852e",
+      "title": "Sign requests and read settings for Spaces",
+      "checks": [
+        {
+          "at": "2026-11-04T13:33:58Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "74466fe9-64c8-418d-b653-4c2a71bd852e",
+            "title": "Sign requests and read settings for Spaces",
+            "criteria": [
+              "Signing AWS's published GET Object example request produces exactly the signature AWS documents.",
+              "With none of the four settings present, parsing reports the shared store as not configured, with no error.",
+              "With all four present and a valid endpoint, parsing returns them, with the signing region taken from the endpoint (for example `ams3` from `https://ams3.digitaloceanspaces.com`).",
+              "With only some settings present, or an endpoint that is not an http or https address with a host, parsing reports an error naming the missing or invalid setting. The error never contains the key or secret value."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/doc.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/sign.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/config.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/sign_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/config_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://ams3.digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "http://127.0.0.1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "ams3.digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "ftp://x"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://x/path"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/spaces/sign_test.go:21-41 (TestSignMatchesAWSGetObjectExample) signs AWS's GET Object example (examplebucket.s3.amazonaws.com/test.txt, Range bytes=0-9, 20130524, us-east-1, empty payload hash) and asserts the Authorization header with Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41 and SignedHeaders=host;range;x-amz-content-sha256;x-amz-date. The canonical request built in internal/spaces/sign.go:73-102 (method, canonicalURI, canonicalQuery, lower-cased sorted headers with trimmed values, signed-header list, payload hash) and the HMAC key chain at sign.go:97-101 follow the SigV4 procedure. Not re-run here (read-only); the reported PASS of this test is consistent with the code. Note: internal/spaces/errors.go is untracked and not in the goal's file list, though sign.go uses its Error type."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/spaces/config.go:58-60: when no setting is non-empty after TrimSpace, FromEnv returns Config{}, false, nil. Covered by TestFromEnvNoneSet and TestFromEnvWhitespaceOnlyIsUnset in internal/spaces/config_test.go:26-38."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/spaces/config.go:64-71 builds the Config from all four values and calls normalized(); config.go:93-101 sets Region from the first host label when the host ends in .digitaloceanspaces.com, so https://ams3.digitaloceanspaces.com yields Region \"ams3\" (other hosts fall back to us-east-1). config_test.go:40-58 (TestFromEnvComplete) asserts the full Config including Region \"ams3\"; TestFromEnvRegion covers more endpoints."
+            },
+            {
+              "criterion": 4,
+              "verdict": "not_met",
+              "evidence": "Missing and invalid settings are reported by name and without the values in the normal cases: config.go:50-63 joins a '\u003cNAME\u003e is not set' error per missing setting, and config.go:76-91 checks endpoint, bucket and credentials. However, the error text is not guaranteed to exclude the key or secret. config.go:80 formats the raw endpoint value with %q into the invalid-endpoint error, and config.go:86 formats the raw bucket value with %q for the slash case. If TCGREPLAY_SPACES_ENDPOINT or TCGREPLAY_SPACES_BUCKET holds the secret or key (a mis-set variable), or the endpoint carries userinfo such as https://user:pass@x (config.go:79 rejects it, but config.go:80 echoes it), the returned error contains that credential. The tests (config_test.go:107-139) never put a credential in the endpoint or bucket, so they do not catch this. The doc comment at config.go:46 says the error never contains the key or secret, which the code does not guarantee. Fix: stop echoing the endpoint and bucket values in these errors and name only the setting."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T13:35:54Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "74466fe9-64c8-418d-b653-4c2a71bd852e",
+            "title": "Sign requests and read settings for Spaces",
+            "criteria": [
+              "Signing AWS's published GET Object example request produces exactly the signature AWS documents.",
+              "With none of the four settings present, parsing reports the shared store as not configured, with no error.",
+              "With all four present and a valid endpoint, parsing returns them, with the signing region taken from the endpoint (for example `ams3` from `https://ams3.digitaloceanspaces.com`).",
+              "With only some settings present, or an endpoint that is not an http or https address with a host, parsing reports an error naming the missing or invalid setting. The error never contains the key or secret value."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/doc.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/sign.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/config.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/sign_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/config_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://ams3.digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "http://127.0.0.1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "ams3.digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "ftp://x"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://x/path"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/spaces/sign_test.go:21-41 (TestSignMatchesAWSGetObjectExample) signs the AWS GET Object example (GET /test.txt, host examplebucket.s3.amazonaws.com, Range bytes=0-9, 2013-05-24, us-east-1, empty payload hash) and asserts the full Authorization header ends in Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41, the value AWS documents. sign.go:37-58 produces SignedHeaders=host;range;x-amz-content-sha256;x-amz-date, matching the example. The verify summary reports this test passing; I did not rerun it."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/spaces/config.go:49-61: the loop collects a missing-name error for each unset or whitespace-only setting, and when len(vals)==0 it returns Config{}, false, nil. internal/spaces/config_test.go:26-38 (TestFromEnvNoneSet, TestFromEnvWhitespaceOnlyIsUnset) asserts set=false and err=nil."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "config.go:65-73 builds the Config from all four values and calls normalized(). config.go:96-105 derives Region from the first host label of a *.digitaloceanspaces.com endpoint, so https://ams3.digitaloceanspaces.com gives region ams3. config_test.go:40-58 (TestFromEnvComplete) asserts the full Config including Region \"ams3\" and config_test.go:60-82 (TestFromEnvRegion) covers more endpoints."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Missing settings: config.go:51-64 reports \"\u003cNAME\u003e is not set\" for each unset name, joined, with set=true. Invalid endpoint: config.go:78-84 rejects non-http(s) schemes, an empty host, a path, query, fragment or user info, and a parse failure, with an error that names TCGREPLAY_SPACES_ENDPOINT and echoes no value. config.go:86-93 covers the bucket, key and secret checks. config_test.go:84-105 (TestFromEnvPartial) and config_test.go:107-128 (TestFromEnvBadEndpoint, which includes ftp://x and https://x/path) check the error names the setting. config_test.go:133-154 (TestFromEnvNeverEchoesValues) checks no key or secret appears in the error. Side note outside this criterion: internal/spaces/errors.go is an untracked new file that is not in the goal's list of files this item may change, though sign.go and sign_test.go depend on its Error type."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "a6e2428c-2777-4bee-84a3-e416a57db7d6",
+      "title": "Add the Spaces client and its stand-in",
+      "checks": [
+        {
+          "at": "2026-11-04T13:39:36Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a6e2428c-2777-4bee-84a3-e416a57db7d6",
+            "title": "Add the Spaces client and its stand-in",
+            "criteria": [
+              "An object written through the client reads back byte for byte, and the stand-in records the content type, cache-control and public-read setting the write asked for.",
+              "Reading a key that does not exist reports \"not found\", distinct from every other error.",
+              "With wrong credentials the stand-in refuses the request as Spaces does, and the client reports an error carrying the status 403 and S3's error code. A server error is reported with its status.",
+              "Requests signed by the client are accepted by the stand-in's signature check, and a request altered after signing is refused.",
+              "The stand-in can be switched to fail, refuse, hang or become unreachable, and reports how many requests it received for each key."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "encoding/xml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/spacestest/spacestest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cardstest/cardstest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/spaces/client_test.go:15-49 (TestPutThenGetRoundTripsBytesAndHeaders) writes a JSON body with ContentType, CacheControl and Public set, reads it back with bytes.Equal, and checks the stand-in's stored Content-Type, Cache-Control and X-Amz-Acl. The stand-in records those headers at spacestest/spacestest.go:130-139 and exposes them via Header() at :164. client.go:96-117 sets the same headers on Put."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "client.go:77-80 maps a 404 on GET to ErrNotFound. Every other non-200 goes through responseError into *Error (client.go:81-82, 146-159), and transport failures are plain wrapped errors. client_test.go:80-90 (TestGetMissingKeyIsNotFound) asserts errors.Is ErrNotFound and that the error is not an *Error. The stand-in returns NoSuchKey 404 at spacestest.go:122-125."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Wrong secret: VerifyRequest returns SignatureDoesNotMatch 403 (sign.go:176-199), and the stand-in writes it (spacestest.go:107-110). Wrong access key: InvalidAccessKeyId 403 (sign.go:173-175). The SetDeny path returns 403 InvalidAccessKeyId (spacestest.go:103-104). The client turns non-200 responses into *Error with Status and Code (client.go:146-159). client_test.go:117-149 asserts 403 with the codes. A server error is reported with its status: client_test.go:180-189 (TestServerErrorReportsStatus) asserts 500 InternalError from SetFail."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Signing is in sign.go:37-58, and VerifyRequest in sign.go:161-202 recomputes the signature and checks the payload hash. Acceptance of signed requests is shown by every successful round trip in client_test.go:15-49 and :51-59 through the real verifier (spacestest.go:107). Refusal after alteration is covered by client_test.go:151-178 (TestRequestAlteredAfterSigningIsRefused), which alters Content-Type, adds X-Amz-Acl and changes the path, and expects 403 SignatureDoesNotMatch in each case."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "spacestest.go:202-234 provides SetFail (500), SetDeny (403), Hang (blocks until release or client context ends) and Close (later requests fail to connect, spacestest.go:238-251). Per-key counts are kept in serve() at spacestest.go:87-88, before the fail/deny/hang branches, and exposed by Requests(method, key) at :178-182. client_test.go:117-124 covers deny, :180-189 covers fail, :191-204 covers close, and :206-229 covers hang with a request count assertion of 1 for the key."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "591bd0ba-960e-45ac-abac-1eef2da12ae5",
+      "title": "Add the Spaces card store",
+      "checks": [
+        {
+          "at": "2026-11-04T13:42:29Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "591bd0ba-960e-45ac-abac-1eef2da12ae5",
+            "title": "Add the Spaces card store",
+            "criteria": [
+              "An entry put into the Spaces store comes back with the same body and exactly the same fetch time.",
+              "Entries land at `tcgdex/sets.json`, `tcgdex/sets/\u003cid\u003e.json` and `tcgdex/cards/\u003cid\u003e.json`, each holding the same bytes the disk cache writes for that entry.",
+              "A key with no object, or an object that is not a valid envelope, is reported as \"not cached\".",
+              "A refused or failed request is reported as an error, distinct from \"not cached\"."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sets.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/spacesstore.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/spacesstore_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/sets.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/sets/sv03.5.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/cards/sv03.5-001.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "application/json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/spacesstore.go:46-55 Put encodes via encodeEnvelope (store.go:72-87, fetched kept as RFC3339Nano so nanoseconds survive, body written raw) and Get decodes via decodeEnvelope (store.go:91-100, RawMessage keeps the body bytes). internal/cards/spacesstore_test.go:17-41 TestSpacesStoreRoundTrip checks body equality (including an irregular-whitespace body) and e.Fetched.Equal(fetched) with a nanosecond timestamp in a non-UTC zone."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "spacesstore.go:25 objectKey returns \"tcgdex/\" + relPath(key), and store.go:56-61 relPath yields sets.json, sets/\u003cid\u003e.json, cards/\u003cid\u003e.json. The disk store and Spaces store both call encodeEnvelope (store.go:127 and spacesstore.go:47), so the bytes are identical. spacesstore_test.go:45-87 TestSpacesStoreObjectsMatchDiskFiles compares each srv.Object against the disk file byte for byte for all three kinds and checks the exact expected envelope text."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "spacesstore.go:31-33 maps spaces.ErrNotFound (returned by spaces/client.go:79-80 on HTTP 404) to ErrNotCached. spacesstore.go:38-41 maps any body that fails decodeEnvelope (store.go:91-100: non-'{' start, unmarshal error, or missing fetched/data) to ErrNotCached. spacesstore_test.go:89-107 covers a missing object plus bare body, no data, not json and bare set list."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "spacesstore.go:35-37 returns every other Get error wrapped with %w and without ErrNotCached. spaces/client.go:81-82 sends non-200/404 answers (403, 500, transport errors) to responseError, which is a *spaces.Error (spaces/errors.go:8-15), and spaces/client.go:72-74 returns transport errors unchanged. spacesstore_test.go:109-134 TestSpacesStoreFailuresAreNotMisses checks refused (deny), failed (500) and unreachable requests all return an error that is not ErrNotCached, and that a refused Put errors."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "11456ca4-6890-4532-95fa-cc57d57ce8d7",
+      "title": "Add the tiered store with a failure breaker",
+      "checks": [
+        {
+          "at": "2026-11-04T13:45:51Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "11456ca4-6890-4532-95fa-cc57d57ce8d7",
+            "title": "Add the tiered store with a failure breaker",
+            "criteria": [
+              "An entry only in the shared store is returned and then exists on disk with exactly the same fetch time. An entry on disk is returned without any shared-store request.",
+              "An entry written to the tiered store exists both on disk and in the shared store.",
+              "With the shared store unreachable, refusing credentials, failing, or hanging, reads fall back to \"not cached\" and writes still reach disk, with no error returned. A hanging store delays only the first request, and by no more than 3 seconds.",
+              "After a failure, no shared-store request is made for one minute. The next request after that tries again, and recovery is logged.",
+              "An outage is logged once when it starts and once when it ends, not once per lookup."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/tiered.go:107-109 returns a local hit before any shared call (no shared request on disk hit, covered by TestTieredLocalHitMakesNoSharedRequest in tiered_test.go:95-107). Shared-only path: tiered.go:115-122 fetches from shared and copies the entry to local with its Fetched value unchanged via t.local.Put(ctx, key, e). Disk Put (store.go:126-127) uses encodeEnvelope (store.go:76, MarshalJSON on the UTC time, RFC3339Nano so nanoseconds survive). TestTieredSharedOnlyEntryIsCopiedToLocalWithItsFetchTime (tiered_test.go:74-93) uses oldFetch with 987654321ns and checks Equal on the local copy."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "tiered.go:127-135 Put writes local first (lerr) and then shared (t.shared.Put with the call bounded by SharedTimeout). TestTieredPutWritesBothTiers (tiered_test.go:119-132) checks the disk copy and the object tcgdex/sets/sv01.json in the stand-in server. Caveat, not a failure: while the breaker is open a write skips shared (tiered.go:129), which criterion 4 requires (no shared request for a minute after a failure), so criterion 2 holds only while shared is reachable. This is documented at tiered.go:32-33."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Get maps every shared failure to ErrNotCached (tiered.go:119-121) and Put returns only the local error (tiered.go:135), so no error reaches the caller for a shared failure. Each shared call is bounded by context.WithTimeout(ctx, t.timeout) (tiered.go:115, 130) with SharedTimeout = 3 * time.Second (tiered.go:14). The four modes are covered by TestTieredAbsorbsSharedOutages (tiered_test.go:141-181): unreachable (srv.Close), refused (SetDeny returns 403 in spacestest.go:103-104), failing (SetFail returns 500), hanging (Hang). The hang case is bounded by the per-request timeout, and the breaker means only the first request waits (TestTieredHangDelaysOnlyTheFirstRequest, tiered_test.go:183-202). spaces client has no internal retry (internal/spaces/client.go has no retry/backoff), so the bound is not multiplied."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "SharedRetryAfter = time.Minute (tiered.go:17). failed() sets until = now + retry (tiered.go:79) and skip() returns true while now is before until (tiered.go:64-68), so no shared request is made inside the window (Get at tiered.go:112, Put at tiered.go:129). After the window the next request probes shared again (tiered.go:112/129 fall through). Recovery is logged once by ok() at tiered.go:86-88 ('shared store reachable again'). TestTieredBreakerSkipsSharedForAMinuteThenRetries (tiered_test.go:204-252) checks 59s skip, retry after the window, re-arm on a failed probe, and a single recovery log."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "failed() logs only when !t.down (tiered.go:75-77), so the outage start is logged once while the outage lasts; ok() logs once on recovery and clears down (tiered.go:86-88). A caller giving up does not count (outcome, tiered.go:95-103). Tests: TestTieredAbsorbsSharedOutages asserts exactly one 'shared store unavailable' line per mode (tiered_test.go:176-178); TestTieredBreakerSkipsSharedForAMinuteThenRetries asserts one unavailable line and one 'reachable again' line across repeated failures and recovery (tiered_test.go:230-251)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "82ace641-7996-4ea0-8792-9fdf3127dece",
+      "title": "Keep game-lock and offline reads on local disk",
+      "checks": [
+        {
+          "at": "2026-11-04T13:50:47Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "82ace641-7996-4ea0-8792-9fdf3127dece",
+            "title": "Keep game-lock and offline reads on local disk",
+            "criteria": [
+              "The cached-only card lookup makes no shared-store request, even for a card that is only in the shared store, and returns nothing for it.",
+              "In offline mode with a shared store attached, no lookup of any kind (card, deck code, by name) makes a request to the shared store.",
+              "An online lookup of a card held only in the shared store returns it with no request to the card source, and the card then exists in the local cache directory.",
+              "Without a shared store attached, every lookup behaves exactly as before, and the existing card, game and importer tests pass unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered_client_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sets/tst"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards/tst-1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "byname_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/cards.go:459-479: Cached checks mem, then reads only c.localStore() (cards.go:227-233, which returns the tiered store's Local() tier). A card only in the shared store is not in the local tier, so Cached returns nil and never calls the shared store. internal/cards/tiered_client_test.go:34-52 (TestCachedNeverReadsSharedStore) asserts nil with srv.Total()==0 and f.totalHits()==0. Caveat, not in the criterion's scope: refreshCardIfStale (fresh.go:111-123) can start a background refresh for a stale, imageless card that is already on local disk while online; that refresh ends in a shared PUT via shared()-\u003ec.store().Put (cards.go:348). The shared-only case in the criterion is unaffected."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Offline, every read goes through readStore(), which returns localStore() (cards.go:238-239): Card (cards.go:434), loadEntry (cards.go:289, used by setFetched, buildCatalog, loadSets with force=false, and prints/Resolve via ensureCatalog) and Cached. Shared-store paths are guarded offline: missAllowed returns false (catalog.go:417-418, so refreshSetList/refreshSet are not reached from Resolve), maybeSweep returns (catalog.go:338-339), maybeRefresh returns (fresh.go:89-91), and buildCatalog returns not-found when offline (catalog.go:92-94). ByName goes through prints-\u003eensureCatalog-\u003eCard, all covered. The shared() path that calls c.store() is only reached from non-offline paths. Test coverage: tiered_client_test.go:113-152 (TestOfflineNeverReadsSharedStore) checks Card, Resolve, ByName and Cached with srv.Total()==0."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Online, Card (cards.go:434) reads c.store(), the tiered store. tiered.go:106-124 Get: local miss, then shared.Get, then local.Put(ctx,key,e) with the original Fetched time, so the card lands in the cache dir. tiered_client_test.go:57-88 (TestOnlineCardFromSharedStoreFillsDisk) asserts the card name is Pineco, f.hits(\"/cards/sv01-001\")==0 (no card-source request), and requireEnvelope(t, c.CacheDir, \"cards/sv01-001\", tCard001, fetched) (the file exists in the cache dir with the fetch time). A fresh client on the same dir then gets it from Cached with no shared request (lines 79-87). I did not re-run the test; the verify summary reports it passing."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Without a shared store, store() is a diskStore, which has no Local() method, so localStore() returns the store itself (cards.go:227-233). readStore() is then store() online and localStore() offline, the same as before, and the single-flight recheck (cards.go:334) now reads localStore(), which equals store() here. The store.go change (diff lines 98-217) is a refactor that keeps the same on-disk path and envelope format (relPath, encodeEnvelope, decodeEnvelope). No existing card, game or importer test file appears in the diff. Verify summary reports go test ./... passing. Out-of-scope note, not a criterion: the diff also changes cmd/tcgreplay/guides_test.go (6 -\u003e 7 guides), which is not one of this item's files; it does not affect the four verdicts."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "d302f56c-8933-4cae-bfef-0425ab6625dd",
+      "title": "Prove a restart keeps the card cache",
+      "checks": [
+        {
+          "at": "2026-11-04T13:55:22Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "d302f56c-8933-4cae-bfef-0425ab6625dd",
+            "title": "Prove a restart keeps the card cache",
+            "criteria": [
+              "After a restart with an empty local cache, resolving the same deck codes and loading the same cards makes no request to the card source for the set list, set card lists or cards, and gives identical answers.",
+              "A game's cards built from the same decklists after such a restart are identical to the first build.",
+              "With the local cache empty, a card only in the shared store is returned without the card source, and then exists locally. A card in neither is fetched once and then exists in both.",
+              "A shared-store entry past its refresh age, read after a restart, is still treated as stale and refreshed from the card source once. Its refreshed copy lands in both places.",
+              "With the shared store unreachable, refusing credentials, failing or hanging, deck codes, by-name lookups and card lookups all succeed from the card source with no error, and the failure is logged.",
+              "In offline mode with a shared store attached, the shared store receives no requests."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/restart_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets/tst"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets/sve"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards/X.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/cards/Y.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/spacescache_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/cardsource_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/manager.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/restart_test.go:78-109 TestWarmRestartMakesNoCardSourceRequests: a first client fills a temp cache against a spacestest shared store, a second client gets a fresh cache dir (restartClient, :20-30) and runs runImport (Resolve, Card, ByName, :40-65). cardDataPaths (:68) covers /sets, /sets/sv01, /sets/sv02 and the card paths; hitsOf before and after are compared with DeepEqual (:98-100), and the answers are compared with DeepEqual (:101-103). Restart cache contents are asserted at :104-108."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/game/spacescache_test.go:82-124 TestGameCardsIdenticalAfterRestartFromSharedStore: client() builds a new t.TempDir() cache per build over a shared spacestest store (:86-93), BuildCards is run with the same testDeck lists for both seats (:94-111), zero card-source requests after the restart are asserted (:115-117), and the card lists are compared with reflect.DeepEqual (:118-120) with warnings compared too (:121-123). BuildCards is defined at internal/game/manager.go:204."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/cards/restart_test.go:114-145 TestRestartFillsLocalAndSharesNewCards: sv01-001 is seeded only in the shared store (:119), Card returns it with zero card-source hits (:123-128) and requireEnvelope confirms it is now on local disk (:129). sv02-001 is in neither tier: exactly one card-source hit (:131-136), then it is present locally (:137) and in the shared store with the right data and fetch time (:138-144)."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/cards/restart_test.go:151-207 TestStaleStaysStaleAfterRestart. Card subtest: a shared entry 25h old is seeded (:155-156); the first answer is the stale imageless copy (:162-167); exactly one card-source refresh after waitBackground (:169-172); the refreshed copy is on disk (:173) and in the shared store with the new fetch time (:174-177). Set subtest: stale sets/sv01 is refreshed once while fresh entries are not fetched (:186-201), with local and shared copies checked (:202-205)."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "internal/cards/restart_test.go:212-238 TestSharedOutageImportsFromCardSource iterates outageModes (internal/cards/tiered_test.go:143-148: unreachable via srv.Close, refused via SetDeny 403, failing via SetFail 500, hanging via Hang). Each mode runs runImport (deck codes via Resolve, cards via Card, by-name via ByName; restart_test.go:40-65) and must equal the card-source-only answers (:230). The failure must be logged exactly once (:233), and the log line exists at internal/cards/tiered.go:76. The 200ms shared timeout is set at restart_test.go:24."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "internal/cards/restart_test.go:243-258 TestOfflineRestartSkipsSharedStore: the warm disk is filled online, srv.Reset() runs, the client is built offline with a tiered store attached (:250-253), runImport runs, and srv.Total() must be 0 (:255-256). The code path is internal/cards/cards.go:237-241 (readStore returns localStore when Offline), and all offline reads go through readStore or localStore (cards.go:289, :434, :467; no direct c.store() read remains). A stronger miss-case test also exists at internal/cards/tiered_client_test.go:116-135 TestOfflineNeverReadsSharedStore. Caveat: the restart_test case only covers entries already on disk."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c0450f8d-572c-492c-aa1d-888914fc9d2d",
+      "title": "Use the shared store in hosted mode",
+      "checks": [
+        {
+          "at": "2026-11-04T13:59:55Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c0450f8d-572c-492c-aa1d-888914fc9d2d",
+            "title": "Use the shared store in hosted mode",
+            "criteria": [
+              "With all four settings pointing at a reachable store, card data the hosted playmat fetches is saved in the shared store as well as in its local cache directory.",
+              "With no settings, the hosted playmat starts, writes card data only to its local cache directory, and logs no warning or error about the shared store.",
+              "With partial or invalid settings, the hosted playmat starts, logs a warning naming the problem (never a secret), and caches locally only.",
+              "With wrong credentials, the hosted playmat starts and serves cards from the card source, and its log records the shared-store failure.",
+              "In offline mode with the settings present, the hosted playmat makes no request to the shared store.",
+              "With the shared store on, the health check answers while the catalog warm is still running, and the warm's result is logged when it finishes.",
+              "Desktop and dev builds start and behave exactly as before, whatever shared-store settings are in their environment."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/warm.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/warm_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/sets.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_cache_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/cards/x"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets/tst"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards/x.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/cards/x.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/healthz"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "hosted.go:237 wraps db.Store in cards.NewTieredStore(local, NewSpacesStore). cards.go:348 writes via c.store().Put, and tiered.go:127-135 Put writes local then shared (spacesstore.go:46-55 PUTs tcgdex/\u003crelPath\u003e). hosted_cache_test.go:165-192 (TestHostedCardDBSharedStoreOn) asserts the object lands in the shared store and cards/x.json lands on disk. Caveat: the diff for cards.go, store.go and guides_test.go is outside the listed file names, but it sits under the listed directories internal/cards and cmd/tcgreplay."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "hostedCardDB (hosted.go:215-240) with no TCGREPLAY_SPACES_* set takes the !set branch: it logs 'card cache: local only' (not a warning) and returns db with no tiered store. The desktop path newCardDB (main.go:227-231) is unchanged. hosted_cache_test.go:137-163 asserts no 'warning' or 'error' in the log and the card is cached on disk."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "hosted.go:224-227 (partial settings, via errors.Join of 'X is not set' from config.go:48-64) and hosted.go:233-236 (invalid endpoint) log a 'warning: card cache: ...' line and return the local-only DB. The error text names settings only and never echoes values (config.go:81-83, 86-93). hosted_cache_test.go:194-247 covers each missing setting and a bad endpoint, asserts no secret or key ID in the log, and asserts the card is still served and cached locally."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "tiered.go:112-124: a shared-store failure becomes ErrNotCached, so loadEntry/Card fall through to the card source. tiered.go:72-78 logs 'card cache: shared store unavailable (...)' with the error. hosted_cache_test.go:249-268 (TestHostedCardDBWrongCredentialsStillServes) sets a denying store, asserts Card still returns Xmon, and asserts the log contains 'shared store unavailable' and 'InvalidAccessKeyId'."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "hosted.go:228-231: when c.offline is set, hostedCardDB returns before spaces.New, so no tiered store and no spaces client are built. cards.go:237-241 readStore reads the local tier only when Offline is set, and Cached (cards.go:467) reads local only. hosted_cache_test.go:270-302 asserts srv.Total()==0 after Card, Card-miss, Resolve and Cached in offline mode."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "hosted.go:278-281 starts go warmCatalog(ctx, db) as a goroutine before the listener is opened and the server started at hosted.go:283-300. /healthz is registered open at internal/hostauth/hostauth.go:127 (GET /healthz, no sign-in). warmCatalog (hosted.go:248-257) logs 'card cache: catalog warmed in ...' or 'catalog warm failed after ...' when it finishes. hosted_cache_test.go:336-383 (TestRunHostedWarmsCatalogInBackground) holds the card source, waits for /healthz to answer, asserts no 'catalog warm' log yet, releases, then asserts the 'catalog warmed' log and the shared objects tcgdex/sets.json and tcgdex/sets/tst.json."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "hostedCardDB is called only from runHosted (hosted.go:273). newServer (main.go:219-224) and the desktop and dev paths go through newCardDB (main.go:227-231), which reads no shared-store settings. The only config change is the test-only cardBase field (main.go:65-66, documented as tests). The local tier is returned unchanged when no tiered store is present (cards.go:227-232 localStore falls through to store()). hosted_cache_test.go:304-330 (TestDesktopNeverUsesSharedStore) asserts no tiered store, no 'card cache' log and zero shared requests with the settings set."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b49eb3be-7dd2-487a-96ed-d3ada79a5a1c",
+      "title": "Declare and document the shared store settings",
+      "checks": [
+        {
+          "at": "2026-11-04T14:03:07Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b49eb3be-7dd2-487a-96ed-d3ada79a5a1c",
+            "title": "Declare and document the shared store settings",
+            "criteria": [
+              "The App Platform definition declares all four shared-store variables for run time, with the access key and secret as encrypted secrets, and explains each in a comment.",
+              "Running the container locally passes the shared-store variables through when they are exported.",
+              "The hosted settings table and operator setup describe each variable, its default (local cache only), and how to create the bucket and access key.",
+              "No deploy file or document still says the hosted card cache is always lost on a deploy or restart. The build context is unchanged, so the guides are still built in."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": ".do/app.yaml:71-91 declares TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET, each with scope: RUN_TIME and type: SECRET. The comment at lines 71-79 explains the endpoint format, the bucket, the access key (limited to the bucket, read and write), and what happens when some or all are unset. The secret is covered by the same shared comment, as the Google client ID/secret pair is at lines 39-41. Unlike the other entries, the comment does not name the secret on its own line; this is a shared-comment convention, not a missing explanation."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Makefile:62-67 (docker-run) now passes -e TCGREPLAY_SPACES_ENDPOINT -e TCGREPLAY_SPACES_BUCKET -e TCGREPLAY_SPACES_KEY -e TCGREPLAY_SPACES_SECRET, bare names, so docker takes them from the exported environment. Makefile:49-55 documents the four exports. Note: the Makefile is not in this item's listed scope (only .do/app.yaml is), but the pointers name it as this item's file, and this criterion cannot be met without it."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The design doc table at 'TCG Review Playmat Design and Build Plan.md':319-322 has one row per variable. Each row gives the setting, 'environment only', and the default 'none: card cache kept on local disk only (lost on restart); some but not all four set -\u003e warning, local only'. Operator setup step 6 at line 116 says how to create a private Spaces bucket, create a Spaces access key limited to it with read and write, and set the four variables encrypted. Line 96 gives the trial-limits summary. The doc is outside the listed scope (only .do/app.yaml), but the pointers name it as this item's file and the criterion requires it."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Searched the code root (excluding .git, node_modules and .spektacular) for cache-with-lost/wiped/erased phrasing and for 'card cache'. Hits in deploy files and the design doc are conditional on the no-settings default: .do/app.yaml:11-13 (kept when the Spaces settings are set, 'lost too' without them), .do/app.yaml:75-76 ('Leave all four unset to keep a local-only cache (lost on every deploy)'), and design doc:96 ('So is the card cache, unless the shared store is configured') and :319-322 ('none: ... lost on restart'). The Dockerfile (lines 1-9 and 29-30) and Makefile make no unconditional claim. The only unconditional 'lost' in the design doc is about games (line 96), which the criterion does not cover. .dockerignore is unchanged: no hunk in tcgreplay.diff. Dockerfile line 29-30 still says the card cache goes under /home/nonroot, which is accurate."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c9549726-3611-4275-a486-2bc9a5b0cf86",
+      "title": "Update the card cache knowledge entry",
+      "checks": [
+        {
+          "at": "2026-11-04T14:05:02Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c9549726-3611-4275-a486-2bc9a5b0cf86",
+            "title": "Update the card cache knowledge entry",
+            "criteria": [
+              "A reader of the card cache entry learns that hosted mode can keep entries in Spaces under `tcgdex/`, which settings switch it on, and that local disk is a per-run copy.",
+              "The entry says that forcing fresh data on the hosted playmat means removing the `tcgdex/` objects as well as restarting, until admin cache clearing exists.",
+              "The entry says the cached-only lookup and offline mode never read the shared store, and that a shared-store outage is logged and skipped for a minute at a time."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcgdex-cache-never-expires.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The exported entry (goal-check/knowledge-entry.md:57-69) says hosted mode with all four TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET set wraps the disk store in a tiered store over Spaces, that entries are kept under tcgdex/ at the disk path, and that the hosted cache directory is only a per-run copy (a disk miss is read from Spaces and copied to disk). Code agrees: cmd/tcgreplay/hosted.go hostedCardDB (diff lines 181-206) builds cards.NewTieredStore only when all four are set in hosted mode; internal/cards/spacesstore.go:13,25 uses the tcgdex/ prefix; tiered.go:107-123 copies a shared hit to local with its Fetched time."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "knowledge-entry.md:81-86 says that on the hosted playmat with the shared store on, restarting is not enough because the restart refills disk from Spaces, so the bucket's tcgdex/ objects (or the affected ones) must be deleted as well, until admin cache clearing exists. Consistent with tiered.go:107-109 (local miss falls through to shared) and hosted.go's warm on start-up."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "knowledge-entry.md:71-73 says Cached and offline mode read only the local tier (Client.localStore) and never Spaces. Code: internal/cards/cards.go:223-241 defines localStore and readStore (offline returns localStore); cards.go:334 recheck uses localStore; cards.go:467 Cached uses localStore; loadEntry and Card use readStore. knowledge-entry.md:74-79 says a Spaces failure is logged once ('shared store unavailable') and Spaces is skipped for 1 minute (SharedRetryAfter). Code: tiered.go:17 SharedRetryAfter = time.Minute; tiered.go:72-80 failed() logs only the first failure of an outage and sets the skip window; tiered.go:112-114 skip() short-circuits shared reads during the window."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "1e7d6bb7-a950-4432-b4db-f374ae7baa94",
+      "title": "Create the Spaces bucket and set its secrets",
+      "checks": [
+        {
+          "at": "2026-11-04T14:07:14Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "1e7d6bb7-a950-4432-b4db-f374ae7baa94",
+            "title": "Create the Spaces bucket and set its secrets",
+            "criteria": [
+              "A private Spaces bucket exists for the hosted playmat, with an access key that can read and write it.",
+              "The four shared-store variables are set on the hosted playmat's App Platform component, with the key and secret encrypted.",
+              "After a redeploy, the hosted playmat's start-up log names the shared store, and no shared-store warning appears."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/sets.json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Nothing in the repo can show a Spaces bucket or access key exists. The staged diff (tcgreplay.diff) and status (tcgreplay.status) contain no bucket name, key id or provisioning record. .do/app.yaml:71-79 only describes the bucket as something to create in the control panel ('a private DigitalOcean Spaces bucket ... a Spaces access key limited to that bucket with read and write'). Existence can only be confirmed in the DigitalOcean account, which this review could not access."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The declaration side is present: .do/app.yaml:80-91 declares TCGREPLAY_SPACES_ENDPOINT, TCGREPLAY_SPACES_BUCKET, TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET on the playmat service as type: SECRET with scope RUN_TIME, so they are encrypted when set. The values are not in the repo by design (the file says they are set in the control panel), and the diff has no evidence they were set. Setting the values on the App Platform component cannot be verified from the files."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The code path that would produce the log exists: cmd/tcgreplay/hosted.go hostedCardDB (diff lines ~181-206) logs 'card cache: \u003cdir\u003e backed by shared store \u003ccfg\u003e' when all four settings are present, and logs 'warning: card cache: ...' only for partial or invalid settings; warmCatalog logs 'card cache: catalog warmed in ...'. However, no redeploy or deployment log is available, so the start-up log naming the shared store and the absence of a shared-store warning cannot be confirmed from the files. Verification commands were not run for this item and cannot be run without DigitalOcean access."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T14:07:59Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "1e7d6bb7-a950-4432-b4db-f374ae7baa94",
+            "title": "Create the Spaces bucket and set its secrets",
+            "criteria": [
+              "A private Spaces bucket exists for the hosted playmat, with an access key that can read and write it.",
+              "The four shared-store variables are set on the hosted playmat's App Platform component, with the key and secret encrypted.",
+              "After a redeploy, the hosted playmat's start-up log names the shared store, and no shared-store warning appears."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/sets.json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Nothing in the code root shows a private Spaces bucket or an access key. The only references are in .do/app.yaml:71-79 (a comment describing the bucket and key as things to create) and in the design doc diff, which describe the manual steps (step 6, 'TTCG Review Playmat Design and Build Plan.md' diff around line 116). No bucket name, region or key ID appears in the diff or status, and the bucket cannot be checked from the files. The criterion can be met by a control-panel step, but the files do not show it yet."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The diff declares the four variables in .do/app.yaml:80-91, each with scope RUN_TIME and type SECRET and no value, which is the encrypted mechanism. Their values are not in any file, so the diff cannot show they are set on the playmat component. The values must be set in the App Platform control panel (the file's comments at lines 71-79 and the design doc step 6 say so). No evidence of that was available here."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Code path only: cmd/tcgreplay/hosted.go in the diff logs 'card cache: %s backed by shared store %s' (line 204) when all four settings are present and 'warning: card cache: ...' only for partial or invalid settings (lines 192, 200). The shared-store line is therefore emitted under the right config, but no deployment log was available, and a redeploy cannot be checked from the files. The criterion cannot be verified until the redeploy happens."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T14:08:36Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "1e7d6bb7-a950-4432-b4db-f374ae7baa94",
+            "title": "Create the Spaces bucket and set its secrets",
+            "criteria": [
+              "A private Spaces bucket exists for the hosted playmat, with an access key that can read and write it.",
+              "The four shared-store variables are set on the hosted playmat's App Platform component, with the key and secret encrypted.",
+              "After a redeploy, the hosted playmat's start-up log names the shared store, and no shared-store warning appears."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/sets.json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "No file in the code root proves a Spaces bucket exists or that an access key was created. The only related text is the instruction in the 'Deploying' section of the plan doc (step 6 in 'TCG Review Playmat Design and Build Plan.md', around line 116 of the diff) and the comments at .do/app.yaml:71-79, which describe what to create. These are instructions, not evidence of the bucket. Per the plan the item is a human task in the DigitalOcean control panel, and no control-panel access is available, so this criterion stays unverified and not_met from the files."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The declarations exist: .do/app.yaml:80-91 lists TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET with 'type: SECRET' and scope RUN_TIME, and no values. That makes them encrypted secrets in the spec, and the variable names match internal/spaces/config.go:14-17. However, the values being set on the App Platform component is a control-panel step (doctl apps update does not carry secret values, per the plan), and no file in the repo shows the values are set. Not verifiable from the files."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The code path that would produce the log lines exists: cmd/tcgreplay/hosted.go hostedCardDB logs 'card cache: %s backed by shared store %s' on success (around line 204), and warmCatalog logs 'card cache: catalog warmed in %s' (around line 222). Neither a deploy nor a start-up log is available here, so whether the hosted playmat actually logs the shared store after a redeploy, with no shared-store warning, cannot be confirmed from the files. The redeploy and log check are human steps."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-04T14:08:38Z",
+          "round": 1,
+          "decision": "skip",
+          "reason": "human task left for the operator (needs the DigitalOcean control panel); orchestrator reports it to the user"
+        }
+      ],
+      "attempts": 3,
+      "state": "skipped"
+    }
+  ]
+}

@@ -31,9 +31,10 @@ never by print number.
 
 **Set-code collisions.** TCGdex gives some sets the same official
 abbreviation: `30th` and `30th-c` are both `30C`, and `cel25` and `cel25cc` are
-both `CEL`. The set index keeps the shorter id (the main set), so the result no
-longer depends on fetch order. Set codes that exports spell their own way
+both `CEL`. The set-code index keeps the shorter id (the main set), so the result
+no longer depends on fetch order. Set codes that exports spell their own way
 (`30th`, `30TH`, `M30`) go straight to a set id through `setAliases` in
 `internal/cards`. The deck parser accepts set codes that start with digits
-(`30th`). Bump the index cache filename (now `set-index-v2.json`) whenever the
-way the index is built changes, so stale caches get rebuilt.
+(`30th`). The set-code index is not persisted: it is rebuilt in memory from the
+cached set files on each start (`internal/cards/catalog.go`), so a change to how
+it is built takes effect on restart with no cache file to bump or delete.

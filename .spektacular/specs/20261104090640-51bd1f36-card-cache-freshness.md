@@ -31,31 +31,31 @@ The playmat's card database refreshes its cached card data on its own, at interv
 -->
 ## Requirements
 
-- [ ] **Set list refreshes**
+- [x] **Set list refreshes**
   The system must treat the cached list of sets as stale no later than 30 days after it was fetched.
-- [ ] **Set card lists refresh**
+- [x] **Set card lists refresh**
   The system must treat each set's cached card list as stale no later than 90 days after it was fetched. A set barely changes once released; additions such as new promos are picked up by "Misses checked against fresh data".
-- [ ] **Imageless cards refresh**
+- [x] **Imageless cards refresh**
   The system must treat a card cached without artwork as stale no later than 24 hours after it was fetched.
-- [ ] **Cards with art are kept**
+- [x] **Cards with art are kept**
   The system must keep a card cached with its artwork without refetching it on a schedule.
-- [ ] **Stale data served while refreshing**
+- [x] **Stale data served while refreshing**
   A lookup that finds what it asked for in stale data must get the stale copy at once, and the system must then refresh that entry. Once the refresh finishes, later lookups must see the refreshed data.
-- [ ] **Misses checked against fresh data**
+- [x] **Misses checked against fresh data**
   A lookup that does not find what it asked for in cached data (an unknown set code, or a card number missing from a set) must refresh that data before answering, unless the same miss already triggered a refresh in the last 5 minutes. A set released or a promo added since the data was fetched then resolves on the first try.
-- [ ] **Stale data kept when the source fails**
+- [x] **Stale data kept when the source fails**
   When a stale entry cannot be refreshed because the card source errors or takes longer than 5 seconds to answer, the system must keep serving the stale copy rather than failing.
-- [ ] **Name lookup follows set changes**
+- [x] **Name lookup follows set changes**
   When a refresh changes the set list or a set's card list, by-name card lookups must reflect the change without a restart.
-- [ ] **Existing caches carried over**
+- [x] **Existing caches carried over**
   Local caches written before this change must stay usable after the upgrade. An entry with no recorded fetch time takes its file's modification time as its fetch time, so it is refreshed only once that age passes its refresh age. Offline mode must keep serving these entries.
-- [ ] **Board stays responsive while card data loads**
+- [x] **Board stays responsive while card data loads**
   Board reads, plays and lookups of cards that are already cached must not be delayed while the set list and set card lists are being fetched, or while other cards are being fetched.
-- [ ] **One request for the same data**
+- [x] **One request for the same data**
   Simultaneous requests needing the same card data must result in only one request to the card source for that data.
-- [ ] **Failed lookups remembered briefly**
+- [x] **Failed lookups remembered briefly**
   After the card source fails to return a card (it reports the card as unknown, errors, or does not answer), the system must not ask it for that card again for at least 5 minutes. Repeated reads of that card in the meantime must return at once with no card data, so the card shows by name only.
-- [ ] **Offline mode unchanged**
+- [x] **Offline mode unchanged**
   With offline mode on, the system must use only data already cached locally and never contact the card source, regardless of how old the data is.
 
 <!--
@@ -83,33 +83,33 @@ The playmat's card database refreshes its cached card data on its own, at interv
 -->
 ## Acceptance Criteria
 
-- [ ] **New set resolves on first try**
+- [x] **New set resolves on first try**
   With a set list cached more than 30 days ago that lacks a set the card source now lists, a deck naming that set's code resolves on the first import, without anyone clearing the cache.
-- [ ] **New promo resolves on first try**
+- [x] **New promo resolves on first try**
   With a set's card list cached less than 90 days ago that lacks a card the card source now has in that set, a deck naming that card by set code and number resolves on the first import, without anyone clearing the cache.
-- [ ] **New set resolves against a recent set list**
+- [x] **New set resolves against a recent set list**
   With a set list cached less than 30 days ago that lacks a set the card source now lists, a deck naming that set's code resolves on the first import.
-- [ ] **Repeated miss not refetched**
+- [x] **Repeated miss not refetched**
   Looking up the same unknown set code twice within 5 minutes makes exactly one request to the card source for the set list.
-- [ ] **Late art appears**
+- [x] **Late art appears**
   A card cached without artwork more than 24 hours ago, which the card source now shows with artwork, appears on the board with its artwork on a view after the first lookup's refresh has finished, without a restart or a cache clear.
-- [ ] **Art kept**
+- [x] **Art kept**
   Looking up a card cached with artwork, however long ago, makes no request to the card source.
-- [ ] **Stale served when source down**
+- [x] **Stale served when source down**
   With the card source unreachable, or answering only after more than 5 seconds, and every cached entry past its refresh age, the playmat still imports a game, resolves deck codes and shows card text and art from the stale copies, with no error shown to the player.
-- [ ] **Name lookup refreshed in place**
+- [x] **Name lookup refreshed in place**
   After a refresh adds a new set to the set list while the playmat is running, a card known only by name (such as an opponent's card) resolves to that set's print without a restart.
-- [ ] **Old cache still works**
+- [x] **Old cache still works**
   A local cache written by the previous release, opened by the new one in offline mode, serves every card it holds. Opened online, it makes no requests to the card source for entries whose file age is below their refresh age.
-- [ ] **Set data kept between refreshes**
+- [x] **Set data kept between refreshes**
   Looking up cards in a set whose card list was cached less than 90 days ago, with a set list cached less than 30 days ago, makes no request to the card source for either.
-- [ ] **No stall during a cold build**
+- [x] **No stall during a cold build**
   Starting with empty caches, while a first import is still fetching the set list and set card lists, a board read or card text request for a card the import has already cached returns within one second.
-- [ ] **One request for the same card**
+- [x] **One request for the same card**
   Several simultaneous requests that need the same uncached card produce exactly one request to the card source for that card.
-- [ ] **Failed lookups not retried at once**
+- [x] **Failed lookups not retried at once**
   Repeatedly reading a board that holds a card whose lookup fails (it is unknown to the card source, or the source is unreachable) makes at most one request for that card to the card source in 5 minutes. Each repeated read returns within one second.
-- [ ] **Offline untouched**
+- [x] **Offline untouched**
   In offline mode, with only stale local data cached, the playmat serves that data and makes no network requests to the card source.
 
 <!--

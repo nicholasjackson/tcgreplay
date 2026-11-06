@@ -1,0 +1,673 @@
+{
+  "plan": "20261104090640-51bd1f36-card-cache-freshness",
+  "items": [
+    {
+      "item": "319e4ac7-542c-40f9-8d3e-4f0af0454fd1",
+      "title": "Add the cache store with fetch times",
+      "checks": [
+        {
+          "at": "2026-11-04T12:40:00Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "319e4ac7-542c-40f9-8d3e-4f0af0454fd1",
+            "title": "Add the cache store with fetch times",
+            "criteria": [
+              "An entry put into the disk store comes back with the same body and exactly the same fetch time.",
+              "A cache file written by the previous release is read back as an entry whose body is the file's content and whose fetch time is the file's modification time.",
+              "Asking for a key that was never stored reports \"not cached\", distinct from any other error.",
+              "Entries land at the same paths as today's cache files, and writes are atomic, so a crash never leaves a half-written entry."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".tmp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sets.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/store_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "store.go:89-104 Put writes the fetch time with e.Fetched.UTC().MarshalJSON(), which is RFC 3339 with nanoseconds, and keeps the body bytes unchanged via RawMessage. store.go:65-77 Get returns them from the envelope. store_test.go:13-51 (TestDiskStoreRoundTrip) checks the body byte for byte and the fetch time with Equal at a 123456789 ns value, including a non-UTC zone and a replace on second put."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "store.go:62-84 Get treats a file without the {fetched,data} envelope as legacy and returns the whole file content as Data and os.Stat ModTime as Fetched. store_test.go:53-95 (TestDiskStoreLegacy) writes bare bodies with a fixed mtime and asserts both the body and the mtime, for sets, sets/\u003cid\u003e, cards/\u003cid\u003e and an object with only one envelope key."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "store.go:25-26 defines ErrNotCached (\"not cached\"). store.go:65-70 returns it wrapped with %w only when os.ReadFile reports os.ErrNotExist. Other read errors are returned unwrapped (store.go:71-73). store_test.go:97-116 (TestDiskStoreNotCached) checks errors.Is ErrNotCached for missing keys and that a directory at the file path is an error other than ErrNotCached."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Paths: store.go:46-54 maps \"sets\" to \u003cdir\u003e/sets.json and \"\u003ckind\u003e/\u003cid\u003e\" to \u003cdir\u003e/\u003ckind\u003e/\u003csafeName(id)\u003e.json, using the same safeName as cards.go:200-202. cards.go:255,274,396,420,593 use sets.json, sets/\u003csafeName(id)\u003e.json and cards/\u003csafeName(id)\u003e.json, so the paths match. Atomicity: store.go:110-127 writes to a CreateTemp file in the same directory, closes it, then os.Rename onto the target, removing the temp file on failure. store_test.go:121-156 checks the paths and that no .tmp files remain. The write is not fsynced, so a power loss could still leave an empty file, but a process crash cannot leave a half-written entry."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "a7f5f7ae-709c-4b35-8e70-52f5c456e93c",
+      "title": "Route card lookups through the store",
+      "checks": [
+        {
+          "at": "2026-11-04T12:46:40Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a7f5f7ae-709c-4b35-8e70-52f5c456e93c",
+            "title": "Route card lookups through the store",
+            "criteria": [
+              "Cards, deck codes and by-name lookups give the same answers as before, and the existing card, deck, game and importer tests pass unchanged.",
+              "A card, set or set list fetched from the card source is saved with the time it was fetched.",
+              "A cache from the previous release, opened offline, serves every card, set and by-name lookup it served before.",
+              "Constructing the card database the way the app does today needs no new settings."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "set-index-v2.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/fake_tcgdex_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/store_client_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/byname_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The staged diff (goal-check/tcgreplay.diff) touches only internal/cards/cards.go among tracked files; no existing card, deck, game or importer test file is modified. The new test files (fake_tcgdex_test.go, store_client_test.go, store.go, store_test.go) are untracked additions. Lookup behaviour is kept: Card() still decodes the body then caches it (cards.go loadEntry/fetchEntry), Cached() and by-name use the same paths, and buildIndex still builds the same index from the set list. The existing suites are reported passing in the verification results; I did not re-run them. TestLegacyCacheOffline (store_client_test.go:121-194) also compares offline Card, Cached, Resolve and ByName output against seeded legacy data."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "fetchEntry (cards.go, diff lines ~99-113) calls c.store().Put(ctx, key, e) after fetch(), and fetch() stamps Entry.Fetched with c.now() (diff ~166-170). Card keys are 'cards/\u003cid\u003e', set keys 'sets/\u003cid\u003e' and the set list 'sets', all through loadEntry/fetchEntry. store.go:89-129 Put writes the envelope {\"fetched\":...,\"data\":...}. store_client_test.go:58-115 TestFetchedEntriesStored checks envelopes for cards/sv01-081, sets, sets/sv01 and sets/sv02 with the expected fetch times. Put's error is ignored by design (comment: a cache write failure only costs a refetch), so a failed write is not reported as saved."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "store.go:65-85 Get reads a bare legacy file (no envelope) and uses its mtime as the fetch time, and the path mapping in store.go:46-54 matches the old layout (sets.json, sets/\u003cid\u003e.json, cards/\u003cid\u003e.json). loadEntry (cards.go) reads the store before checking Offline, so offline lookups are served from the cache. buildIndex still reads set-index-v2.json (cards.go ~486-491) for the old index. store_client_test.go:121-194 TestLegacyCacheOffline seeds legacy bare files plus set-index-v2.json, runs offline, checks that the fake source got zero requests and that legacy files keep their mtime. The verification summary also reports TestByNameCached, TestLogCodesCached and TestResolve30th passing offline against the real ~/.cache/tcgreplay cache. I did not run them myself."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "NewClient(dir string) keeps its single-argument signature (cards.go ~190-203). It now sets Store: NewDiskStore(dir), Timeout: 5s and Now: time.Now, so the app's existing construction needs no new settings. A nil Store, nil Now or nil HTTP falls back to the same defaults (store(), now(), fetch()). store_client_test.go:196-236 TestNewClientDefaults checks this. Note for the caller, not a criterion: the Client.Timeout field is documented as bounding each request to the card source, but nothing reads c.Timeout (grep finds only the assignments in cards.go and the tests). Requests are still bounded only by the HTTP client's 20s timeout, so the field is inert."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "bd415d22-a274-4b78-83cc-456df13ddb11",
+      "title": "Deduplicate fetches and remember failed cards",
+      "checks": [
+        {
+          "at": "2026-11-04T12:50:32Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "bd415d22-a274-4b78-83cc-456df13ddb11",
+            "title": "Deduplicate fetches and remember failed cards",
+            "criteria": [
+              "Several simultaneous lookups of the same uncached card produce exactly one request to the card source, and all of them get the card.",
+              "A card the source reports as unknown, or cannot return because it is down or slower than 5 seconds, is requested at most once in 5 minutes. Lookups in between return within one second with no card.",
+              "Once 5 minutes have passed, the next lookup of a failed card asks the source again.",
+              "Offline mode still never contacts the card source."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/flight.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/fresh.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Client.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/flight_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/cards.go:127-158 (shared) routes every card fetch through c.flight.do keyed by \"cards/\u003cid\u003e\". internal/cards/flight.go:27-56 runs one fn per key, and later callers wait on the same call.done. The store write (cards.go:151) happens before the key is removed from the group, so late arrivals find the card in the store. internal/cards/flight_test.go:11-41 (TestOneRequestForSameCard) runs 10 simultaneous lookups and asserts one request and all 10 get 'Miraidon ex'."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "A failed fetch (unknown 404, error, timeout or unreachable) is recorded by noteCard (cards.go:310, fresh.go:43-52). Card() then returns ErrNotFound at once while recentlyFailed is true (cards.go:403-406, fresh.go:35-40); production bound is Client.Timeout=5s (cards.go:199, 357-360 via the fctx timeout in flight.go:37-41). flight_test.go:86-127 (TestFailedCardRemembered: unknown, erroring, slow) checks one request in the window, each repeat under 1s, and a repeat-lookup count of 1. TestFailedCardDown (flight_test.go:129-154) covers the source being down. Caveat: a lookup that joins a request still in flight waits for that request, up to 5s, rather than returning in under 1s. The criterion reads 'in between' as lookups after the failure, so I count this as met, but it is a judgment call."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "fresh.go:18-23 recent() returns now.Sub(t) \u003c RetryAfter (RetryAfter = 5*time.Minute, fresh.go:7), so at 5 minutes or later the card is no longer recent and cards.go:405-408 falls through to shared(). flight_test.go:120-124 advances the fake clock 6 minutes and asserts a second request; flight_test.go:150-153 checks recentlyFailed is false after 6 minutes."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Card() returns ErrNotFound before any request when c.Offline is set (cards.go:403-404). loadEntry returns before shared when offline (cards.go:262-265). buildIndex returns before fetchEntry when offline (cards.go:573-575, and fetchEntry is only called from there at cards.go:578). Resolve only rebuilds the index when !c.Offline (cards.go:644). buildNameIndex and set go through loadEntry, so they are guarded. The only http.Request construction in the package is in fetch (cards.go:357). flight_test.go:175-197 (TestOfflineNoRequests) runs Card three times plus Resolve and ByName offline and asserts zero hits."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "013ab016-d61d-4022-b6e2-8966b5614f21",
+      "title": "Build the card catalog outside the database lock",
+      "checks": [
+        {
+          "at": "2026-11-04T13:00:57Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "013ab016-d61d-4022-b6e2-8966b5614f21",
+            "title": "Build the card catalog outside the database lock",
+            "criteria": [
+              "Starting with empty caches, while a first import is still fetching set data, a lookup of a card that is already cached returns within one second.",
+              "Several imports resolving deck codes at once fetch each set only once.",
+              "Deck codes and by-name lookups pick the same prints as before, including the shorter id for sets that share a code.",
+              "The playmat no longer reads or writes the persisted set index file, and an old one left on disk does no harm."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "c.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "c.cat"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "set-index-v2.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/byname_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Card and Cached read the store and c.mem under c.mu only briefly, never across I/O: internal/cards/cards.go:247-283 and 287-312. A cold catalog build runs in ensureCatalog (internal/cards/catalog.go:45-72) via flightGroup, and buildCatalog/loadSets (catalog.go:83-143) hold no client lock during fetches. TestCatalogBuildDoesNotBlockLookups (internal/cards/catalog_test.go:46-104) holds the set requests, then requires Card and Cached to return within time.Second while Resolve is blocked. The verify summary reports this test passing under -race."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The catalog is built once: ensureCatalog runs the build under flight key \"catalog\" and publishes it (catalog.go:54-65, 75-79). Each set is loaded once through loadEntry, which uses the single-flight group and rechecks the store inside the flight before fetching (cards.go:98-118 region, 140-164; flight.go:27-56). TestCatalogBuiltOnce (catalog_test.go:106-158) runs six concurrent Resolve calls on empty caches and asserts /sets, /sets/sv01 and /sets/sv02 are each requested exactly once. The test passes in the verify summary."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "indexes() (catalog.go:153-214) keeps the same rules as the removed buildIndex and buildNameIndex: the shorter id wins for shared codes with a lexical tie-break (catalog.go:176-183), tcgp sets are skipped for names but not codes, and print preference is art, then release date, then number, with lettered prints last. TestCatalogSharedCodeKeepsMainSet (catalog_test.go:160-188) checks the 30th/30th-c pick in both list orders. TestCatalogPrintPreference (catalog_test.go:190-237) checks print order and the basic-energy fallback. The one-off check against the real cache (200 codes, 0 differing) is reported in the verify summary, not reproduced here."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "A grep of the whole code root for set-index, setIndex, buildIndex and indexed finds set-index-v2.json only in test files (catalog_test.go:255, 264; store_client_test.go:132) and in notes and knowledge. The set-index file path and its read and write code are gone from cards.go, and the diff shows the removed buildIndex and its os.WriteFile. The Resolve and prints paths use the in-memory catalog only (cards.go:562-618, 662-677). TestCatalogNoSetIndexFile (catalog_test.go:239-299) checks that no set-index file is written and that a stale one, online and offline, is neither read nor rewritten."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "739b3a00-fb90-4918-abf2-65f7d1b9548e",
+      "title": "Keep card fetches out of the game lock",
+      "checks": [
+        {
+          "at": "2026-11-04T13:03:55Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "739b3a00-fb90-4918-abf2-65f7d1b9548e",
+            "title": "Keep card fetches out of the game lock",
+            "criteria": [
+              "A board read or a play on a game holding a card whose fetch hangs returns within one second.",
+              "Repeated board reads of a game holding a card whose lookup fails each return within one second.",
+              "A card missing from the cache when it is first needed is fetched in the background, and later reads see it once that fetch finishes.",
+              "Games built from decklists and imported games behave as before, and the existing game tests pass unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Game.card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/cardlock_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/game.go:487-497: Game.card now only calls g.db.Cached and, on a miss, g.warm(def) and returns nil; it never calls g.db.Card, so no network wait happens under g.mu. Board reads and plays reach it via verbs.go:85,160,375,404,433,566 and reads.go:303,463,500. internal/game/cardlock_test.go:108-139 (TestBoardReadsDoNotWaitOnHungFetch) times View, SearchDeck, Warnings, a Move that infers from the card def, and 20 repeated reads against a hung fetch with a 1s limit. The verify run reports this test passing with -race -count=3. Caveat: Cached on the real cards.Client does a disk read under g.mu, but that is local I/O, not the card source, so it does not break this criterion."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/game/cardlock_test.go:141-152 (TestBoardReadsWithFailingCard) runs 20 View and SearchDeck calls against a fetch that errors and asserts each is under 1s and that the fetch was attempted in the background. The non-blocking path is game.go:487-497 with warm at game.go:501-511, and the failing-lookup memory is in cards.go Card (recentlyFailed). Verify run passes."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "game.go:501-511: warm starts a goroutine calling g.db.Card with a 5s timeout, deduplicated by the g.warming sync.Map (game.go:88-90, LoadOrStore/Delete). cards.go Card stores the result in c.mem via remember, so Cached later returns it. cardlock_test.go:154-185 (TestMissingCardWarmedInBackground) polls SearchDeck until the card's Category becomes \"Trainer\" and checks exactly one fetch. The test has a t.Skip branch if the deck has no Ultra Ball; the verify run reports no skips for the -run pattern, so the branch was not taken."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The diff touches no existing test file: only internal/game/game.go (warming field, card, warm) and the new internal/game/cardlock_test.go are changed in this item. Decklist construction still goes through manager.go:216-227 (l.Resolve and db.Card) and import.go:96, which are unchanged by the diff. Verify run reports go test -race ./internal/game ./internal/webui ./internal/mcpserver passing and only the pre-existing cmd/tcgreplay TestHostedGuidesMatchDesktop failure, which also fails on base 8c26660. Judged from the diff and files; I did not re-run the tests."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "80112c38-1d01-417f-b5ac-fa258f8061a5",
+      "title": "Refresh stale cards in the background",
+      "checks": [
+        {
+          "at": "2026-11-04T13:07:19Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "80112c38-1d01-417f-b5ac-fa258f8061a5",
+            "title": "Refresh stale cards in the background",
+            "criteria": [
+              "A card cached without artwork more than 24 hours ago is returned at once from the cache. Once the refresh finishes, lookups show the artwork the card source now has, with no restart or cache clear.",
+              "A card cached with artwork, however long ago, causes no request to the card source.",
+              "With the card source down or slow, a stale card is still served with no error, and the source is asked again no sooner than 5 minutes later.",
+              "A previous-release card file younger than 24 hours causes no request; an older imageless one is refreshed and saved with its new fetch time.",
+              "In offline mode, stale cards are served and the card source is never contacted."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/fresh.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "c.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/fresh_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "A stale imageless card is returned from memory or the store with no wait: Card (cards.go:402-405, 426-428) and Cached (cards.go:434-437, 449-451) call refreshCardIfStale, which only starts a goroutine (fresh.go:84-103, 107-119). That goroutine calls shared(..., false) (cards.go:306-330), then remember() replaces the in-memory entry (fresh.go:111-118, cards.go:238-249), so later lookups show art without a restart. TestLateArtAppears (fresh_test.go:75-112) covers Card and Cached, checks the first lookup takes under 100 ms against a 200 ms source, and checks the envelope with the new fetch time. Tests were not re-run; this relies on reading them plus the given pass result."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cardStale (fresh.go:76-78) is true only when e.card.Image == \"\", so a card with art never triggers maybeRefresh. energyArt runs before remember (cards.go:425, 448), so borrowed Basic Energy art also counts as art. TestCardWithArtKept (fresh_test.go:31-50) checks zero requests for both Card and Cached over 3 lookups, and TestBorrowedEnergyArtKept (fresh_test.go:260-278) covers the energy case."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "A stale card is served from the store or memory before any network call, so a down, failing or slow source returns no error (cards.go:402-428; the refresh is detached in fresh.go:97-102). maybeRefresh records the attempt time in tracker.bg and skips any key attempted less than RetryAfter (5 min) earlier (fresh.go:9-24, 88-95). TestStaleCardServedWhenSourceFails (fresh_test.go:117-178) covers down, failing and slow sources, checks no error and at most one request, and checks there is no retry at 4 minutes and a retry at 6. TestStaleCardSlowSourceCounted (fresh_test.go:182-202) checks one request per 5 minutes against a slow source."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "diskStore.Get treats a bare file as a previous-release entry and uses its mtime as the fetch time (store.go:62-85). A 1-hour-old legacy card with no art is not stale (fresh.go:76-78), so no request is made. A 25-hour-old legacy imageless card is refreshed in the background and saved as an envelope via diskStore.Put with fetched set to the new fetch time (store.go:89-129, cards.go:323 inside shared). TestLegacyCardAges (fresh_test.go:204-233) checks zero hits for the young card, one hit for the old card, and the envelope at testEpoch."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "maybeRefresh returns immediately when c.Offline is set (fresh.go:84-87), so no background refresh starts. Card and Cached read only from the store or memory in offline mode (cards.go:412-413 returns an error on a store miss without touching the network). TestOfflineStaleCardsUntouched (fresh_test.go:237-256) serves a stale imageless card and a stale legacy card through both lookups and asserts the fake source received zero requests. TestLegacyCacheOffline (store_client_test.go:121-194) also asserts zero source requests offline."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "98142a67-9383-4af7-b5b6-dd83ca083519",
+      "title": "Refresh set data and check misses against fresh data",
+      "checks": [
+        {
+          "at": "2026-11-04T13:16:09Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "98142a67-9383-4af7-b5b6-dd83ca083519",
+            "title": "Refresh set data and check misses against fresh data",
+            "criteria": [
+              "A deck naming a set the cached set list lacks resolves on the first import, whether the cached list is older or younger than 30 days.",
+              "A deck naming a card that a recently cached set lacks, but the card source now has, resolves on the first import.",
+              "Looking up the same unknown set code twice within 5 minutes makes exactly one request for the set list.",
+              "With the set list younger than 30 days and a set younger than 90 days, looking up that set's cards makes no request to the card source.",
+              "After a refresh adds a new set while the playmat runs, a card known only by name resolves to that set's print without a restart.",
+              "With the card source down or slow and all set data stale, deck codes and by-name lookups still answer from the stale copies with no error.",
+              "In offline mode, stale set data is served and the card source is never contacted."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "c.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/fresh.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/setfresh_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cards.go Resolve (new code path): setIndex miss -\u003e missAllowed(\"code:\"+code) -\u003e refreshSetList (catalog.go:302) fetches /sets and loads newly listed sets, then re-looks up the code. Does not depend on list age, so it holds for stale and young lists alike. setfresh_test.go:31 TestUnknownSetResolvesFirstTime runs both 31-day and 2-day list ages and checks NEW 1 resolves to new-001."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cards.go Resolve: findNumber miss -\u003e missAllowed(\"num:\"+setID+\":\"+number) -\u003e refreshSet (catalog.go:324) fetches /sets/\u003cid\u003e, update() publishes it, findNumber on the fresh list. setfresh_test.go:96 TestMissingNumberResolvesFirstTime: sv01 seeded 10 days old, SVI 200 resolves to sv01-200 on first call, and the refreshed set serves later lookups (same test checks ByName Latemon)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "catalog.go:416 missAllowed records the miss in tracker.miss and refuses the same key for RetryAfter (fresh.go:26 RetryAfter = 5 min). Resolve only calls refreshSetList when missAllowed is true, so the second lookup within 5 minutes makes no /sets request. setfresh_test.go:134 TestUnknownCodeMissOncePerRetry asserts exactly one /sets hit within 5 minutes and a second after 6 minutes."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "With list 10 days and sets 50 days old, withStaleAt (catalog.go:162) gives staleAt about 40 days out, so maybeSweep (catalog.go:337) starts nothing. Resolve and ByName are answered from the store-loaded catalog with no miss, so no refresh path runs. setfresh_test.go:205 TestYoungSetDataNoRequests checks Resolve SVI 1, Resolve PAL 001, ByName Miraidon ex and asserts totalHits == 0."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Catalog.go:250 update() publishes a catalog with the new set's index and byName recomputed when a body or the set list changed. sweep (catalog.go:369) reloads the list once it is past SetListMaxAge and loads newly listed sets, then publishes. prints() (cards.go:683) reads the current catalog via ensureCatalog, so no restart is needed. setfresh_test.go:320 TestNewSetFollowedByName: after the list passes 30 days, ByName Brandnew resolves to new-002 and ByName Newmon to new-001 on the same client."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Lookups use the stale in-memory catalog (catalog.go:47 ensureCatalog returns it without waiting on the network). Background refreshes run in goroutines (catalog.go:353 sweep) and their failures are dropped (catalog.go:376, loadSets errors ignored; update only runs when list != nil or fresh is non-empty). Stale copies are not overwritten on failure. Per-request timeout comes from Client.Timeout via flight.go:27. setfresh_test.go:368 TestStaleSetDataSourceDown covers the down and slow (1 s vs 300 ms timeout) cases over two passes, with no error and the stale files still on disk."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "Offline: loadEntry (cards.go shared/loadEntry path) returns not-cached-offline errors without touching the source; missAllowed returns false when c.Offline (catalog.go:417), so no set-list or set refresh starts; maybeSweep returns when Offline (catalog.go:338); buildCatalog serves stored data. Resolve NEW 1 and SVI 200 return errors (not found). setfresh_test.go:409 TestOfflineStaleSetData asserts the stale SVI 1 and Pineco lookups succeed and the fake records zero requests."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "6967f59a-3846-4e45-b250-8821f21100cb",
+      "title": "Prove the playmat plays on with the card source down",
+      "checks": [
+        {
+          "at": "2026-11-04T13:23:34Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "6967f59a-3846-4e45-b250-8821f21100cb",
+            "title": "Prove the playmat plays on with the card source down",
+            "criteria": [
+              "With every cached entry past its refresh age and the card source unreachable, a game builds from decklists with set codes, with no error and no warnings beyond those a fresh cache gives.",
+              "Card text and artwork come from the stale copies, and board reads each return within one second.",
+              "A card the stale cache lacks shows by name only, and repeated board reads do not retry it within 5 minutes."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/cardsource_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sets/tst"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sets/sve"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/cardsource_test.go:140-187 (TestPlaysOnWithSourceDown) builds a game from testDeck (game_test.go:18-29, set codes TST and SVE) through the manager over a cache whose entries are stamped 400 days old (line 146), with a dead source. It asserts no error from m.New (line 129), that every warning contains ' mulliganed ' (149-153), that the warnings equal those of a fresh-cache build (148, 154-155), and that every card resolves (158-162). Refresh ages are SetListMaxAge 30d, SetMaxAge 90d, ImagelessCardMaxAge 24h (cards/fresh.go:11-18), so 400 days is past every age. Both 'unreachable' and 'slow' subtests run (lines 142-144)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cardsource_test.go:164-174 asserts Iono (tst-4) text contains 'Each player shuffles their hand' and Riolu (tst-1) Image equals the seeded artwork URL, both served from the stale copies (seed at lines 103-112 writes cards with stale fetched time). cardsource_test.go:176-184 runs 5 View reads per seat through quick(), and quick (internal/game/cardlock_test.go:84-91) fails any call taking a second or more. Client.Timeout is 200 ms (line 125), so the dead source cannot block a read. Caveat: no run output was captured for the one intermittent internal/game FAIL, so reliability of the timing assertions is unverified."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cardsource_test.go:189-232 (TestUncachedCardWithSourceDown) uses deck 'Ghostmon TST 9' (line 193) with tst-9 absent from the seeded cache (seed comment line 61, Ghostmon is not put in cards/). It asserts the card resolves with Name 'Ghostmon' (lines 202-209), client.Cached('tst-9') is nil (213-215), at most one request while building (216-218), 10 rounds of View and SearchDeck reads (220-223) add no requests (229-231), and a direct Card lookup returns ErrNotFound with 'recently failed' (225-228). The 5-minute window is implemented as cards/fresh.go:24 RetryAfter = 5*time.Minute, applied in recentlyFailed (fresh.go:58-63) and noteCard (fresh.go:66-75), and used by cards.go:274-275. Risk noted, not a failing verdict: game.go warm() runs the fetch in a goroutine, so the 'before' snapshot at cardsource_test.go:216 may be taken before that fetch lands, which would be a false failure, not a false pass. This could be the uncaptured flaky FAIL, but the output was not captured so I cannot confirm it."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "dc01362a-e359-4508-b44d-d88f6e905ebb",
+      "title": "Update the card cache knowledge entries",
+      "checks": [
+        {
+          "at": "2026-11-04T13:25:45Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "dc01362a-e359-4508-b44d-d88f6e905ebb",
+            "title": "Update the card cache knowledge entries",
+            "criteria": [
+              "No knowledge entry still says the card cache never expires or tells readers to bump the set index filename.",
+              "A reader of the card cache entry learns each kind's refresh age, how fetch times are recorded, and how to force fresh data."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcgdex-cache-never-expires.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "set-index-v2.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcg-live-log-card-codes.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Read the read-back copies. gotchas/tcgdex-cache-never-expires.md:11-12 says only \"(This file's name is historical: until late 2026 the cache never expired.)\", which is past tense and describes the old behaviour, not a current claim. The current text says a card with artwork is never refreshed (line 20), so the card cache is not described as never expiring. Nothing tells the reader to bump the set index file: gotchas/tcgdex-cache-never-expires.md:51-55 says an old set-index-v2.json or set-index.json left on disk is ignored and nothing deletes it. gotchas/tcg-live-log-card-codes.md:39-40 and :239-240 say the set-code index is rebuilt in memory on start \"with no cache file to bump or delete\", which tells the reader there is nothing to bump. The all-entries file has no other 'never expire' or 'bump the index' text (knowledge-all-entries.txt scanned, only the two tcgdex-cache-never-expires lines and the tcg-live-log-card-codes lines above)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "gotchas/tcgdex-cache-never-expires.md:14-20 gives each kind's refresh age: set list 30 days (SetListMaxAge), a set's card list 90 days (SetMaxAge), a card without artwork 24 hours (ImagelessCardMaxAge), a card with artwork never. Checked against internal/cards/fresh.go:12-18 (constants 30d, 90d, 24h match). Fetch times are at lines 43-49: new files are an envelope {\"fetched\":\"\u003cRFC 3339\u003e\",\"data\":...}, and files without the envelope use their mtime and are rewritten on refresh. This matches the envelope type in internal/cards/store.go:56-58. How to force fresh data is at lines 57-59: delete the cache directory (or the affected files) and restart. The hosted-image note is also there."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    }
+  ]
+}

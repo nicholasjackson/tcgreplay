@@ -1,0 +1,1030 @@
+{
+  "plan": "20261104090640-25f673ed-card-image-cdn",
+  "items": [
+    {
+      "item": "e52e31a8-9a3f-49f2-9001-313ea09e2c9d",
+      "title": "Carry an image fallback on the card endpoint",
+      "checks": [
+        {
+          "at": "2026-11-04T14:15:01Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "e52e31a8-9a3f-49f2-9001-313ea09e2c9d",
+            "title": "Carry an image fallback on the card endpoint",
+            "criteria": [
+              "With no image source, a card's answer from the card endpoint is the same as before this change: the same image address and no fallback field.",
+              "With an image source that gives a different address, the answer's image is that address and its fallback is the card source's address.",
+              "A card without an image has neither an image nor a fallback in its answer, and the image source is not asked about it.",
+              "The card endpoint still answers without waiting on the network for the image decision."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "server.go:169-175 sets img to c.Image and fb to \"\" when s.Images is nil, so the answer keeps the same image and no fallback. ImageFallback is tagged omitempty (server.go:152), so the key is absent. webui_test.go:117-124 (\"no image source\" subtest) asserts both."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "server.go:170-174 sets img, fb = s.Images.Image(c.Image) and clears fb only when it equals img. The stub in webui_test.go:132-140 returns (cdn, src), and the test at lines 135-137 asserts image == cdn and image_fallback == src."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "server.go:170 guards the call with c.Image != \"\", so the source is not asked. Image stays \"\" and is omitted via omitempty, and fb stays \"\" and is omitted. webui_test.go:126-130 and 142-151 assert no image, no fallback, and that the stub was asked only once (for tst-1)."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "serveCard (server.go:156-186) makes no network call. The only network-touching step is the DB lookup at line 164, which exists before this change. The image decision is a synchronous call to the Images interface (line 171), and the interface doc at server.go:49-56 requires implementations to never block or touch the network. No concrete ImageSource implementation exists in this worktree (grep for ImageSource and Image( found only the interface and the test stub), so the non-blocking guarantee rests on that contract and is not enforced by this diff."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "a00bab29-1a24-4124-b3bc-00b521066320",
+      "title": "Fall back to the card source when a board image fails",
+      "checks": [
+        {
+          "at": "2026-11-04T14:20:38Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a00bab29-1a24-4124-b3bc-00b521066320",
+            "title": "Fall back to the card source when a board image fails",
+            "criteria": [
+              "When a card's image address loads, the board shows it and makes no request to the fallback address.",
+              "When the image address fails, the card on the mat, the zoomed card and the dialog preview each show the image from the fallback address.",
+              "When both addresses fail, the card shows today's text stand-in, or the Energy token for an Energy card.",
+              "A card with no fallback behaves exactly as today, and the existing browser tests pass unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/board-card-info-per-page-load.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "card.def"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Zoom.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Zoom.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "high.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/images.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "./fixtures.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "page.route"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "assets.tcgdex.net"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/touch.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".token"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/components/Card.svelte:82 sets src to imageSrc(info,'low.webp',stage); at stage 0 imageSrc (web/src/lib/store.svelte.js:297-302) returns only info.image, and the fallback is reached only through onerror. Zoom.svelte:277 and Modal.svelte:245 work the same way. web/e2e/images.spec.js:56-68 (untracked, new) asserts the img src is the CDN address and that the TCGdex host received no requests."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "After onerror, nextImageStage (store.svelte.js:306-308) moves to stage 1, and imageSrc (store.svelte.js:300) returns image_fallback at stage 1. Card.svelte:82 (mat card), Zoom.svelte:277 (zoom) and Modal.svelte:244-245 (dialog preview, with a new onerror) all use it. images.spec.js:70-92 checks the fallback src for the card, the zoom and the preview (desktop only, since the preview follows the mouse)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "At stage 2 (nextImageStage returns 2 when the fallback is absent or already tried), Card.svelte:79 shows the .token for Energy cards, and the else branch at Card.svelte:83-88 shows the .text-card for other cards. Zoom.svelte:276 hides the img and keeps the text block, and Modal.svelte:244 hides the preview img. images.spec.js:94-103 asserts both stand-ins and that each address was tried once."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "With no image_fallback, nextImageStage returns 2 on the first error and imageSrc returns the same `${info.image}/${size}` as before, so the old broken-flag behaviour is kept (Card.svelte:79-83, Zoom.svelte:276-277). git status shows no changes to existing e2e specs (fixtures.js, touch.spec.js and others are unmodified); images.spec.js is the only new test file. The reported runs of the full suite (239 passed) and the build are consistent with this. Caveat: the staged diff also holds internal/webui/server.go and webui_test.go, which the pointer says belong to an earlier task of the same plan and are not in this item's file list. The fallback field the board reads (image_fallback) is produced by that server change, so the feature depends on it. This does not change the verdicts on the web files, but it is outside this item's own scope."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "a344ea2e-51bf-452f-ac15-17bf0c6277dc",
+      "title": "List the bucket and work out its public address",
+      "checks": [
+        {
+          "at": "2026-11-04T14:23:59Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a344ea2e-51bf-452f-ac15-17bf0c6277dc",
+            "title": "List the bucket and work out its public address",
+            "criteria": [
+              "Listing a prefix returns every key under it and none outside it, in key order, across as many pages as the stand-in splits it into.",
+              "A listing refused for its credentials, or failed by the server, is reported with its status and S3 error code.",
+              "The public address for a DigitalOcean endpoint such as `https://lon1.digitaloceanspaces.com` with bucket `b` is `https://b.lon1.cdn.digitaloceanspaces.com`, and for any other endpoint it is the endpoint followed by the bucket.",
+              "The stand-in serves an object written as public to a request with no signature, and refuses an unsigned request for a private or missing object."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "encoding/xml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/config.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/config_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://lon1.digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://b.lon1.cdn.digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "http://127.0.0.1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/spacestest/spacestest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/spacestest/spacestest_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/spaces/client.go:159-200 List sends ListObjectsV2 with prefix and continuation-token, returns keys in server order, and sets Next only when IsTruncated. spacestest.go:207-241 serveList filters by prefix, sorts keys and pages by PageSize. client_test.go:129-153 TestListReturnsKeysUnderPrefixAcrossPages lists 5 keys under images/ over 3 pages of 2 (excluding tcgdex/ and imagesque.json), checks key order and the page count, and checks 3 LIST requests were counted."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "client.go:179-181 returns responseError for any non-200 listing answer. errors.go:8-16 Error carries Status, Code and Message. responseError (client.go:204-217) parses the S3 XML Code. client_test.go:185-202 TestListErrorsAreTyped checks a 403 InvalidAccessKeyId from SetDeny and a 500 InternalError from SetFail, both through wantError, and a closed server gives a non-*Error transport error."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/spaces/config.go:47-55 PublicBase returns https://\u003cbucket\u003e.\u003cregion\u003e.cdn.digitaloceanspaces.com when the host ends in .digitaloceanspaces.com with a single-label region and no port, and otherwise endpoint + \"/\" + bucket. config_test.go:238-250 TestPublicBase covers https://lon1.digitaloceanspaces.com with bucket b expecting https://b.lon1.cdn.digitaloceanspaces.com, plus ams3 with a trailing slash, 127.0.0.1:9000 and minio.example.com falling back to endpoint/bucket."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "spacestest.go:97 marks an unsigned GET of a key as anonymous. spacestest.go:123-126 routes it to serveAnonymous before signature verification, and spacestest.go:170-184 serves the object only when it exists and its X-Amz-Acl is public-read, otherwise 403 AccessDenied (missing or private). spacestest_test.go:26-56 TestPublicObjectIsServedUnsigned checks a public object is served with 200 and its headers, and that unsigned GETs of tcgdex/sets.json (private) and images/missing/low.webp return 403. spacestest_test.go:58-72 covers deny and fail interaction. The file is untracked but present in the code root."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "d8aade03-4a48-4fc6-9b32-c9ed93102224",
+      "title": "Copy card images to the shared store in the background",
+      "checks": [
+        {
+          "at": "2026-11-04T14:32:39Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "d8aade03-4a48-4fc6-9b32-c9ed93102224",
+            "title": "Copy card images to the shared store in the background",
+            "criteria": [
+              "The first request for an image without a copy returns the card source's address with no fallback. Shortly afterwards, both of its sizes exist in the shared store as public, byte-identical copies with the image content type and cache-control, well within 60 seconds.",
+              "Once copied, the image's address is its CDN address with the card source as fallback, and later requests make no request to the card source.",
+              "An address that is not the card source's own art, or is malformed, is returned unchanged and never copied. An empty address stays empty.",
+              "With the shared store unreachable, hanging, failing or refusing credentials, answers stay instant and use the card source's address. At most one shared-store attempt is made per minute, and the outage is logged once when it starts and once when it ends.",
+              "An image the card source fails to serve is not fetched again for 5 minutes, and is copied on a request after that.",
+              "A copied image is never deleted or rewritten by the cache, and a card whose art appears later gets its own new copy."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/breaker.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/swsh/swsh12.5/157"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/en/sv/sv1/1/low.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/high.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "image/webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/low.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tiered_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/images.go:132-161: Image returns (src, \"\") for an uncopied image and queues it. copyOne (images.go:213-249) fetches low.webp and high.webp from the source, then Puts each with ContentType image/webp, CacheControl ImageCacheControl (\"public, max-age=604800\", images.go:26) and Public:true; spaces/client.go:96-106 writes Content-Type, Cache-Control and X-Amz-Acl public-read. images_test.go:251-270 (TestImageFirstRequestAnswersSourceThenCopiesBothSizes) and wantCopied (images_test.go:213-237) check bytes, public ACL, headers and both sizes."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "Within one process it holds: images.go:142-145 returns PublicBase()+\"/images/\"+rel with src as fallback once ic.known[rel] is set (set at images.go:244-247), and known images are never queued again (images.go:194-198). But the only record of a copy is the in-memory map ic.known (images.go:76-84). Nothing scans the bucket at startup: Run (images.go:164-170) only starts workers, and no code outside the tests calls NewImageCache or reads ic.known to rebuild it. The spaces List method added in internal/spaces/client.go:131-174 is not used by internal/cards. So after a restart a copied image answers with the source address and is fetched from the card source again, contrary to 'once copied ... later requests make no request to the card source'."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "images.go:132-137: an empty src returns (\"\",\"\") and a non-prefix address (other host, malformed, or not a string under Source) returns src unchanged with no fallback. imageRel (images.go:116-127) rejects queries, fragments, and empty, '.' or '..' segments, and a trailing slash. images_test.go:310-348 (TestImageAddressesOutsideSourceAreReturnedUnchangedAndNeverCopied) covers these cases and asserts zero store and source requests."
+            },
+            {
+              "criterion": 4,
+              "verdict": "not_met",
+              "evidence": "The breaker is shared (images.go:71, 104-110, breaker.go:26-52), so the outage is logged once down and once up, and Image never touches the network (images.go:132-161). But at-most-one-attempt is not enforced. There are imageWorkers = 2 copy goroutines (images.go:29, 166-168). In copyOne, breaker.skip() is checked only before each Put (images.go:228) and nothing serialises shared attempts across workers. Two workers can both pass the check at outage start or when the window expires and each send a PUT in the same minute. internal/cards/images_test.go:387-477 (TestImageAbsorbsSharedOutages) only ever has one image in flight, so it does not exercise this."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "images.go:150-152: Image skips a rel whose failed[rel] is less than RetryAfter old, so no queueing or source fetch happens. images.go:218-222 sets failed[rel] when a source fetch fails (not when the cache's own ctx ends), and images.go:247 clears it on success. RetryAfter = 5 * time.Minute is at internal/cards/fresh.go:24. images_test.go:479-550 (TestImageSourceFailureWaitsRetryAfterThenCopies) covers 404, 500, a missing second size and a slow source."
+            },
+            {
+              "criterion": 6,
+              "verdict": "not_met",
+              "evidence": "Within one process copies are never deleted or overwritten: a known image is not queued (images.go:194-198) and no DELETE is issued anywhere in internal/cards/images.go. But copyOne Puts unconditionally (images.go:233, no existence check or If-None-Match), and after a restart ic.known is empty (images.go:76-84). Image then queues every viewed image again (images.go:146-155, handle at 191-199), so the bucket's existing public objects are PUT over, and rewritten if the source's bytes have changed. internal/cards/images_test.go:350-385 checks rewrites only within one process, where the in-memory known map prevents them."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T14:41:25Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "d8aade03-4a48-4fc6-9b32-c9ed93102224",
+            "title": "Copy card images to the shared store in the background",
+            "criteria": [
+              "The first request for an image without a copy returns the card source's address with no fallback. Shortly afterwards, both of its sizes exist in the shared store as public, byte-identical copies with the image content type and cache-control, well within 60 seconds.",
+              "Once copied, the image's address is its CDN address with the card source as fallback, and later requests make no request to the card source.",
+              "An address that is not the card source's own art, or is malformed, is returned unchanged and never copied. An empty address stays empty.",
+              "With the shared store unreachable, hanging, failing or refusing credentials, answers stay instant and use the card source's address. At most one shared-store attempt is made per minute, and the outage is logged once when it starts and once when it ends.",
+              "An image the card source fails to serve is not fetched again for 5 minutes, and is copied on a request after that.",
+              "A copied image is never deleted or rewritten by the cache, and a card whose art appears later gets its own new copy."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/breaker.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/swsh/swsh12.5/157"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/en/sv/sv1/1/low.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/high.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "image/webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/low.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tiered_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/images.go:138-167: Image answers (src, \"\") for an uncached image and queues it. copyOne (images.go:283-307) fetches both low.webp and high.webp from the source, then put (images.go:312-330) writes each with ContentType image/webp, CacheControl ImageCacheControl (\"public, max-age=604800\", images.go:27) and Public: true. Workers start after the start-up listing (images.go:172-181). images_test.go:295-314 (TestImageFirstRequestAnswersSourceThenCopiesBothSizes) checks bytes, public ACL, headers and a 60s bound."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "images.go:148-150: once known[rel] is set, Image returns ic.Public + \"/images/\" + rel with src as fallback. known is set only after both files are put (images.go:302-306). Later requests take the known branch and never touch the source. images_test.go:316-352 (TestImageCopiedAnswersCDNWithSourceFallbackAndNoSourceRequest) checks no further source hits or store requests."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "images.go:120-133 (imageRel) accepts only a clean path under ic.Source+\"/\": it rejects other hosts, a missing or extra slash, query, fragment, and empty, \".\" or \"..\" segments. Image (images.go:138-145) returns any non-matching src unchanged with no fallback, and returns \"\" for \"\". Nothing is queued on those paths. images_test.go:354-397 covers the listed malformed and foreign addresses and the empty string."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Image never touches the network: it only takes ic.mu and does a non-blocking queue send (images.go:146-166). Shared calls are bounded by ic.timeout = SharedTimeout (3s, tiered.go:13), which covers hanging, failing and refused credentials (spacestest deny/fail/hang modes). ic.attempt serialises list and put (images.go:215, 314), and each checks brk.skip() under that lock, so one attempt per SharedRetryAfter (1 minute, tiered.go:16) window. breaker.go:34-52 logs the down message only on the first failure of an outage and the up message once on recovery. images_test.go:436-563 and 777-847 exercise these."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "copyOne records failed[rel] when a source fetch fails (images.go:286-292). Image returns src without queuing while Now().Sub(failed[rel]) \u003c RetryAfter (images.go:156-158). RetryAfter is 5 minutes (internal/cards/fresh.go:24). After that window Image queues the image again (images.go:159-166). images_test.go:565-641 covers not-found, server-error, second-size-missing and slow sources."
+            },
+            {
+              "criterion": 6,
+              "verdict": "not_met",
+              "evidence": "The cache can overwrite an existing copy in the bucket. loadKnown (images.go:188-210) discards the start-up listing when it fails: the comment at images.go:184-187 says copying starts anyway and that an image then viewed is copied again over its objects. handle (images.go:261-270) and copyOne (images.go:283-307) then PUT over any image whose rel is not in known, with no existence check. The PUT is in put (images.go:312-330). Concretely, if the store is down at start-up, or a listing page fails, a copy already in the bucket is PUT again, which rewrites it and can change its bytes if the source has changed. The restart test (images_test.go:688-739) only covers the successful-listing path. The fix would be to never PUT over an image the listing did not confirm absent, for example by not copying while the listing is incomplete."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T14:47:39Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "d8aade03-4a48-4fc6-9b32-c9ed93102224",
+            "title": "Copy card images to the shared store in the background",
+            "criteria": [
+              "The first request for an image without a copy returns the card source's address with no fallback. Shortly afterwards, both of its sizes exist in the shared store as public, byte-identical copies with the image content type and cache-control, well within 60 seconds.",
+              "Once copied, the image's address is its CDN address with the card source as fallback, and later requests make no request to the card source.",
+              "An address that is not the card source's own art, or is malformed, is returned unchanged and never copied. An empty address stays empty.",
+              "With the shared store unreachable, hanging, failing or refusing credentials, answers stay instant and use the card source's address. At most one shared-store attempt is made per minute, and the outage is logged once when it starts and once when it ends.",
+              "An image the card source fails to serve is not fetched again for 5 minutes, and is copied on a request after that.",
+              "A copied image is never deleted or rewritten by the cache, and a card whose art appears later gets its own new copy."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/breaker.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/swsh/swsh12.5/157"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/en/sv/sv1/1/low.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/high.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "image/webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/low.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tiered_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/images.go:142-171 Image returns (src, \"\") for an uncopied image and queues it; copyOne (images.go:318-360) fetches low.webp and high.webp from the source and put()s each (images.go:365-383) with ContentType image/webp, CacheControl ImageCacheControl=\"public, max-age=604800\" (images.go:27) and Public:true, which client.go:104-105 turns into X-Amz-Acl public-read. Bytes come straight from the fetch, so they are byte-identical. images_test.go:327-346 (TestImageFirstRequestAnswersSourceThenCopiesBothSizes) checks source answer, both copies, headers and 60s bound."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "images.go:152-154: once ic.known[rel] is set, Image returns ic.Public+\"/images/\"+rel with src as fallback, with no network call. known is set in copyOne (images.go:352-353) and loadKnown (images.go:204). images_test.go:348-384 checks the CDN answer with fallback and that later requests add no source hits and no store requests."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "images.go:143-149: empty src returns (\"\",\"\"); imageRel (images.go:126-137) accepts only a prefix of Source+\"/\" with no ?/#, and no empty, \".\" or \"..\" segment, so other hosts, prefix lookalikes, malformed paths, trailing slash and non-URLs return src unchanged and are never queued. images_test.go:386-429 covers these cases and asserts zero source hits and only the listing in the store."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Image never touches the network (images.go:142-171, only a mutex and a non-blocking queue send). All shared calls go through list() and put(), which hold ic.attempt and check brk.skip() first (images.go:248-274, 365-383), so one attempt is made per SharedRetryAfter=time.Minute (tiered.go:16). Timeouts are SharedTimeout=3s per request (images.go:104, 256, 371). breaker.go:34-52 logs the outage once when down goes true and the recovery once when it goes false; images_test.go:468-619 (outage modes incl. refused and hanging) asserts one attempt in the window, one down log and one up log."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "copyOne sets ic.failed[rel] when a source fetch fails and the context is still live (images.go:331-337). Image skips queuing while ic.Now().Sub(t) \u003c RetryAfter (images.go:160-162); RetryAfter = 5*time.Minute is in fresh.go:24. The entry is cleared on success (images.go:358). images_test.go:621-697 checks no refetch inside RetryAfter and a copy after it, with source failures not logged as store outages."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The cache has no delete path: grep finds no Delete call in internal/cards/images.go. copyOne puts only the files missing from the bucket (images.go:324-328, using the start-up listing or a per-image listing in present, images.go:231-244), so an object already present is never written. A new art address has a different rel path and gets its own copy (images.go:156-171). images_test.go:431-466 and 744-795 check no rewrite, no DELETE and late art getting its own copy after a restart."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 3,
+      "state": "accepted"
+    },
+    {
+      "item": "dc3ff181-4082-480b-9659-2308f38e304f",
+      "title": "Find existing copies at start-up and count image answers",
+      "checks": [
+        {
+          "at": "2026-11-04T14:50:06Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "dc3ff181-4082-480b-9659-2308f38e304f",
+            "title": "Find existing copies at start-up and count image answers",
+            "criteria": [
+              "After start-up, every image whose two sizes are already in the bucket, across several listing pages, is answered with its CDN address and makes no request to the card source.",
+              "An image with only one of its two sizes in the bucket is treated as not copied, and is copied when next asked for.",
+              "An image asked for while the listing is still running is not uploaded again if the listing finds it.",
+              "If the listing fails, the cache still answers and copies, and the failure is logged once.",
+              "Each hour with activity produces one log line with the counts of CDN answers, card source answers and copies made. An hour with none produces no line."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/images.go:219-247 loadKnown pages through the whole listing via list() (images.go:280-306 follows page.Next) and sets known[rel]=true for every image with both ImageFiles listed. Image() (images.go:152-155) answers the CDN address from known without any fetch, and handle() (images.go:327-336) skips known images, so no source request is made. TestImageStartUpListingAcrossPages (images_test.go:1137-1173) seeds 5 whole images over 6 pages of 2 keys and asserts CDN answers, 0 PUTs and no source hits for them; go test ./internal/cards/... passes per the verification summary."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "images.go:247-258 puts an image with fewer than both files into ic.partial rather than known, so Image() queues it (images.go:157-168). copyOne (images.go:350-392) uses present() (images.go:263-276) to fetch and PUT only the missing file(s) and marks known only once all files are in. TestImageStartUpListingNeedsBothFiles (images_test.go:802-850) seeds only low.webp of card 2, then asserts it is not answered from the CDN, high.webp is fetched once and PUT once, and the image then answers from the CDN (wantCDN(t,2) at line 849)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Run (images.go:180-198) closes ic.ready only after loadKnown returns, and work() (images.go:309-322) takes no queued image until ready is closed. Image() calls made during the listing only enqueue a rel and return the source; when handle() runs after the listing it checks known[rel] (images.go:329-334) and returns without a PUT. TestImageAskedDuringListingIsNotUploadedAgain (images_test.go:1178-1216) holds the listing, asks for card 1 during it, releases it, and asserts 0 PUTs, 0 source hits and the seeded bytes unchanged."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "When the listing fails, list() (images.go:291-294) calls ic.brk.failed only if ctx is not done, which logs the outage once (breaker logging in internal/cards/breaker.go, the untracked file the diff lists). loadKnown still closes ready (images.go:181-184), so work() runs. present() (images.go:263-276) falls back to a per-image listing when listed is false, and copyOne proceeds. No 'copies found' line is logged on failure (images.go:244-246). TestImageFailedListingStillAnswers (images_test.go:1218-1241) asserts one outage log, no count log, and copying after the store heals; TestImageFailedStartUpListingAsksTheBucketBeforeCopying covers copying through the failed listing."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Run starts a time.Ticker at imageReportEvery (images.go:174, 188-197) and calls report() each tick. report() (images.go:204-217) reads and resets cdn, source and copied under the lock, returns without logging when all three are zero, and otherwise logs one line 'card images: last hour %d from the shared store, %d from the card source (%.0f%% shared), %d copied'. The CDN count is incremented at images.go:153 and the source count at images.go:156, and copied is incremented at images.go:388. TestImageReportCountsAnswers (images_test.go:1246-1266) checks the line content and that an idle hour logs nothing; TestImageRunReportsOnItsTicker (images_test.go:1270-1284) checks Run emits it on its ticker."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "9bb9d5f0-aead-4d7a-a25d-af1eef2907c7",
+      "title": "Switch on image copies in hosted mode",
+      "checks": [
+        {
+          "at": "2026-11-04T14:53:10Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "9bb9d5f0-aead-4d7a-a25d-af1eef2907c7",
+            "title": "Switch on image copies in hosted mode",
+            "criteria": [
+              "With all four settings pointing at a reachable store and the playmat online, a board's card answer for an uncopied image gives the card source's address, and the image is then copied to the shared store. A later answer gives the CDN address.",
+              "The start-up log names the public address card images are served from.",
+              "With no settings, partial settings or offline mode, card answers are as today, no image is copied, and no new warning is logged.",
+              "The health check answers while the start-up listing is still running.",
+              "Desktop and dev builds behave exactly as before, whatever shared-store settings are in their environment."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_cache_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "high.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/healthz"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "hosted.go:257-260 builds images = cards.NewImageCache(sc, cfg.PublicBase()) when all four settings are good and the playmat is online. hosted.go:210-217 (hostedBoard) sets ui.Images. webui/server.go:166-172 (serveCard) answers img = Images.Image(c.Image) and fb = the source address. cards/images.go:142-171 (Image) returns the source with no fallback and queues the image when no copy is known. cards/images.go:350-392 (copyOne) fetches low.webp and high.webp from Source and puts them with Public: true under images/\u003crel\u003e/. Once known, Image returns ic.Public+\"/\"+ImagePrefix+rel with the source as fallback (images.go:152-154). The Spaces client Put and PublicBase are in internal/spaces/config.go:775-783. Scope note: webui/server.go, the web/src files and internal/cards/images.go are outside this item's listed files, but the diff labels them as earlier tasks of the same plan, and the criterion depends on them."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "hosted.go:261 logs \"card images: copied from the card source to the shared store, served from %s/%s\" with images.Public and cards.ImagePrefix (\"images/\"). images.Public is cfg.PublicBase() (images.go:100), which is the CDN address for a digitaloceanspaces.com endpoint. The line is logged in hostedCardDB, which runs at start-up in runHosted (hosted.go:296). The test at hosted_cache_test.go:272 checks for this line."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "hosted.go:241 (no settings), :244 (partial or invalid settings) and :247 (offline) each return images=nil and log only the existing messages. Neither the image cache nor its log line is reached on these paths. runHosted starts images.Run only when images != nil (hosted.go:302). hosted_cache_test.go:316-371 (TestHostedImagesOffWithoutTheSharedStore) checks zero image-source and shared-store requests, the warning count (one for partial, none otherwise), and no \"card images\" log line. The test was not run by me; the verification summary says it passed."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "hosted.go:302-304 starts images.Run in a goroutine, and the listener is set up independently at hosted.go:309-315. images.Run (images.go:180-184) runs loadKnown in its own goroutine, so a blocked listing does not block the server. /healthz is registered in hostauth/hostauth.go:127 as GET /healthz, and the mux serves it ahead of the \"/\" route (hosted.go:162). hosted_cache_test.go:408-447 (TestRunHostedAnswersWhileImageListingHangs) holds the shared store and waits for /healthz. The test was not run by me; the verification summary says it passed."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "The desktop path does not read the Spaces settings. spaces.FromEnv is called only at hosted.go:238, and newCardDB (main.go:229-233) has no Spaces code. The desktop's webui.New calls (main.go:253 in startUI and daemon.go:206) never set Images, so ui.Images stays nil and serveCard keeps the TCGdex address (webui/server.go:170). hosted_cache_test.go:376-403 (TestDesktopBoardHasNoImageSource) checks this with the Spaces settings present. The test was not run by me; the verification summary says it passed."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "79912466-672b-48d5-8ce7-d9a7a30a79fe",
+      "title": "Document CDN card images for operators",
+      "checks": [
+        {
+          "at": "2026-11-04T14:54:35Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "79912466-672b-48d5-8ce7-d9a7a30a79fe",
+            "title": "Document CDN card images for operators",
+            "criteria": [
+              "The App Platform definition's comments say card images are served from the bucket's CDN when the shared store is set, and from the card source otherwise.",
+              "The design document's hosted section describes the image copies (prefix, public access, the card source as the only source, kept until cleared), the hourly count line, and the fallback.",
+              "The operator setup says how to enable the bucket's CDN, and that the access key must be able to list the bucket and write public objects.",
+              "The Docker build context is unchanged, so the guides are still built in."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261104090640-25f673ed-card-image-cdn/tcgreplay/.do/app.yaml lines 9-16 (added in the staged diff, hunk @@ -10,7 +10,10 @@): 'With them, card images are also copied to that bucket under images/ (public) and the board loads them from the bucket's CDN (enable it on the bucket), falling back to TCGdex if the CDN fails; without them, images come from TCGdex as before.' Also lines 83-84 say the same four settings switch on CDN card images. The file names TCGdex rather than the words 'card source', but the design document treats TCGdex as the card source (the only image source), so the meaning matches."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "'TCG Review Playmat Design and Build Plan.md', hosted mode paragraph (staged diff line 49, hunk @@ -299,7 +299,7 @@): 'card images are served from the bucket's CDN too: each image ... is copied byte for byte from TCGdex (the only image source ...) to images/\u003cTCGdex path\u003e/low.webp and high.webp, public-read with Cache-Control: public, max-age=604800, and kept until an admin clears it'; 'Every hour with activity it logs card images: last hour N from the shared store, M from the card source (P% shared), K copied'; the CDN-address versus image_fallback behaviour and the board's CDN -\u003e TCGdex -\u003e text fallback are also described."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Design document operator setup step 7 (staged diff line 59, hunk @@ -329,7 +329,8 @@): 'in the Spaces bucket's Settings -\u003e CDN, enable the CDN with an edge cache TTL ... The step-6 access key must be able to list the bucket and write objects with a public-read ACL (a \"Limited access\" key with read and write on the bucket can)'. The same step also says tcgdex/ objects stay private and gives the expected start-up log lines."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The staged diff (tcgreplay.diff) lists no .dockerignore entry, and the verification shows git diff HEAD -- .dockerignore is empty. The Dockerfile changes are comment-only (diff lines 26-36, hunk @@ -6,7 +6,8 @@); its COPY . . (Dockerfile:25) and COPY --from=web lines are unchanged. .dockerignore:2 says the guides (internal/guides) are embedded and must not be excluded, which is consistent with the unchanged context."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "8d8941d1-6d35-4c40-bb56-dceb0eae032c",
+      "title": "Update the card image knowledge entries",
+      "checks": [
+        {
+          "at": "2026-11-04T14:56:08Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "8d8941d1-6d35-4c40-bb56-dceb0eae032c",
+            "title": "Update the card image knowledge entries",
+            "criteria": [
+              "A reader of the card cache entry learns that hosted mode with the shared store copies card images to `images/` in the bucket and serves them from its CDN, and that desktop and dev builds still load images from the card source.",
+              "A reader of the board card info entry learns that the image address is fixed for the page's life, so a new copy is used from the next page load, and that the board falls back to the card source if the CDN fails.",
+              "The entries say that image copies are kept until cleared, and that clearing one also needs the playmat restarted (or the later admin clearing) so it stops pointing at the copy."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcgdex-cache-never-expires.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "assets.tcgdex.net"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/board-card-info-per-page-load.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Staged card cache entry (knowledge-tcgdex-cache-never-expires.md, lines 88-96, 'Card images' paragraph): 'Desktop, daemon, dev and hosted-without-the-shared-store boards load images straight from assets.tcgdex.net' and 'Hosted mode with the shared store copies each image the board shows (cards.ImageCache, internal/cards/images.go) byte for byte to images/\u003cTCGdex path\u003e/low.webp and high.webp in the same bucket', with '/api/card' answering the CDN address (\u003cbucket\u003e.\u003cregion\u003e.cdn.digitaloceanspaces.com/images/...) as image (lines 96-99). Code check: internal/cards/images.go:21-27 defines ImagePrefix 'images/' and ImageCacheControl 'public, max-age=604800', consistent with the entry."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Staged board entry (knowledge-board-card-info-per-page-load.md, lines 22-28): 'The image address in a card's answer is fixed for the page too... an image copied to the bucket while the page is open is loaded from the CDN only after a reload; until then the board keeps the TCGdex address it was given.' Fallback: 'Each image spot (card, zoom, preview) tries image, then image_fallback (TCGdex...) once, then the text stand-in or Energy token'. The fallback to the card source is therefore stated. Code check: internal/webui/server.go:152 has ImageFallback with json image_fallback, and webui_test.go:797-840 covers its presence and absence."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Staged card cache entry, lines 94-95: 'copies ... and keeps them until they are cleared: the cache never deletes an image object and never writes over one already in the bucket.' Lines 101-104: 'The playmat learns which copies exist by listing images/ at start-up and remembers them in memory, so deleting image objects by hand needs a restart before it stops pointing boards at them (until admin cache clearing exists)'. The entry names the restart and the later admin clearing as the way to stop pointing at a copy. The board entry does not repeat this, but the criterion is satisfied by the entries together."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "db22391d-851d-499e-8713-44aec042aff3",
+      "title": "Enable the CDN on the Spaces bucket",
+      "checks": [
+        {
+          "at": "2026-11-04T14:56:59Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "db22391d-851d-499e-8713-44aec042aff3",
+            "title": "Enable the CDN on the Spaces bucket",
+            "criteria": [
+              "The bucket's CDN is enabled, and its address matches the public image address in the playmat's start-up log.",
+              "After a redeploy, the start-up log shows no shared-store warning or failure for card images.",
+              "An image copied by the playmat loads from the CDN address in a browser with no sign-in."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "high.webp"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Enabling the bucket's CDN is a DigitalOcean control-panel action, and nothing in the repo or the staged diff can show it is done. The start-up log address is built at hosted.go (diff line ~152-156) as images.Public from cfg.PublicBase(), i.e. from environment settings, not from a CDN endpoint hard-coded in the code. Glob and Grep over the code root found no CDN endpoint value in any file, and .do/app.yaml (diff line 1) only changes the app config. No evidence the bucket CDN is enabled or that its address matches the logged public address."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "This needs a live redeploy and a read of the start-up log, which cannot be checked from files. The code does log a card-image line on success (hosted.go diff line 156: 'card images: copied from the card source to the shared store, served from ...'), and the shared-store failure path logs 'warning: card cache: ...' (hosted.go diff line 145). Neither proves the deployed log is free of a shared-store warning or failure for card images."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Browser loading of an image from the CDN address with no sign-in cannot be checked from files. The client picks the image source via imageSrc() in web/src/lib/store.svelte.js (diff line ~1356-1359), which uses info.image or info.image_fallback. The e2e spec web/e2e/images.spec.js uses a stub host (cdn.test.invalid), not the real CDN. No evidence in the repo of a real CDN address or of an anonymous fetch succeeding."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T14:58:01Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "db22391d-851d-499e-8713-44aec042aff3",
+            "title": "Enable the CDN on the Spaces bucket",
+            "criteria": [
+              "The bucket's CDN is enabled, and its address matches the public image address in the playmat's start-up log.",
+              "After a redeploy, the start-up log shows no shared-store warning or failure for card images.",
+              "An image copied by the playmat loads from the CDN address in a browser with no sign-in."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "high.webp"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The bucket's CDN setting lives in the DigitalOcean control panel, not in the repo, and no CDN state or bucket address is recorded in the files. The repo only shows the address format the code derives: internal/spaces/config_test.go:169-170 expects https://\u003cbucket\u003e.\u003cregion\u003e.cdn.digitaloceanspaces.com (e.g. https://playmat-cache.ams3.cdn.digitaloceanspaces.com). The start-up log's public image address is checked in cmd/tcgreplay/hosted_cache_test.go:471 (\"served from \"+public+\"/images/\"), but no real start-up log is in the files to compare against. The CDN can be enabled by a human, so this is not impossible."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "No redeploy or real start-up log exists in the files, and the goal states no DigitalOcean credentials are available. The only start-up log assertions are in tests: cmd/tcgreplay/hosted_cache_test.go:471 expects the 'copied from the card source to the shared store, served from ...' line, and hosted_cache_test.go:190 and :269 cover other shared-store messages. These show the code's intended log text, not the live deployed output."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Nothing in the repo shows a real CDN image loading in a browser. web/e2e/images.spec.js:8 uses a fake host (https://cdn.test.invalid/images/en/sv/sv1) and intercepts it with page.route (line 36), so it does not test the real CDN. The board's CDN image source is set in internal/webui/server.go:146-148 and the components use it, but that does not show the live bucket serving images without sign-in. Verifying this requires the live CDN after the CDN is enabled."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T14:58:41Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "db22391d-851d-499e-8713-44aec042aff3",
+            "title": "Enable the CDN on the Spaces bucket",
+            "criteria": [
+              "The bucket's CDN is enabled, and its address matches the public image address in the playmat's start-up log.",
+              "After a redeploy, the start-up log shows no shared-store warning or failure for card images.",
+              "An image copied by the playmat loads from the CDN address in a browser with no sign-in."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "high.webp"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Enabling the CDN is a DigitalOcean control-panel action, and nothing in the repo records it as done. The code derives the CDN address in internal/spaces/config.go:47-55 (https://\u003cbucket\u003e.\u003cregion\u003e.cdn.digitaloceanspaces.com) and config.go:46 says the CDN serves an object only once it is enabled on the bucket. The staged diff and status show no CDN-enablement evidence, and the in-scope file tcgreplay high.webp does not exist (Glob for **/high.webp under the code root found nothing). The criterion is achievable in the control panel, so it is not impossible. The start-up log address in cmd/tcgreplay/hosted.go:261 is printed from images.Public, but no start-up log captured from a real deploy is in the files to compare against the bucket's CDN address."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The start-up log code paths exist: cmd/tcgreplay/hosted.go:244 and :252 emit 'warning: card cache: ...' lines on shared-store failure, and :256 emits 'card cache: ... backed by shared store'. No captured log from a redeploy is in the repo, the diff, or the status file, so the absence of a shared-store warning for card images is not shown. Verifying it needs a real redeploy."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Image URLs are built from the public base at internal/webui/server.go:146-148 and in web/src/lib/store.svelte.js:155-160, so the code can point boards at the CDN. Nothing in the repo shows a browser loading an image from the CDN address with no sign-in. The e2e spec web/e2e/images.spec.js uses the stub host cdn.test.invalid, not the real bucket CDN, so it does not show this. Verifying it needs the live CDN after enablement."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-04T14:58:41Z",
+          "round": 1,
+          "decision": "skip",
+          "reason": "human task left for the operator (needs the DigitalOcean control panel); orchestrator reports it to the user"
+        }
+      ],
+      "attempts": 3,
+      "state": "skipped"
+    }
+  ]
+}
