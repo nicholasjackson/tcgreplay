@@ -307,7 +307,7 @@ func TestToolsSayWhenToUseThem(t *testing.T) {
 			desc[tool.Name] = tool.Description
 		}
 		imp := desc["import_log"]
-		for _, want := range []string{"Use this when the user pastes or attaches a Pokémon TCG Live battle log", "even if they do not mention TCG Replay", "rather than reading the log yourself", "import-game guide"} {
+		for _, want := range []string{"Use this when the user pastes or attaches a Pokémon TCG Live battle log", "even if they do not mention TCG Replay", "rather than reading the log yourself", "import-game guide", "if you do not have it, ask the player to paste the list they played"} {
 			if !strings.Contains(imp, want) {
 				t.Errorf("import_log description lacks %q", want)
 			}

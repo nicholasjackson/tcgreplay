@@ -47,7 +47,7 @@ type ImportResult struct {
 var nonID = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 // errNoDeck refuses a battle log imported without the owner's decklist.
-var errNoDeck = errors.New("a decklist is required to import a battle log: pass the player's list in TCG Live export format")
+var errNoDeck = errors.New("a decklist is required to import a battle log: pass the player's list in TCG Live export format as deck. If you do not have it, ask the player to paste the list they played (exported from the TCG Live deck editor; it starts with \"Pokémon:\" and ends with \"Total Cards: 60\"), then import again. Do not review the game from the log text instead.")
 
 // errRecordExtras refuses a record imported together with the values it
 // already holds.
