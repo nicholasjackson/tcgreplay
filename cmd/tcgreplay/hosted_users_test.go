@@ -264,7 +264,7 @@ func TestHostedBoardLinkOwnerOnly(t *testing.T) {
 	res := importFor(t, csA, testLogA, "owner-only", "")
 	handle := usergames.Handle(userA.ID)
 	link, _ := res["board"].(string)
-	if want := h.public + "/?board=" + handle; link != want {
+	if want := h.public + "/board?board=" + handle; link != want {
 		t.Fatalf("A's import_log board link %q, want %s", link, want)
 	}
 	if handle == usergames.Handle(userB.ID) {
@@ -282,6 +282,9 @@ func TestHostedBoardLinkOwnerOnly(t *testing.T) {
 	resp, body := getWith(t, h.ts.URL+path, cookieB, nil)
 	if resp.StatusCode != http.StatusForbidden || !strings.Contains(body, "Not your game") {
 		t.Fatalf("B opening A's board link: %d %q, want 403 not your game", resp.StatusCode, body)
+	}
+	if !strings.Contains(body, `<a href="/board">Open your own board</a>`) {
+		t.Errorf("B's not-your-game page does not link to /board:\n%s", body)
 	}
 	for _, leak := range leaks {
 		if strings.Contains(body, leak) {

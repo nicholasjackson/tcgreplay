@@ -212,8 +212,8 @@ func TestHostedHandlerServesMCPAndBoard(t *testing.T) {
 
 	// The board's routes on the same address, signed in.
 	cookie := h.cookie(t)
-	if resp, body := getWith(t, ts.URL+"/", cookie, nil); resp.StatusCode != http.StatusOK || !strings.Contains(body, "<title>tcgreplay</title>") {
-		t.Fatalf("index: %d %q", resp.StatusCode, body)
+	if resp, body := getWith(t, ts.URL+"/board", cookie, nil); resp.StatusCode != http.StatusOK || !strings.Contains(body, "<title>tcgreplay</title>") {
+		t.Fatalf("board page: %d %q", resp.StatusCode, body)
 	}
 	// The board's card handler answers (its own 404), not the mux's.
 	if resp, body := getWith(t, ts.URL+"/api/card", cookie, nil); resp.StatusCode != http.StatusNotFound || !strings.Contains(body, "unknown card") {
@@ -743,8 +743,8 @@ func hasCard(cards []state.CardView, iid state.IID) bool {
 func TestHostedBoardLinks(t *testing.T) {
 	deck, logText := readTestdata(t, testDeckPath), readTestdata(t, testLogPath)
 	for _, tt := range []struct{ public, want string }{
-		{testPublic, "https://playmat.example/?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
-		{"https://other.example", "https://other.example/?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
+		{testPublic, "https://playmat.example/board?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
+		{"https://other.example", "https://other.example/board?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
 	} {
 		t.Run(tt.public, func(t *testing.T) {
 			cs := startHosted(t, tt.public).connect(t)
@@ -916,9 +916,9 @@ func TestHostedBoardAcceptsPublicAddress(t *testing.T) {
 	ts := h.ts
 	cookie := h.cookie(t)
 
-	resp, body := getWith(t, ts.URL+"/", cookie, func(r *http.Request) { r.Host = "playmat.example" })
+	resp, body := getWith(t, ts.URL+"/board", cookie, func(r *http.Request) { r.Host = "playmat.example" })
 	if resp.StatusCode != http.StatusOK || !strings.Contains(body, "<title>tcgreplay</title>") {
-		t.Fatalf("GET / with Host playmat.example: %d %q", resp.StatusCode, body)
+		t.Fatalf("GET /board with Host playmat.example: %d %q", resp.StatusCode, body)
 	}
 
 	if _, _, err := dialBoard(t, ts, testPublic, cookie); err != nil {
@@ -1285,7 +1285,7 @@ func TestAppSpecIdleTimeoutAndSingleInstance(t *testing.T) {
 // following it lands on the board page it asked for, signed in.
 func TestHostedBoardSignInReturnsToPage(t *testing.T) {
 	h := startHosted(t, testPublic)
-	for path, next := range map[string]string{"/": "%2F", "/?x=1": "%2F%3Fx%3D1"} {
+	for path, next := range map[string]string{"/board": "%2Fboard", "/board?x=1": "%2Fboard%3Fx%3D1"} {
 		resp, _ := getWith(t, h.ts.URL+path, nil, nil)
 		if want := "/auth/login?next=" + next; resp.StatusCode != http.StatusFound || resp.Header.Get("Location") != want {
 			t.Errorf("GET %s signed out: %d to %q, want 302 to %s", path, resp.StatusCode, resp.Header.Get("Location"), want)
@@ -1293,7 +1293,7 @@ func TestHostedBoardSignInReturnsToPage(t *testing.T) {
 	}
 
 	browser := hostauthtest.Browser(t, h.public, h.ts.URL)
-	resp, err := browser.Get(h.public + "/?x=1")
+	resp, err := browser.Get(h.public + "/board?x=1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1304,8 +1304,8 @@ func TestHostedBoardSignInReturnsToPage(t *testing.T) {
 	}
 	// The test browser serves the public host from the test server, so the
 	// final request names the test server; its path is what counts.
-	if got := resp.Request.URL.RequestURI(); got != "/?x=1" {
-		t.Errorf("sign-in ended at %s, want /?x=1", got)
+	if got := resp.Request.URL.RequestURI(); got != "/board?x=1" {
+		t.Errorf("sign-in ended at %s, want /board?x=1", got)
 	}
 	if len(h.g.Prompts()) != 1 {
 		t.Errorf("Google asked %d times, want once", len(h.g.Prompts()))
@@ -1386,9 +1386,9 @@ func TestHostedSignOutClosesBoard(t *testing.T) {
 	}
 	t.Logf("live connection closed %v after sign-out", time.Since(start))
 
-	resp, _ = getWith(t, h.ts.URL+"/", cookie, nil)
-	if resp.StatusCode != http.StatusFound || resp.Header.Get("Location") != "/auth/login?next=%2F" {
-		t.Errorf("GET / after sign-out: %d to %q, want 302 to sign-in", resp.StatusCode, resp.Header.Get("Location"))
+	resp, _ = getWith(t, h.ts.URL+"/board", cookie, nil)
+	if resp.StatusCode != http.StatusFound || resp.Header.Get("Location") != "/auth/login?next=%2Fboard" {
+		t.Errorf("GET /board after sign-out: %d to %q, want 302 to sign-in", resp.StatusCode, resp.Header.Get("Location"))
 	}
 	if _, resp, err := dialBoard(t, h.ts, testPublic, cookie); err == nil || resp == nil || resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("live connection after sign-out: %v (response %v), want 401", err, resp)

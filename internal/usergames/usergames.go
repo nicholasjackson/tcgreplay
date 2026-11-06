@@ -330,11 +330,11 @@ func Handle(accountID string) string {
 }
 
 // Link returns the entry's board link on the public address:
-// <public>/?board=<handle>.
+// <public>/board?board=<handle>.
 func (e *Entry) Link(public *url.URL) string {
 	if public == nil {
 		return ""
 	}
-	u := url.URL{Scheme: public.Scheme, Host: public.Host, Path: "/", RawQuery: url.Values{"board": {e.Handle}}.Encode()}
+	u := url.URL{Scheme: public.Scheme, Host: public.Host, Path: "/board", RawQuery: url.Values{"board": {e.Handle}}.Encode()}
 	return u.String()
 }

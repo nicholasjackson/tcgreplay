@@ -138,7 +138,7 @@ func newService(c Cards, i Images) (*Service, *logLines) {
 func TestPageShowsTheAdminAndBothActions(t *testing.T) {
 	s, _ := newService(&fakeCards{}, nil)
 	status, body := getPage(t, serve(t, s))
-	for _, want := range []string{"Signed in as admin@example.com", `name="all" value="1"`, "Clear everything", `name="set"`, "MEG or me01", "No clear since the playmat started"} {
+	for _, want := range []string{"Signed in as admin@example.com", `name="all" value="1"`, "Clear everything", `name="set"`, "MEG or me01", "No clear since the playmat started", `<a href="/board">Back to the board</a>`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page lacks %q", want)
 		}

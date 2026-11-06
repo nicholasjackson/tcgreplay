@@ -21,6 +21,7 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
+	"github.com/nicholasjackson/tcgreplay/internal/site"
 	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 	"github.com/nicholasjackson/tcgreplay/internal/usergames"
@@ -169,13 +170,22 @@ func idleText(d time.Duration) string {
 	return fmt.Sprintf("idle games dropped after %s", d)
 }
 
-// hostedHandler serves MCP over Streamable HTTP at /mcp, every session
-// sharing srv, and the playmat on every other path, with a's sign-in in
-// front: its own routes (metadata, client registration, authorize, token,
-// Google's callback, /healthz) are open, /mcp needs an access token and
-// the board needs a session. The board goes through reg's front door to
-// the signed-in account's own board. The card cache admin page, admin,
-// is served at /admin to admins only (see hostauth.RequireAdmin).
+// hostedHandler serves the hosted playmat's routes, with a's sign-in in
+// front:
+//   - a's own routes (metadata, client registration, authorize, token,
+//     Google's callback, /healthz) are open;
+//   - /mcp serves MCP over Streamable HTTP, every session sharing srv, and
+//     needs an access token;
+//   - /admin is the card cache admin page, admin, for admins only (see
+//     hostauth.RequireAdmin);
+//   - the board page is at /board and needs a session. It goes through
+//     reg's front door to the signed-in account's own board, which still
+//     sees itself at /. /board/ redirects to /board;
+//   - the board's own files (/assets/), live connection (/ws) and card
+//     lookups (/api/) stay at the root, where the built board asks for
+//     them, behind the same session;
+//   - every other path is the public website (package site): no sign-in,
+//     no cookies.
 func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service) http.Handler {
 	mux := http.NewServeMux()
 	a.Routes(mux)
@@ -187,8 +197,40 @@ func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, a
 	adminPage := a.RequireAdmin(admin.Handler())
 	mux.Handle("/admin", adminPage)
 	mux.Handle("/admin/", adminPage)
-	mux.Handle("/", a.RequireSession(reg.Board()))
+	board := reg.Board()
+	// The rewrite sits inside RequireSession so a signed-out page load
+	// returns to /board?…, not to /.
+	mux.Handle("GET /board", a.RequireSession(atRoot(board)))
+	mux.Handle("GET /board/{$}", toBoard())
+	session := a.RequireSession(board)
+	mux.Handle("/assets/", session)
+	mux.Handle("/ws", session)
+	mux.Handle("/api/", session)
+	mux.Handle("/", site.Handler())
 	return mux
+}
+
+// atRoot hands next the request with its path set to /, keeping the
+// query, so the board's server and front door see their page load at the
+// root (with its ?board= handle) when the page is served at /board.
+func atRoot(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/"
+		r2.URL.RawPath = ""
+		next.ServeHTTP(w, r2)
+	})
+}
+
+// toBoard redirects /board/ to /board, keeping the query.
+func toBoard() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		target := "/board"
+		if r.URL.RawQuery != "" {
+			target += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, target, http.StatusMovedPermanently)
+	})
 }
 
 // newHosted builds the per-account game registry, the sign-in service and
@@ -227,7 +269,7 @@ func newHosted(c config, db *cards.Client, images *cards.ImageCache, public *url
 	}
 	// BoardURL keeps the instructions' board-link line; each result's link
 	// comes from Resolve.
-	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet}).MCP()
+	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/board", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet}).MCP()
 	srv.AddReceivingMiddleware(a.MCPMiddleware())
 	return reg, srv, a, nil
 }

@@ -100,8 +100,8 @@ func TestAdminSignedOut(t *testing.T) {
 // wantNotAdmin checks resp is the "Not an admin" page.
 func wantNotAdmin(t *testing.T, resp *http.Response, body, email string) {
 	t.Helper()
-	if resp.StatusCode != http.StatusForbidden || !strings.Contains(body, "Not an admin") || !strings.Contains(body, email) {
-		t.Errorf("got %d %q, want 403 Not an admin for %s", resp.StatusCode, body, email)
+	if resp.StatusCode != http.StatusForbidden || !strings.Contains(body, "Not an admin") || !strings.Contains(body, email) || !strings.Contains(body, `href="/board"`) {
+		t.Errorf("got %d %q, want 403 Not an admin for %s, linking to /board", resp.StatusCode, body, email)
 	}
 	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
 		t.Errorf("Content-Type = %q", ct)

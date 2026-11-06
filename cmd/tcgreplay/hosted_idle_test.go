@@ -139,7 +139,7 @@ func TestHostedIdleDrop(t *testing.T) {
 	}
 
 	// A's board load gets the page, then the notice on its live connection.
-	if resp, body := getWith(t, h.ts.URL+"/", cookieA, nil); resp.StatusCode != http.StatusOK {
+	if resp, body := getWith(t, h.ts.URL+"/board", cookieA, nil); resp.StatusCode != http.StatusOK {
 		t.Fatalf("A's board page after expiry: %d %q", resp.StatusCode, body)
 	}
 	checkNotice(t, "A's board", waitNotice(t, rawBoardFeed(t, h, cookieA), 5*time.Second))

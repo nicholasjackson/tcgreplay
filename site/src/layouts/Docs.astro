@@ -1,0 +1,56 @@
+---
+// Docs is the layout of the how-to pages: the shared page layout with a
+// sidebar of the docs pages, lowest order first.
+import Base from './Base.astro';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+
+// Pages that are not Markdown docs, placed among them by order.
+const extra = [
+  { href: '/docs/workflows', title: 'Coaching workflows', order: 50 },
+  { href: '/docs/example', title: 'Example game', order: 70 },
+  { href: '/docs/limits', title: 'Limits', order: 80 },
+];
+const docs = (await getCollection('docs')).map((d) => ({ href: `/docs/${d.id}`, title: d.data.title, order: d.data.order }));
+const items = [...docs, ...extra].sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
+const here = Astro.url.pathname.replace(/\/$/, '');
+---
+<Base title={title} description={description}>
+  <div class="docs">
+    <nav class="docs-nav" aria-label="Guide">
+      <ul>
+        {items.map((i) => (
+          <li><a href={i.href} aria-current={here === i.href ? 'page' : undefined}>{i.title}</a></li>
+        ))}
+      </ul>
+    </nav>
+    <article class="prose">
+      <slot />
+    </article>
+  </div>
+</Base>
+
+<style>
+  .docs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem 2rem;
+  }
+  @media (min-width: 52rem) {
+    .docs { grid-template-columns: 13rem minmax(0, 1fr); }
+    .docs-nav { position: sticky; top: 1rem; align-self: start; }
+  }
+  .docs-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; }
+  @media (min-width: 52rem) { .docs-nav ul { display: grid; gap: 0.35rem; } }
+  .docs-nav a { text-decoration: none; }
+  .docs-nav a[aria-current='page'] { font-weight: 700; text-decoration: underline; }
+  .prose { min-width: 0; max-width: 46rem; }
+  .prose :global(h1) { margin-top: 0; }
+  .prose :global(li) { margin: 0.3rem 0; }
+  .prose :global(ol), .prose :global(ul) { padding-left: 1.4rem; }
+</style>

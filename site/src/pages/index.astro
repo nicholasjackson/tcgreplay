@@ -1,0 +1,81 @@
+---
+// The home page: what tcgreplay is in one sentence, the playmat in action
+// and "Get started", all within the first screen on a laptop.
+import Base from '../layouts/Base.astro';
+import Playmat from '../components/Playmat.astro';
+import CopyBlock from '../components/CopyBlock.astro';
+import { site } from '../lib/facts';
+---
+<Base description="Paste a Pokémon TCG Live battle log, and your AI assistant rebuilds the game on a live board, coaches you through it, and rewinds to try better lines.">
+  <section class="hero">
+    <div class="pitch">
+      <h1>Replay your Pokémon TCG Live games with an AI coach</h1>
+      <p class="lede" data-pitch>
+        Paste a Pokémon TCG Live battle log, and your AI assistant rebuilds the game on a live board, coaches you
+        through it, and rewinds to try better lines.
+      </p>
+      <p class="actions">
+        <a class="button" href="/docs/connect">Get started</a>
+        <span class="works-with">Works with Claude and ChatGPT</span>
+      </p>
+    </div>
+    <Playmat />
+  </section>
+
+  <section class="what" aria-labelledby="what-heading">
+    <h2 id="what-heading">What it does</h2>
+    <ul>
+      <li>
+        <strong>Imports your games.</strong> Paste a battle log and your decklist, and step through the game turn by
+        turn, with the opponent's unseen cards filled in from a likely list built from what they showed.
+      </li>
+      <li>
+        <strong>Reviews them with you.</strong> The assistant asks why you made a play before giving its view, rates
+        decisions apart from how they turned out, and notes what you did well as well as your mistakes.
+      </li>
+      <li>
+        <strong>Rewinds, drills and plays.</strong> Go back to any decision and try another line, practise the ideas
+        behind your mistakes in short drills, or play a game against the assistant on the board.
+      </li>
+    </ul>
+    <p>
+      tcgreplay is a playmat, not a rules engine: the assistant runs the game and the board shows it, live in your
+      browser. <a href="/docs/connect">Connect it to your assistant</a> to start.
+    </p>
+  </section>
+
+  <section class="address" aria-labelledby="address-heading">
+    <h2 id="address-heading">Already use connectors?</h2>
+    <p>Add the hosted playmat to your assistant as a custom connector at this address, then sign in with Google.</p>
+    <CopyBlock text={site.mcpURL} label="The playmat's address" wrap />
+  </section>
+</Base>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+    padding: 0.25rem 0 1rem;
+  }
+  @media (min-width: 56rem) {
+    .hero { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 2rem; }
+  }
+  h1 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); margin: 0 0 0.5rem; }
+  .lede { font-size: 1.1rem; margin: 0 0 1rem; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin: 0; }
+  .button {
+    display: inline-block;
+    padding: 0.6rem 1.4rem;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #1d2420;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .button:hover { filter: brightness(1.08); }
+  .works-with { color: var(--muted); font-size: 0.95rem; }
+  .what ul { padding-left: 1.2rem; }
+  .what li { margin: 0.5rem 0; }
+</style>

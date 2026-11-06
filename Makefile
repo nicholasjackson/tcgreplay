@@ -1,7 +1,7 @@
 # Build the playmat UI into the Go package, then the binary.
 BIN := bin/tcgreplay
 
-.PHONY: build install web test dev dev-ui docker-build docker-run clean
+.PHONY: build install web site site-dev site-test test dev dev-ui docker-build docker-run clean
 
 # Dev mode runs this checkout's build beside the installed one, with its
 # own data dir and UI port, so real games and the desktop app's daemon are
@@ -24,13 +24,34 @@ web/node_modules: web/package.json web/package-lock.json
 	cd web && npm ci
 	touch web/node_modules
 
+# site builds the public website (site/) into its Go package
+# (internal/site/dist/app), which the hosted playmat serves at / . It reads
+# the guides, the limits in .do/app.yaml and the example deck at build time.
+site: site/node_modules
+	cd site && npm run build
+
+site/node_modules: site/package.json site/package-lock.json
+	cd site && npm ci
+	touch site/node_modules
+
+# site-dev serves the website with live reload (Astro's dev server).
+site-dev: site/node_modules
+	cd site && npm run dev
+
+# site-test builds the website and runs its browser suite (site/e2e)
+# against the Go site handler.
+site-test: site
+	cd site && npm run test:e2e
+
 # test runs the Go checks, then builds the board and runs its browser
-# suite (web/e2e) by touch and by mouse against the board test server.
+# suite (web/e2e) by touch and by mouse against the board test server, then
+# builds the website and runs its browser suite (site-test).
 test:
 	go vet ./...
 	go test ./...
 	$(MAKE) web
 	cd web && npm run test:e2e
+	$(MAKE) site-test
 
 # dev builds and runs the dev daemon in the foreground, logging to the
 # terminal; the playmat is at http://$(DEV_UI)/. Claude Code reaches it
@@ -46,8 +67,9 @@ dev: build
 dev-ui: web/node_modules
 	cd web && TCGREPLAY_ADDR=$(DEV_UI) npm run dev
 
-# docker-build builds the hosted playmat's container image; docker-run
-# starts it on port 8080, with board links at PUBLIC_URL. Hosted mode needs
+# docker-build builds the hosted playmat's container image, with the board
+# and the website built in; docker-run starts it on port 8080, serving the
+# website at PUBLIC_URL and the board at PUBLIC_URL/board. Hosted mode needs
 # a Google sign-in client: export TCGREPLAY_GOOGLE_CLIENT_ID and
 # TCGREPLAY_GOOGLE_CLIENT_SECRET first (redirect URI
 # $(PUBLIC_URL)/auth/google/callback). To keep the card cache in a Spaces
@@ -71,4 +93,4 @@ docker-run:
 		-e TCGREPLAY_ADMINS -e TCGREPLAY_SPACES_CDN_TOKEN $(IMAGE)
 
 clean:
-	rm -rf bin internal/webui/dist/app
+	rm -rf bin internal/webui/dist/app internal/site/dist/app

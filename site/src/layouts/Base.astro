@@ -1,0 +1,70 @@
+---
+// Base is every page's layout: the logo and navigation, the page, and the
+// footer with the unofficial fan project notice and the TCGdex credit.
+// Importing the facts here makes every page's build check them.
+import '../styles/tokens.css';
+import '../styles/site.css';
+import { site } from '../lib/facts';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const fm = (Astro.props as { frontmatter?: Props }).frontmatter ?? {};
+const title = Astro.props.title ?? fm.title;
+const description =
+  Astro.props.description ??
+  fm.description ??
+  'tcgreplay rebuilds your Pokémon TCG Live games on a live board for your AI assistant to coach you through.';
+const fullTitle = title ? `${title} · tcgreplay` : 'tcgreplay';
+
+const nav = [
+  { href: '/', label: 'Home' },
+  { href: '/docs/connect', label: 'Get started' },
+  { href: '/docs/workflows', label: 'Guides' },
+  { href: '/docs/example', label: 'Example' },
+  { href: '/docs/limits', label: 'Limits' },
+  { href: '/privacy', label: 'Privacy' },
+];
+const here = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/png" href="/icon.png" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="bar">
+        <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" />tcgreplay</a>
+        <nav class="site-nav" aria-label="Site">
+          <ul>
+            {nav.map((n) => (
+              <li><a href={n.href} aria-current={here === n.href ? 'page' : undefined}>{n.label}</a></li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="bar">
+        <p class="fan-notice">
+          tcgreplay is an unofficial fan project. It is not affiliated with, endorsed, sponsored or approved by
+          Nintendo, The Pokémon Company, Creatures or Game Freak. Pokémon and its trademarks are theirs.
+        </p>
+        <p class="credit">Card data and images from <a href="https://tcgdex.dev">TCGdex</a>.</p>
+        <p><a href={site.repoURL}>Source on GitHub</a></p>
+      </div>
+    </footer>
+    <script>
+      import '../scripts/copy';
+    </script>
+  </body>
+</html>

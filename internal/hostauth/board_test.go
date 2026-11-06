@@ -166,18 +166,18 @@ func TestBoardSignedOutGoesThroughSignIn(t *testing.T) {
 }
 
 // TestBoardLoginReturnsOnlyToLocalPaths shows /auth/login returns to the
-// local path it is given, and to / for anything that is not one: another
+// local path it is given, and to the board at /board for anything that is not one: another
 // host, a scheme, a backslash trick, or nothing.
 func TestBoardLoginReturnsOnlyToLocalPaths(t *testing.T) {
 	b := newBoard(t)
 	for next, want := range map[string]string{
 		"/?x=1":                "/?x=1",
-		"//evil.example":       "/",
-		"//evil.example/board": "/",
-		"/\\evil.example":      "/",
-		"https://evil.example": "/",
-		"board":                "/",
-		"":                     "/",
+		"//evil.example":       "/board",
+		"//evil.example/board": "/board",
+		"/\\evil.example":      "/board",
+		"https://evil.example": "/board",
+		"board":                "/board",
+		"":                     "/board",
 	} {
 		t.Run(next, func(t *testing.T) {
 			br := b.browser(t)
@@ -418,7 +418,7 @@ func TestBoardLogout(t *testing.T) {
 			}
 
 			resp, body := b.send(t, "GET", "/auth/signed-out", "", nil)
-			if resp.StatusCode != http.StatusOK || !strings.Contains(body, "Sign in again") || !strings.Contains(body, `href="/auth/login?next=/"`) {
+			if resp.StatusCode != http.StatusOK || !strings.Contains(body, "Sign in again") || !strings.Contains(body, `href="/auth/login?next=/board"`) {
 				t.Errorf("signed-out page: %d %q, want 200 offering to sign in again", resp.StatusCode, body)
 			}
 

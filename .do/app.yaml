@@ -16,6 +16,14 @@
 # without them, images come from TCGdex as before. Accounts named in
 # TCGREPLAY_ADMINS can open /admin to clear the card cache (everything,
 # or one set) without a redeploy.
+#
+# The playmat also serves the public website (built from site/ by the
+# Dockerfile) at / , with the board at /board. Every push to main
+# redeploys it, so a docs change also restarts the playmat and drops every
+# game. The limits below (TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS,
+# TCGREPLAY_IDLE_TIMEOUT) are also shown on the website, which reads them
+# from this file when it is built: this file stays the one place they are
+# set, and the site build fails if one goes missing.
 name: tcgreplay
 region: lon
 services:

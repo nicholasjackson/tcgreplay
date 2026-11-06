@@ -1,0 +1,31 @@
+---
+// One coaching workflow: the hand-written page, its example prompts (each
+// copyable), and the one-line description from the playmat's guide.
+import { render } from 'astro:content';
+import Docs from '../../../layouts/Docs.astro';
+import Prompt from '../../../components/Prompt.astro';
+import { pairWorkflows } from '../../../lib/workflows';
+
+export async function getStaticPaths() {
+  const workflows = await pairWorkflows();
+  return workflows.map((w) => ({ params: { guide: w.name }, props: { w } }));
+}
+const { w } = Astro.props;
+const { Content } = await render(w.page.entry);
+---
+<Docs title={w.page.title} description={w.description}>
+  <h1>{w.page.title}</h1>
+  <p class="guide-line" data-guide-description>
+    <span class="label">The playmat's guide, <code>{w.name}</code>:</span> {w.description}
+  </p>
+  <Content />
+  <h2>Example prompts</h2>
+  <div class="prompts">
+    {w.page.prompts.map((text) => <Prompt text={text} />)}
+  </div>
+</Docs>
+
+<style>
+  .guide-line { color: var(--muted); border-left: 3px solid var(--accent); padding-left: 0.75rem; }
+  .guide-line .label { font-weight: 600; }
+</style>

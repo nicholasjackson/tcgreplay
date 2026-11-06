@@ -44,7 +44,7 @@ func (a *Auth) RequireAdmin(next http.Handler) http.Handler {
 			if !s.account.EmailVerified {
 				msg += " If you are an admin, sign out and sign in again."
 			}
-			renderPage(w, http.StatusForbidden, pageData{Title: "Not an admin", Message: msg, Link: "/", LinkText: "Back to the board"})
+			renderPage(w, http.StatusForbidden, pageData{Title: "Not an admin", Message: msg, Link: "/board", LinkText: "Back to the board"})
 			return
 		}
 		if !read && !a.sameSite(r) {

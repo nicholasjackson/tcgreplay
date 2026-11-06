@@ -1,0 +1,141 @@
+---
+// The privacy page, at /privacy: what the hosted playmat collects and keeps,
+// for how long, and what it never collects. Each statement follows the
+// playmat as built (internal/hostauth, internal/usergames, internal/game);
+// the idle time comes from the App Platform definition, not typed in.
+import Base from '../layouts/Base.astro';
+import { limits, site } from '../lib/facts';
+
+const updated = '6 November 2026';
+---
+<Base
+  title="Privacy"
+  description="What the hosted tcgreplay playmat collects when you sign in and play, how long it keeps it, and what it never collects."
+>
+  <article class="privacy">
+    <h1>Privacy</h1>
+    <p class="updated">Last updated {updated}.</p>
+    <p>
+      This page covers the hosted playmat at <a href={site.publicURL}>{site.publicURL.replace('https://', '')}</a>.
+      If you run tcgreplay on your own computer, nothing leaves your machine except card data fetched from TCGdex. This
+      website itself sets no cookies and loads nothing from other sites.
+    </p>
+
+    <section id="sign-in" aria-labelledby="h-sign-in">
+      <h2 id="h-sign-in">When you sign in</h2>
+      <p>
+        You sign in with Google. The playmat asks Google only for your email address (the <code>openid</code> and
+        <code>email</code> permissions) and keeps three things:
+      </p>
+      <ul>
+        <li>your Google account ID, a number Google uses to tell accounts apart;</li>
+        <li>your email address;</li>
+        <li>whether Google has verified that email address.</li>
+      </ul>
+      <p>
+        It never asks for or keeps your name, photo or password. Google hands the playmat a token when you sign in,
+        which it uses once to confirm who you are and then throws away.
+      </p>
+      <p>
+        Your sign-ins are kept encrypted, in the playmat's memory only. Two cookies keep you signed in, both hidden
+        from scripts:
+      </p>
+      <ul>
+        <li><code>tcgreplay_session</code>, which keeps the board signed in;</li>
+        <li><code>tcgreplay_login_…</code>, which exists only while a Google sign-in is in progress.</li>
+      </ul>
+      <p>
+        The board also remembers four display settings in your browser (replay speed, autoplay, where the panel sits and
+        prize reminders). They never leave your browser.
+      </p>
+    </section>
+
+    <section id="while-playing" aria-labelledby="h-while-playing">
+      <h2 id="h-while-playing">While you play</h2>
+      <p>
+        The playmat keeps your current game: the battle log and decklists you import, the moves on the board, its
+        branches, the assistant's coaching notes and the opponent's likely list. Each Google account has its own game,
+        and only that account can open its board.
+      </p>
+      <p>
+        All of it is held in memory only. It is never written to disk or to any storage service, and it is gone when
+        the playmat restarts.
+      </p>
+    </section>
+
+    <section id="how-long" aria-labelledby="h-how-long">
+      <h2 id="h-how-long">How long it is kept</h2>
+      <ul>
+        <li>
+          <strong>Your game</strong> is dropped after <span data-idle>{limits.idleTimeout}</span> without activity, when
+          your last sign-in ends, and whenever the playmat is updated or restarted. To keep a game, ask your assistant for
+          its record and save it yourself.
+        </li>
+        <li>
+          <strong>Your account details</strong> (ID, email, verified flag) are kept with your sign-ins and dropped
+          when your last one ends: when you sign out and disconnect your assistant, or when they run out (below).
+        </li>
+        <li>
+          <strong>Board sign-in</strong> lasts up to 30 days. <strong>Your assistant's connection</strong> lasts up to
+          30 days and is renewed while you use it; each access it is given lasts one hour. A Google sign-in in progress
+          lasts up to 10 minutes.
+        </li>
+        <li>
+          <strong>Logs.</strong> The playmat writes your email address to its logs when you sign in or out, when a limit
+          stops a request, and when your game expires or is removed. Logs never contain IP addresses, battle logs or
+          decks. The hosting providers, DigitalOcean and Cloudflare, may keep their own request logs.
+        </li>
+      </ul>
+    </section>
+
+    <section id="outside-services" aria-labelledby="h-outside-services">
+      <h2 id="h-outside-services">Outside services</h2>
+      <ul>
+        <li><strong>Google</strong>, for signing in.</li>
+        <li>
+          <strong>TCGdex</strong>, for card data. The playmat looks cards up there; no information about you is sent.
+        </li>
+        <li>
+          <strong>Card images</strong> are loaded by your browser, from the playmat's own image store or from TCGdex.
+        </li>
+        <li>
+          <strong>DigitalOcean</strong> hosts the playmat, and <strong>Cloudflare</strong> delivers its traffic.
+        </li>
+        <li>
+          <strong>Your AI assistant</strong> (Claude, ChatGPT or another) sees what you share with it and what the
+          playmat tells it, under that assistant's own privacy terms.
+        </li>
+      </ul>
+    </section>
+
+    <section id="never" aria-labelledby="h-never">
+      <h2 id="h-never">What it never collects</h2>
+      <ul>
+        <li>Your password, name or photo.</li>
+        <li>Your Google access tokens, after the moment of sign-in.</li>
+        <li>Analytics, tracking or advertising data of any kind.</li>
+        <li>Anything to sell or share: the playmat sells or shares nothing.</li>
+      </ul>
+    </section>
+
+    <section id="removing" aria-labelledby="h-removing">
+      <h2 id="h-removing">Removing your data</h2>
+      <p>
+        Sign out from the board's menu, and disconnect tcgreplay in your assistant's connector settings. There is no
+        stored account to delete: once your sign-ins end, the playmat forgets you.
+      </p>
+    </section>
+
+    <section id="contact" aria-labelledby="h-contact">
+      <h2 id="h-contact">Questions</h2>
+      <p>Open an issue on <a href={`${site.repoURL}/issues`}>the project's GitHub page</a>.</p>
+    </section>
+  </article>
+</Base>
+
+<style>
+  .privacy { max-width: 46rem; }
+  .updated { color: var(--muted); }
+  section { margin-top: 1.5rem; }
+  li { margin: 0.3rem 0; }
+</style>
