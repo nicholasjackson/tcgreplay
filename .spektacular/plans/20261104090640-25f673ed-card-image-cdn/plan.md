@@ -350,7 +350,7 @@ The card cache knowledge entry still says the playmat never caches images, and t
 - [x] A reader of the board card info entry learns that the image address is fixed for the page's life, so a new copy is used from the next page load, and that the board falls back to the card source if the CDN fails.
 - [x] The entries say that image copies are kept until cleared, and that clearing one also needs the playmat restarted (or the later admin clearing) so it stops pointing at the copy.
 
-#### - [ ] Task: Enable the CDN on the Spaces bucket
+#### - [x] Task: Enable the CDN on the Spaces bucket
 **Id:** db22391d-851d-499e-8713-44aec042aff3
 **Repo:** tcgreplay
 **Depends on:**
@@ -362,9 +362,9 @@ Enable the CDN on the Spaces bucket the shared card cache uses, and confirm its 
 *Technical detail:* [context.md#task-enable-the-cdn-on-the-spaces-bucket](./context.md#task-enable-the-cdn-on-the-spaces-bucket)
 
 **Acceptance criteria**:
-- [ ] The bucket's CDN is enabled, and its address matches the public image address in the playmat's start-up log.
-- [ ] After a redeploy, the start-up log shows no shared-store warning or failure for card images.
-- [ ] An image copied by the playmat loads from the CDN address in a browser with no sign-in.
+- [x] The bucket's CDN is enabled, and its address matches the public image address in the playmat's start-up log.
+- [x] After a redeploy, the start-up log shows no shared-store warning or failure for card images.
+- [x] An image copied by the playmat loads from the CDN address in a browser with no sign-in.
 
 ## Open Questions
 
@@ -515,3 +515,13 @@ No other questions are left for implementation time. Every other decision is set
 **Files changed**: None.
 
 **Discoveries**: Until the operator enables the CDN, hosted boards with the shared store get CDN addresses that fail and fall back to TCGdex, so players see no difference. Copies are still made.
+
+### 2026-11-06 — Task: Enable the CDN on the Spaces bucket
+
+**What was done**: The operator enabled the CDN on the `tcgreplay` bucket and redeployed. The 10:14:00 start-up log reads `card images: copied from the card source to the shared store, served from https://tcgreplay.ams3.cdn.digitaloceanspaces.com/images/`, which is the bucket's CDN address, then `card images: 0 copies found in the shared store` with no shared-store warning or failure. After a board load the board served `https://tcgreplay.ams3.cdn.digitaloceanspaces.com/images/en/sv/sv03.5/016/high.webp?v=0e5d62d29792`, and signed-out requests for the copies of `sv03.5/016`, `sv02/172` and `sv01/191` (`low.webp` and `high.webp`) returned 200 `image/webp` with `Cache-Control: public, max-age=604800`. All three criteria are met and ticked.
+
+**Deviations**: None. A signed-out request for an image not yet copied gets 403 (the private bucket hides missing objects), not 404.
+
+**Files changed**: None.
+
+**Discoveries**: None.

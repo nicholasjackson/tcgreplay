@@ -363,7 +363,7 @@ The card cache knowledge entry, as the freshness plan leaves it, describes a loc
 - [x] The entry says that forcing fresh data on the hosted playmat means removing the `tcgdex/` objects as well as restarting, until admin cache clearing exists.
 - [x] The entry says the cached-only lookup and offline mode never read the shared store, and that a shared-store outage is logged and skipped for a minute at a time.
 
-#### - [ ] Task: Create the Spaces bucket and set its secrets
+#### - [x] Task: Create the Spaces bucket and set its secrets
 **Id:** 1e7d6bb7-a950-4432-b4db-f374ae7baa94
 **Repo:** tcgreplay
 **Depends on:**
@@ -375,9 +375,9 @@ Create the private Spaces bucket the hosted playmat will use, and an access key 
 *Technical detail:* [context.md#task-create-the-spaces-bucket-and-set-its-secrets](./context.md#task-create-the-spaces-bucket-and-set-its-secrets)
 
 **Acceptance criteria**:
-- [ ] A private Spaces bucket exists for the hosted playmat, with an access key that can read and write it.
-- [ ] The four shared-store variables are set on the hosted playmat's App Platform component, with the key and secret encrypted.
-- [ ] After a redeploy, the hosted playmat's start-up log names the shared store, and no shared-store warning appears.
+- [x] A private Spaces bucket exists for the hosted playmat, with an access key that can read and write it.
+- [x] The four shared-store variables are set on the hosted playmat's App Platform component, with the key and secret encrypted.
+- [x] After a redeploy, the hosted playmat's start-up log names the shared store, and no shared-store warning appears.
 
 ## Open Questions
 
@@ -534,3 +534,14 @@ No other questions are left for implementation time. Every other decision is set
 - None
 
 **Discoveries**: A whole-plan implement run can only get past an open human task by sending it through the goal check until its attempts are exhausted and then recording a `skip` decision. `goal decide` is refused (`goal_decision_not_due`) before the check has stopped the run.
+
+### 2026-11-06 — Task: Create the Spaces bucket and set its secrets
+
+**What was done**: The operator created the private `tcgreplay` bucket in `ams3` with an access key, set the four `TCGREPLAY_SPACES_*` variables encrypted on the `playmat` component, and redeployed. The 10:14:00 start-up log reads `card cache: /home/nonroot/.cache/tcgreplay backed by shared store https://ams3.digitaloceanspaces.com/tcgreplay` with no shared-store warning, and `card cache: catalog warmed in 3.983s` follows. All three criteria are met and ticked.
+
+**Deviations**: The first deploy set `TCGREPLAY_SPACES_ENDPOINT` to the bucket's origin address (`https://tcgreplay.ams3.digitaloceanspaces.com`, which the DigitalOcean panel labels "Origin Endpoint") rather than the region endpoint. `normalized()` accepts it, so start-up still logged `backed by shared store`; requests then went path-style under the bucket host, card data keys landed under `tcgreplay/`, and the image listing failed with `404 NoSuchKey`. Setting the region endpoint `https://ams3.digitaloceanspaces.com` fixed it.
+
+**Files changed**:
+- None
+
+**Discoveries**: A bucket-origin endpoint passes settings validation and shows only as later shared-store failures. Accepting it (stripping a leading `<bucket>.` label) or refusing it at start-up would catch this; not done yet.
