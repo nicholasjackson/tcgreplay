@@ -101,6 +101,28 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 			id, _ := m.DB.ByName(ctx, name, moves...)
 			return id
 		}
+		// Each copy the log names with a code gets that print, so the
+		// alternate arts a player used show as themselves rather than as
+		// the decklist's print of the name. Basic Energy keeps the
+		// decklist's print, whose art is borrowed (see cards.energyArt).
+		byCode := map[string]string{}
+		opts.DefOfCode = func(name, code string) string {
+			if _, ok := deck.BasicEnergyDef(name); ok {
+				return ""
+			}
+			key := code + "\x00" + name
+			if id, ok := byCode[key]; ok {
+				return id
+			}
+			id := ""
+			if cid, ok := cards.LogCodeID(code); ok {
+				if c, err := m.DB.Card(ctx, cid); err == nil && cards.SameName(c.Name, name) {
+					id = cid
+				}
+			}
+			byCode[key] = id
+			return id
+		}
 	}
 	res, err := importer.Import(req.Log, opts)
 	if err != nil {

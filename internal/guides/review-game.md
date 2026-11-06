@@ -34,7 +34,7 @@ Pick the two to four that mattered most, in game order. Ignore turns with no rea
 1. `rewind` to the start of the turn (after the turn's draw) on a `review-t<N>-<seat>` branch (`<seat>` is `p1` or `p2`, the player whose turn it is).
 2. Set the scene in a few lines: both boards, the player's hand, prizes, what the opponent threatens next turn.
 3. Ask what they were thinking, with one or two specific questions ("you had Boss's Orders and Lillie's in hand: what made you pick Lillie's?").
-4. Wait for the answer. If the player wants to play the turn themselves on the board, let them: call `wait_for_turn` with their seat, answer any card that asks your side to act, and read their moves from the result when the turn ends.
+4. Wait for the answer in chat. If the player says they want to play the turn themselves on the board, hand it to them and, in that same reply, call `wait_for_turn` with their seat straight away. Keep calling it, answering any card that asks your side to act, until it reports the turn ended, then read their moves from the result. A move that does not end the turn is not a cue to post. Never ask them to say they are done or to end their turn.
 5. Then give your view, plainly: was it a mistake, and why? Distinguish a **poor decision** from a **bad outcome**: a correct play that lost to variance is not an error.
 
 ## 3. Test the alternative

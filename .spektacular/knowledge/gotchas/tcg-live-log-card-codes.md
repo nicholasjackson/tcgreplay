@@ -13,19 +13,32 @@ matches: the owner's opening hand fails and every later line fails with it. A
 new log shape that seems to break everything is more likely a format change
 than a cache problem.
 
-The codes still name the exact print, which helps with the opponent's cards.
-`importer.LogCodes(log, name)` finds a name's codes, and `cards.LogCodeID` turns
-a code into a TCGdex id using these rules:
-- the series number is padded to 2 digits (`me3` → `me03`, `sv5` → `sv05`)
+The codes still name the exact print of each copy, which is how alternate arts
+show as themselves on the board. The importer keeps, for each card, the code
+the line that named it gives for that name, when the line (with its bullet
+lists) gives exactly one; a list naming two prints of the same card gives none,
+and a later line naming it alone (drawing it, evolving into it) fills it in.
+`Options.DefOfCode` turns that code into the card's def, for both players, and a
+copy without a usable code keeps the decklist's print (or `DefOf`'s for the
+opponent). Never key prints by card name alone: one deck often runs two prints
+of a name (`2 MEG 188` and `1 MEP 33`), and a name-keyed map gives every copy
+the same one. `importer.LogCodes(log, name)` lists a name's codes, and
+`cards.LogCodeID` turns a code into a TCGdex id using these rules:
+- the series number is padded to 2 digits for Scarlet & Violet and Mega
+  Evolution (`me3` → `me03`, `sv5` → `sv05`) but not for older series
+  (`swsh1` stays `swsh1`, as TCGdex spells it)
 - a `-5` half set becomes `.5` (`me2-5` → `me02.5`)
 - `zsv10-5` → `sv10.5b` (Black Bolt) and `rsv10-5` → `sv10.5w` (White Flare)
 - `mebsp` → `mep`, and `mee` stays `mee`
 - the card number is padded to 3 digits
 - trailing parts such as `_ph` are dropped
 
-The mapping is a best guess. Always check that the TCGdex card's name matches
-before using the id, and fall back to `ByName` otherwise. `game/import.go`'s
-`DefOf` does this. The log may name a different print than the decklist (for
+The mapping is a best guess, and some prints are not on TCGdex at all
+(`me5-5_66`). Always check that the TCGdex card's name matches before using the
+id, and fall back otherwise; `game/import.go`'s `DefOf` and `DefOfCode` do
+this. A print TCGdex has but without an image (new promos such as `mep-033`)
+gets the art of the same name's preferred print with the same moves from the
+board server (`webui` `borrowedArt`), keeping its own identity. The log may name a different print than the decklist (for
 example a secret rare `sv10_226` against `DRI 176`), so match cards by name,
 never by print number.
 

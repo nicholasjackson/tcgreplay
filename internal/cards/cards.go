@@ -594,7 +594,7 @@ var logCodeRe = regexp.MustCompile(`^([a-z]+?)(\d+)?(?:-(\d+))?_(\d+)(?:_[a-z0-9
 
 // LogCodeID turns a TCG Live log card code into the TCGdex id it most
 // likely names: me3_121 is me03-121, me2-5_172 me02.5-172, zsv10-5_79
-// sv10.5b-079 (Black Bolt) and mebsp_33 mep-033. Callers should check the
+// sv10.5b-079 (Black Bolt), mebsp_33 mep-033 and swsh1_213 swsh1-213. Callers should check the
 // card exists and has the expected name.
 func LogCodeID(code string) (string, bool) {
 	m := logCodeRe.FindStringSubmatch(strings.ToLower(code))
@@ -619,7 +619,13 @@ func LogCodeID(code string) (string, bool) {
 			prefix, suffix = "sv", "w"
 		}
 		mj, _ := strconv.Atoi(major)
-		set = fmt.Sprintf("%s%02d", prefix, mj)
+		// TCGdex pads the set number for Scarlet & Violet and Mega
+		// Evolution (sv01, me01) but not for older series (swsh1).
+		if prefix == "sv" || prefix == "me" {
+			set = fmt.Sprintf("%s%02d", prefix, mj)
+		} else {
+			set = fmt.Sprintf("%s%d", prefix, mj)
+		}
 		if half != "" {
 			set += "." + half
 		}

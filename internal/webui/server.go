@@ -100,6 +100,32 @@ func (s *Server) Handler() http.Handler {
 	return localOnly(mux)
 }
 
+// borrowedArt is the art for a card TCGdex has no image for (a new promo,
+// say): the image of the print of the same name and moves that the card
+// database prefers, which is one with art. Only the picture is borrowed;
+// the card keeps its identity. "" if there is none.
+func (s *Server) borrowedArt(ctx context.Context, c *cards.Card) string {
+	if c.Category == "Energy" {
+		return "" // Basic Energy art is borrowed by the card database
+	}
+	var moves []string
+	for _, a := range c.Attacks {
+		moves = append(moves, a.Name)
+	}
+	for _, a := range c.Abilities {
+		moves = append(moves, a.Name)
+	}
+	id, err := s.M.DB.ByName(ctx, c.Name, moves...)
+	if err != nil || id == "" || id == c.ID {
+		return ""
+	}
+	alt, err := s.M.DB.Card(ctx, id)
+	if err != nil || !cards.SameName(alt.Name, c.Name) {
+		return ""
+	}
+	return alt.Image
+}
+
 // StartHub runs the update hub until ctx is done, for use with Handler.
 func (s *Server) StartHub(ctx context.Context) { go s.hub.run(ctx) }
 
@@ -174,12 +200,15 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	img, fb, ver := c.Image, "", ""
-	if s.Images != nil && c.Image != "" {
-		img, fb, ver = s.Images.Image(c.Image)
+	if img == "" {
+		img = s.borrowedArt(ctx, c)
+	}
+	if src := img; s.Images != nil && src != "" {
+		img, fb, ver = s.Images.Image(src)
 		if fb == img {
 			fb = ""
 		}
-		if img == c.Image {
+		if img == src {
 			ver = "" // a version only ever names a copy
 		}
 	}

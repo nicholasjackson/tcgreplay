@@ -32,12 +32,20 @@ type Options struct {
 	// Abilities the log shows the card using, to pick among same-named
 	// cards. "" if unknown.
 	DefOf func(name string, moves []string) string
+	// DefOfCode, if set, names the card definition for a log card code
+	// (e.g. "me1_179") given for a card called name, or "" if the code
+	// does not resolve to a card of that name. It gives each copy the
+	// print the log names for it, so an alternate art shows as itself;
+	// copies without a code keep the decklist's print (or DefOf's).
+	DefOfCode func(name, code string) string
 	// Trace, if set, receives each line and a board summary after it.
 	Trace io.Writer
 
 	// oppLimit caps the opponent's copies of each card at OppDeck's
 	// counts while replaying; nil allows MaxCopies.
 	oppLimit map[string]int
+	// lineCodes is the card codes on each log line (see lineCodes).
+	lineCodes map[int][]lineCode
 }
 
 // Result is a replayed game ready to be written as an event log.
@@ -61,6 +69,7 @@ func (res *Result) Events() []state.Event {
 // opponent list, it fills every opponent card the log never names from it.
 func Import(text string, opts Options) (*Result, error) {
 	secs, err := Parse(text)
+	opts.lineCodes = lineCodes(text)
 	if err != nil {
 		return nil, err
 	}
@@ -222,6 +231,8 @@ func replayOnce(secs []*Section, me, opp string, opts Options, seed uint64, deci
 		rng:            rng,
 		trace:          opts.Trace,
 		boundAt:        map[state.IID]int{},
+		lineCodes:      opts.lineCodes,
+		codes:          map[state.IID]string{},
 		decisions:      decisions,
 		pendingPrize:   map[state.Seat][]state.IID{},
 		pendingRetreat: map[state.Seat]bool{},
@@ -549,13 +560,22 @@ func (r *replay) finish(res *Result, opts Options) error {
 	if err := json.Unmarshal(setupEv.Payload, &setup); err != nil {
 		return err
 	}
+	// printOf is the print the log names for a card, if it names one that
+	// resolves to a card of that name.
+	printOf := func(iid state.IID, name string) string {
+		code := r.codes[iid]
+		if code == "" || opts.DefOfCode == nil {
+			return ""
+		}
+		return opts.DefOfCode(name, code)
+	}
 	var unbound []state.IID // the opponent's cards the log never names
 	for i := range setup.Cards {
 		c := &setup.Cards[i]
 		name := r.bound[c.IID]
 		switch {
 		case c.Owner == MeSeat && name != "":
-			c.Name, c.Def = name, defs[name]
+			c.Name, c.Def = name, cmpOr(printOf(c.IID, name), defs[name])
 		case c.Owner == MeSeat:
 			if len(pool) == 0 {
 				rep.Warnings = append(rep.Warnings, fmt.Sprintf("no decklist card left for %s", c.IID))
@@ -564,7 +584,7 @@ func (r *replay) finish(res *Result, opts Options) error {
 			c.Name, c.Def, c.Basis = pool[0], defs[pool[0]], "decklist"
 			pool = pool[1:]
 		case name != "":
-			c.Name, c.Def, c.Basis = name, oppDef(name), "observed"
+			c.Name, c.Def, c.Basis = name, cmpOr(printOf(c.IID, name), oppDef(name)), "observed"
 		default:
 			unbound = append(unbound, c.IID)
 		}

@@ -19,8 +19,9 @@ Past mistakes make the best puzzles: the position is real, the player has been t
 - `rewind` to the start of the turn containing the finding (after that turn's draw), on a branch named `drill-<game>-t<N>-<seat>` (the turn and the player whose turn it is; add `-2`, `-3` for repeats). Turns count both players, as on the timeline: name one as "turn 3, your turn". The timeline then stops before the finding, so the annotation is not visible.
 - Do not quote the finding, its principle, or the original play.
 - Describe the position the way the player would have seen it: both boards, their hand, prizes each side, the opponent's visible threats. Use view `coach`, never `reveal`: the player must not see hidden cards.
-- Ask: "It's your turn. What's your play?" They can answer in words or play the turn on the board.
-- If they play it on the board, call `wait_for_turn` with their seat and do what each result's `next` says, answering any card that asks your side to act. When it reports the turn ended, go straight to Compare. Never ask them to say they are done.
+- Ask: "It's your turn. What's your play? Play it on the board, or tell me." Then, in the same reply, call `wait_for_turn` with their seat straight away. Do not end your reply to wait for an answer first.
+- Do what each result's `next` says, answering any card that asks your side to act, and keep calling `wait_for_turn` until it reports the turn ended; then go straight to Compare. A move on the board that does not end the turn is not a cue to post: keep waiting. Never ask them to say they are done or to end their turn.
+- If they would rather answer in words, the wait's check-in ("Still playing?") hands the chat back to them; take their play from their reply and compare it the same way.
 
 ## 3. Compare
 
