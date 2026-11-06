@@ -5,20 +5,20 @@ description: Use when the player asks to review, go through, analyse or coach a 
 
 # Review a game
 
-A review is a conversation about decisions, not a verdict. The player learns most by explaining a play, seeing the alternative played out on the board, and leaving with one principle per mistake. Your job is to find the decision points, put the board there, ask, test lines honestly, and record what was learned.
+A review has two parts. First a **turn-by-turn analysis**: every one of the player's turns, what they did and your verdict, with real mistakes kept apart from plays that simply did not work out. Then **practice**: the player chooses the turns they want to work on, and for each you put the board there, let them play it again, and test the scenarios on the board. The player learns most by replaying the position and seeing the alternatives played out, and leaves with one principle per mistake.
 
 ## 0. Ground rules
 
-- **Ask before judging.** At each decision point, set the scene and ask what the player was thinking. Give your view only after they answer, or when they ask for it.
-- **Put the board where you are talking.** Before asking about a turn, `rewind` to the start of it on a branch named for the turn and the player whose turn it is (`review-t2-p2`), so the playmat and its timeline show that turn rather than the end of the game. Never just tell the player which timeline header to click.
+- **Rate decisions, not outcomes.** Distinguish a **poor decision** from a **bad outcome**: a correct play that lost to variance is not an error, and a lucky one is still a mistake.
+- **Put the board where you are talking.** When you practise a turn, `rewind` to the start of it on a branch named for the turn and the player whose turn it is (`review-t2-p2`), so the playmat and its timeline show that turn rather than the end of the game. Never just tell the player which timeline header to click. During the analysis itself, leave the board alone: the findings you record on the main branch (step 3) put each verdict on the timeline.
 - **Name turns as players do.** Turn N counts both players: it is the first player's Nth turn and the second player's Nth turn, the way the timeline and the log show it (`T2 p2`). Always say whose turn it is: "turn 2, your turn" or "turn 2, <opponent>'s turn".
 - **Check the current branch before you move anything.** Branch switches are shared with the player's browser; `list_branches` first, and never make test moves on a branch the player is using.
 - **Card text from `card_text`**, never memory. Quote the numbers you rely on: HP, attack costs, damage, Weakness, Resistance, Tool effects.
 - **Hidden information is an assumption.** The opponent's unseen cards come from an assumed list: say "they had" only for cards the log proves, "they likely had" otherwise.
 
-## 1. Find the decision points
+## 1. Read the game
 
-Read the game with `get_log` (view `coach` shows what the player could see; `reveal` shows the assumed hidden cards too). Look for:
+Read the game with `get_log` (view `coach` shows what the player could see; `reveal` shows the assumed hidden cards too). For each of the player's turns, look for the decision points:
 
 - Turns that ended without an attack when an attacker could have been made ready.
 - Supporters played when another Supporter in hand would have done more (a shuffle-draw that threw away a gust or a search).
@@ -27,31 +27,24 @@ Read the game with `get_log` (view `coach` shows what the player could see; `rev
 - Prize-race swings: the turn where the prizes needed to win changed by two or more.
 - Attacks short of a knockout by a small amount (a Tool, a boost, Weakness misapplied).
 
-Pick the two to four that mattered most, in game order. Ignore turns with no real choice.
+Before calling anything a mistake, check the better line: it is legal, and the numbers reach (count damage in order: attacker bonuses, then Weakness doubles, then Resistance subtracts; Tools and Stadiums change HP). If you cannot show a concrete better line, the turn is at most worth examining.
 
-## 2. Walk each point
+## 2. Turn-by-turn analysis
 
-1. `rewind` to the start of the turn (after the turn's draw) on a `review-t<N>-<seat>` branch (`<seat>` is `p1` or `p2`, the player whose turn it is).
-2. Set the scene in a few lines: both boards, the player's hand, prizes, what the opponent threatens next turn.
-3. Ask what they were thinking, with one or two specific questions ("you had Boss's Orders and Lillie's in hand: what made you pick Lillie's?").
-4. Wait for the answer in chat. If the player says they want to play the turn themselves on the board, hand it to them and, in that same reply, call `wait_for_turn` with their seat straight away. Keep calling it, answering any card that asks your side to act, until it reports the turn ended, then read their moves from the result. A move that does not end the turn is not a cue to post. Never ask them to say they are done or to end their turn.
-5. Then give your view, plainly: was it a mistake, and why? Distinguish a **poor decision** from a **bad outcome**: a correct play that lost to variance is not an error.
+In one reply, go through every one of the player's turns in game order. For each turn:
 
-## 3. Test the alternative
+- **A heading** with the turn, whose it is and a few words of verdict: "Turn 3, your turn: good recovery".
+- **What they did**, in a sentence or two: the plays that mattered, not every card.
+- **Your assessment**: why it was right, or what was better and why, naming the alternative concretely (the card, the target, the order). Mention the opponent's turn only where it set up the player's choice.
+- **A verdict**, one of: `Strong play`, `Good`, `Reasonable`, `Worth examining`, `Mistake`, `Dealt` (forced by the draw or the prizes, not a mistake).
 
-When you claim a better line, show it:
+Keep it tight: a turn with no real choice gets one line. Then close the analysis in a few lines: your overall assessment, whether the result was earned, gifted, dealt or played, what went well (name real good plays), and any principle that showed up more than once, since that is the thing to practise.
 
-- Play it on the branch with the normal verbs, one move per action, so the player can press Play on the playmat and watch it at their own speed. Use `annotate` on a key event to explain the reasoning; notes show as captions during playback.
-- Check the line is legal and the numbers reach: count damage in order (attacker bonuses, then Weakness doubles, then Resistance subtracts; Tools and Stadiums change HP).
-- Test the opponent's best reply, not their worst. `sample_hidden` after rewinding to the same event deals plausible hidden cards; try two or three samples on separate branches before claiming a line is safe.
-- If the alternative turns out no better, say so. A review that finds the player was right is still a good review.
-- To play a line out with the player taking one seat, play the other seat's turns yourself and, after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended. Never ask them to say "done".
+## 3. Record the findings
 
-## 4. Record the finding
+For each turn marked `Mistake` or `Worth examining`, and each `Strong play`, `annotate` the event where the decision happened, on the main branch so it shows whenever the game is opened:
 
-On the event where the mistake happened (on the main branch, so it shows whenever the game is opened), `annotate` with:
-
-`Finding (<category>, decision: <good|poor>, outcome: <good|bad>): <what happened>. Better: <the line>. See branch <name>. Principle: <one sentence to remember>.`
+`Finding (<category>, decision: <good|poor>, outcome: <good|bad>): <what happened>. Better: <the line>. Principle: <one sentence to remember>.`
 
 Categories, one per finding:
 
@@ -67,6 +60,33 @@ Categories, one per finding:
 | `dealt` | Variance: prized key cards, dead draws, forced plays. Not a mistake |
 | `none` | Reviewed and found sound |
 
-## 5. Close
+## 4. Offer practice
 
-Summarise in a few lines: the findings with their categories, what went well (name real good plays), and whether the result was earned, gifted, dealt or played. If the same principle showed up more than once, say so: that is the thing to practise. Offer the `replay-drill` guide to practise the position later without the answer showing.
+End the analysis reply with a numbered list of the turns worth practising, the ones marked `Mistake` or `Worth examining`, each with a few words on what to try:
+
+1. Turn 4, your turn: the Ultra Ball target.
+2. Turn 2, your turn: Energy on Riolu or Makuhita.
+
+Add that the player can pick any other turn, or stop here, and ask which they would like to practise. If no turn qualifies, say so and offer to practise any turn they choose. Wait for their choice in chat; do not start practising until they pick.
+
+## 5. Practise a turn
+
+1. `rewind` to the start of the turn (after the turn's draw) on a `review-t<N>-<seat>` branch (`<seat>` is `p1` or `p2`, the player whose turn it is).
+2. Set the scene in a few lines: both boards, the player's hand, prizes, what the opponent threatens next turn. Do not repeat your verdict yet.
+3. Ask: "It's turn N, your turn. What's your play? Play it on the board, or tell me." Then, in that same reply, call `wait_for_turn` with their seat straight away. Keep calling it, answering any card that asks your side to act, until it reports the turn ended, then read their moves from the result. A move that does not end the turn is not a cue to post. Never ask them to say they are done or to end their turn. If they answer in chat instead, take their play from there.
+4. Compare their play with the line from your analysis. If theirs is as good or better, say so: a practice that finds the player was right is still a good practice.
+
+### Test the alternative
+
+Then play the scenarios out on the board:
+
+- Play the better line on its own branch (`review-t<N>-<seat>-alt`) with the normal verbs, one move per action, so the player can press Play on the playmat and watch it at their own speed. Use `annotate` on a key event to explain the reasoning; notes show as captions during playback.
+- Test the opponent's best reply, not their worst. `sample_hidden` after rewinding to the same event deals plausible hidden cards; try two or three samples on separate branches before claiming a line is safe.
+- If the alternative turns out no better, say so, and change your verdict.
+- To play a line out with the player taking one seat, play the other seat's turns yourself and, after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended. Never ask them to say "done".
+
+Finish the turn with its one principle, and `annotate` the finding's event on the main branch again with what the practice showed and the branch names to open. Then offer the turns left on the list, or to stop.
+
+## 6. Close
+
+When the player stops, sum up in a line or two: the turns practised and the principle from each. Offer the `replay-drill` guide to practise these positions later without the answer showing.

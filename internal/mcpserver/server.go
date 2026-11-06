@@ -744,7 +744,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return "no open action", nil
 	})
-	addQuiet(s, srv, "wait_for_turn", "After you hand the player a turn (end_turn in play mode; a drill or a line for them to play in review mode), call this and act on the result. Each call returns within about 30 seconds.", s.waitForTurn)
+	addQuiet(s, srv, "wait_for_turn", "After you hand the player a turn (end_turn in play mode; a drill, a practice turn or a line for them to play in review mode), call this in the same reply and act on the result. Never end your reply to wait for the player: until you call this, nothing sees their moves. Each call returns within about 30 seconds.", s.waitForTurn)
 
 	// Deck and randomness.
 	add(s, srv, "search_deck", "List a deck's cards sorted by category and name (never in true order). Then move or bench what you take, and shuffle.", func(ctx context.Context, in Search) (any, error) {
@@ -843,9 +843,9 @@ func (s *Server) register(srv *mcp.Server) {
 			if err := g.SetDrawsLikeMain(true); err != nil {
 				return nil, err
 			}
-			return fmt.Sprintf("on branch %s at event %d; draws repeat main's", name, in.EventID), nil
+			return fmt.Sprintf("on branch %s at event %d; draws repeat main's", name, in.EventID) + handOffHint(g), nil
 		}
-		return fmt.Sprintf("on branch %s at event %d", name, in.EventID), nil
+		return fmt.Sprintf("on branch %s at event %d", name, in.EventID) + handOffHint(g), nil
 	})
 	add(s, srv, "undo", "Step the current branch back over its last n moves (default 1); its head moves to just before them. The events stay in the log. Only moves made on the playmat can be undone, never the imported game itself.", func(ctx context.Context, in Undo) (any, error) {
 		g, err := s.m(ctx).Current()
@@ -871,7 +871,7 @@ func (s *Server) register(srv *mcp.Server) {
 				return nil, err
 			}
 		}
-		return fmt.Sprintf("on branch %s at event %d", in.Branch, g.Head()), nil
+		return fmt.Sprintf("on branch %s at event %d", in.Branch, g.Head()) + handOffHint(g), nil
 	})
 
 	// Opponent inference.
@@ -918,6 +918,17 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return "noted", nil
 	})
+}
+
+// handOffHint is added to a review-mode branch move that leaves a turn in
+// progress: assistants that ask the player to play it tend to end their
+// reply there, and then nothing sees the player's moves.
+func handOffHint(g *game.Game) string {
+	seat := g.State().Current
+	if g.Mode() != game.ModeReview || seat == "" {
+		return ""
+	}
+	return fmt.Sprintf(". It is %s's turn. If you hand this turn to the player to play on the board, ask for their play and call wait_for_turn with seat %s in this same reply, then keep calling it as its next says; do not end your reply to wait for them.", seat, seat)
 }
 
 // otherSeat parses a seat argument, defaulting to the seat opposite the player.

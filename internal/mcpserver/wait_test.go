@@ -444,3 +444,40 @@ func TestWaitForTurnGameOver(t *testing.T) {
 		}
 	})
 }
+
+// TestRewindNamesTheHandOff: a review-mode rewind into a turn in progress
+// tells the assistant to call wait_for_turn on that turn's seat in the same
+// reply, so a practice turn handed to the player is watched; in play mode
+// the hint is left out.
+func TestRewindNamesTheHandOff(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
+		g := waitGame(t, cs, m)
+		head := g.Head()
+		out, isErr := call(t, cs, "rewind", map[string]any{"event_id": head, "name": "play-branch"})
+		if isErr {
+			t.Fatal(out)
+		}
+		if strings.Contains(out, "wait_for_turn") {
+			t.Errorf("play-mode rewind hints a hand-off: %s", out)
+		}
+		if out, isErr := call(t, cs, "set_mode", map[string]any{"mode": "review"}); isErr {
+			t.Fatal(out)
+		}
+		out, isErr = call(t, cs, "rewind", map[string]any{"event_id": head, "name": "review-t1-p1"})
+		if isErr {
+			t.Fatal(out)
+		}
+		for _, want := range []string{"on branch review-t1-p1", "call wait_for_turn with seat p1 in this same reply", "do not end your reply to wait for them"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("review rewind result lacks %q: %s", want, out)
+			}
+		}
+		out, isErr = call(t, cs, "checkout", map[string]any{"branch": "play-branch"})
+		if isErr {
+			t.Fatal(out)
+		}
+		if !strings.Contains(out, "call wait_for_turn with seat p1 in this same reply") {
+			t.Errorf("review checkout result lacks the hand-off: %s", out)
+		}
+	})
+}

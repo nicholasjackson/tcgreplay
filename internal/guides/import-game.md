@@ -53,4 +53,10 @@ Give the player a short summary:
 - The game id, and that it is on the playmat with its timeline.
 - The game record from the result (`record`), in a code block, exactly as returned (after a `set_opponent_deck` fix, the updated one). The playmat keeps nothing after this session: if something keeps the player's records (step 0), save the record there with the game; otherwise the player can keep it in their notes. Either way it can be pasted back later to bring this exact game back. Branches and notes made during the review are not in it and last only for this session. `get_record` returns it again at any time.
 
-Then offer to review it with the `review-game` guide. Do not start judging plays until the player asks.
+End with a short numbered choice of what to do next, and wait for the player to pick:
+
+1. **Analyse this game turn by turn**: follow the `review-game` guide from the start.
+2. **Practise a critical decision**: name the decision point you would start with ("turn 4, your turn: the Ultra Ball target"). If they pick it, or another turn, follow the `review-game` guide's "Practise a turn" step for that turn, without the full analysis first.
+3. **Stop here**: the record above brings the game back later.
+
+Do not start judging plays until the player asks.
