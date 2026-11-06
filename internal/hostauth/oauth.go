@@ -33,11 +33,19 @@ const (
 	resourceMetadataPath = "/.well-known/oauth-protected-resource"
 )
 
-// claudeCallbacks are the redirect addresses claude.ai registers.
-var claudeCallbacks = []string{
+// connectorCallbacks are the fixed redirect addresses hosted MCP clients
+// register: claude.ai's, and ChatGPT's stable one.
+var connectorCallbacks = []string{
 	"https://claude.ai/api/mcp/auth_callback",
 	"https://claude.com/api/mcp/auth_callback",
+	"https://chatgpt.com/connector_platform_oauth_redirect",
 }
+
+// chatGPTCallbackPrefix opens ChatGPT's per-connector redirect address,
+// https://chatgpt.com/connector/oauth/{callback_id}, which ChatGPT
+// registers for an authorization server that does not advertise RFC 9207
+// issuer identification (this one does not).
+const chatGPTCallbackPrefix = "https://chatgpt.com/connector/oauth/"
 
 // resource is the protected resource's identifier: the MCP endpoint.
 func (a *Auth) resource() string { return a.public + "/mcp" }
@@ -124,18 +132,37 @@ type oauthError struct {
 }
 
 // allowedRedirect reports whether a client may register redirect address
-// u: claude.ai's callbacks, or a loopback address on any port (a native
-// client such as Claude Code). Restricting redirects keeps a stranger who
-// registers a client from collecting codes issued in a victim's browser.
+// u: claude.ai's or ChatGPT's callbacks, or a loopback address on any port
+// (a native client such as Claude Code). Restricting redirects keeps a
+// stranger who registers a client from collecting codes issued in a
+// victim's browser.
 func allowedRedirect(u string) bool {
-	if slices.Contains(claudeCallbacks, u) {
+	if slices.Contains(connectorCallbacks, u) {
 		return true
+	}
+	if id, ok := strings.CutPrefix(u, chatGPTCallbackPrefix); ok {
+		return isCallbackID(id)
 	}
 	p, err := url.Parse(u)
 	if err != nil || p.Scheme != "http" || p.Fragment != "" || p.User != nil {
 		return false
 	}
 	return isLoopbackHost(p.Hostname())
+}
+
+// isCallbackID reports whether id is a plausible ChatGPT callback id: one
+// non-empty path segment of letters, digits, '-' and '_', so the address
+// stays on ChatGPT's own callback path with no query or fragment.
+func isCallbackID(id string) bool {
+	if id == "" || len(id) > 128 {
+		return false
+	}
+	for _, r := range id {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
 }
 
 func isLoopbackHost(h string) bool {
