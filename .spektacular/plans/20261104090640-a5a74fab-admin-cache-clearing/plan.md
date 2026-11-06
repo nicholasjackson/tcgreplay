@@ -547,7 +547,7 @@ Update the card cache and board card info knowledge entries through the knowledg
 - [x] The entry explains that games already open keep their cards through a clear, and that cleared data is fetched again from the card source.
 - [x] A reader of the board card info entry learns that copied images carry a content version in their address, so changed art reaches browsers despite the long cache lifetime, and that an open board shows cleared data after a reload.
 
-#### - [ ] Task: Name the admins and create the CDN purge token
+#### - [x] Task: Name the admins and create the CDN purge token
 **Id:** a533b58b-cd2a-483c-8038-e8a3291c8a3d
 **Repo:** tcgreplay
 **Depends on:**
@@ -559,9 +559,9 @@ Create a DigitalOcean API token limited to reading and updating CDN endpoints, a
 *Technical detail:* [context.md#task-name-the-admins-and-create-the-cdn-purge-token](./context.md#task-name-the-admins-and-create-the-cdn-purge-token)
 
 **Acceptance criteria**:
-- [ ] The hosted playmat's App Platform component has the admin list set to the admins' Google account emails, and the CDN token set as an encrypted value.
-- [ ] After a redeploy, the start-up log reports the expected number of admins and CDN purging on, with no warning.
-- [ ] The Spaces access key in use can list and delete objects in the bucket.
+- [x] The hosted playmat's App Platform component has the admin list set to the admins' Google account emails, and the CDN token set as an encrypted value.
+- [x] After a redeploy, the start-up log reports the expected number of admins and CDN purging on, with no warning.
+- [x] The Spaces access key in use can list and delete objects in the bucket.
 
 ## Open Questions
 
@@ -778,3 +778,17 @@ No other questions are left for implementation time. Every other decision is set
 - None.
 
 **Discoveries**: A human task can only be skipped after its goal check is exhausted: `goal decide` refuses while the check is retrying, so it takes all three attempts.
+
+### 2026-11-06 — Task: Name the admins and create the CDN purge token (done by the operator)
+
+**What was done**: The operator set `TCGREPLAY_ADMINS` and an encrypted `TCGREPLAY_SPACES_CDN_TOKEN` on the App Platform playmat component and redeployed. After signing out and back in (the session predated the verified-email flag), the operator opened `/admin` and cleared `sv01`: 11 card entries removed from the shared store, 1 from local disk, 2 image copies removed (so the Spaces key can list and delete). The first clear reported "CDN not purged (no TCGREPLAY_SPACES_CDN_TOKEN)" because the token was not yet in place; after the token was created and set and the app redeployed, the operator confirmed the start-up log and a repeat clear purged the CDN.
+
+**Deviations**: The token needs the `cdn:read` and `cdn:delete` scopes, not `cdn:read` and `cdn:update` as this task and the docs said: DigitalOcean's API gates `DELETE /v2/cdn/endpoints/{id}/cache` on `cdn:delete` (its OpenAPI spec, `cdn_purge_cache.yml`). The design doc, `.do/app.yaml` and the `internal/spaces/cdn.go` comment were corrected.
+
+**Files changed**:
+- `TCG Review Playmat Design and Build Plan.md`
+- `.do/app.yaml`
+- `internal/spaces/cdn.go`
+- knowledge (repo tier, store `tcgreplay`): `gotchas/cdn-purge-needs-cdn-delete.md`
+
+**Discoveries**: Purging a DigitalOcean CDN cache is `cdn:delete`, although the scopes page describes `cdn:update` as modifying CDN endpoints.
