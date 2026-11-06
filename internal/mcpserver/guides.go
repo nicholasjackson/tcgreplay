@@ -26,7 +26,7 @@ type guideEntry struct {
 // game, and in hosted mode must not take a place or be refused as busy (see
 // bind).
 func (s *Server) registerGuides(srv *mcp.Server) {
-	mcp.AddTool(srv, &mcp.Tool{Name: "guide", Description: "List the playmat's coaching guides, or read one by name. Read a guide before starting its workflow."}, func(_ context.Context, _ *mcp.CallToolRequest, in GuideArg) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(srv, &mcp.Tool{Name: "guide", Description: "List the playmat's coaching guides, or read one by name. Read a guide before starting its workflow.", Annotations: annotations("guide")}, func(_ context.Context, _ *mcp.CallToolRequest, in GuideArg) (*mcp.CallToolResult, any, error) {
 		if in.Name == "" {
 			var list []guideEntry
 			for _, g := range guides.List() {

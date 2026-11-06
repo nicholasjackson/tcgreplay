@@ -1,0 +1,7 @@
+- Prefer a static site published automatically by the project's existing CI, with GitHub Pages as the default host. If a github.io address cannot be verified for Google's consent screen, propose an address on a domain the owner controls.
+- Prefer writing the docs pages in Markdown so they are easy to keep current, built into plain HTML. Choose the lightest generator that fits; the repository already has a Node toolchain for the board.
+- For the home page animation, prefer something lightweight that is drawn or scripted in the page (CSS or SVG animation, or a short muted looping video captured from the real board) over a heavy embedded player. Keep it in the board's own visual style, with the board's card styling or plain stand-ins in place of card artwork, so it reads as the real product.
+- The example game can be the corpus game in testdata/logs dated 2026-10-11, a close loss against a Mew ex / Bronzong / Mega Lopunny ex deck, with the Mega Lucario ex v12 decklist in testdata/decks. Both have been shown to import cleanly from ChatGPT.
+- The coaching workflows at the time of writing are: import a game, the opponent's likely deck, review a game, replay drill, before-you-move, numbers drill, and play a game.
+- Where practical, take tool names, workflow names and service limits from the playmat itself rather than retyping them, so the site stays accurate as the playmat changes.
+- Known risk: the hosted playmat serves a small number of players at once, and a widely shared site could fill it.

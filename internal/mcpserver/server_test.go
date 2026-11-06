@@ -509,6 +509,7 @@ func TestAssistantName(t *testing.T) {
 	for in, want := range map[string]string{
 		"claude-code": "Claude", "claude-ai": "Claude", "codex-mcp-client": "Codex",
 		"gemini-cli-mcp-client": "Gemini", "cursor-vscode": "cursor-vscode",
+		"openai-mcp": "ChatGPT", "ChatGPT": "ChatGPT", "openai-codex": "Codex",
 	} {
 		if got := AssistantName(in); got != want {
 			t.Errorf("%s: %s, want %s", in, got, want)

@@ -154,12 +154,17 @@ func (s *Server) board(ctx context.Context) string {
 }
 
 // AssistantName turns an MCP client's name ("claude-code",
-// "codex-mcp-client", "gemini-cli-mcp-client") into a name for the playmat.
+// "codex-mcp-client", "gemini-cli-mcp-client", "openai-mcp") into a name for
+// the playmat. ChatGPT connects as "openai-mcp"; Codex is checked first so
+// its client keeps its own name.
 func AssistantName(client string) string {
 	c := strings.ToLower(client)
-	for _, known := range []string{"Claude", "Codex", "Gemini"} {
-		if strings.Contains(c, strings.ToLower(known)) {
-			return known
+	for _, known := range []struct{ match, name string }{
+		{"claude", "Claude"}, {"codex", "Codex"}, {"gemini", "Gemini"},
+		{"chatgpt", "ChatGPT"}, {"openai", "ChatGPT"},
+	} {
+		if strings.Contains(c, known.match) {
+			return known.name
 		}
 	}
 	return client
@@ -201,7 +206,7 @@ func addQuiet[In any](s *Server, srv *mcp.Server, name, desc string, h func(cont
 // call counts as one of the assistant's moves, which keeps its acting
 // lock from releasing itself.
 func addWith[In any](s *Server, srv *mcp.Server, name, desc string, resolve func(context.Context, *mcp.RequestExtra) (*game.Manager, string, error), moves bool, h func(context.Context, In) (any, error)) {
-	mcp.AddTool(srv, &mcp.Tool{Name: name, Description: desc}, func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(srv, &mcp.Tool{Name: name, Description: desc, Annotations: annotations(name)}, func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error) {
 		ctx, err := s.bindWith(ctx, req, resolve)
 		if err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}}}, nil, nil

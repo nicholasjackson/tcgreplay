@@ -1,0 +1,5 @@
+- The site must be static content only: no user accounts, no server-side logic, and no interactive features beyond the home page animation and copy controls.
+- The hosted playmat's existing address for its MCP endpoint and board must not change: connectors people have already added in claude.ai, ChatGPT and Claude Code point at it.
+- The site's home page and privacy page must be at addresses Google accepts on the hosted playmat's OAuth consent screen (Google requires both for an app offered to the public, on a domain the owner can verify).
+- The site and its animation must not reproduce official Pokémon card artwork or the Pokémon and Pokémon TCG logos.
+- Everything the site says about the playmat (assistants supported, coaching workflows, limits) must match the playmat as it behaves at the time of publishing.

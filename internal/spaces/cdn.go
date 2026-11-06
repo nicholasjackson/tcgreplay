@@ -25,7 +25,8 @@ const purgeBatch = 50
 // its origin, so no endpoint id is configured. It knows nothing about what
 // the paths hold.
 type CDN struct {
-	// Token is a DigitalOcean API token with CDN read and update access.
+	// Token is a DigitalOcean API token with the cdn:read scope (to list
+	// endpoints) and cdn:delete (to purge a cache; not cdn:update).
 	// It is sent only as a bearer token and never appears in an error.
 	Token string
 	// Origin is the bucket's origin host, <bucket>.<region>.digitaloceanspaces.com.

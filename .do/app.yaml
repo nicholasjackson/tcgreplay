@@ -101,7 +101,8 @@ services:
       # nobody can use the admin page. Needs only a restart.
       - key: TCGREPLAY_ADMINS
         scope: RUN_TIME
-      # A DigitalOcean API token with CDN read and update access, used to
+      # A DigitalOcean API token with the cdn:read and cdn:delete scopes
+      # (purging is cdn:delete, not cdn:update), used to
       # purge the bucket's CDN when an admin clears card image copies.
       # Unset means clears still delete the copies but do not purge the
       # CDN. Ignored without the four TCGREPLAY_SPACES_* settings.
