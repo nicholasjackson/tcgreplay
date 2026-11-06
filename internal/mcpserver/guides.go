@@ -2,6 +2,7 @@ package mcpserver
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -26,7 +27,7 @@ type guideEntry struct {
 // game, and in hosted mode must not take a place or be refused as busy (see
 // bind).
 func (s *Server) registerGuides(srv *mcp.Server) {
-	mcp.AddTool(srv, &mcp.Tool{Name: "guide", Description: "List the playmat's coaching guides, or read one by name. Read a guide before starting its workflow.", Annotations: annotations("guide")}, func(_ context.Context, _ *mcp.CallToolRequest, in GuideArg) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(srv, &mcp.Tool{Name: "guide", Description: guideToolDescription(), Annotations: annotations("guide")}, func(_ context.Context, _ *mcp.CallToolRequest, in GuideArg) (*mcp.CallToolResult, any, error) {
 		if in.Name == "" {
 			var list []guideEntry
 			for _, g := range guides.List() {
@@ -50,6 +51,19 @@ func (s *Server) registerGuides(srv *mcp.Server) {
 			}, nil
 		})
 	}
+}
+
+// guideToolDescription says when to use each guide, built from the guide
+// list. Some clients (ChatGPT) choose an app from its tool descriptions and
+// pay little heed to the server instructions, so the description has to
+// carry each guide's trigger itself.
+func guideToolDescription() string {
+	var b strings.Builder
+	b.WriteString("Pokémon TCG coaching on the playmat. Read the matching guide (pass its name) before starting its workflow, even if the player does not mention TCG Replay; call with no name to list them.")
+	for _, g := range guides.List() {
+		fmt.Fprintf(&b, " %s: %s", g.Name, g.Description)
+	}
+	return b.String()
 }
 
 // guideInstructions is the instructions' guide block: one line per guide,

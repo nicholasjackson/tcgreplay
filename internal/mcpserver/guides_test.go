@@ -292,3 +292,30 @@ func TestGuidePromptsAddNoTools(t *testing.T) {
 		}
 	})
 }
+
+// TestToolsSayWhenToUseThem: clients that pick an app from its tool
+// descriptions alone (ChatGPT) must learn from import_log that a pasted
+// battle log goes to the playmat, and from guide when each guide applies.
+func TestToolsSayWhenToUseThem(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
+		res, err := cs.ListTools(context.Background(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		desc := map[string]string{}
+		for _, tool := range res.Tools {
+			desc[tool.Name] = tool.Description
+		}
+		imp := desc["import_log"]
+		for _, want := range []string{"Use this when the user pastes or attaches a Pokémon TCG Live battle log", "even if they do not mention TCG Replay", "rather than reading the log yourself", "import-game guide"} {
+			if !strings.Contains(imp, want) {
+				t.Errorf("import_log description lacks %q", want)
+			}
+		}
+		for _, g := range guides.List() {
+			if !strings.Contains(desc["guide"], g.Name+": "+g.Description) {
+				t.Errorf("guide description lacks %s's trigger", g.Name)
+			}
+		}
+	})
+}
