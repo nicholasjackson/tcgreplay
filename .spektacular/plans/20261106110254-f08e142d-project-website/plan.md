@@ -249,7 +249,7 @@ A guide added to the playmat without a page, or a page for a guide that's gone, 
 
 **Validation point**: Go tests show public site paths serve without sign-in or cookies and the board needs sign-in at `/board`, with the new link format in tool results. The site's browser tests pass for the home page, privacy page, connecting pages, the address copy button, the notice on every page, phone width, and no cookies or third-party requests. After a deploy, the live address shows the home page and a fresh board link opens the board.
 
-#### - [ ] Task: Embed and serve the website from a Go site package
+#### - [x] Task: Embed and serve the website from a Go site package
 **Id:** 603b3ddb-f67a-41c7-8abe-63bb41727ef2
 **Repo:** tcgreplay
 **Depends on:** none
@@ -260,12 +260,12 @@ Add a small Go package that carries the built website inside the playmat binary,
 *Technical detail:* [context.md#task-embed-and-serve-the-website-from-a-go-site-package](./context.md#task-embed-and-serve-the-website-from-a-go-site-package)
 
 **Acceptance criteria**:
-- [ ] The playmat binary builds and its tests pass on a machine that has never built the website, serving a placeholder page.
-- [ ] When the website has been built, its pages, assets and 404 page are served from the binary with the right content types.
-- [ ] Pages are sent with headers that stop browsers caching them, hashed build assets with long-lived caching, and no response sets a cookie.
-- [ ] An unknown address gets the site's own 404 page with a 404 status.
+- [x] The playmat binary builds and its tests pass on a machine that has never built the website, and the site package serves a placeholder page (mounting it on the hosted router is the next task's work).
+- [x] When the website has been built, its pages, assets and 404 page are served from the binary with the right content types.
+- [x] Pages are sent with headers that stop browsers caching them, hashed build assets with long-lived caching, and no response sets a cookie.
+- [x] An unknown address gets the site's own 404 page with a 404 status.
 
-#### - [ ] Task: Move the board to /board and serve the site on every other path
+#### - [x] Task: Move the board to /board and serve the site on every other path
 **Id:** 5f2c6513-b004-460f-ab3d-fc25e2ef9b41
 **Repo:** tcgreplay
 **Depends on:**
@@ -277,14 +277,14 @@ Change the hosted playmat's routing so the website is public at every path it do
 *Technical detail:* [context.md#task-move-the-board-to-board-and-serve-the-site-on-every-other-path](./context.md#task-move-the-board-to-board-and-serve-the-site-on-every-other-path)
 
 **Acceptance criteria**:
-- [ ] A signed-out visitor to `/`, a docs address or `/privacy` gets the website with no redirect to Google and no cookie set.
-- [ ] A signed-out visitor to `/board` is sent to Google sign-in and comes back to `/board`; a signed-in visitor gets their own board there, and `/board/` redirects to `/board`.
-- [ ] Board links returned by `import_log`, `new_game` and `set_opponent_deck` have the form `https://tcgreplay.demo.gs/board?board=<handle>`, and opening one in the signed-in browser shows that account's board.
-- [ ] The board's files, live connection and card lookups still need sign-in, and the board works at `/board` as it did at `/`.
-- [ ] `/mcp`, sign-in, OAuth, health and admin addresses behave exactly as before, and the desktop playmat still serves its board at `http://127.0.0.1:7777/` with no website.
-- [ ] The signed-out, "not your game", "not an admin" and admin pages link to `/board`.
+- [x] A signed-out visitor to `/`, a docs address or `/privacy` gets the website with no redirect to Google and no cookie set.
+- [x] A signed-out visitor to `/board` is sent to Google sign-in and comes back to `/board`; a signed-in visitor gets their own board there, and `/board/` redirects to `/board`.
+- [x] Board links returned by `import_log`, `new_game` and `set_opponent_deck` have the form `https://tcgreplay.demo.gs/board?board=<handle>`, and opening one in the signed-in browser shows that account's board.
+- [x] The board's files, live connection and card lookups still need sign-in, and the board works at `/board` as it did at `/`.
+- [x] `/mcp`, sign-in, OAuth, health and admin addresses behave exactly as before, and the desktop playmat still serves its board at `http://127.0.0.1:7777/` with no website.
+- [x] The signed-out, "not your game", "not an admin" and admin pages link to `/board`.
 
-#### - [ ] Task: Scaffold the website build, layout and test harness
+#### - [x] Task: Scaffold the website build, layout and test harness
 **Id:** b7c5ba5f-02c1-46c8-a7ad-2b9ed9550592
 **Repo:** tcgreplay
 **Depends on:**
@@ -296,14 +296,14 @@ Create the website project. It holds Astro, a shared page layout and the shared 
 *Technical detail:* [context.md#task-scaffold-the-website-build-layout-and-test-harness](./context.md#task-scaffold-the-website-build-layout-and-test-harness)
 
 **Acceptance criteria**:
-- [ ] Building the site puts plain HTML pages into the Go site package, and the container build produces a playmat image that serves them.
-- [ ] Every page shows the logo, the site navigation, the unofficial fan project notice naming all four companies, and the TCGdex credit.
-- [ ] The site build fails with a clear message if any of the three service limits is missing from the App Platform definition.
-- [ ] Any block marked as copyable gets a copy button that puts exactly that block's text on the clipboard.
-- [ ] The browser suite runs from the project's test target against the built site, and checks every page for the notice, sideways scrolling at 375 pixels, cookies, and requests to other hosts.
-- [ ] The site loads no web fonts, analytics or resources from any other host.
+- [x] Building the site puts plain HTML pages into the Go site package, and the container build produces a playmat image that serves them.
+- [x] Every page shows the logo, the site navigation, the unofficial fan project notice naming all four companies, and the TCGdex credit.
+- [x] The site build fails with a clear message if any of the three service limits is missing from the App Platform definition.
+- [x] Any block marked as copyable gets a copy button that puts exactly that block's text on the clipboard.
+- [x] The browser suite runs from the project's test target against the built site, and checks every page for the notice, sideways scrolling at 375 pixels, cookies, and requests to other hosts.
+- [x] The site loads no web fonts, analytics or resources from any other host.
 
-#### - [ ] Task: Write the home page and the privacy page
+#### - [x] Task: Write the home page and the privacy page
 **Id:** b6dd327b-6407-4ad9-9fbf-71c92c547cbc
 **Repo:** tcgreplay
 **Depends on:**
@@ -322,12 +322,12 @@ The privacy page uses the facts the playmat implements today.
 *Technical detail:* [context.md#task-write-the-home-page-and-the-privacy-page](./context.md#task-write-the-home-page-and-the-privacy-page)
 
 **Acceptance criteria**:
-- [ ] On a 1366×768 window the home page shows the one-sentence description, the playmat scene and a "Get started" link without scrolling.
-- [ ] The scene shows a playmat in the board's style with plain stand-in cards, and no official card artwork or Pokémon logos.
-- [ ] The privacy page at `/privacy` states what is collected at sign-in (Google account id, email and its verified flag), what is kept while playing and that it is held in memory only, how long each is kept, the outside services involved, and what is never collected.
-- [ ] The privacy page's idle time comes from the App Platform definition, not typed in.
+- [x] On a 1366×768 window the home page shows the one-sentence description, the playmat scene and a "Get started" link without scrolling.
+- [x] The scene shows a playmat in the board's style with plain stand-in cards, and no official card artwork or Pokémon logos.
+- [x] The privacy page at `/privacy` states what is collected at sign-in (Google account id, email and its verified flag), what is kept while playing and that it is held in memory only, how long each is kept, the outside services involved, and what is never collected.
+- [x] The privacy page's idle time comes from the App Platform definition, not typed in.
 
-#### - [ ] Task: Write the connecting, desktop and sign-in pages
+#### - [x] Task: Write the connecting, desktop and sign-in pages
 **Id:** 11845bab-16a7-4f15-9d70-ac5dbe866883
 **Repo:** tcgreplay
 **Depends on:**
@@ -344,11 +344,11 @@ The playmat's address has a copy button.
 *Technical detail:* [context.md#task-write-the-connecting-desktop-and-sign-in-pages](./context.md#task-write-the-connecting-desktop-and-sign-in-pages)
 
 **Acceptance criteria**:
-- [ ] The home page's "Get started" link opens the connecting instructions.
-- [ ] There are separate step-by-step instructions for claude.ai, ChatGPT and Claude Code, and each ends by telling the user how to check the connection works.
-- [ ] The desktop instructions list the prerequisites, the install steps, the Claude desktop app setting and the board's address on the desktop.
-- [ ] The sign-in and board-link text is reachable from the connecting instructions and describes the Google prompt and opening the board link (at `/board`).
-- [ ] The playmat's MCP address has a copy button that copies exactly `https://tcgreplay.demo.gs/mcp`.
+- [x] The home page's "Get started" link opens the connecting instructions.
+- [x] There are separate step-by-step instructions for claude.ai, ChatGPT and Claude Code, and each ends by telling the user how to check the connection works.
+- [x] The desktop instructions list the prerequisites, the install steps, the Claude desktop app setting and the board's address on the desktop.
+- [x] The sign-in and board-link text is reachable from the connecting instructions and describes the Google prompt and opening the board link (at `/board`).
+- [x] The playmat's MCP address has a copy button that copies exactly `https://tcgreplay.demo.gs/mcp`.
 
 ### Milestone 2: The how-to guide: import, review, drill and play
 **What changes**: The site becomes the full user guide.
@@ -362,7 +362,7 @@ Every prompt and the example game have one-click copy buttons. Workflow names an
 
 **Validation point**: The site build fails if a workflow page or limit is missing. The Go test proves the example game imports cleanly. Browser tests confirm copy buttons, workflow coverage, limits matching the App Platform settings, and no sideways scrolling on a phone. The README links to the home and connecting pages.
 
-#### - [ ] Task: Write a page for every coaching workflow, read from the playmat's guides
+#### - [x] Task: Write a page for every coaching workflow, read from the playmat's guides
 **Id:** 0d86023b-e1a4-4cce-a547-5aad2d1b2dad
 **Repo:** tcgreplay
 **Depends on:**
@@ -383,12 +383,12 @@ Also write a page on rewinding an imported game to a chosen turn and trying anot
 *Technical detail:* [context.md#task-write-a-page-for-every-coaching-workflow-read-from-the-playmats-guides](./context.md#task-write-a-page-for-every-coaching-workflow-read-from-the-playmats-guides)
 
 **Acceptance criteria**:
-- [ ] Every coaching workflow the playmat offers has a page on the site with at least one copyable example prompt, listed in the playmat's own order.
-- [ ] The site build fails if a workflow has no page, a page names a workflow the playmat doesn't have, or a page has no example prompt.
-- [ ] A page explains how to rewind an imported game to a chosen turn and play a different line, with an example prompt.
-- [ ] The workflow descriptions shown come from the playmat's guides, not retyped.
+- [x] Every coaching workflow the playmat offers has a page on the site with at least one copyable example prompt, listed in the playmat's own order.
+- [x] The site build fails if a workflow has no page, a page names a workflow the playmat doesn't have, or a page has no example prompt.
+- [x] A page explains how to rewind an imported game to a chosen turn and play a different line, with an example prompt.
+- [x] The workflow descriptions shown come from the playmat's guides, not retyped.
 
-#### - [ ] Task: Publish the anonymised example game and the import page
+#### - [x] Task: Publish the anonymised example game and the import page
 **Id:** cb1c4655-a05b-4285-a115-655e38a7b3df
 **Repo:** tcgreplay
 **Depends on:**
@@ -404,12 +404,12 @@ Add the example game: the corpus game from 11 October 2026 with the opponent's p
 *Technical detail:* [context.md#task-publish-the-anonymised-example-game-and-the-import-page](./context.md#task-publish-the-anonymised-example-game-and-the-import-page)
 
 **Acceptance criteria**:
-- [ ] The example page shows the complete battle log from setup to the result and its decklist, each with a copy button that copies exactly that text.
-- [ ] The example log contains no real opponent's name, and a test fails if it differs from the original game in anything but that name.
-- [ ] A test imports the example log with its decklist and finds no problems and the same winner and prize counts as the original game.
-- [ ] The import page explains where to copy the log and the decklist in TCG Live, what a complete import looks like, and what to do if lines are missing.
+- [x] The example page shows the complete battle log from setup to the result and its decklist, each with a copy button that copies exactly that text.
+- [x] The example log contains no real opponent's name, and a test fails if it differs from the original game in anything but that name.
+- [x] A test imports the example log with its decklist and finds no problems and the same winner and prize counts as the original game.
+- [x] The import page explains where to copy the log and the decklist in TCG Live, what a complete import looks like, and what to do if lines are missing.
 
-#### - [ ] Task: Write the hosted limits and developer pages
+#### - [x] Task: Write the hosted limits and developer pages
 **Id:** 8fdc8d6b-84a1-4306-8bb1-9e3116500e38
 **Repo:** tcgreplay
 **Depends on:**
@@ -428,11 +428,11 @@ The numbers come from the App Platform definition. Write a short developer secti
 *Technical detail:* [context.md#task-write-the-hosted-limits-and-developer-pages](./context.md#task-write-the-hosted-limits-and-developer-pages)
 
 **Acceptance criteria**:
-- [ ] The limits page's idle time, players served at once and requests per minute match the App Platform definition, and change when it does.
-- [ ] The limits page says what the hosted playmat keeps, that games are lost when idle or updated, that a record can be kept and imported again, and points to the desktop option when the playmat is full.
-- [ ] The developer section links to the source repository and contains no build or test instructions beyond that pointer.
+- [x] The limits page's idle time, players served at once and requests per minute match the App Platform definition, and change when it does.
+- [x] The limits page says what the hosted playmat keeps, that games are lost when idle or updated, that a record can be kept and imported again, and points to the desktop option when the playmat is full.
+- [x] The developer section links to the source repository and contains no build or test instructions beyond that pointer.
 
-#### - [ ] Task: Point the README at the site and record the new routes
+#### - [x] Task: Point the README at the site and record the new routes
 **Id:** 4fcd4d8b-f215-48f0-926e-535fe36c7d1c
 **Repo:** tcgreplay
 **Depends on:**
@@ -446,16 +446,16 @@ Shorten the README to a brief introduction with the logo, linking to the site's 
 *Technical detail:* [context.md#task-point-the-readme-at-the-site-and-record-the-new-routes](./context.md#task-point-the-readme-at-the-site-and-record-the-new-routes)
 
 **Acceptance criteria**:
-- [ ] The README links to the site's home page and its connecting instructions, and no longer contains the step-by-step connecting instructions or the example prompts.
-- [ ] The README still carries a brief description, the logo and the developer notes.
-- [ ] The design notes and the deploy definition's comments describe the site at `/`, the board at `/board`, how the site is built, and that each push to main redeploys the playmat.
+- [x] The README links to the site's home page and its connecting instructions, and no longer contains the step-by-step connecting instructions or the example prompts.
+- [x] The README still carries a brief description, the logo and the developer notes.
+- [x] The design notes and the deploy definition's comments describe the site at `/`, the board at `/board`, how the site is built, and that each push to main redeploys the playmat.
 
 ### Milestone 3: The home page shows the playmat in action, and Google's consent screen points at the site
 **What changes**: The home page's still is replaced by a short looping animation in the board's own look, with no card artwork or logos. A battle log arrives, the board fills with the game, the assistant coaches, the game rewinds to a decision and a different line is played. It plays on its own, needs nothing from the playmat, and shows a still to visitors who ask for reduced motion. Once the site is live, the operator enters its home and privacy addresses on Google's OAuth consent screen.
 
 **Validation point**: Browser tests show the animation's beats in order and looping with the playmat blocked, a still with no motion under reduced motion, and a home page under 1.5 MB. The owner's look-and-feel review and the Lighthouse checks are recorded in the implementation test plan. The consent screen lists the site's home and privacy addresses.
 
-#### - [ ] Task: Animate the home page's playmat scene
+#### - [x] Task: Animate the home page's playmat scene
 **Id:** 8eda3982-e121-4fdf-abb3-f81dc1235958
 **Repo:** tcgreplay
 **Depends on:**
@@ -467,10 +467,10 @@ Turn the home page's still scene into a short looping animation. A battle log ar
 *Technical detail:* [context.md#task-animate-the-home-pages-playmat-scene](./context.md#task-animate-the-home-pages-playmat-scene)
 
 **Acceptance criteria**:
-- [ ] With the playmat's addresses blocked, the home page animation plays without being touched, shows in order a battle log arriving, the board filling, a coaching message, a rewind to an earlier turn and a different line, then starts again.
-- [ ] With the reduced-motion setting on, the home page shows the still scene and nothing on the page moves.
-- [ ] The home page's total download, animation included, is under 1.5 MB.
-- [ ] The animation uses the board's colours and plain stand-in cards, with no official card artwork or Pokémon logos.
+- [x] With the playmat's addresses blocked, the home page animation plays without being touched, shows in order a battle log arriving, the board filling, a coaching message, a rewind to an earlier turn and a different line, then starts again.
+- [x] With the reduced-motion setting on, the home page shows the still scene and nothing on the page moves.
+- [x] The home page's total download, animation included, is under 1.5 MB.
+- [x] The animation uses the board's colours and plain stand-in cards, with no official card artwork or Pokémon logos.
 
 #### - [ ] Task: Enter the site's addresses on Google's OAuth consent screen
 **Id:** 797471ef-70b2-493f-9f4c-536d0a045c85
@@ -505,3 +505,299 @@ Once the site is deployed, open the playmat's OAuth consent screen in the Google
 - **A "Help" or "Docs" link inside the board's menu.** Useful, but it is a board change the spec doesn't ask for.
 - **Serving the website in desktop mode.** The desktop playmat keeps its board at the root, with no website.
 - **Google brand verification.** Entering the home page and privacy addresses is in scope. Submitting the app for brand verification is optional and left to the operator.
+
+## Changelog
+
+### 2026-11-06 — Task: Embed and serve the website from a Go site package
+
+**What was done**: Added `internal/site`, which embeds `dist/` with `//go:embed all:dist` and serves the built website (`dist/app`) or, when unbuilt, a checked-in placeholder (`dist/placeholder`), mirroring `internal/webui`. `Handler()` resolves `/` to `index.html` and `/x` to `x`, `x/index.html` or `x.html`, serves the site's `404.html` with status 404 for unknown paths, allows GET and HEAD only (405 otherwise), sends `no-cache` on everything except `/_astro/` assets (`public, max-age=31536000, immutable`), and never sets a cookie. `Built()` reports whether the real site is embedded.
+
+**Deviations**: Criterion 1 was reworded with the user's approval after the first goal check judged it not met only because nothing mounts the handler yet. It now reads "...and the site package serves a placeholder page (mounting it on the hosted router is the next task's work)". The build output is ignored through a package-level `internal/site/.gitignore` (`dist/app/`), matching `internal/webui/.gitignore`, rather than a line in the root `.gitignore`. Content types come from an explicit extension table, not only `mime.TypeByExtension`.
+
+**Files changed**:
+- `internal/site/site.go`
+- `internal/site/site_test.go`
+- `internal/site/dist/placeholder/index.html`
+- `internal/site/.gitignore`
+
+**Discoveries**: Go's built-in MIME table has no `.txt` entry, and the distroless runtime image has no `/etc/mime.types`, so `site.go` keeps its own extension table (the example battle log is served as `.txt`). The tests swap the unexported `fsys` for an `fstest.MapFS`; later tasks that need a built tree in Go tests can do the same. Unbuilt binaries have no site 404 page, so unknown paths there get a plain-text 404.
+
+### 2026-11-06 — Task: Move the board to /board and serve the site on every other path
+
+**What was done**: The hosted router (`hostedHandler`) is now an explicit path table. The board page is at `GET /board` behind `RequireSession`, rewritten to `/` (query kept) inside the session check so a signed-out load returns to `/board?…`. `/board/` gives a 301 to `/board`, keeping the query. `/assets/`, `/ws` and `/api/` stay at the root behind the same session, and every other path goes to `site.Handler()` with no sign-in. Board links, the default sign-in return path and the board links on the signed-out, sign-in-problem, "not your game", "not an admin" and admin pages now point at `/board`.
+
+**Deviations**: Two places not listed in the plan also spelled the board as `/` and were moved to `/board`: the "Sign-in problem" page's "Sign in again" link (`internal/hostauth/pages.go:46`) and the hosted MCP server's fallback `BoardURL` (`cmd/tcgreplay/hosted.go`, used for the instructions' board-link line). `/board/` is matched exactly (`GET /board/{$}`), so deeper `/board/x` paths get the site's 404 rather than a redirect. The route table test is in a new file, `cmd/tcgreplay/hosted_routes_test.go`, rather than in `hosted_test.go`. Four more hosted tests than the plan listed were silently hitting `/` for the board (they still passed, because the site placeholder also returns 200 with `<title>tcgreplay</title>`); they now use `/board`.
+
+**Files changed**:
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_routes_test.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `cmd/tcgreplay/hosted_users_test.go`
+- `cmd/tcgreplay/hosted_places_test.go`
+- `cmd/tcgreplay/hosted_idle_test.go`
+- `internal/usergames/usergames.go`
+- `internal/usergames/board.go`
+- `internal/usergames/mcp_test.go`
+- `internal/usergames/usergames_test.go`
+- `internal/hostauth/board.go`
+- `internal/hostauth/pages.go`
+- `internal/hostauth/admin.go`
+- `internal/hostauth/board_test.go`
+- `internal/hostauth/admin_test.go`
+- `internal/cacheadmin/page.go`
+- `internal/cacheadmin/cacheadmin_test.go`
+
+**Discoveries**: The board placeholder and the site placeholder both have `<title>tcgreplay</title>`, so a hosted test that checks only for that title can't tell the board from the website. `TestHostedRoutes` compares the router's answers against `site.Handler()` directly instead. A request that fails `RequireSession` with no `Sec-Fetch-Mode` header is redirected to sign-in, while one marked as a subresource gets 401, so tests of the board's support paths must set that header to see the 401.
+
+### 2026-11-06 — Task: Scaffold the website build, layout and test harness
+
+**What was done**: Added the Astro 7.4.7 website project in `site/`, which builds directory-format HTML into `internal/site/dist/app`. It has a shared layout (logo, site navigation, fan project notice naming all four companies, TCGdex credit, repository link), the board's colour tokens, system fonts only, a shared copy-button script with `CopyBlock`/`Prompt` components, a placeholder home page and a 404 page. `site/src/lib/facts.ts` reads the hosted limits from `.do/app.yaml` at build time and stops the build with a message naming any missing or unparsable limit. The layout imports it, so every page's build runs the check. Also added Make targets (`site`, `site-dev`, `site-test`, with `test` running `site-test`), a `site` Dockerfile stage, `.dockerignore` lines, a Go test server (`internal/site/sitetest/cmd/serve`) that serves the site through `site.Handler()` with the playmat's own addresses answering 503, and a Playwright suite (laptop 1366×768 and phone 375px, Chromium only).
+
+**Deviations**:
+- The Dockerfile's site stage is pinned to `node:22.23.4`, not a floating `node:22`, because Astro 7.4.7 refuses to run on Node 22 below 22.23.4.
+- Generated and test output is ignored through `site/.gitignore`, mirroring `web/.gitignore`, rather than through root `.gitignore` lines.
+- The tokens are copied into `site/src/styles/tokens.css`, which the plan preferred, so the Dockerfile does not copy `web/src/app.css`. The logo and icon are copied into `site/public/`, so `docs/` is not copied either.
+- Markdown syntax highlighting is turned off.
+- Telemetry is turned off with `ASTRO_TELEMETRY_DISABLED=1` in the npm scripts, since Astro has no config option for it.
+- Besides `site.spec.js`, the tests include `site/e2e/facts.spec.js` (the limits loader and its failures) and `internal/site/sitetest/cmd/serve/main_test.go`.
+- The crawl accepts 404 pages for now: the nav links to pages that later tasks write.
+
+**Files changed**:
+- `site/package.json`
+- `site/package-lock.json`
+- `site/astro.config.mjs`
+- `site/tsconfig.json`
+- `site/.gitignore`
+- `site/playwright.config.js`
+- `site/scripts/check-browsers.js`
+- `site/public/logo.png`
+- `site/public/icon.png`
+- `site/src/lib/facts.ts`
+- `site/src/layouts/Base.astro`
+- `site/src/styles/tokens.css`
+- `site/src/styles/site.css`
+- `site/src/scripts/copy.ts`
+- `site/src/components/CopyBlock.astro`
+- `site/src/components/Prompt.astro`
+- `site/src/pages/index.astro`
+- `site/src/pages/404.astro`
+- `site/e2e/site.spec.js`
+- `site/e2e/facts.spec.js`
+- `internal/site/sitetest/cmd/serve/main.go`
+- `internal/site/sitetest/cmd/serve/main_test.go`
+- `Makefile`
+- `Dockerfile`
+- `.dockerignore`
+
+**Discoveries**:
+- Astro 7 hard-checks Node at least 22.23.4 on the 22 line (`bin/astro.mjs`), and it empties `outDir` on every build, including dotfiles.
+- At build time, file paths must come from `process.cwd()` (the `site/` directory). `new URL(…, import.meta.url)` points into Astro's prerender bundle and fails.
+- Scripts and stylesheets under about 4 KB are inlined into each page, so today the site has no `/_astro/` files at all.
+- `go run ./internal/site/sitetest/cmd/serve` embeds whatever is in `internal/site/dist/app` when it compiles, so the site must be built first. `make site-test` does that.
+- Later page tasks should tighten the crawl to require 200 for every linked page once the nav targets exist (task: README and routes, or the last page task).
+
+### 2026-11-06 — Task: Write the home page and the privacy page
+
+**What was done**: The home page now has an h1, a one-sentence pitch, a "Get started" button to `/docs/connect` and the new `Playmat` scene, all within the first 1366×768 screen. Below the fold are three "what it does" points and the playmat's MCP address with a copy button. `Playmat.astro` draws a still playmat in the board's felt and seat colours, built from the board's no-art card looks (text cards, card backs, an energy token): a battle log panel, a coach message and a highlighted second attacker as the better line, with an accessible label and caption. It has no images at all. The privacy page at `/privacy` (`privacy.astro`) covers what is kept at sign-in, cookies and browser settings, games held in memory only, how long each thing is kept (the idle time from `limits.idleTimeout`), logs, outside services, what is never collected, how to remove your data, and a contact link.
+
+**Deviations**:
+- The home page keeps the MCP address copy block, below the fold under "Already use connectors?". That gives returning users the address at once and keeps the copy-button checks meaningful before the connect page exists.
+- Two claims were re-checked against the code and corrected: account details live with your sign-ins (up to 30 days, or until you sign out), not just a day; and the board session cookie lasts 30 days.
+- `site/src/styles/site.css`: the light-theme link colour rule is wrapped in `:where()` so component styles such as the home page button win over it.
+- The scene's cards are generic labels ("Your attacker", "Rival support"), not invented names.
+
+**Files changed**:
+- `site/src/pages/index.astro`
+- `site/src/components/Playmat.astro`
+- `site/src/pages/privacy.astro`
+- `site/src/styles/site.css`
+- `site/e2e/home.spec.js`
+- `site/e2e/privacy.spec.js`
+
+**Discoveries**:
+- Astro's scoped styles add no specificity (`:where()`), so a global rule like `:root:not(…) a` beats a component's `.button`. Keep global element rules at low specificity.
+- The usergames purge after 24 hours removes only the game entry. An account's email stays in its hostauth sessions for up to 30 days, which is what the privacy page now says.
+- The scene's `data-playmat`/`data-beat="line"` root and the `data-line` cards are the hooks for the animation task.
+
+### 2026-11-06 — Task: Write the connecting, desktop and sign-in pages
+
+**What was done**: Added the docs content collection (`site/src/content.config.ts`, top-level `src/content/docs/*.md`), a docs layout with a sidebar sorted by frontmatter `order`, and the `/docs/<id>` route. Wrote three pages:
+- `/docs/connect`: the playmat's address with a copy button (taken from the build-time facts through `showAddress: true`), then numbered steps for claude.ai, ChatGPT and Claude Code, each ending with "Check it works", a copyable prompt and what the assistant should answer. It also points to the desktop page.
+- `/docs/sign-in`: Google's account chooser on first use, the board link at `/board?board=…`, same-browser and other-browser cases, "Not your game" and "busy".
+- `/docs/desktop`: prerequisites, `git clone` and `make install`, the `claude_desktop_config.json` setting, restarting the app, and the board at `http://127.0.0.1:7777`.
+
+`copy.ts` now makes every fenced code block in docs content copyable, without the final newline. A ```prompt fence is shown as a wrapping "Example prompt".
+
+**Deviations**:
+- The address block is rendered by the docs route from `site.mcpURL` (frontmatter `showAddress`), not by a component inside the Markdown, which can't host components.
+- Copyable code blocks in Markdown come from `copy.ts` wrapping `.prose pre`, so later Markdown pages get copy buttons with no markup.
+- The ChatGPT menu path keeps the README's wording ("Plugins → Add → Add custom MCP server"). Its "rough edges" caveat is dropped, as the plan said. The exact menu names are a manual check for the test plan.
+
+**Files changed**:
+- `site/src/content.config.ts`
+- `site/src/layouts/Docs.astro`
+- `site/src/pages/docs/[...slug].astro`
+- `site/src/scripts/copy.ts`
+- `site/src/content/docs/connect.md`
+- `site/src/content/docs/sign-in.md`
+- `site/src/content/docs/desktop.md`
+- `site/e2e/connect.spec.js`
+
+**Discoveries**:
+- Astro 7's Markdown applies smartypants: straight apostrophes in prose become curly (’), so browser tests must match `['’]`. Code spans and fences are left alone, so copied prompts and commands keep straight quotes.
+- With syntax highlighting off, a fence's language still comes out as `class="language-<lang>"` on the `<code>`, which is how `copy.ts` recognises ```prompt fences.
+- The workflows task should add its own collection beside `docs`. The `docs` glob is top-level only, so `content/docs/workflows/*.md` won't be routed twice.
+
+### 2026-11-06 — Task: Write a page for every coaching workflow, read from the playmat's guides
+
+**What was done**: The site now reads the playmat's coaching guides at build time and requires a hand-written page for each one:
+- **Collections:** a `guides` collection (glob over `../internal/guides/*.md`, `name` and `description` from frontmatter) and a `workflows` collection (`site/src/content/docs/workflows/*.md`, whose frontmatter holds `guide`, `title` and at least one entry in `prompts`).
+- **The check:** `lib/workflow-pairing.ts` reads the order from `internal/guides/guides.go` and pairs guides with pages one to one. `lib/workflows.ts` wires it to the collections. The build stops with a message naming the gap: a guide with no page, a page for an unknown guide, a duplicate page, a page with no prompt (also caught by the schema), or a guide missing from the order.
+- **Pages:**
+  - `/docs/workflows` lists the workflows in the playmat's order, each with its guide's description.
+  - `/docs/workflows/<guide>` shows the page, the guide's description and copyable example prompts.
+  - Seven workflow pages, written in plain language.
+  - `/docs/rewind`: branches, turn naming, trying another line, sampling hidden hands, keeping the record.
+
+**Deviations**:
+- The pure pairing logic lives in `site/src/lib/workflow-pairing.ts`, separate from the Astro wiring in `workflows.ts`, so the browser suite can unit-test every failure case. Those tests are appended to `site/e2e/facts.spec.js`.
+- Guide descriptions are written for the assistant ("Use when the player…"). The pages show them as "The playmat's guide, `<name>`:" beside the plain-language page text, rather than rewording them.
+- A workflows spec test hand-maintains the seven guide names, so adding a guide prompts a page.
+
+**Files changed**:
+- `site/src/content.config.ts`
+- `site/src/lib/workflows.ts`
+- `site/src/lib/workflow-pairing.ts`
+- `site/src/pages/docs/workflows/index.astro`
+- `site/src/pages/docs/workflows/[guide].astro`
+- `site/src/content/docs/workflows/play-game.md`
+- `site/src/content/docs/workflows/import-game.md`
+- `site/src/content/docs/workflows/opponent-deck.md`
+- `site/src/content/docs/workflows/review-game.md`
+- `site/src/content/docs/workflows/replay-drill.md`
+- `site/src/content/docs/workflows/before-you-move.md`
+- `site/src/content/docs/workflows/numbers-drill.md`
+- `site/src/content/docs/rewind.md`
+- `site/e2e/workflows.spec.js`
+- `site/e2e/facts.spec.js`
+
+**Discoveries**:
+- Astro's `glob` loader accepts a `base` outside the project (`../internal/guides`) in 7.4.7, so the plan's fallback (a plain `fs` read) wasn't needed. That answers the plan's second open question.
+- A content schema failure (for example `prompts: []`) stops the build with `InvalidContentEntryDataError`, before any page code runs.
+- A module that imports `astro:content` can't be loaded by Playwright, so build-time logic that needs testing belongs in a module without Astro imports.
+
+### 2026-11-06 — Task: Publish the anonymised example game and the import page
+
+**What was done**: Added `site/src/content/example/battle-log.txt`: the 11 October 2026 corpus game with every "GatoruSoju" replaced by "Rival" (102 mentions on 98 of its 266 lines), byte-identical otherwise. `internal/game/site_example_test.go` (`TestSiteExampleGame`) guards it:
+- the file must be the corpus log with only that substitution, checked line for line, and must contain no trace of the real name;
+- it must run from `Setup` to the result line;
+- it must import with the Mega Lucario ex v12 decklist with no problems or invariant warnings and the original result: Rival wins, all prizes taken, prizes NicJackson 4 / Rival 6, turns 6 / 7, Rival first.
+
+`/docs/example` shows a suggested prompt, the decklist (read at build time from `testdata/decks/mega-lucario-ex-v12.txt` by `site/src/lib/example.ts`) and the full log in a scrolling box, each with a copy button. `/docs/import` covers where to copy the log and the decklist in TCG Live, what to paste, what a complete import looks like, what to do about missing lines, and keeping the game's record.
+
+**Deviations**:
+- Before writing the pages, a throwaway program imported both the original and the anonymised log. Both came out clean and identical apart from the name, which answers the plan's first open question; nothing in the importer changed.
+- The decklist and log are copied without their files' final newline.
+- The test also checks turns and who went first, beyond winner and prizes.
+
+**Files changed**:
+- `site/src/content/example/battle-log.txt`
+- `internal/game/site_example_test.go`
+- `site/src/lib/example.ts`
+- `site/src/pages/docs/example.astro`
+- `site/src/content/docs/import.md`
+- `site/e2e/example.spec.js`
+
+**Discoveries**:
+- The importer's `Report` already carries `Me`, `Opponent`, `Winner`, `PrizesTaken`, `Turns`, `WentFirst` and `EndReason` keyed by player name, matching `testdata/index.json`'s `expected` block, so corpus-style checks can compare them directly.
+- The TCG Live menu names on the import page are deliberately general, as the plan decided. They are a manual check for the test plan.
+
+### 2026-11-06 — Task: Write the hosted limits and developer pages
+
+**What was done**:
+- **`/docs/limits`** (`site/src/pages/docs/limits.astro`) covers:
+  - what the hosted playmat keeps: one game per account, in memory;
+  - when games are dropped: after the idle time, on every update or restart, and when the last sign-in ends;
+  - how to keep a game's record (with a copyable prompt) and import it again;
+  - how many players it serves at once and the requests a minute per account;
+  - the "busy", "too many requests" and "expired" messages, quoted from the code;
+  - the desktop option for when the playmat is full.
+
+  Every number comes from `site/src/lib/facts.ts`, which reads `.do/app.yaml`.
+- **`/docs/developers`** (`developers.md`) is two sentences pointing to the repository for the source, design notes and developer instructions, and for issues and contributions. It has no commands.
+- **Sidebar:** the docs sidebar now lists Limits.
+- **Crawl:** now that every nav target exists, the site suite requires every linked page to answer 200.
+
+**Deviations**:
+- The limits page is an `.astro` page, which the plan allowed, so it can read the facts.
+- A scratch build with changed limits (450 requests, 25 players, 3h) showed the limits and privacy pages following the App Platform definition.
+- The crawl check that every linked page exists, flagged in the scaffold task's discoveries, was added here.
+
+**Files changed**:
+- `site/src/pages/docs/limits.astro`
+- `site/src/content/docs/developers.md`
+- `site/src/layouts/Docs.astro`
+- `site/e2e/limits.spec.js`
+- `site/e2e/site.spec.js`
+
+**Discoveries**:
+- The rate limit's user-facing text is `"too many requests: this account is limited to N requests a minute; try again in Ns"` (`internal/hostauth/limit.go:83`).
+- The busy refusal has two forms: the browser page "tcgreplay is serving as many signed-in users as it can (N) right now" (`pages.go`) and the MCP error "the server is busy: it already has the most signed-in users it serves at once (N); try again later" (`limit.go`). The limits page names both.
+
+### 2026-11-06 — Task: Point the README at the site and record the new routes
+
+**What was done**: The README keeps the logo, title and a short description. Its "What it does", "Using it" (hosted connect steps and desktop install) and "Example prompts" sections are replaced by a "Get started" paragraph linking to https://tcgreplay.demo.gs, the connecting page and the desktop page. "Development" keeps its notes, gains `make site`, `make site-dev` and `make site-test`, and gains a paragraph on where the website lives and what it reads at build time. The design notes changed in four places:
+- the **Hosted mode** paragraph now has the board at `/board`, its files at the root and the website everywhere else, and the local URLs;
+- a new **Website** paragraph covers the routes, caching, the embed and placeholder, the `site` Docker stage, the build-time checks, redeploys on every push, and the consent-screen operator step;
+- the stale "since `/` now redirects to Google" note is gone;
+- the *Board links* bullet now gives `/board?board=<handle>` and notes that old `/?board=` links land on the home page.
+
+The `.do/app.yaml` header says the playmat serves the website at `/` and the board at `/board`, that every push redeploys and drops games, and that the site reads the limits from this file. The Makefile's `docker-build` comment mentions the website.
+
+**Deviations**: The README's "make test" line now says it also runs the website's browser tests. The design notes' *Board links* bullet used to say `/` with no handle opens your board; it now records that old links open the home page instead, which the user accepted.
+
+**Files changed**:
+- `README.md`
+- `TCG Review Playmat Design and Build Plan.md`
+- `.do/app.yaml`
+- `Makefile`
+
+**Discoveries**: None.
+
+### 2026-11-06 — Task: Animate the home page's playmat scene
+
+**What was done**: The home page's `Playmat` scene now plays a looping story through five beats, about 15 seconds in all:
+- **log:** the battle log arrives line by line onto an empty board;
+- **board:** the cards are dealt onto the board, staggered;
+- **coach:** the coach's message fades in;
+- **rewind:** a dark sweep crosses the board and the turn counter ticks back from Turn 7 to Turn 3;
+- **line:** the second attacker drops onto the bench with an accent outline, and its log line appears.
+
+A small inlined script sets `data-beat` and `data-beat-seen` and pauses while the tab is hidden or the scene is off screen. CSS transitions do the motion, on opacity and transform only. Without script, and under `prefers-reduced-motion: reduce`, the script never starts and the scene stays the still last beat with every transition off. It loads nothing from the playmat or any other host.
+
+**Deviations**:
+- The coach bubble uses the board's dark note colour (`#2c3a52`) directly instead of the `--note` token, which is pale in the light scheme and made the white text unreadable.
+- The "better line" log entry is taken out of the flow (`position: absolute; visibility: hidden`) until the line beat, so the log doesn't show a gap before the rewind.
+- The turn counter changes its text between beats (Turn 7 / Turn 3) rather than animating a number.
+- The scene's CSS is now over Astro's 4 KB inline threshold, so it ships as one hashed `/_astro/index.*.css` file (cached immutably by the site handler). The home page totals about 58 KB.
+
+**Files changed**:
+- `site/src/components/Playmat.astro`
+- `site/e2e/animation.spec.js`
+
+**Discoveries**:
+- Playwright pages default to the light colour scheme, so a scene that looked right in the dark scheme showed a light-scheme token problem only in the test screenshots. Check both schemes for anything drawn on the always-dark felt.
+- `document.getAnimations()` includes running CSS transitions, so it is a good check that nothing moves under reduced motion.
+
+### 2026-11-06 — Task: Enter the site's addresses on Google's OAuth consent screen
+
+**What was done**: Nothing in code. This is a human task: it needs the Google Cloud console for the playmat's OAuth project and the site deployed at https://tcgreplay.demo.gs, which happens only after this branch is merged.
+
+**Deviations**: Skipped in this run at the user's choice, with both acceptance criteria left unticked. The goal check judged both not met: the console settings can't be seen from the files, and the site isn't deployed yet. After the merge deploys, the operator does the following (it is also in the design notes' **Website** paragraph and the implementation test plan):
+1. Set the consent screen's application home page to `https://tcgreplay.demo.gs/` and its privacy policy to `https://tcgreplay.demo.gs/privacy`.
+2. Confirm `demo.gs` is an authorized domain.
+3. Check that a fresh Google sign-in to the board still works.
+
+**Files changed**: None.
+
+**Discoveries**: A human task can only be recorded as skipped once its goal check has stopped the run (after the round's retries are exhausted). `implement goal decide` refuses a skip while the check is pending or retrying.

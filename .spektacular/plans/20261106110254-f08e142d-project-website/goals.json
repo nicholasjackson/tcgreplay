@@ -1,0 +1,1511 @@
+{
+  "plan": "20261106110254-f08e142d-project-website",
+  "items": [
+    {
+      "item": "603b3ddb-f67a-41c7-8abe-63bb41727ef2",
+      "title": "Embed and serve the website from a Go site package",
+      "checks": [
+        {
+          "at": "2026-11-06T13:10:15Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "603b3ddb-f67a-41c7-8abe-63bb41727ef2",
+            "title": "Embed and serve the website from a Go site package",
+            "criteria": [
+              "The playmat binary builds and its tests pass on a machine that has never built the website, serving a placeholder page.",
+              "When the website has been built, its pages, assets and 404 page are served from the binary with the right content types.",
+              "Pages are sent with headers that stop browsers caching them, hashed build assets with long-lived caching, and no response sets a cookie.",
+              "An unknown address gets the site's own 404 page with a 404 status."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/site.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "dist/placeholder"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/x"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "x/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "x.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "404.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/placeholder/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist/placeholder/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/app/.gitkeep"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/site_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".svg"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".txt"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Build and test side looks right: internal/site/site.go:25-26 embeds `all:dist`, internal/site/dist/placeholder/index.html exists (titled tcgreplay, says the site has not been built, run make site), and site_test.go:44-72 covers the unbuilt case. But the binary does not serve the placeholder. Grep for 'internal/site', 'site.Handler' and 'site.Built' across the code root finds no importer outside internal/site itself, and internal/webui/server.go:92-101 (Handler) is unchanged and mounts only /ws, /api/card and webui's own assets. The staged status lists only four untracked files under internal/site/, so nothing mounts site.Handler(). The criterion says the playmat binary builds and tests pass 'serving a placeholder page', which needs a mount. Missing: a route in the playmat's HTTP handler (e.g. mux.Handle(\"/\", site.Handler()) in a server or cmd file) that serves site.Handler(). I could not run go build or go test (no shell in this review); this verdict rests on reading the files."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/site/site.go:40-56 maps .html, .css, .js, .mjs, .svg, .png, .txt and other types to explicit content types. site.go:112-126 resolve() maps '/' to index.html, '/x' to x, x/index.html, or x.html, which matches Astro's directory format. site.go:78-107 serves the resolved file with ServeContent. site.go:130-144 serves dist/app/404.html with status 404 once the site is built. site_test.go:74-93 (TestBuiltSiteResolvesPages), site_test.go:95-114 (TestContentTypes) and site_test.go:135-154 (404 page) cover these. The files are embedded in the binary via the go:embed at site.go:25-26. Caveat: no real Astro output exists under internal/site/dist/app in this tree (it is gitignored), so the built case is exercised only through fstest.MapFS. Also, nothing mounts the handler, which is covered under criterion 1."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Pages: site.go:99-101 sets Cache-Control to 'no-cache' for every non-_astro/ file, and notFound at site.go:137-138 does the same for the 404 page. Hashed assets: site.go:97-98 sets 'public, max-age=31536000, immutable' for names under _astro/. No cookie: a grep of site.go shows no Set-Cookie or cookie use, and TestNoCookies (site_test.go:156-167) checks GET, HEAD and POST. Note: 'no-cache' allows storage but forces revalidation; with no ETag or Last-Modified sent (time.Time{} at site.go:105) every load re-fetches, so it meets the intent. If 'stop browsers caching' is read strictly as no-store, the pages would fall short."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "site.go:86-89 sends any unresolved path to notFound. site.go:130-144 returns dist/app/404.html with status 404 and Content-Type text/html when it exists. Traversal paths are cleaned at site.go:113 and rejected by fs.ValidPath at site.go:117. Tests: site_test.go:135-154 (/nope, /docs/nope, /_astro/missing.js, /../etc/passwd, /docs all return 404 with the 'Page not found' body, and HEAD returns 404 with no body). Caveat: on an unbuilt tree there is no site 404 page, so the response is plain text 404 (site.go:132-135). That is the only case without the site's own page, and criterion 4 reads as applying to the built site."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-06T13:12:28Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "603b3ddb-f67a-41c7-8abe-63bb41727ef2",
+            "title": "Embed and serve the website from a Go site package",
+            "criteria": [
+              "The playmat binary builds and its tests pass on a machine that has never built the website, and the site package serves a placeholder page (mounting it on the hosted router is the next task's work).",
+              "When the website has been built, its pages, assets and 404 page are served from the binary with the right content types.",
+              "Pages are sent with headers that stop browsers caching them, hashed build assets with long-lived caching, and no response sets a cookie.",
+              "An unknown address gets the site's own 404 page with a 404 status."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/site.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "dist/placeholder"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/x"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "x/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "x.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "404.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/placeholder/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist/placeholder/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/app/.gitkeep"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/site_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".svg"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".txt"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/site/site.go:25-26 embeds `all:dist`, and the only file it must find on a fresh tree is internal/site/dist/placeholder/index.html (present, shows 'The website has not been built into this binary'). internal/site/.gitignore:1 ignores dist/app/, so an unbuilt tree embeds only the placeholder. internal/site/site.go:72-74 Built() and site.go:59-67 assets() fall back to dist/placeholder. internal/site/site_test.go:64-72 TestEmbeddedTreeServes checks GET / on the real embedded tree returns 200 with the placeholder text. Imports in site.go and site_test.go all appear used, so the package should compile. The verify run reports go build/vet/test pass, which I could not re-run (read-only). The package is not imported by webui or the binary yet, which matches the 'mounting is next task' rule."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/site/site.go:78-107 Handler resolves a request path to a file in the built tree (resolve, site.go:112-126, covering x, x/index.html, x.html) and serves it with http.ServeContent. Content types come from an explicit map (site.go:40-56: .html, .css, .js/.mjs, .svg, .png, .jpg, .webp, .txt, etc.), with mime fallback (site.go:148-154). site_test.go:74-93 covers pages (/, /privacy, /docs/connect, /flat); site_test.go:95-114 covers content types for css, js, svg, png, txt and html. The 404 page is served from dist/app/404.html (site.go:130-144). Note: the tests use fstest.MapFS, not a real embedded build; the embed directive (site.go:25-26) does cover dist/app, and I could not build the real site to check it end to end. The Astro site/ config and Makefile target referenced in comments are not in this diff, so they are outside this item."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Pages: site.go:99-101 sets Cache-Control to `no-cache` for every non-_astro path; site_test.go:116-133 TestCacheHeaders checks this for /, /docs/connect, /logo.png, /nope. Hashed assets: site.go:97-98 sets `public, max-age=31536000, immutable` for names under _astro/; site_test.go:123-124 checks it. No cookie: grep of site.go shows no Set-Cookie or cookie code; site_test.go:156-167 TestNoCookies checks GET, HEAD and POST across pages, assets and 404. Caveat: the goal says 'stop browsers caching', and `no-cache` permits storage but forces revalidation on every load, which is the intent the code documents (site.go:31-32, 6-8). `no-store` would be the literal reading; the criterion is judged on the revalidate-every-load behaviour."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "site.go:112-126 resolve returns false for unknown paths, and site.go:86-90 then calls notFound. site.go:130-143 notFound reads 404.html from the built root and writes it with WriteHeader(http.StatusNotFound) and Content-Type text/html. site_test.go:135-154 TestUnknownPathGetsSite404 checks /nope, /docs/nope, /_astro/missing.js, /../etc/passwd and /docs all return 404 with the body containing 'Page not found' (the site's 404 fixture). HEAD returns 404 with no body (site_test.go:150-153). When unbuilt, the placeholder has no 404.html and falls back to plain http.NotFound, which is outside the built-site case this criterion names. Scope note (not a criterion): internal/site/.gitignore is untracked and not in the goal's listed files; it is needed to keep dist/app out of git, so it is an unlisted change."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "5f2c6513-b004-460f-ab3d-fc25e2ef9b41",
+      "title": "Move the board to /board and serve the site on every other path",
+      "checks": [
+        {
+          "at": "2026-11-06T13:19:10Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "5f2c6513-b004-460f-ab3d-fc25e2ef9b41",
+            "title": "Move the board to /board and serve the site on every other path",
+            "criteria": [
+              "A signed-out visitor to `/`, a docs address or `/privacy` gets the website with no redirect to Google and no cookie set.",
+              "A signed-out visitor to `/board` is sent to Google sign-in and comes back to `/board`; a signed-in visitor gets their own board there, and `/board/` redirects to `/board`.",
+              "Board links returned by `import_log`, `new_game` and `set_opponent_deck` have the form `https://tcgreplay.demo.gs/board?board=\u003chandle\u003e`, and opening one in the signed-in browser shows that account's board.",
+              "The board's files, live connection and card lookups still need sign-in, and the board works at `/board` as it did at `/`.",
+              "`/mcp`, sign-in, OAuth, health and admin addresses behave exactly as before, and the desktop playmat still serves its board at `http://127.0.0.1:7777/` with no website.",
+              "The signed-out, \"not your game\", \"not an admin\" and admin pages link to `/board`."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/page.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/admin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/session.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_users_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/mcp_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/board_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/board_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/connect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/assets/x.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/ws"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/healthz"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:209 mounts site.Handler() on \"/\" with no session wrapper. internal/site/site.go:78-107 serves files without cookies or redirects. cmd/tcgreplay/hosted_routes_test.go:28-46 checks / , /docs/connect and /privacy signed out for no Location and no Set-Cookie. Caveat: the repo has no built Astro site (only internal/site/dist/placeholder/index.html exists), so /docs/connect and /privacy currently return the placeholder's 404. The routing is correct; the real page content depends on the site build."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:203 mounts a.RequireSession(atRoot(board)) on \"GET /board\". internal/hostauth/board.go:69 redirects signed-out page loads to /auth/login?next=\u003cRequestURI\u003e, so the query is kept. Signed in, the board is served with the account's session context. hosted.go:204 mounts toBoard() on \"GET /board/{$}\", which 301s to /board and keeps the query (hosted.go:226-234). hosted_routes_test.go:60-98 covers these cases."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/usergames/usergames.go:333-342: Entry.Link builds Path \"/board\" with the board query, giving \u003cpublic\u003e/board?board=\u003chandle\u003e. cmd/tcgreplay/hosted.go:272 sets BoardURL to public+\"/board\" for the MCP results. Tests at internal/usergames/usergames_test.go:157, internal/usergames/mcp_test.go:33 and 89, and cmd/tcgreplay/hosted_users_test.go:267 expect the /board?board= form. Opening the link works because hosted.go atRoot (lines 216-223) clones the request, keeps RawQuery and sets the path to /, so the board's front door reads the ?board= handle. I could not run the tests."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "hosted.go:206-208 puts /assets/, /ws and /api/ behind the same RequireSession (session := a.RequireSession(board)), so they still need sign-in. internal/hostauth/board.go:58-93 refuses them with 401 when signed out. The board's own code uses absolute paths: web/src/lib/ws.js:13 (`${location.host}/ws`), web/src/lib/store.svelte.js:144 (/api/card), web/src/lib/session.js:12 and 31 (/auth/session, and next=location.pathname+search). The board at /board sees itself at / through atRoot, and internal/webui/server.go:94-96 serves /ws, /api/card and GET / as before. hosted_routes_test.go:67-90 covers the 401s and the signed-in board at /board."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "The desktop playmat is untouched: cmd/tcgreplay/main.go:256 and cmd/tcgreplay/daemon.go:206 still call webui.New(m, human).Run/Handler with the default ui-addr 127.0.0.1:7777 (main.go:133), and internal/webui/server.go:96 still serves GET / from assets(). None of those files is in the diff. Hosted /mcp, /healthz, /admin, and the a.Routes OAuth and sign-in routes (internal/hostauth/hostauth.go:141-145, oauth.go:62-70) are unchanged in the diff. The only sign-in change is the default return path, from / to /board (hostauth/board.go:23), which criterion 2 requires. hosted_routes_test.go:100-112 covers /mcp, /healthz, /admin and the OAuth metadata."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The \"Not your game\" page links \u003ca href=\"/board\"\u003eOpen your own board\u003c/a\u003e (internal/usergames/board.go:124). The \"Not an admin\" page sets Link \"/board\" (internal/hostauth/admin.go:47). The admin page links \u003ca href=\"/board\"\u003eBack to the board\u003c/a\u003e (internal/cacheadmin/page.go:47). The signed-out page (internal/hostauth/board.go:143) and the sign-in-problem page (internal/hostauth/pages.go:46) link to /auth/login?next=/board, so their sign-in link now returns to /board. Read literally, the signed-out page does not link to /board directly; it links to sign-in with next=/board, which is the same pattern as before with / replaced by /board."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b7c5ba5f-02c1-46c8-a7ad-2b9ed9550592",
+      "title": "Scaffold the website build, layout and test harness",
+      "checks": [
+        {
+          "at": "2026-11-06T13:34:26Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b7c5ba5f-02c1-46c8-a7ad-2b9ed9550592",
+            "title": "Scaffold the website build, layout and test harness",
+            "criteria": [
+              "Building the site puts plain HTML pages into the Go site package, and the container build produces a playmat image that serves them.",
+              "Every page shows the logo, the site navigation, the unofficial fan project notice naming all four companies, and the TCGdex credit.",
+              "The site build fails with a clear message if any of the three service limits is missing from the App Platform definition.",
+              "Any block marked as copyable gets a copy button that puts exactly that block's text on the clipboard.",
+              "The browser suite runs from the project's test target against the built site, and checks every page for the notice, sideways scrolling at 375 pixels, cookies, and requests to other hosts.",
+              "The site loads no web fonts, analytics or resources from any other host."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/package.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "1.64.1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/package.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/package-lock.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/astro.config.mjs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/facts.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../.do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/layouts/Base.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/icon.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/public/icon.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/logo.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/public/logo.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../web/src/app.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/styles/tokens.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/scripts/copy.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/components/Prompt.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/components/CopyBlock.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/404.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/index.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/node_modules"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/test-results"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/sitetest/cmd/serve/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/cmd/boardtest"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/ws"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/playwright.config.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/playwright.config.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/astro.config.mjs:8 sets outDir '../internal/site/dist/app' with build.format 'directory'. internal/site/dist/app/ holds index.html and 404.html (plain HTML) and logo.png/icon.png. internal/site/site.go:25-29 embeds dist and Handler serves it. Dockerfile:48-56 adds a node:22.23.4 site stage running npm run build, and Dockerfile:65 copies /src/internal/site/dist/app into the Go build, so the image serves the pages. The verify summary records a docker run returning GET / 200 with the notice text."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/layouts/Base.astro:43 renders the logo img (/logo.png, which exists at site/public/logo.png). Lines 21-28 define the nav (Home, Get started, Guides, Example, Limits, Privacy) rendered at lines 44-50. Lines 58-61 hold the fan notice naming Nintendo, The Pokémon Company, Creatures and Game Freak with 'unofficial fan project'. Line 62 holds the TCGdex credit linking https://tcgdex.dev. Base.astro is the layout used by index.astro and 404.astro, so every page has these."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/lib/facts.ts:52-89 loadLimits reads the playmat service's envs and throws FactError when TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS or TCGREPLAY_IDLE_TIMEOUT is missing or empty (value() at lines 64-70 with message 'does not set \u003cKEY\u003e on the playmat service; the website states it, so the build stops'). Line 128 evaluates limits at module load, and Base.astro:7 imports site from facts, so every page build runs the check. site/e2e/facts.spec.js:38-53 tests each key removed. The verify run shows the build failing with that message and with the app.yaml-absent ENOENT message."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "site/src/components/CopyBlock.astro:17 wraps the text in \u003cpre data-copy\u003e\u003ccode\u003e{text}\u003c/code\u003e\u003c/pre\u003e with no extra whitespace, inside .copy-box. site/src/scripts/copy.ts:9-35 adds a button with class copy into el.closest('.copy-box') for every [data-copy] element. On click (lines 17-18) it writes el.dataset.copyText ?? el.textContent, which for the pre is exactly the block text, and the button lives outside the pre so 'Copy' is not included. site/e2e/site.spec.js:216-242 checks every block's button copies exactly its text."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Makefile: the test target (Makefile lines 105-114) runs go vet, go test, the board suite and then $(MAKE) site-test, and site-test (line 102-103) runs cd site \u0026\u0026 npm run test:e2e. site/playwright.config.js defines laptop and phone (375px) projects and a webServer serving the built site. site/e2e/site.spec.js covers the notice on every crawled page (lines 99-119), the 375px sideways-scroll check on the phone project (lines 121-156), cookies (lines 158-168), and requests to other hosts (lines 170-175)."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "No web font, analytics or external resource in the site source. site/src/styles/site.css:1 says system fonts only and uses no @import or url(). tokens.css has no url() or @import. A grep of site/src for https?://, @import, url(, \u003clink, \u003cscript and analytics found only the icon link (/icon.png, same host), the TCGdex and GitHub anchors (navigation, not loaded), and the bundled inline script. The Astro config sets devToolbar disabled (astro.config.mjs:12). site/e2e/site.spec.js:178-214 asserts no font faces, document.fonts size 0, and every script, stylesheet, image and srcset URL on the site's own origin."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b6dd327b-6407-4ad9-9fbf-71c92c547cbc",
+      "title": "Write the home page and the privacy page",
+      "checks": [
+        {
+          "at": "2026-11-06T13:42:40Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b6dd327b-6407-4ad9-9fbf-71c92c547cbc",
+            "title": "Write the home page and the privacy page",
+            "criteria": [
+              "On a 1366×768 window the home page shows the one-sentence description, the playmat scene and a \"Get started\" link without scrolling.",
+              "The scene shows a playmat in the board's style with plain stand-in cards, and no official card artwork or Pokémon logos.",
+              "The privacy page at `/privacy` states what is collected at sign-in (Google account id, email and its verified flag), what is kept while playing and that it is held in memory only, how long each is kept, the outside services involved, and what is never collected.",
+              "The privacy page's idle time comes from the App Platform definition, not typed in."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/index.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/connect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/components/Playmat.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".token"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/privacy.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "privacy.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "oauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/manager.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/home.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/privacy.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/index.astro:12-22 puts the h1, the one-sentence lede (data-pitch), the 'Get started' link (href /docs/connect) and the \u003cPlaymat /\u003e scene in the first section. site/e2e/home.spec.js:6-24 asserts all four fit inside 1366x768 at the laptop project. The supplied screenshot /home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/tmp/20261106110254-f08e142d-project-website/goal-check/home-laptop.png shows the pitch, the playmat scene (bottom edge about y=493) and the Get started button all above y=768 with no scroll. The page's lower sections start below the fold."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/components/Playmat.astro:113-228 copies the board's no-art styles from web/src/components/Card.svelte (.back-art at Card.svelte:167, .text-card at :187, .token at :207; Playmat.astro:186-227 matches them). All cards are plain text cards, card backs and an energy token with letter 'F' (Playmat.astro:50-61). The scene markup has no img, svg image or background url (Playmat.astro:63-111); home.spec.js:53-60 asserts this. The only image on the page is the project logo in Base.astro:43, which is outside the scene. No Pokémon logo or artwork appears in the scene."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/pages/privacy.astro:24-38 lists sign-in data: Google account ID, email address and whether Google verified it, and says name, photo and password are never kept. Lines 53-63 cover what is kept while playing and say it is held in memory only and never written to disk. Lines 66-89 give how long each thing is kept (game idle time, account details, 30-day sign-in and connection, 10-minute pending sign-in, logs). Lines 91-109 name the outside services (Google, TCGdex, card images, DigitalOcean, Cloudflare, the AI assistant). Lines 111-119 list what is never collected. The stated durations match internal/hostauth/store.go:13-17 (10 minutes, 30 days) and oauth.go:27 (one hour access). Fields match hostauth/google.go:137-189 and hostauth.go:74-77. The page also has a privacy spec, site/e2e/privacy.spec.js:30-49, that checks these sections."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "privacy.astro:70 renders the idle time as \u003cspan data-idle\u003e{limits.idleTimeout}\u003c/span\u003e, with no typed value. limits comes from site/src/lib/facts.ts:128, which calls loadLimits on .do/app.yaml. loadLimits reads TCGREPLAY_IDLE_TIMEOUT from the playmat service's envs (.do/app.yaml:73-74, value \"60m\") and humanDuration renders it as '60 minutes' (facts.ts:112-117). The built page internal/site/dist/app/privacy/index.html contains '60 minutes'. site/e2e/privacy.spec.js:9-21 and 51-56 re-read app.yaml and assert the rendered value matches."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "11845bab-16a7-4f15-9d70-ac5dbe866883",
+      "title": "Write the connecting, desktop and sign-in pages",
+      "checks": [
+        {
+          "at": "2026-11-06T13:46:32Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "11845bab-16a7-4f15-9d70-ac5dbe866883",
+            "title": "Write the connecting, desktop and sign-in pages",
+            "criteria": [
+              "The home page's \"Get started\" link opens the connecting instructions.",
+              "There are separate step-by-step instructions for claude.ai, ChatGPT and Claude Code, and each ends by telling the user how to check the connection works.",
+              "The desktop instructions list the prerequisites, the install steps, the Claude desktop app setting and the board's address on the desktop.",
+              "The sign-in and board-link text is reachable from the connecting instructions and describes the Google prompt and opening the board link (at `/board`).",
+              "The playmat's MCP address has a copy button that copies exactly `https://tcgreplay.demo.gs/mcp`."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/connect.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/connect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/sign-in.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/sign-in"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/oauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/desktop.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/desktop"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "claude_desktop_config.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content.config.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/connect.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "127.0.0.1"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/index.astro:18 renders \u003ca class=\"button\" href=\"/docs/connect\"\u003eGet started\u003c/a\u003e. The built page internal/site/dist/app/index.html contains the same link text. site/e2e/connect.spec.js:7-12 tests the click through to /docs/connect."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/content/docs/connect.md has separate h2 sections for claude.ai (lines 12-25), ChatGPT (27-40) and Claude Code (42-58). Each has numbered steps, then a '**Check it works.**' block with a ```prompt fence asking 'What can the tcgreplay playmat do?' and an expected result ('should list the playmat's coaching workflows'). Only troubleshooting text follows the check. Each section uses https://tcgreplay.demo.gs/mcp. The built page internal/site/dist/app/docs/connect/index.html contains these sections."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/content/docs/desktop.md: prerequisites at lines 9-14 (Go 1.27 or newer, Node.js 22 or newer, git, the Claude desktop app). Install steps at lines 16-30 (git clone, make install, locating the binary). Desktop app setting at lines 32-44 (claude_desktop_config.json via Settings → Developer → Edit Config, the mcpServers JSON, restart the app). Board address at line 54: http://127.0.0.1:7777."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "site/src/content/docs/connect.md links to /docs/sign-in at lines 25, 40, 58 and 66. site/src/content/docs/sign-in.md:9 describes Google's account chooser on the first sign-in. Lines 13-18 describe the board link as https://tcgreplay.demo.gs/board?board=… and cover the same-browser and other-browser cases. site/e2e/connect.spec.js:73-83 asserts these texts."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "site/src/pages/index.astro:50 renders \u003cCopyBlock text={site.mcpURL} label=\"The playmat's address\" wrap /\u003e. site/src/lib/facts.ts:15-20 sets mcpURL to `${publicURL}/mcp` with publicURL 'https://tcgreplay.demo.gs', which gives exactly https://tcgreplay.demo.gs/mcp. site/src/components/CopyBlock.astro:17 puts the text in \u003cpre data-copy\u003e\u003ccode\u003e{text}\u003c/code\u003e\u003c/pre\u003e with no surrounding whitespace. site/src/scripts/copy.ts:32-41 copies el.textContent (no trailing newline) to the clipboard and gives the button the name 'Copy The playmat's address'. The same block also appears on connect.md via showAddress (site/src/pages/docs/[...slug].astro:17). The built index.html contains data-copy-label and tcgreplay.demo.gs/mcp. Not verified: the Playwright clipboard run itself. The run is reported as passing, and I did not run it."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "0d86023b-e1a4-4cce-a547-5aad2d1b2dad",
+      "title": "Write a page for every coaching workflow, read from the playmat's guides",
+      "checks": [
+        {
+          "at": "2026-11-06T13:51:03Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "0d86023b-e1a4-4cce-a547-5aad2d1b2dad",
+            "title": "Write a page for every coaching workflow, read from the playmat's guides",
+            "criteria": [
+              "Every coaching workflow the playmat offers has a page on the site with at least one copyable example prompt, listed in the playmat's own order.",
+              "The site build fails if a workflow has no page, a page names a workflow the playmat doesn't have, or a page has no example prompt.",
+              "A page explains how to rewind an imported game to a chosen turn and play a different line, with an example prompt.",
+              "The workflow descriptions shown come from the playmat's guides, not retyped."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content.config.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/workflows.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/guides.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/import"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/rewind.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/rewind"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/workflows/index.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/workflows"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/workflows.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".prompt"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "guides.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/docs/workflows/index.astro:15-22 lists workflows from pairWorkflows(), which takes its order from internal/guides/guides.go (`var order = []string{\"play-game\", \"import-game\", \"opponent-deck\", \"review-game\", \"replay-drill\", \"before-you-move\", \"numbers-drill\"}`, guides.go:17) via site/src/lib/workflow-pairing.ts:55-60. Each of the seven pages in site/src/content/docs/workflows/ has at least two prompts in its frontmatter (e.g. review-game.md:5-7, play-game.md:5-7), and [guide].astro:22-24 renders each one through Prompt.astro (CopyBlock with copy button). Built output exists for all seven at internal/site/dist/app/docs/workflows/\u003cguide\u003e/index.html and the index page."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/content.config.ts:37-41 requires `guide` and `prompts` with `.min(1)` on prompts (schema failure on empty prompts). site/src/lib/workflow-pairing.ts:39-53 throws a WorkflowError when a page names a guide not in the playmat (line 40), when a guide has no page (line 46, message names site/src/content/docs/workflows/\u003cname\u003e.md), when a page has no prompt (line 43), and when a guide is missing from the order (line 47). lib/workflows.ts:21-22 calls pair() at build time through pairWorkflows(), and the index and [guide] pages call it in their frontmatter, so the build stops. The orchestrator's three scratch-copy failure runs corroborate this; I did not re-run them."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/content/docs/rewind.md:7 explains that the playmat keeps every line on its own branch; lines 9-11 explain turn-numbering (turn N is each player's Nth turn); lines 13-19 'Try another line' explain rewinding to a chosen turn and playing a different line, with the prompt 'Take me back to my third turn and show me the line where I bench a second attacker first.' Built output internal/site/dist/app/docs/rewind/index.html:8 contains that prompt as a language-prompt code block, which copy.ts turns into a copy button."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The workflow page frontmatter (site/src/content/docs/workflows/*.md) has only guide, title and prompts, with no description field. The description comes from the guide file: lib/workflow-pairing.ts:59 returns `description: g.description` from the guides collection, which reads internal/guides/*.md (content.config.ts:26-32). index.astro:19 renders `{w.description}` and [guide].astro:19-20 renders `{w.description}` in the data-guide-description element. The internal/guides/*.md files are unchanged in the status (not listed as modified). site/e2e/workflows.spec.js:44 and :56 also assert the rendered text against the guide files parsed independently."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "cb1c4655-a05b-4285-a115-655e38a7b3df",
+      "title": "Publish the anonymised example game and the import page",
+      "checks": [
+        {
+          "at": "2026-11-06T13:55:01Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "cb1c4655-a05b-4285-a115-655e38a7b3df",
+            "title": "Publish the anonymised example game and the import page",
+            "criteria": [
+              "The example page shows the complete battle log from setup to the result and its decklist, each with a copy button that copies exactly that text.",
+              "The example log contains no real opponent's name, and a test fails if it differs from the original game in anything but that name.",
+              "A test imports the example log with its decklist and finds no problems and the same winner and prize counts as the original game.",
+              "The import page explains where to copy the log and the decklist in TCG Live, what a complete import looks like, and what to do if lines are missing."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/example/battle-log.txt"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/logs/2026-10-11_gatorusoju_mewex-bronzong-lopunny.txt"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/site_example_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../site/src/content/example/battle-log.txt"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/decks/mega-lucario-ex-v12.txt"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/import_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "expected.winner"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "import_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/example.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/example"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../testdata/decks/mega-lucario-ex-v12.txt"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/import.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/import"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/example.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/docs/example.astro:31 and :35 render CopyBlock with example.deck and example.log (log is the full file, from site/src/lib/example.ts:25). CopyBlock.astro:17 puts the text in a data-copy pre, and copy.ts:38 gives each a 'Copy \u003clabel\u003e' button that writes el.dataset.copyText ?? el.textContent. The log file has 266 lines (20 blank, 246 non-blank), starts with 'Setup' and ends 'Opponent took all of their Prize cards. Rival wins.' (site_example_test.go:56 asserts this). e2e site/e2e/example.spec.js:21-42 asserts the copied text equals the file exactly, and the verify run reports Playwright passing."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/content/example/battle-log.txt contains 0 occurrences of 'GatoruSoju'. internal/game/site_example_test.go:43-55 builds the corpus log with GatoruSoju replaced by Rival and fails on a line-count mismatch (line 47) or on any differing line (line 51), with a final fallback fatal at line 54 for any other difference. Lines 40-42 also reject the real name case-insensitively. The verify run shows the test failing on a deleted line and on a changed 'NicJackson' line."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/game/site_example_test.go:60-63 imports the example log with testdata/decks/mega-lucario-ex-v12.txt and fails on any res.Report.Problems (lines 64-66). Lines 74-82 check winner Rival, end reason all_prizes_taken, and prizes {NicJackson:4, Rival:6}, matching testdata/index.json:234-248 for the original game (winner GatoruSoju, prizes NicJackson 4, GatoruSoju 6). Turns 6/7 match too. The verify run reports go test ./... passing."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "site/src/content/docs/import.md:9-14 'Where to copy them in TCG Live' explains copying the battle log from match history and the decklist from the deck editor. Lines 26-30 'What a complete import looks like' say the import reports no problems and every line was replayed. Lines 32-38 'If lines are missing' cover the 'lines hidden' truncation, pasting again or attaching a file, and checking the log starts with Setup and ends with the result."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "8fdc8d6b-84a1-4306-8bb1-9e3116500e38",
+      "title": "Write the hosted limits and developer pages",
+      "checks": [
+        {
+          "at": "2026-11-06T13:58:16Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "8fdc8d6b-84a1-4306-8bb1-9e3116500e38",
+            "title": "Write the hosted limits and developer pages",
+            "criteria": [
+              "The limits page's idle time, players served at once and requests per minute match the App Platform definition, and change when it does.",
+              "The limits page says what the hosted playmat keeps, that games are lost when idle or updated, that a record can be kept and imported again, and points to the desktop option when the playmat is full.",
+              "The developer section links to the source repository and contains no build or test instructions beyond that pointer."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/limits.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/facts.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/limits"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/desktop"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/developers.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/developers"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/limits.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://github.com/nicholasjackson/tcgreplay"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/docs/limits.astro:30, :54 and :58 render {limits.idleTimeout}, {limits.maxUsers} and {limits.requestsPerMinute} into data-limit=\"idle\", \"users\" and \"rate\". site/src/lib/facts.ts:52-89 (loadLimits) reads TCGREPLAY_IDLE_TIMEOUT, TCGREPLAY_MAX_USERS and TCGREPLAY_RATE_LIMIT from the playmat service in .do/app.yaml (lines 64-74: '300', '10', '60m'), so the values follow the App Platform definition. facts.ts:128 reads the file once at build time, so an edit to app.yaml shows on the next build. humanDuration (facts.ts:112-117) renders 60m as '60 minutes', matching the App Platform comment ('Go duration, e.g. 2m or 1h'). The rate wording 'requests a minute per account' matches app.yaml:60-61."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "limits.astro:20-25 'What it keeps': one game per Google account in the playmat's memory (battle log, board moves, branches, coaching notes). limits.astro:27-38 'When games are dropped': after {limits.idleTimeout} without activity, and 'Whenever the playmat is updated or restarted ... every game is lost'. limits.astro:40-49 'Keep the record': ask for the record, keep it, paste it back to import it again (with a Prompt component). limits.astro:82-86 'When it's full: run it on your desktop' links to /docs/desktop, and that page exists at site/src/content/docs/desktop.md."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/content/docs/developers.md:7-9 has only prose: a link to https://github.com/nicholasjackson/tcgreplay for the source, design notes and build/run/test instructions, plus a line on issues and pull requests. The file has no code blocks, commands or steps. The e2e test at site/e2e/limits.spec.js:55-62 checks for the banned command strings and zero \u003cpre\u003e blocks, and the file has none of them."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "4fcd4d8b-f215-48f0-926e-535fe36c7d1c",
+      "title": "Point the README at the site and record the new routes",
+      "checks": [
+        {
+          "at": "2026-11-06T14:00:42Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "4fcd4d8b-f215-48f0-926e-535fe36c7d1c",
+            "title": "Point the README at the site and record the new routes",
+            "criteria": [
+              "The README links to the site's home page and its connecting instructions, and no longer contains the step-by-step connecting instructions or the example prompts.",
+              "The README still carries a brief description, the logo and the developer notes.",
+              "The design notes and the deploy definition's comments describe the site at `/`, the board at `/board`, how the site is built, and that each push to main redeploys the playmat."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/ws"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "README.md:14-20 (worktree copy) has a 'Get started' section linking to https://tcgreplay.demo.gs (home page) and https://tcgreplay.demo.gs/docs/connect (connecting instructions), plus the desktop guide link. The diff removes the old 'Using it' section (claude mcp add, Settings → Connectors, Plugins → Add) and the whole 'Example prompts' section. A grep of README.md for 'claude mcp add', 'Settings → Connectors', 'Plugins → Add', 'Example prompts' and 'Review this game' returns no matches."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Brief description at README.md:5-12 ('A virtual Pokémon TCG playmat... It is a playmat, not a rules engine...'). Logo at README.md:1 (\u003cimg src=\"docs/logo.png\"\u003e), and docs/logo.png exists in the worktree. Developer notes at README.md:22-49 ('## Development' with make targets, the site notes, the hosted-playmat notes and the design-notes link), unchanged in substance apart from the added site targets."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Design notes, 'TCG Review Playmat Design and Build Plan.md' in the worktree: line 302 says the board page is at /board; line 304 'Website.' paragraph says the home page is at /, the site is built into internal/site/dist/app via the Dockerfile's site stage (make site), and 'Every push to `main` redeploys the playmat'. Deploy definition .do/app.yaml:20-26 (header comment): 'The playmat also serves the public website (built from site/ by the Dockerfile) at / , with the board at /board. Every push to main redeploys it'. Both describe the site at /, the board at /board, how the site is built and the push-to-main redeploy."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "8eda3982-e121-4fdf-abb3-f81dc1235958",
+      "title": "Animate the home page's playmat scene",
+      "checks": [
+        {
+          "at": "2026-11-06T14:05:52Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "8eda3982-e121-4fdf-abb3-f81dc1235958",
+            "title": "Animate the home page's playmat scene",
+            "criteria": [
+              "With the playmat's addresses blocked, the home page animation plays without being touched, shows in order a battle log arriving, the board filling, a coaching message, a rewind to an earlier turn and a different line, then starts again.",
+              "With the reduced-motion setting on, the home page shows the still scene and nothing on the page moves.",
+              "The home page's total download, animation included, is under 1.5 MB.",
+              "The animation uses the board's colours and plain stand-in cards, with no official card artwork or Pokémon logos."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/components/Playmat.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/animation.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "page.route"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Playmat.astro:136-176 runs a script with beats log(2800ms), board, coach, rewind, line(3600ms), advancing with (at + 1) % beats.length from show(0) and schedule(), so it starts without input. Playmat.astro:57-175 sets data-beat and the turn label per beat, and the rewind beat shows the .sweep and changes Turn 7 to Turn 3 (Playmat.astro:381-385). The line beat reveals [data-line] and the log line (Playmat.astro:372-379). site/e2e/animation.spec.js:19-41 checks the order log,board,coach,rewind,line,log with the playmat addresses blocked and expects no blocked requests. index.astro:22 is the only place the component is used. The spec run passed per the verify summary, but I did not run it."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Playmat.astro:142 does not start the script when matchMedia('(prefers-reduced-motion: reduce)') matches, and Playmat.astro:182-186 stops it if the setting changes. The HTML defaults to data-beat=\"line\" (Playmat.astro:71), which shows the full still. Playmat.astro:388-395 sets transition and animation to none for all scene elements under reduced motion. A grep of site/src for transition, animation and keyframes finds nothing outside Playmat.astro, so nothing else on the page moves. animation.spec.js:71-91 covers this case."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The scene CSS and script are inlined in internal/site/dist/app/index.html, which has no external script, link or image loads: the only https URLs are anchors (tcgreplay.demo.gs/mcp, tcgdex.dev, github.com). Base.astro:43 loads only /logo.png from the site itself. The verify summary reports 57,687 B for the home page's files (index.html 13,855 B, CSS 7,703 B, logo 27,053 B, icon 9,076 B). I could not measure sizes myself with read-only tools, but that total is far below 1.5 MB. animation.spec.js:93-105 asserts the 1.5 MB limit on the response bodies."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The scene draws only HTML and CSS. The cards are text-card, back-art and token elements (Playmat.astro:57-63 and the CSS at lines 264-305), with stand-in names such as 'Rival attacker' and 'Your attacker' (Playmat.astro:21-41). The colours match the board: the felt, strip, accent, line, slot-line and p1/p2 tokens in site/src/styles/tokens.css:6-34 match web/src/app.css, and the back-art and text-card gradients and hexes match web/src/components/Card.svelte:167-226. The scene has no img, image or picture elements, and a grep of the built index.html finds no image or logo reference inside the scene. animation.spec.js:107-121 checks for no images and no background url()."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "797471ef-70b2-493f-9f4c-536d0a045c85",
+      "title": "Enter the site's addresses on Google's OAuth consent screen",
+      "checks": [
+        {
+          "at": "2026-11-06T14:09:29Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "797471ef-70b2-493f-9f4c-536d0a045c85",
+            "title": "Enter the site's addresses on Google's OAuth consent screen",
+            "criteria": [
+              "The consent screen's home page is `https://tcgreplay.demo.gs/` and its privacy policy is `https://tcgreplay.demo.gs/privacy`, both loading publicly.",
+              "`demo.gs` is an authorized domain on the consent screen, and Google sign-in to the playmat still works afterwards."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Nothing in the staged diff or the worktree sets the Google OAuth consent screen's home page or privacy policy; the only mention is the operator step in 'TCG Review Playmat Design and Build Plan.md' (diff hunk at line 318: 'Operator step: once the site is live, set the Google OAuth consent screen's application home page to https://tcgreplay.demo.gs/ and its privacy policy to https://tcgreplay.demo.gs/privacy'), which describes the step as still to do. The pages exist in code (site/src/pages/index.astro, site/src/pages/privacy.astro, and the route in internal/site and cmd/tcgreplay/hosted.go), but the work is not merged or deployed, so 'loading publicly' cannot be shown from the files. The console setting itself can only be made in the Google Cloud console, which I could not check; I changed nothing."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "No file in the worktree or the staged diff lists demo.gs as an authorized domain. The only demo.gs references are the app domain in .do/app.yaml:128 and the site URL in site/astro.config.mjs:7 and site/src/lib/facts.ts:15. The authorized-domain setting lives in the Google console, which the files cannot show. The 'sign-in still works afterwards' half also cannot be shown from the files: the sign-in code (cmd/tcgreplay/hosted.go, internal/hostauth) is unchanged by this item and the site is not deployed. The status lists only the plan's earlier tasks, and the goal's scope names no file that this item changes."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-06T14:10:19Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "797471ef-70b2-493f-9f4c-536d0a045c85",
+            "title": "Enter the site's addresses on Google's OAuth consent screen",
+            "criteria": [
+              "The consent screen's home page is `https://tcgreplay.demo.gs/` and its privacy policy is `https://tcgreplay.demo.gs/privacy`, both loading publicly.",
+              "`demo.gs` is an authorized domain on the consent screen, and Google sign-in to the playmat still works afterwards."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The consent screen's home page and privacy policy are set in the Google Cloud console, which no file in the code root or the staged diff touches (tcgreplay.diff and tcgreplay.status list no OAuth or console config). The page sources exist: site/src/pages/index.astro and site/src/pages/privacy.astro are untracked in tcgreplay.status (lines 78-79), and privacy.astro renders at /privacy with a 'Privacy' h1 (privacy.astro:16). But the diff's own text says the site is 'not merged or deployed' and the operator step is still pending (TCG Review Playmat Design and Build Plan.md hunk at diff line 318, 'Operator step: once the site is live, set ...'). Nothing in the files shows the URLs load publicly. Missing: the console setting and a live deployment of https://tcgreplay.demo.gs/ and /privacy."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "Adding demo.gs as an authorised domain is a Google console setting; no file in the diff or status records it. The sign-in path is unchanged: the callback is still registered as GET /auth/google/callback (internal/hostauth/google.go:18 and internal/hostauth/hostauth.go:142, registered before the catch-all '/' site handler in cmd/tcgreplay/hosted.go hostedHandler, diff lines 396-397), so the code side looks intact. But 'Google sign-in still works afterwards' can only be confirmed against the live deployed app and the console, and neither is in the files. Missing: the authorised-domain entry and a live sign-in check."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-06T14:11:01Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "797471ef-70b2-493f-9f4c-536d0a045c85",
+            "title": "Enter the site's addresses on Google's OAuth consent screen",
+            "criteria": [
+              "The consent screen's home page is `https://tcgreplay.demo.gs/` and its privacy policy is `https://tcgreplay.demo.gs/privacy`, both loading publicly.",
+              "`demo.gs` is an authorized domain on the consent screen, and Google sign-in to the playmat still works afterwards."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The consent screen's home page and privacy policy are set in the Google Cloud console, which is not visible in the repo or the staged diff. The repo side is in place: site/src/pages/privacy.astro exists and the plan (Makefile/README/Dockerfile diff, TCG Review Playmat Design and Build Plan.md around line 318) names the operator step. Nothing in the files shows the console values are set or that https://tcgreplay.demo.gs/ and https://tcgreplay.demo.gs/privacy load publicly. The branch is unmerged and undeployed (per the pointers), so the public URLs cannot be shown to load. This is a human step that can be met, so it is not impossible."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "No file in the diff or worktree records demo.gs as an authorized domain; that is a console setting only. The sign-in code is unchanged in the way that matters: the callback is still registered at internal/hostauth/hostauth.go:142 (GET /auth/google/callback via googleCallbackPath in internal/hostauth/google.go:18), and the new site catch-all at cmd/tcgreplay/hosted.go is the plain '/' pattern, so the more specific callback route still wins. Whether Google sign-in works after the change, and whether demo.gs is authorized, cannot be confirmed from files; it needs a deployed build and the console check."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-06T14:11:01Z",
+          "round": 1,
+          "decision": "skip",
+          "reason": "Human task: needs the Google Cloud console and the deployed site, which comes after this branch is merged. The user chose to skip it in this run and do it after deploy."
+        }
+      ],
+      "attempts": 3,
+      "state": "skipped"
+    }
+  ]
+}
