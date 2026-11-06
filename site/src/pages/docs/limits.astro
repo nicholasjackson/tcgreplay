@@ -1,0 +1,92 @@
+---
+// The hosted playmat's limits: what it keeps, when games are dropped, how
+// to keep a game's record, how many players it serves and how many
+// requests a minute. The numbers come from the App Platform definition
+// (lib/facts.ts), so they change when it does.
+import Docs from '../../layouts/Docs.astro';
+import Prompt from '../../components/Prompt.astro';
+import { limits } from '../../lib/facts';
+---
+<Docs
+  title="The hosted playmat's limits"
+  description="What the hosted tcgreplay playmat keeps, when games are dropped, and how many players and requests it serves."
+>
+  <h1>The hosted playmat's limits</h1>
+  <p>
+    The hosted playmat at tcgreplay.demo.gs is free and small. It runs on a single server, so it keeps games only in
+    memory and serves a limited number of players at once. Here is what that means for you.
+  </p>
+
+  <h2 id="what-it-keeps">What it keeps</h2>
+  <p>
+    Each Google account has <strong>one game at a time</strong>, held in the playmat's memory: the imported battle log,
+    the moves on the board, its branches and the assistant's coaching notes. Importing or starting another game replaces
+    it. See <a href="/privacy">privacy</a> for everything it keeps about you.
+  </p>
+
+  <h2 id="when-games-are-dropped">When games are dropped</h2>
+  <ul>
+    <li>
+      After <strong data-limit="idle">{limits.idleTimeout}</strong> without activity. The next time your assistant
+      uses the game, it is told the game expired.
+    </li>
+    <li>
+      <strong>Whenever the playmat is updated or restarted</strong>, which can happen at any time: every change to
+      tcgreplay is deployed straight away, and every game is lost when it is.
+    </li>
+    <li>When your last sign-in ends.</li>
+  </ul>
+
+  <h2 id="keep-the-record">Keep the record</h2>
+  <p>
+    To come back to a game later, ask your assistant for its <strong>record</strong> and keep it somewhere safe, such as
+    a note. The record holds the battle log, both decklists and everything needed to rebuild the game exactly.
+  </p>
+  <Prompt text="Give me this game's record so I can keep it." />
+  <p>
+    Later, paste the record into a chat and ask your assistant to import it: the same game comes back, move for move.
+    Branches you made and coaching notes aren't part of the record.
+  </p>
+
+  <h2 id="players-and-requests">How many players and requests</h2>
+  <ul>
+    <li>
+      It serves up to <strong data-limit="users">{limits.maxUsers}</strong> signed-in players at once. A place is freed
+      when a player's game is dropped or their last sign-in ends.
+    </li>
+    <li>
+      Each account may make up to <strong data-limit="rate">{limits.requestsPerMinute}</strong> requests a minute, from
+      the assistant and the board together. Normal play stays well under it.
+    </li>
+  </ul>
+
+  <h2 id="messages">Messages you may see</h2>
+  <dl>
+    <dt>"tcgreplay is busy"</dt>
+    <dd>
+      The playmat already has {limits.maxUsers} players signed in. Your assistant may say "the server is busy: it already
+      has the most signed-in users it serves at once ({limits.maxUsers}); try again later". Try again later, or run it
+      on your desktop (below).
+    </dd>
+    <dt>"too many requests"</dt>
+    <dd>
+      Your account went over {limits.requestsPerMinute} requests a minute: "too many requests: this account is limited
+      to {limits.requestsPerMinute} requests a minute; try again in …s". Wait the few seconds it says and carry on.
+    </dd>
+    <dt>"Your game expired"</dt>
+    <dd>
+      The game was dropped after {limits.idleTimeout} without activity. Import its record again to carry on.
+    </dd>
+  </dl>
+
+  <h2 id="when-full">When it's full: run it on your desktop</h2>
+  <p>
+    The playmat is open source and runs on your own computer with the Claude desktop app, with no sign-in and no limits,
+    and your games stay on your machine. See <a href="/docs/desktop">running it on your desktop</a>.
+  </p>
+</Docs>
+
+<style>
+  dt { font-weight: 700; margin-top: 0.75rem; }
+  dd { margin: 0.2rem 0 0 1rem; }
+</style>

@@ -1,11 +1,17 @@
 # Local build output, dependencies and tooling state stay out of the image
-# build. The guides (internal/guides) and the UI placeholder are embedded, so
-# they stay in.
+# build. The guides (internal/guides) and the UI and website placeholders are
+# embedded, so they stay in; the website build also reads the guides,
+# .do/app.yaml and testdata/decks.
 .git
 bin
 .dev
 web/node_modules
 internal/webui/dist/app
+site/node_modules
+site/.astro
+site/test-results
+site/playwright-report
+internal/site/dist/app
 .spektacular
 skills
 .claude

@@ -44,7 +44,7 @@ button { font: inherit; padding: .3rem .8rem; }
 <h2>{{if .Running}}Clearing now{{else}}Last clear{{end}}</h2>
 {{with .Job}}{{if $.Running}}<p>Clearing {{.Label}} for {{.By}}, started {{$.Started}}…</p>{{else}}<p>{{.Label}} by {{.By}} at {{$.Started}}, took {{$.Took}}{{if .Failed}}, <span class="failed">with failures</span>{{end}}.</p>
 <ul>{{range $.Tiers}}<li{{if .Failed}} class="failed"{{end}}>{{.Text}}</li>{{end}}</ul>{{end}}{{else}}<p>No clear since the playmat started.</p>{{end}}
-<p><a href="/">Back to the board</a></p>
+<p><a href="/board">Back to the board</a></p>
 </main>
 </body>
 </html>

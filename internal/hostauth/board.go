@@ -20,7 +20,7 @@ func (a *Auth) boardRoutes(mux *http.ServeMux) {
 func (a *Auth) serveLogin(w http.ResponseWriter, r *http.Request) {
 	next := r.URL.Query().Get("next")
 	if !localPath(next) {
-		next = "/"
+		next = "/board"
 	}
 	a.startGoogle(w, r, &pendingLogin{kind: loginBoard, next: next})
 }
@@ -140,7 +140,7 @@ func serveSignedOut(w http.ResponseWriter, r *http.Request) {
 	renderPage(w, http.StatusOK, pageData{
 		Title:    "Signed out",
 		Message:  "You have signed out of tcgreplay.",
-		Link:     "/auth/login?next=/",
+		Link:     "/auth/login?next=/board",
 		LinkText: "Sign in again",
 	})
 }
