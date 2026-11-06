@@ -58,3 +58,18 @@ end. Do not plan or implement: the request was to "spec out" the site.
   (depends on the site). Offer NOT acted on: the user is away and a split needs
   their agreement. Offer it in the final report; a written spec can be split
   any time.
+
+
+## Plan workflow: 20261106110254-f08e142d-project-website (started 2026-11-06)
+
+User decisions during discovery (spec amended via the CLI to match):
+- Serve everything at tcgreplay.demo.gs: the site is embedded in and served by the hosted playmat. GitHub Pages is dropped.
+- Home at `/` always; board moves to `/board` (`/board?board=<handle>`); docs at `/docs/...`, privacy at `/privacy`. The user accepted that old board links in past chats break.
+- Accept that every push to main redeploys the playmat (drops games); no deploy change.
+Learnings:
+- Board JS uses absolute /ws, /api/card, /auth/session, /auth/login?next=; Vite assets at /assets/. Those paths stay at the root behind the session. Only the page moves to /board.
+- Hard-coded "/" board spots: usergames.go:338 link, hostauth/board.go:23 & :143, usergames/board.go:124, cacheadmin/page.go:47, hostauth/admin.go:47.
+- Privacy facts gathered (research.md). Limits come from .do/app.yaml (300/min, 10 users, 60m).
+- Out-of-scope wording bug noted for the user: oauth.go:201 refusal text mentions only Claude's callback.
+- Plan drafted through assemble and verification. 11 tasks in 3 milestones. The connecting pages moved into milestone 1 so "Get started" never dead-ends. One human task: the consent screen addresses.
+- 2026-11-06: user approved the website plan at the walkthrough ("looks good").

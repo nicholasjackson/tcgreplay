@@ -1,0 +1,13 @@
+- **Design documents this plan was built on: none.** The spec carries no design references.
+- **Spec 20261106110254-f08e142d-project-website** — the source of scope. It was amended on 2026-11-06 with the user's hosting decisions (site at tcgreplay.demo.gs, board at `/board`, redeploys accepted).
+- **Astro (current release, 7.x) — new dev dependency of the site package only.** Builds Markdown pages to static HTML and bundles the one site script. Not used at runtime and not in the board's package. The site needs no front-end framework integration.
+- **A YAML parser (e.g. `yaml`) — new dev dependency of the site package.** Reads the limits from the App Platform definition at build time.
+- **Playwright (already used by the board, 1.64.x).** The site's browser tests reuse it with Chromium-only profiles (knowledge gotchas/playwright-touch-tests.md); no new browser installs.
+- **Node 22 (already in the Dockerfile's board stage).** The site stage uses the same image.
+- **Go standard library `embed`, `net/http`, `io/fs`** — the site package. No new Go modules.
+- **The playmat's guides (internal), the App Platform definition, and the test corpus decklist and game log.** Read, not changed. The App Platform definition remains the single place the limits are set.
+- **The hosted router, the per-account registry's board link, and the sign-in service's return paths and pages (internal).** Changed, as described above, to move the board to `/board`.
+- **The board's colour tokens (internal).** Imported read-only by the site so the animation matches the board's palette.
+- **Google Cloud OAuth consent screen (external service).** After launch the operator enters `https://tcgreplay.demo.gs/` as the home page and `https://tcgreplay.demo.gs/privacy` as the privacy policy (a human task). `demo.gs` is assumed to be an authorized domain already.
+- **DigitalOcean App Platform (external service, unchanged).** Its push-to-main deploy publishes the site. Every merge redeploys the playmat; the user accepted this.
+- **Prior plans that must land first: none.** The TCGdex Spaces cache epic is complete. The read-only tool annotations, the ChatGPT name mapping and the CDN scope doc fixes are uncommitted in the working tree; they are independent of this plan and may land in either order.

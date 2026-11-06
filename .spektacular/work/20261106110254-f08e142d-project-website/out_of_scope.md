@@ -1,0 +1,10 @@
+- **Changes to the playmat beyond serving the site and moving the board to `/board`.** Its sign-in, limits, tools and board behaviour stay as they are (spec Non-Goals). The OAuth refusal text that still mentions only Claude's callback (`redirect_uri must be Claude's callback or a loopback address`) is a separate small fix, reported to the user and not tracked yet.
+- **Keeping docs merges from restarting the playmat.** Every push to main redeploys it. The user accepted this for now and declined both a separate site repo and deploying from GitHub Actions. There is no follow-up yet.
+- **Redirecting old board links (`/?board=…`) to `/board`.** The user chose home at `/` always and accepted that links in past chats break.
+- **A separate domain or host for the site, including GitHub Pages** (spec Non-Goals, as amended).
+- **Accounts, comments, a blog, newsletters, search, versioned docs and translations** (spec Non-Goals).
+- **An API reference or contribution guide.** The developer section only points to the repository (spec Non-Goals).
+- **Replacing the project logo.** The site uses the current logo until the user decides whether it suits a public site (spec Non-Goals).
+- **A "Help" or "Docs" link inside the board's menu.** Useful, but it is a board change the spec doesn't ask for.
+- **Serving the website in desktop mode.** The desktop playmat keeps its board at the root, with no website.
+- **Google brand verification.** Entering the home page and privacy addresses is in scope. Submitting the app for brand verification is optional and left to the operator.
