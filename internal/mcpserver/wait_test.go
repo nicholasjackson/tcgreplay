@@ -13,6 +13,8 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 )
@@ -32,9 +34,26 @@ type waitOut struct {
 		Card string `json:"card"`
 		Kind string `json:"kind"`
 		Text string `json:"text"`
+		Need string `json:"need"`
 	} `json:"cards"`
-	Reason string `json:"reason"`
-	Next   string `json:"next"`
+	Decision string `json:"decision"`
+	Choices  []struct {
+		Slot int    `json:"slot"`
+		IID  string `json:"iid"`
+		Name string `json:"name"`
+	} `json:"choices"`
+	Applied []struct {
+		IID  string `json:"iid"`
+		Name string `json:"name"`
+		Card string `json:"card"`
+		What string `json:"what"`
+	} `json:"applied"`
+	Reason      string `json:"reason"`
+	KeepWaiting bool   `json:"keep_waiting"`
+	Action      string `json:"action"`
+	Wait        int    `json:"wait"`
+	Waited      string `json:"waited"`
+	Next        string `json:"next"`
 }
 
 // waitGame opens a play-mode game through new_game and starts it with p1
@@ -227,7 +246,7 @@ func TestWaitForTurnStillWaiting(t *testing.T) {
 		if d := time.Since(start); d > time.Second {
 			t.Errorf("call took %v with a 100ms cap", d)
 		}
-		want := fmt.Sprintf("Call wait_for_turn again with since %d. Post nothing in chat.", since)
+		want := fmt.Sprintf("The player is still taking their turn (wait 1, %s so far). This is not the end of the wait, however many times you see it: call wait_for_turn again now with since %d, in this same reply, and keep calling it until the turn ends. Post nothing in chat.", w.Waited, since)
 		if w.Outcome != "still_waiting" || w.Since != since || w.Next != want {
 			t.Fatalf("result: %+v", w)
 		}
@@ -253,7 +272,7 @@ func TestWaitForTurnCheckIn(t *testing.T) {
 		g := waitGame(t, cs, m)
 		since := g.TurnStartedAt(state.P1)
 		w := mustWait(t, cs, nil)
-		want := fmt.Sprintf("Ask the player exactly \"Still playing?\" and nothing else. When they reply, call wait_for_turn with since %d.", since)
+		want := fmt.Sprintf("Ask the player exactly \"Still playing?\" and nothing else. When they reply, call wait_for_turn with since %d and keep waiting until the turn ends.", since)
 		if w.Outcome != "check_in" || w.Since != since || w.Next != want {
 			t.Fatalf("result: %+v", w)
 		}
@@ -372,6 +391,8 @@ func TestInstructionsTeachTheLoop(t *testing.T) {
 			"call wait_for_turn",
 			`Never ask the player to say "your turn" or "done"`,
 			`on a check-in ask only "Still playing?"`,
+			"the playmat applies shuffle-hand-and-draw cards (Judge, Iono and the like) to your side itself",
+			"wait_for_turn stops only when your seat has a decision (a promotion or a card it cannot apply)",
 		} {
 			if !strings.Contains(ins, want) {
 				t.Errorf("instructions lack %q", want)
@@ -383,11 +404,14 @@ func TestInstructionsTeachTheLoop(t *testing.T) {
 	})
 }
 
-// TestWaitForTurnRespondAndPromote: a card the player uses comes back as
-// respond with the card and a next line asking the assistant to judge its
-// text and wait again; a knock-out of the assistant's Active comes back as
-// promote, telling it to promote and wait again.
-func TestWaitForTurnRespondAndPromote(t *testing.T) {
+// TestWaitForTurnDecisions: a card the player uses that the playmat
+// cannot judge (unknown here: the test server has no card DB) comes back
+// as decide/answer_card, with the card marked to read; a knock-out of the
+// assistant's Active comes back as decide/promote listing its Bench. Each
+// names the decision and the assistant's seat, keeps waiting, and gives
+// numbered steps ending with the hand-back call for the right seat and
+// cursor; neither says the board is locked.
+func TestWaitForTurnDecisions(t *testing.T) {
 	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
 		m.Timing = game.Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute}
 		g := waitGameBench(t, cs, m, true)
@@ -398,27 +422,71 @@ func TestWaitForTurnRespondAndPromote(t *testing.T) {
 			t.Fatal(err)
 		}
 		w := mustWait(t, cs, nil)
-		if w.Outcome != "respond" || len(w.Cards) != 1 {
-			t.Fatalf("after a card: %+v", w)
+		if w.Outcome != "decide" || w.Action != "answer_card" || len(w.Cards) != 1 || !w.KeepWaiting {
+			t.Fatalf("after a card: %+v; want decide/answer_card with one card, keep waiting", w)
 		}
 		c := w.Cards[0]
-		if c.IID != string(card) || c.Kind != "trainer" || c.Card != st.Cards[card].Def || c.Name != st.Name(card) {
-			t.Errorf("reported card %+v, want %s (%s)", c, card, st.Cards[card].Def)
+		if c.IID != string(card) || c.Kind != "trainer" || c.Card != st.Cards[card].Def || c.Name != st.Name(card) || c.Need != "read" {
+			t.Errorf("reported card %+v, want %s (%s) with need read", c, card, st.Cards[card].Def)
 		}
-		want := fmt.Sprintf("The player used the cards below. Read each card's text: if it asks your side (p2) to do something, do it now with your seat's verbs (pass seat p2 in review mode), then call wait_for_turn with since %d. If nothing, call it again straight away.", w.Since)
-		if w.Next != want {
-			t.Errorf("respond next: %q", w.Next)
+		if want := fmt.Sprintf("The player used %s, which involves your side (p2): answer it.", st.Name(card)); w.Decision != want {
+			t.Errorf("answer_card decision %q, want %q", w.Decision, want)
 		}
+		for _, want := range []string{"Decision needed for your seat p2", "1. For each card: if need is choose",
+			"if need is read, read its text and do exactly what it asks your side to do", "passing seat p2",
+			"2. Do nothing else", fmt.Sprintf("3. Hand the turn back: call wait_for_turn with seat p1 and since %d, in this same reply, and keep calling it until the turn ends", w.Since),
+			"The player keeps playing meanwhile"} {
+			if !strings.Contains(w.Next, want) {
+				t.Errorf("answer_card next lacks %q: %s", want, w.Next)
+			}
+		}
+		noOldWording(t, "answer_card", w.Next)
 
 		if _, err := g.KnockOut(state.P1, state.ActorHuman, state.Loc{Seat: state.P2, Zone: state.Active}); err != nil {
 			t.Fatal(err)
 		}
 		w = mustWait(t, cs, map[string]any{"since": w.Since})
-		want = fmt.Sprintf("Your Active Pokémon was Knocked Out: promote with switch (to_slot) if you have a Benched Pokémon, then call wait_for_turn with since %d.", w.Since)
-		if w.Outcome != "promote" || w.Next != want || len(w.Cards) != 0 {
-			t.Fatalf("after the knock-out: %+v", w)
+		if w.Outcome != "decide" || w.Action != "promote" || len(w.Cards) != 0 || !w.KeepWaiting {
+			t.Fatalf("after the knock-out: %+v; want decide/promote, keep waiting", w)
 		}
+		if len(w.Choices) != 1 || w.Choices[0].Slot != 0 || w.Choices[0].IID != "p2-2" || w.Choices[0].Name != st.Name("p2-2") {
+			t.Errorf("promote choices %+v, want slot 0 p2-2 %s", w.Choices, st.Name("p2-2"))
+		}
+		if want := "Your Active Pokémon (p2) was Knocked Out: choose a Benched Pokémon to promote."; w.Decision != want {
+			t.Errorf("promote decision %q, want %q", w.Decision, want)
+		}
+		for _, want := range []string{"Decision needed for your seat p2", "1. Promote: call switch with seat p2 and to_slot set to one of the choices (slots 0)",
+			"2. Do nothing else: do not take prizes, end the turn",
+			fmt.Sprintf("3. Hand the turn back: call wait_for_turn with seat p1 and since %d, in this same reply, and keep calling it until the turn ends", w.Since),
+			"The player keeps playing meanwhile"} {
+			if !strings.Contains(w.Next, want) {
+				t.Errorf("promote next lacks %q: %s", want, w.Next)
+			}
+		}
+		noOldWording(t, "promote", w.Next)
+
+		// Promoting and waiting again hands the turn back: the next wait
+		// continues the same turn.
+		if out, isErr := call(t, cs, "switch", map[string]any{"seat": "p2", "to_slot": 0}); isErr {
+			t.Fatalf("promote: %s", out)
+		}
+		m.Timing = game.Timing{WaitCap: 50 * time.Millisecond, CheckIn: time.Minute}
+		if w = mustWait(t, cs, map[string]any{"seat": "p1", "since": w.Since}); w.Outcome != "still_waiting" || w.Action != "" {
+			t.Errorf("after promoting: outcome %q action %q, want still_waiting and none", w.Outcome, w.Action)
+		}
+		noOldWording(t, "still_waiting", w.Next)
 	})
+}
+
+// noOldWording fails if a wait next text says the board is locked for the
+// player or that every card must be checked.
+func noOldWording(t *testing.T, what, next string) {
+	t.Helper()
+	for _, bad := range []string{"locked", "unlocks", "every card", "Check needed"} {
+		if strings.Contains(next, bad) {
+			t.Errorf("%s next says %q: %s", what, bad, next)
+		}
+	}
 }
 
 // TestWaitForTurnGameOver: a knock-out that leaves the assistant no
@@ -478,6 +546,225 @@ func TestRewindNamesTheHandOff(t *testing.T) {
 		}
 		if !strings.Contains(out, "call wait_for_turn with seat p1 in this same reply") {
 			t.Errorf("review checkout result lacks the hand-off: %s", out)
+		}
+	})
+}
+
+// TestStillWaitingNeverRepeats: consecutive still_waiting results say the
+// player is still playing and differ from each other (a rising wait count
+// and the time waited), since some assistants stop after two identical
+// results; they keep keep_waiting set, and a turn_ended result clears it.
+func TestStillWaitingNeverRepeats(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
+		m.Timing = game.Timing{WaitCap: 50 * time.Millisecond, CheckIn: time.Minute}
+		g := waitGame(t, cs, m)
+		if _, err := g.EndTurn(state.P1, state.ActorHuman); err != nil {
+			t.Fatal(err)
+		}
+		if out, isErr := call(t, cs, "end_turn", nil); isErr {
+			t.Fatal(out)
+		}
+		first := mustWait(t, cs, nil)
+		second := mustWait(t, cs, map[string]any{"since": first.Since})
+		for i, w := range []waitOut{first, second} {
+			if w.Outcome != "still_waiting" || !w.KeepWaiting {
+				t.Fatalf("wait %d: outcome %q keep_waiting %v, want still_waiting and true", i+1, w.Outcome, w.KeepWaiting)
+			}
+			if w.Wait != i+1 {
+				t.Errorf("wait %d reports wait %d", i+1, w.Wait)
+			}
+			for _, want := range []string{"The player is still taking their turn", "This is not the end of the wait", fmt.Sprintf("since %d", w.Since)} {
+				if !strings.Contains(w.Next, want) {
+					t.Errorf("wait %d next lacks %q: %s", i+1, want, w.Next)
+				}
+			}
+		}
+		if first.Next == second.Next {
+			t.Errorf("two still_waiting results are identical: %s", first.Next)
+		}
+		if _, err := g.EndTurn(state.P1, state.ActorHuman); err != nil {
+			t.Fatal(err)
+		}
+		if w := mustWait(t, cs, map[string]any{"since": second.Since}); w.Outcome != "turn_ended" || w.KeepWaiting {
+			t.Errorf("after the turn: outcome %q keep_waiting %v, want turn_ended and false", w.Outcome, w.KeepWaiting)
+		}
+	})
+}
+
+// TestWaitForTurnReportsAppliedJudge: the player's Judge, played through
+// the game as the human, applies itself to the assistant's side; the next
+// wait result lists it in applied without stopping (still_waiting, keep
+// waiting), its log names Judge, and the turn-ended result lists it again
+// and says so in next.
+func TestWaitForTurnReportsAppliedJudge(t *testing.T) {
+	for _, tr := range transports {
+		t.Run(tr.name, func(t *testing.T) {
+			cs, _, g := cardGame(t, tr)
+			judge := cardToHand(t, g, "tst-9")
+			hand := len(g.State().Sides[state.P2].Hand)
+			if _, err := g.PlayTrainer(state.P1, state.ActorHuman, judge); err != nil {
+				t.Fatal(err)
+			}
+			if n := len(g.State().Sides[state.P2].Hand); n != 4 {
+				t.Fatalf("p2 holds %d cards after the player's Judge, want 4", n)
+			}
+
+			w := mustWait(t, cs, nil)
+			if w.Outcome != "still_waiting" || !w.KeepWaiting || len(w.Cards) != 0 {
+				t.Fatalf("after Judge: %+v; want still_waiting, keep waiting, no card to answer", w)
+			}
+			want := fmt.Sprintf("p2's hand of %d cards was shuffled into p2's deck; p2 drew 4 cards", hand)
+			if len(w.Applied) != 1 || w.Applied[0].IID != string(judge) || w.Applied[0].Name != "Judge" || w.Applied[0].Card != "tst-9" || w.Applied[0].What != want {
+				t.Fatalf("applied %+v, want Judge %s: %q", w.Applied, judge, want)
+			}
+			if !strings.Contains(w.Next, "keep calling it until the turn ends. Post nothing in chat. The playmat applied its side of Judge to your side (see applied).") {
+				t.Errorf("still_waiting next does not mention the applied Judge and keep waiting: %s", w.Next)
+			}
+			if !strings.Contains(w.Log, "Judge") {
+				t.Errorf("wait log does not name Judge:\n%s", w.Log)
+			}
+			if w = mustWait(t, cs, map[string]any{"since": w.Since}); len(w.Applied) != 0 {
+				t.Errorf("Judge reported again: %+v", w.Applied)
+			}
+
+			if _, err := g.EndTurn(state.P1, state.ActorHuman); err != nil {
+				t.Fatal(err)
+			}
+			w = mustWait(t, cs, map[string]any{"since": w.Since})
+			if w.Outcome != "turn_ended" || len(w.Applied) != 1 || w.Applied[0].Name != "Judge" {
+				t.Fatalf("turn ended: %+v; want turn_ended listing Judge", w)
+			}
+			if !strings.Contains(w.Next, "The playmat applied its side of: Judge; see applied.") {
+				t.Errorf("turn-ended next does not mention the applied Judge: %s", w.Next)
+			}
+		})
+	}
+}
+
+// Card texts for the card-DB games: Judge (sv01-176) and Eri (sv05-210).
+const (
+	judgeText = "Each player shuffles their hand into their deck and draws 4 cards."
+	eriText   = "Your opponent reveals their hand, and you discard up to 2 Item cards you find there."
+)
+
+// cardGame connects a client through tr to a server whose manager reads
+// the test card pool, with Judge as tst-9 and Eri as tst-10 in both decks,
+// and starts a play-mode game with p1 (the player) to move.
+func cardGame(t *testing.T, tr transport) (*mcp.ClientSession, *game.Manager, *game.Game) {
+	t.Helper()
+	db := cardstest.New()
+	db["tst-9"] = &cards.Card{ID: "tst-9", Name: "Judge", Category: "Trainer", TrainerType: "Supporter", Effect: judgeText}
+	db["tst-10"] = &cards.Card{ID: "tst-10", Name: "Eri", Category: "Trainer", TrainerType: "Supporter", Effect: eriText}
+	m := game.NewManager(t.TempDir(), db)
+	s := &Server{Version: "test", M: m}
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "test-client"}, nil).Connect(context.Background(), tr.dial(t, s.MCP()), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { cs.Close() })
+	m.Timing = game.Timing{WaitCap: 100 * time.Millisecond, CheckIn: time.Minute}
+
+	const deck = "Pokémon: 8\n4 Riolu TST 1\n4 Lucario TST 2\nTrainer: 12\n4 Ultra Ball TST 3\n4 Judge TST 9\n4 Eri TST 10\nEnergy: 40\n40 Basic {F} Energy SVE 6"
+	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "wait-cards", DeckP1: deck, DeckP2: deck}); err != nil {
+		t.Fatal(err)
+	}
+	g, err := m.Current()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, seat := range state.Seats {
+		iid := state.IID(string(seat) + "-1")
+		if l, _ := g.State().Find(iid); l.Zone != state.Hand {
+			g.Move(seat, state.ActorSystem, iid, state.Loc{Zone: state.Hand}, "", "")
+		}
+		if _, err := g.PlaceActive(seat, state.ActorSystem, iid); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := g.StartGame(state.P1, state.ActorHuman); err != nil {
+		t.Fatal(err)
+	}
+	return cs, m, g
+}
+
+// cardToHand puts one of p1's cards with def into p1's hand and returns it.
+func cardToHand(t *testing.T, g *game.Game, def string) state.IID {
+	t.Helper()
+	st := g.State()
+	for _, iid := range append(append([]state.IID{}, st.Sides[state.P1].Hand...), st.Sides[state.P1].Deck...) {
+		if st.Cards[iid].Def != def {
+			continue
+		}
+		if l, _ := st.Find(iid); l.Zone != state.Hand {
+			if _, err := g.Move(state.P1, state.ActorSystem, iid, state.Loc{Zone: state.Hand}, "", ""); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return iid
+	}
+	t.Fatalf("p1 has no %s outside its prizes", def)
+	return ""
+}
+
+// TestDecisionCarriesApplied: a decision result also carries the applied
+// effects not yet reported and still says to keep waiting: after the
+// player's Judge (applied) and Eri (needs reading), the wait asks for Eri,
+// lists Judge in applied, and its next says not to redo Judge's part.
+func TestDecisionCarriesApplied(t *testing.T) {
+	for _, tr := range transports {
+		t.Run(tr.name, func(t *testing.T) {
+			cs, _, g := cardGame(t, tr)
+			judge, eri := cardToHand(t, g, "tst-9"), cardToHand(t, g, "tst-10")
+			for _, iid := range []state.IID{judge, eri} {
+				if _, err := g.PlayTrainer(state.P1, state.ActorHuman, iid); err != nil {
+					t.Fatal(err)
+				}
+			}
+			w := mustWait(t, cs, nil)
+			if w.Outcome != "decide" || w.Action != "answer_card" || !w.KeepWaiting {
+				t.Fatalf("after Judge and Eri: %+v; want decide/answer_card, keep waiting", w)
+			}
+			if len(w.Cards) != 1 || w.Cards[0].IID != string(eri) || w.Cards[0].Name != "Eri" || w.Cards[0].Need != "read" || w.Cards[0].Text != eriText {
+				t.Errorf("cards %+v, want Eri %s with need read", w.Cards, eri)
+			}
+			if len(w.Applied) != 1 || w.Applied[0].IID != string(judge) || w.Applied[0].Name != "Judge" {
+				t.Errorf("applied %+v, want Judge %s", w.Applied, judge)
+			}
+			if !strings.Contains(w.Next, "already applied its side of Judge") {
+				t.Errorf("decide next does not mention the applied Judge: %s", w.Next)
+			}
+		})
+	}
+}
+
+// TestWaitToolDescribesDecisions: wait_for_turn's description says that
+// shuffle-and-draw cards happen on the assistant's side by themselves and
+// that outcome decide asks its seat to act, and keeps the loop lines.
+func TestWaitToolDescribesDecisions(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
+		res, err := cs.ListTools(context.Background(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		i := slices.IndexFunc(res.Tools, func(tl *mcp.Tool) bool { return tl.Name == "wait_for_turn" })
+		if i < 0 {
+			t.Fatal("no wait_for_turn tool")
+		}
+		desc := res.Tools[i].Description
+		for _, want := range []string{
+			"call this in the same reply and act on the result",
+			"outcome still_waiting means the player is still playing, so call it again",
+			"Cards like Judge or Iono happen on your side by themselves and are listed in applied",
+			"outcome decide means your seat must act now (promote or answer a card), then call this again",
+		} {
+			if !strings.Contains(desc, want) {
+				t.Errorf("wait_for_turn description lacks %q: %s", want, desc)
+			}
+		}
+		for _, bad := range []string{"every card", "locked"} {
+			if strings.Contains(desc, bad) {
+				t.Errorf("wait_for_turn description says %q: %s", bad, desc)
+			}
 		}
 	})
 }

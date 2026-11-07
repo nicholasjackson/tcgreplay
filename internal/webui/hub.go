@@ -145,9 +145,14 @@ func (h *hub) stateMessage(reveal bool, frames []int) ([]byte, bool) {
 		"assistant": h.s.M.Assistant(),
 		"reveal":    reveal,
 	}
-	// opponent is what the assistant is doing: waiting, acting or stopped.
+	// opponent is what the assistant is doing: waiting, acting, deciding
+	// or stopped; decision names the decision while it decides, or the
+	// one it left unanswered when the hold lapsed.
 	if o := h.s.M.Opponent(); o != "" {
 		msg["opponent"] = o
+	}
+	if d := h.s.M.Decision(); d != "" {
+		msg["decision"] = d
 	}
 	g, err := h.s.M.Current()
 	if err != nil {

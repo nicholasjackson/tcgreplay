@@ -319,7 +319,7 @@ func (g *Game) prizesOwedLocked() []prizeDebt {
 			taken[mv.From.Seat]++
 			continue
 		}
-		if a := g.log.Action(e.Action); a != nil && a.Kind == "knockout" && mv.From.Zone.IsStack() {
+		if g.isKnockoutMove(e, mv) {
 			if v := prizeValue(g.st.Cards[mv.IID].Name); v > ko[e.Action] {
 				ko[e.Action] = v
 			}
@@ -449,7 +449,10 @@ func (g *Game) PlayTrainer(seat state.Seat, actor state.Actor, iid state.IID) (*
 			}
 			return t.move(iid, state.Loc{Zone: state.Stadium}, "", "")
 		}
-		return t.move(iid, loc(seat, state.Discard), "", "")
+		if err := t.move(iid, loc(seat, state.Discard), "", ""); err != nil {
+			return err
+		}
+		return t.opponentPart(t.st.Name(iid))
 	})
 }
 
@@ -466,7 +469,8 @@ func (g *Game) UseAbility(seat state.Seat, actor state.Actor, slot state.Loc, na
 		return nil, fmt.Errorf("no Pokémon in %s", slot)
 	}
 	top := st.Top()
-	return g.run(seat, actor, actionSpec{label: fmt.Sprintf("%s: %s", g.nameOf(top), name), kind: "ability", source: top, opener: true}, func(t *tx) error {
+	label := fmt.Sprintf("%s: %s", g.nameOf(top), name)
+	return g.run(seat, actor, actionSpec{label: label, kind: "ability", source: top, opener: true}, func(t *tx) error {
 		if slot.Seat != seat {
 			t.warn = append(t.warn, "using an Ability of the opponent's Pokémon")
 		}
@@ -478,7 +482,10 @@ func (g *Game) UseAbility(seat state.Seat, actor state.Actor, slot state.Loc, na
 				t.effect = &c.Abilities[i].Effect
 			}
 		}
-		return t.emit(seat, state.EvDeclare, state.DeclarePayload{Kind: "ability", Name: name, At: slot})
+		if err := t.emit(seat, state.EvDeclare, state.DeclarePayload{Kind: "ability", Name: name, At: slot}); err != nil {
+			return err
+		}
+		return t.opponentPart(label)
 	})
 }
 
@@ -574,10 +581,12 @@ func (g *Game) Attack(seat state.Seat, actor state.Actor, name string, target st
 		if err := t.emit(seat, state.EvDeclare, state.DeclarePayload{Kind: "attack", Name: name, At: loc(seat, state.Active)}); err != nil {
 			return err
 		}
-		if damage == 0 {
-			return nil
+		if damage > 0 {
+			if err := t.addDamage(target, damage); err != nil {
+				return err
+			}
 		}
-		return t.addDamage(target, damage)
+		return t.opponentPart(label)
 	})
 }
 

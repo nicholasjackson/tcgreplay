@@ -224,6 +224,8 @@ func TestGetUnknownListsTheGuides(t *testing.T) {
 // One rule or step per guide that moving it from a skill must not drop.
 func TestGuidesKeepTheirRules(t *testing.T) {
 	anchors := map[string][]string{
+		"play-game": {"A `decide` outcome means your seat must act now",
+			"The playmat carries out your side of shuffle-hand-and-draw cards the player uses"},
 		"import-game": {"Read the log first", "Triage", "Analyse this game turn by turn",
 			"Practise a critical decision", "wait for the player to pick"},
 		"opponent-deck": {"Name the archetype"},
@@ -233,11 +235,15 @@ func TestGuidesKeepTheirRules(t *testing.T) {
 			"in that same reply, call `wait_for_turn` with their seat straight away",
 			"until it reports the turn ended, then read their moves from the result",
 			"Never ask them to say they are done or to end their turn.",
+			"acting on any `decide` outcome",
+			"lists them in `applied`: do not do them again",
 			"after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended"},
 		"replay-drill": {"Set it up without the answer",
 			"Then, in the same reply, call `wait_for_turn` with their seat straight away. Do not end your reply to wait for an answer first.",
 			"keep calling `wait_for_turn` until it reports the turn ended; then go straight to Compare",
-			"A move on the board that does not end the turn is not a cue to post: keep waiting. Never ask them to say they are done or to end their turn."},
+			"A move on the board that does not end the turn is not a cue to post: keep waiting. Never ask them to say they are done or to end their turn.",
+			"acting on any `decide` outcome",
+			"lists them in `applied`: do not do them again"},
 		"before-you-move": {"The three questions"},
 		"numbers-drill":   {"Damage order"},
 	}
@@ -272,6 +278,19 @@ func TestRepoHoldsNoCoachingSkills(t *testing.T) {
 		p := filepath.Join(root, link, "skills", "spek-implement", "SKILL.md")
 		if _, err := os.Stat(p); err != nil {
 			t.Errorf("%s: %v", p, err)
+		}
+	}
+}
+
+// TestNoGuideSaysAnswerEveryCard: no guide tells the assistant that the
+// wait stops for every card or to answer each card: the playmat applies
+// shuffle-and-draw cards itself, and the wait stops only for decisions.
+func TestNoGuideSaysAnswerEveryCard(t *testing.T) {
+	for _, g := range List() {
+		for _, bad := range []string{"answering any card", "`respond` or `promote`", "respond` outcome", "check every card", "stops for every card"} {
+			if strings.Contains(g.Text, bad) {
+				t.Errorf("guide %s says %q", g.Name, bad)
+			}
 		}
 	}
 }

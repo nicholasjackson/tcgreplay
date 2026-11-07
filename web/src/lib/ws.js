@@ -48,7 +48,17 @@ function onState(msg) {
   app.assistant = msg.assistant || 'Assistant';
   app.reveal = !!msg.reveal;
   app.notice = msg.notice || '';
+  const was = app.opponent;
   app.opponent = msg.opponent || '';
+  app.decision = msg.decision || '';
+  // A decision the assistant left unanswered lifts its hold: say once that
+  // the human may carry on and make its move for it.
+  if (was === 'deciding' && app.opponent === 'stopped') {
+    toast(
+      "Your opponent hasn't answered. Carry on, and make their move yourself if you need to (for example, promote one of their Benched Pokémon).",
+      'info',
+    );
+  }
   if (msg.error) toast(msg.error, 'error');
   showSnapshot(msg.snapshot);
 }
