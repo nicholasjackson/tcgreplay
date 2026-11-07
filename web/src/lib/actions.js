@@ -273,6 +273,10 @@ export function stackMenu(seat, slot, stack) {
     const i = Number(slot.split(':')[1]);
     const empty = !app.board.sides[seat].active;
     move.push({ label: empty ? 'Promote to Active' : 'Switch into Active', run: () => act('switch', { to_slot: i, ...sa }) });
+  } else if (!mine && slot.startsWith('bench') && top && !app.board.sides[seat].active) {
+    // The opponent's Active Spot is empty: the human may promote for it
+    // (the server holds this while the opponent is still deciding).
+    move.push({ label: 'Promote to Active', run: () => act('move', { iid: top.iid, to: `${seat}:active` }) });
   }
   const damage = stack.damage || 0;
   const conds = stack.conditions || [];

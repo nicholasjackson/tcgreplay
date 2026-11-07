@@ -716,6 +716,7 @@ func (g *Game) checkoutLocked(name, change string) error {
 	}
 	g.open = nil
 	g.responder = ""
+	g.handed = ""
 	u := Update{Head: g.log.Head(), Branch: name, Change: change}
 	for _, f := range g.listeners {
 		f(u)

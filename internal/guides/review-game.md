@@ -73,7 +73,7 @@ Add that the player can pick any other turn, or stop here, and ask which they wo
 
 1. `rewind` to the start of the turn (after the turn's draw) on a `review-t<N>-<seat>` branch (`<seat>` is `p1` or `p2`, the player whose turn it is).
 2. Set the scene in a few lines: both boards, the player's hand, prizes, what the opponent threatens next turn. Do not repeat your verdict yet.
-3. Ask: "It's turn N, your turn. What's your play? Play it on the board, or tell me." Then, in that same reply, call `wait_for_turn` with their seat straight away. Keep calling it, answering any card that asks your side to act, until it reports the turn ended, then read their moves from the result. A move that does not end the turn is not a cue to post. Never ask them to say they are done or to end their turn. If they answer in chat instead, take their play from there.
+3. Ask: "It's turn N, your turn. What's your play? Play it on the board, or tell me." Then, in that same reply, call `wait_for_turn` with their seat straight away. Keep calling it, acting on any `decide` outcome (a promotion or a card the playmat could not apply) and handing the turn back in the same reply, until it reports the turn ended, then read their moves from the result. The playmat carries out your side of shuffle-hand-and-draw cards the player uses (Judge, Iono and the like) by itself and lists them in `applied`: do not do them again. A move that does not end the turn is not a cue to post. Never ask them to say they are done or to end their turn. If they answer in chat instead, take their play from there.
 4. Compare their play with the line from your analysis. If theirs is as good or better, say so: a practice that finds the player was right is still a good practice.
 
 ### Test the alternative

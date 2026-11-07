@@ -74,6 +74,7 @@
   const oppStatus = {
     waiting: 'Opponent is waiting',
     acting: 'Opponent is acting',
+    deciding: 'Opponent is deciding',
     stopped: 'Opponent stopped responding',
   };
 
@@ -408,6 +409,7 @@
   .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
   .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: 999px; border: 1px solid var(--line); color: var(--text); }
   .opp-status.acting { border-color: var(--accent); color: var(--accent); }
+  .opp-status.deciding { border-color: var(--accent); color: var(--accent); border-style: dashed; }
   .opp-status.stopped { border-color: var(--reveal); color: var(--reveal); }
   .landing { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .muted { color: var(--muted); }

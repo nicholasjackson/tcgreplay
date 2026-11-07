@@ -85,6 +85,12 @@ type Game struct {
 	// turn wait opens and closes it; ending the turn, a mode switch and a
 	// branch move close it too.
 	responder state.Seat
+	// handed, when set, is the seat a turn wait has handed to the player.
+	// In review mode the playmat applies the shuffle-hand-and-draw family
+	// to the other seat only for the handed seat's cards (play mode always
+	// applies it). The presence sets and clears it with the wait session; a
+	// mode switch and a branch move clear it too.
+	handed state.Seat
 	// warming holds the card defs being fetched in the background because
 	// card found them uncached; it keeps one fetch per def at a time.
 	warming sync.Map
@@ -171,6 +177,7 @@ func (g *Game) SetMode(m Mode) error {
 	}
 	g.mode = m
 	g.responder = ""
+	g.handed = ""
 	u := Update{Head: g.log.Head(), Branch: g.log.Current(), Change: ChangeMode}
 	for _, f := range g.listeners {
 		f(u)
@@ -479,6 +486,14 @@ func (g *Game) setResponder(seat state.Seat) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	g.responder = seat
+}
+
+// setHanded records the seat a turn wait has handed to the player, or
+// clears it ("").
+func (g *Game) setHanded(seat state.Seat) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.handed = seat
 }
 
 // card returns a card's definition if it is cached, else nil. It is

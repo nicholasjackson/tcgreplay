@@ -15,8 +15,13 @@ export const app = $state({
   // Why there is no game, when the server says (an expired game); '' otherwise.
   notice: '',
   // What the assistant is doing: 'waiting' for the human's turn, 'acting'
-  // (the board is locked), 'stopped' responding, or ''.
+  // (its own turn: the board is locked), 'deciding' (it answers a decision;
+  // the human keeps playing what does not depend on it), 'stopped'
+  // responding, or ''.
   opponent: '',
+  // The decision it is making ('promote' or 'answer_card') while deciding,
+  // or the one it left unanswered when it stopped; '' otherwise.
+  decision: '',
   // Latest snapshot from the server (game, branch, mode, board, log, ...).
   snap: null,
   // Board being displayed; differs from snap.board while animating frames.

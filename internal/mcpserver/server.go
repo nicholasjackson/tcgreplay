@@ -73,7 +73,8 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 - Every write returns the events and a delta, so you rarely need to re-read the board. Warnings are advisory, never blocking.
 - Turns count both players: turn N is the first player's Nth turn and the second player's Nth turn. Logs show "T<N> <seat>"; always name the seat with a turn.
 - Quote card text from card_text, not memory.
-- After handing the player a turn (your end_turn in play mode, or a drill or line for them to play in review mode), call wait_for_turn and do what its result's next says, calling it again until the turn ends. Never ask the player to say "your turn" or "done"; on a check-in ask only "Still playing?".`
+- After handing the player a turn (your end_turn in play mode, or a drill or line for them to play in review mode), call wait_for_turn and do what its result's next says, calling it again until the turn ends. Never ask the player to say "your turn" or "done"; on a check-in ask only "Still playing?".
+- During the player's turn the playmat applies shuffle-hand-and-draw cards (Judge, Iono and the like) to your side itself; wait_for_turn stops only when your seat has a decision (a promotion or a card it cannot apply), and its next says what to do.`
 
 // boardInstruction is added to the instructions when results carry a board link.
 const boardInstruction = "\n- Results of import_log, new_game and set_opponent_deck carry a board link: give it to the player so they can watch and act on the live board."
@@ -744,7 +745,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return "no open action", nil
 	})
-	addQuiet(s, srv, "wait_for_turn", "After you hand the player a turn (end_turn in play mode; a drill, a practice turn or a line for them to play in review mode), call this in the same reply and act on the result. Never end your reply to wait for the player: until you call this, nothing sees their moves. Each call returns within about 30 seconds.", s.waitForTurn)
+	addQuiet(s, srv, "wait_for_turn", "After you hand the player a turn (end_turn in play mode; a drill, a practice turn or a line for them to play in review mode), call this in the same reply and act on the result. Never end your reply to wait for the player: until you call this, nothing sees their moves. Each call returns within about 15 seconds; outcome still_waiting means the player is still playing, so call it again. Cards like Judge or Iono happen on your side by themselves and are listed in applied; outcome decide means your seat must act now (promote or answer a card), then call this again.", s.waitForTurn)
 
 	// Deck and randomness.
 	add(s, srv, "search_deck", "List a deck's cards sorted by category and name (never in true order). Then move or bench what you take, and shuffle.", func(ctx context.Context, in Search) (any, error) {

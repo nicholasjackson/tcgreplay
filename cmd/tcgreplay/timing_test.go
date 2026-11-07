@@ -130,7 +130,7 @@ func TestMainTimingSettings(t *testing.T) {
 		env  []string
 		want string
 	}{
-		{"default", nil, "turn waits up to 30s a call, check-in after 5m0s, lock release after 2m0s"},
+		{"default", nil, "turn waits up to 15s a call, check-in after 5m0s, lock release after 2m0s"},
 		{"env", []string{"TCGREPLAY_WAIT_CAP=20s", "TCGREPLAY_CHECK_IN=10m", "TCGREPLAY_LOCK_RELEASE=1m"},
 			"turn waits up to 20s a call, check-in after 10m0s, lock release after 1m0s"},
 		{"flag over env", []string{"TCGREPLAY_WAIT_CAP=20s", "TCGREPLAY_CHECK_IN=10m", "TCGREPLAY_LOCK_RELEASE=1m",

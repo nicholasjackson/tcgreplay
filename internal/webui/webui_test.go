@@ -19,6 +19,7 @@ import (
 
 	"github.com/coder/websocket"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
@@ -78,6 +79,9 @@ func dial(t *testing.T, ts *httptest.Server) *websocket.Conn {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { c.CloseNow() })
+	// State pushes can exceed the client's default 32 KiB read limit (the
+	// browser has none), which made board tests fail at random.
+	c.SetReadLimit(1 << 22)
 	return c
 }
 
@@ -891,4 +895,136 @@ func TestCardImageVersion(t *testing.T) {
 			}
 		}
 	})
+}
+
+// sendDelta sends a board request and returns its result's delta, failing
+// the test if the request is refused.
+func sendDelta(t *testing.T, c *websocket.Conn, id int, verb string, args map[string]any) []string {
+	t.Helper()
+	b, _ := json.Marshal(map[string]any{"id": id, "verb": verb, "args": args})
+	if err := c.Write(context.Background(), websocket.MessageText, b); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	for {
+		_, raw, err := c.Read(ctx)
+		if err != nil {
+			t.Fatalf("waiting for result %d: %v", id, err)
+		}
+		var r struct {
+			Type  string   `json:"type"`
+			ID    int      `json:"id"`
+			OK    bool     `json:"ok"`
+			Error string   `json:"error"`
+			Delta []string `json:"delta"`
+		}
+		json.Unmarshal(raw, &r)
+		if r.Type != "result" || r.ID != id {
+			continue
+		}
+		if !r.OK {
+			t.Fatalf("%s refused: %s", verb, r.Error)
+		}
+		return r.Delta
+	}
+}
+
+// TestBoardDeltaHidesOpponentCards: the board's result for a move that
+// makes the opponent draw (the player's Judge, applied to p2) shows p2's
+// drawn cards as hidden in play mode. With the reveal view on in review
+// mode it names every card, as the board itself does.
+func TestBoardDeltaHidesOpponentCards(t *testing.T) {
+	db := cardstest.New()
+	db["tst-9"] = &cards.Card{ID: "tst-9", Name: "Judge", Category: "Trainer", TrainerType: "Supporter", Effect: "Each player shuffles their hand into their deck and draws 4 cards."}
+	m := game.NewManager(t.TempDir(), db)
+	deck := strings.Replace(testDeck, "Trainer: 4\n4 Ultra Ball TST 3", "Trainer: 8\n4 Ultra Ball TST 3\n4 Judge TST 9", 1)
+	deck = strings.Replace(deck, "48 Basic {F} Energy SVE 6", "44 Basic {F} Energy SVE 6", 1)
+	deck = strings.Replace(deck, "Energy: 48", "Energy: 44", 1)
+	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-delta", DeckP1: deck, DeckP2: deck}); err != nil {
+		t.Fatal(err)
+	}
+	s := New(m, state.P1)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	s.StartHub(ctx)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+
+	g, _ := m.Current()
+	startPlay(t, g)
+	var judge state.IID
+	st := g.State()
+	for _, iid := range append(append([]state.IID{}, st.Sides[state.P1].Hand...), st.Sides[state.P1].Deck...) {
+		if st.Cards[iid].Def == "tst-9" {
+			judge = iid
+			break
+		}
+	}
+	if judge == "" {
+		t.Fatal("p1 has no Judge outside its prizes")
+	}
+	if l, _ := st.Find(judge); l.Zone != state.Hand {
+		if _, err := g.Move(state.P1, state.ActorSystem, judge, state.Loc{Zone: state.Hand}, "", ""); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	c := dial(t, ts)
+	var sm stateMsg
+	next(t, c, "state", &sm)
+
+	// Play mode: p2's new hand is drawn by the applied Judge.
+	delta := sendDelta(t, c, 1, "play_trainer", map[string]any{"iid": string(judge)})
+	after := g.State()
+	drawn := after.Sides[state.P2].Hand
+	if len(drawn) != 4 {
+		t.Fatalf("p2 holds %d cards after the player's Judge, want 4", len(drawn))
+	}
+	hidden := 0
+	for _, iid := range drawn {
+		for _, line := range delta {
+			if !strings.Contains(line, string(iid)+" ") {
+				continue
+			}
+			if strings.Contains(line, string(iid)+" "+after.Name(iid)) {
+				t.Errorf("play-mode delta names p2's drawn card: %q", line)
+			}
+			if strings.Contains(line, string(iid)+" (hidden)") {
+				hidden++
+			}
+		}
+	}
+	if hidden < len(drawn) {
+		t.Errorf("play-mode delta hides %d mentions of p2's %d drawn cards, want each hidden; delta %q", hidden, len(drawn), delta)
+	}
+
+	// Review mode with the reveal view on: a p2 draw is named.
+	sendDelta(t, c, 2, "set_mode", map[string]any{"mode": "review"})
+	sendDelta(t, c, 3, "set_reveal", map[string]any{"reveal": true})
+	delta = sendDelta(t, c, 4, "draw", map[string]any{"seat": "p2"})
+	after = g.State()
+	top := after.Sides[state.P2].Hand[len(after.Sides[state.P2].Hand)-1]
+	want := string(top) + " " + after.Name(top)
+	if !slicesContainsSub(delta, want) {
+		t.Errorf("reveal-view delta %q does not name the drawn card %q", delta, want)
+	}
+
+	// Review mode with the reveal view off: hidden again.
+	sendDelta(t, c, 5, "set_reveal", map[string]any{"reveal": false})
+	delta = sendDelta(t, c, 6, "draw", map[string]any{"seat": "p2"})
+	after = g.State()
+	top = after.Sides[state.P2].Hand[len(after.Sides[state.P2].Hand)-1]
+	if !slicesContainsSub(delta, string(top)+" (hidden)") || slicesContainsSub(delta, string(top)+" "+after.Name(top)) {
+		t.Errorf("review delta without reveal %q should hide %s", delta, top)
+	}
+}
+
+func slicesContainsSub(lines []string, sub string) bool {
+	for _, l := range lines {
+		if strings.Contains(l, sub) {
+			return true
+		}
+	}
+	return false
 }

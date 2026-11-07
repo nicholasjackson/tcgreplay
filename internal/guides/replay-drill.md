@@ -20,7 +20,8 @@ Past mistakes make the best puzzles: the position is real, the player has been t
 - Do not quote the finding, its principle, or the original play.
 - Describe the position the way the player would have seen it: both boards, their hand, prizes each side, the opponent's visible threats. Use view `coach`, never `reveal`: the player must not see hidden cards.
 - Ask: "It's your turn. What's your play? Play it on the board, or tell me." Then, in the same reply, call `wait_for_turn` with their seat straight away. Do not end your reply to wait for an answer first.
-- Do what each result's `next` says, answering any card that asks your side to act, and keep calling `wait_for_turn` until it reports the turn ended; then go straight to Compare. A move on the board that does not end the turn is not a cue to post: keep waiting. Never ask them to say they are done or to end their turn.
+- Do what each result's `next` says, acting on any `decide` outcome (a promotion or a card the playmat could not apply) and handing the turn back in the same reply, and keep calling `wait_for_turn` until it reports the turn ended; then go straight to Compare. A move on the board that does not end the turn is not a cue to post: keep waiting. Never ask them to say they are done or to end their turn.
+- The playmat carries out your side of shuffle-hand-and-draw cards the player uses (Judge, Iono and the like) by itself and lists them in `applied`: do not do them again.
 - If they would rather answer in words, the wait's check-in ("Still playing?") hands the chat back to them; take their play from their reply and compare it the same way.
 
 ## 3. Compare
