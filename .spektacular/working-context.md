@@ -1,75 +1,24 @@
-# Working context: spec 20261106110254-f08e142d-project-website
+# Working context: real-game-opponent (plan workflow)
 
-## Run mode (user, 2026-11-06)
-The user is away ("I am going to go for coffee so feel free to run through this
-without me"). Drive the whole spec workflow without asking; settle open
-questions with sensible defaults, record each one here, and report them at the
-end. Do not plan or implement: the request was to "spec out" the site.
+Plan for spec `20261107074845-fc71eb04-real-game-opponent`. Single repo `tcgreplay` at /home/nicj/code/github.com/nicholasjackson/tcgreplay. No design references.
 
-## Why (user's words)
-- "the tool is amazing, I would love to share it."
-- "let's spec out a website and docs"
-- "I would like a simple site that shows how to use the tool. Maybe has an
-  animation on the home page"
+## From the spec workflow (still binding)
 
-## Context gathered this session
-- The hosted playmat is live at https://tcgreplay.demo.gs (MCP at /mcp, Google
-  sign-in, per-account games, idle drop after 1h, games lost on deploy). It runs
-  on DigitalOcean App Platform from .do/app.yaml (single instance), with a
-  Spaces bucket + CDN for card data/images.
-- Works with claude.ai custom connectors, Claude Code (HTTP MCP), Claude
-  desktop (local binary, board on 127.0.0.1:7777), and now ChatGPT (custom MCP
-  server; OAuth callback allowlist extended today). The user found ChatGPT
-  "works even better".
-- A README now exists (what it does, connecting, example prompts, dev), with a
-  logo at docs/logo.png (transparent, Poké Ball on cards) and docs/icon.png
-  (256px, <10 KB). Trademark note given: the Poké Ball is a Nintendo/TPC mark.
-- A real example game (GatoruSoju, Mew ex/Bronzong/Lopunny, a close loss) plus
-  the Mega Lucario ex v12 list in testdata worked well end to end in ChatGPT.
-  It contains a real opponent's screen name: anonymise before public use.
-- Repo is public on GitHub (nicholasjackson/tcgreplay).
-- Coaching guides: import-game, opponent-deck, review-game, replay-drill,
-  before-you-move, numbers-drill, play-game.
+- User's goal: "play like a real game where possible. I don't want to have to tell everything." Telling the opponent via a board step was rejected (bad UX). Streaming events, server push, deferring effects to end of turn, request ids: all rejected.
+- Applies in play mode and in review-mode practice; unrecognised opponent cards stop and ask; no off switch; saved records need not stay compatible.
+- Hold covers ending the turn and lifts after the board's release time; unmet card conditions still apply with a warning; Special Red Card (not Red Card) in the minimum set.
 
-## Decisions made without the user (report at the end)
-- Spec name `project-website`, standalone (not in an epic).
-- Hosting: static site, GitHub Pages by default, separate from the playmat
-  (playmat address must not change). Planner to check Google consent-screen
-  domain verification for github.io; propose an owned domain if needed.
-- Animation: lightweight, in the board's style, offline, looping, reduced-motion
-  still; no official card art or logos.
-- Docs in Markdown; README shrinks to intro + links (one source of truth).
-- No analytics/cookies.
-- Example game: GatoruSoju game + Mega Lucario ex v12, opponent anonymised.
-- Success metrics invented: <10 min to connect + import; <2 s / <1.5 MB home;
-  audit >= 90.
-- Non-goals drafted while the user was away; the user confirmed the whole
-  spec, non-goals and away-run decisions included, on 2026-11-06 ("I think
-  this is good"). Split into two specs not taken up; stays one spec.
-- Constraints: all four trace to the user (simple site), existing systems
-  (connector address), platform (Google consent screen), and accuracy.
-- Verification: fresh-eyes reviewer raised 23 findings; applied all but the
-  H1 title (template-mandated), "site source must live in repo" (not a user
-  rule; requirement reworded instead), and resolved the logo conflict by
-  banning official card art + Pokémon/TCG logos while keeping the project logo
-  until the user decides. Spec written to the store.
-- Split check (moderate): passes — 21 requirements (weak) and a group that
-  ships alone (the docs site with a still home image) vs the home animation
-  (depends on the site). Offer NOT acted on: the user is away and a split needs
-  their agreement. Offer it in the final report; a written spec can be split
-  any time.
+## Plan learnings and decisions so far
 
-
-## Plan workflow: 20261106110254-f08e142d-project-website (started 2026-11-06)
-
-User decisions during discovery (spec amended via the CLI to match):
-- Serve everything at tcgreplay.demo.gs: the site is embedded in and served by the hosted playmat. GitHub Pages is dropped.
-- Home at `/` always; board moves to `/board` (`/board?board=<handle>`); docs at `/docs/...`, privacy at `/privacy`. The user accepted that old board links in past chats break.
-- Accept that every push to main redeploys the playmat (drops games); no deploy change.
-Learnings:
-- Board JS uses absolute /ws, /api/card, /auth/session, /auth/login?next=; Vite assets at /assets/. Those paths stay at the root behind the session. Only the page moves to /board.
-- Hard-coded "/" board spots: usergames.go:338 link, hostauth/board.go:23 & :143, usergames/board.go:124, cacheadmin/page.go:47, hostauth/admin.go:47.
-- Privacy facts gathered (research.md). Limits come from .do/app.yaml (300/min, 10 users, 60m).
-- Out-of-scope wording bug noted for the user: oauth.go:201 refusal text mentions only Claude's callback.
-- Plan drafted through assemble and verification. 11 tasks in 3 milestones. The connecting pages moved into milestone 1 so "Get started" never dead-ends. One human task: the consent screen addresses.
-- 2026-11-06: user approved the website plan at the walkthrough ("looks good").
+- Uncommitted work on main (15 s wait cap, `action` field, numbered steps, `keep_waiting`, `wait`/`waited`) is the base this plan builds on.
+- Real TCGdex wording differs from the test fixtures: Special Red Card puts the hand on the bottom and draws 3 only "if they put any cards on the bottom"; its condition is the opponent having 3 or fewer Prize cards. Iono's draw has "If either player put any cards on the bottom…". The cardstest Iono (`tst-4`) is an older wording.
+- Applied effects: emitted inside the opener's own tx, stamped ActorSystem and the opponent's seat (one commit; undo by action covers them).
+- "Involves the opponent" = the opponent / each player is the subject of an action; possessive-only mentions (gusts, damage modifiers) don't stop.
+- Board result delta is unredacted (knowledge entry written: gotchas/board-delta-unredacted.md); must redact for hidden info AC.
+- Board can already promote the opponent's Pokémon via `move {iid, to:"p2:active"}`; needs a menu entry only. End turn with empty Active is already refused by the game.
+- Undo/rewind still end the wait (left unchanged; recorded assumption).
+- Judgement calls are logged in .spektacular/work/<plan>/assumptions.md.
+- Architecture chosen (Option A): effects.go reader (none/apply/choice/unknown); in-tx application on PlayTrainer/UseAbility/Attack for human vs assistant side (play mode always; review only while a wait has handed that seat over — presence sets a "handed" seat on Game); one `decide` outcome (action promote|answer_card) + `applied` list; presence hold full|decision; board refuses only dependent actions under a decision hold; board "Promote to Active" on opponent bench via `move`; site play-game doc gains a paragraph.
+- Drafting steps done through out_of_scope (10 tasks, 3 milestones). Task titles avoid apostrophes so context.md anchors resolve. One open question (system-actor draws vs draws-like-main pinning).
+- All three plan documents committed to the store (2026-11-07); working dir removed. Now in walkthrough: read docs back with `spektacular plan file read <name> <doc>`.
+- Walkthrough: user raised other-language cards. Answer: card data is always English (TCGdex /v2/en, cards identified by TCGdex id). Applied: empty Trainer text → "read" (never silent pass); out-of-scope entry for other-language text; open assumption. Knowledge entry learnings/card-text-always-english.md written. User signed off on the plan (2026-11-07).

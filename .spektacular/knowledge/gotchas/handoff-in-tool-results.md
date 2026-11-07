@@ -12,5 +12,7 @@ So the hand-off now lives where the decision happens:
 - `wait_for_turn`'s own tool description says to call it in the same reply and never end the reply to wait.
 - Each `wait_for_turn` result already carries a `next` line that says what to do.
 
+**Never return the same result twice in a row.** ChatGPT stopped waiting after two `still_waiting` results in a row, although each said "Call wait_for_turn again… Post nothing in chat." Those results were identical, with the same `since` and the same text, which plausibly looks like a stuck loop to an agent. Each `still_waiting` now carries a rising `wait` count and the time `waited`, and says "The player is still taking their turn… This is not the end of the wait, however many times you see it." Every result also has `keep_waiting`, which is false only after `turn_ended` or `ended`. The default wait per call dropped from 30 s to 15 s (`-wait-cap`, max 50 s for HTTP timeouts), which the user preferred: shorter calls, polled more often.
+
 When adding any new flow that hands the player a turn, put the instruction in that tool's result, not only in a guide.
 

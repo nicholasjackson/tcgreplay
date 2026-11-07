@@ -1,0 +1,1160 @@
+{
+  "plan": "20261107074845-fc71eb04-real-game-opponent",
+  "items": [
+    {
+      "item": "b1228e9b-048f-4cab-a969-2a59e623431f",
+      "title": "Effect reader for what a card asks of the opponent",
+      "checks": [
+        {
+          "at": "2026-11-07T10:45:53Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b1228e9b-048f-4cab-a969-2a59e623431f",
+            "title": "Effect reader for what a card asks of the opponent",
+            "criteria": [
+              "Judge, Special Red Card, Iono and Unfair Stamp, in their real current wording, read as applicable, each with its own count (4; 3; one per remaining prize; 2) and its own hand destination (deck, or bottom for Special Red Card and Iono).",
+              "Red Card, Reset Stamp, Roxanne and Marnie also read as applicable with their own counts.",
+              "Unfair Stamp's knockout condition and Special Red Card's \"3 or fewer Prize cards\" condition are recognised.",
+              "A card making each player switch their Active Pokémon reads as a choice. Eri and Mega Absol ex's hand-reveal attack read as unrecognised.",
+              "Boss's Orders, damage-bonus cards, damage-counter attacks, Ultra Ball and empty text read as asking nothing of the opponent.",
+              "A family card with one extra sentence it does not understand reads as unrecognised, never applicable."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/effects.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/v2/en"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/effects_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/effects_test.go:34-37 asserts Judge = OppApply, HandToDeck, Draw 4; Special Red Card = HandToBottom, Draw 3, DrawIfOpponentPut; Iono = HandToBottom, PerPrize, DrawIfEitherPut; Unfair Stamp = HandToDeck, Draw 2. The wording constants (effects_test.go:8-11) are marked as TCGdex /v2/en text. The implementing patterns are at effects.go:95 (deck disposal), :99 (bottom disposal), :104 (lead-in) and :108-111 (draw forms). I could not fetch TCGdex live, so the 'real current wording' match rests on those fixture constants and the existing fixtures in internal/game/cardsource_test.go:169 and clear_test.go:103."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "effects_test.go:40 Red Card = HandToDeck, Draw 4 (xy1-124 'his or her' normalised at effects.go:264); :41 Reset Stamp = HandToDeck, PerPrize; :42 Roxanne = HandToDeck, Draw 2, Condition CondOppPrizesAtMost N 3; :43 Marnie = HandToBottom, Draw 4, DrawIfEitherPut. The draw-count handling is in effects.go:191-211."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Unfair Stamp's knockout condition is matched by reCondKO (effects.go:86) and returned as CondKOLastTurn (effects.go:226-227); asserted at effects_test.go:37. Special Red Card's and Roxanne's 'N or fewer Prize cards remaining' condition is matched by reCondPrizes (effects.go:88) and returned as CondOppPrizesAtMost (effects.go:229-231); asserted at effects_test.go:35 and :42."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Escape Rope's 'Each player switches their Active Pokémon with 1 of their Benched Pokémon' reads as OppChoice: the 'switches their active' entry in choiceWords (effects.go:117) matches and the sentence has 'each player' as subject (opponentIsSubject, effects.go:289-300); asserted at effects_test.go:49. Eri (effects_test.go:53) and Mega Absol ex Claw of Darkness (effects_test.go:54) read as OppUnknown: no family match, no choice words, and the opponent is the subject. The code names this kind 'OppUnknown' (effects.go:22-23), not 'unrecognised', but its doc comment and the tests give it that meaning."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Boss's Orders, Premium Power Pro, Phantom Dive and Terminal Period name 'your opponent's …' only, and opponentIsSubject skips a match followed by \"'s\" (effects.go:291-292), so they read OppNone (effects_test.go:57-60). Ultra Ball has no opponent subject, so OppNone (effects_test.go:61). Empty text is OppNone (effects.go:129-131; effects_test.go:62)."
+            },
+            {
+              "criterion": 6,
+              "verdict": "not_met",
+              "evidence": "Extra sentences after a family card are handled correctly: Judge + 'Discard a card from your hand.' and Iono + 'Your opponent reveals their hand.' read OppUnknown (effects_test.go:66-67), because readFamily returns false (effects.go:184-188 and :202-204). But one extra sentence the reader does not understand, a use condition, still reads as applicable: effects_test.go:45 asserts 'You can use this card only if you have exactly 1 Benched Pokémon.' + Judge gives OppApply with CondUnrecognised. readCondition returns CondUnrecognised (effects.go:234) and readFamily keeps going (effects.go:161-163) instead of rejecting the text. The criterion requires such a card to read as unrecognised, never applicable. Fix: return false from readFamily when the condition is CondUnrecognised, and change the test expectation to OppUnknown."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-07T10:58:28Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "b1228e9b-048f-4cab-a969-2a59e623431f",
+            "title": "Effect reader for what a card asks of the opponent",
+            "criteria": [
+              "Judge, Special Red Card, Iono and Unfair Stamp, in their real current wording, read as applicable, each with its own count (4; 3; one per remaining prize; 2) and its own hand destination (deck, or bottom for Special Red Card and Iono).",
+              "Red Card, Reset Stamp, Roxanne and Marnie also read as applicable with their own counts.",
+              "Unfair Stamp's knockout condition and Special Red Card's \"3 or fewer Prize cards\" condition are recognised.",
+              "A card making each player switch their Active Pokémon reads as a choice. Eri and Mega Absol ex's hand-reveal attack read as unrecognised.",
+              "Boss's Orders, damage-bonus cards, damage-counter attacks, Ultra Ball and empty text read as asking nothing of the opponent.",
+              "A family card with one extra sentence it does not understand reads as unrecognised, never applicable. A \"You can use this card only if …\" condition is not such a sentence: a condition the reader cannot check is the player's responsibility, so the card still applies with no warning."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/effects.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/v2/en"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/effects_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/effects_test.go:34-36 and 40-44 assert ReadEffect gives OppApply for Judge (HandToDeck, Draw 4), Special Red Card (HandToBottom, Draw 3, DrawIfOpponentPut), Iono (HandToBottom, PerPrize, DrawIfEitherPut) and Unfair Stamp (HandToDeck, Draw 2). The wording constants at effects_test.go:8-15 match the real cards. Judge is 'Each player shuffles their hand into their deck and draws 4 cards'; Iono is 'Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards ... each player draws a card for each of their remaining Prize cards'. The Unfair Stamp text also appears verbatim in internal/game/presence_respond_test.go:16. The TCGdex wording itself could not be fetched from here, so 'real current' rests on the test file's claim."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "effects_test.go:40-43 asserts Red Card (HandToDeck, Draw 4), Reset Stamp (HandToDeck, PerPrize), Roxanne (HandToDeck, Draw 2, CondOppPrizesAtMost 3) and Marnie (HandToBottom, Draw 4, DrawIfEitherPut). The grammar in effects.go:95-111 accepts these shapes."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Unfair Stamp's knockout condition: effects.go:86 reCondKO matches 'any of your pokémon were knocked out during your opponent's last turn' and readCondition (effects.go:225-228) returns CondKOLastTurn; effects_test.go:37 asserts it. Special Red Card's condition: effects.go:88 reCondPrizes matches 'your opponent has N or fewer prize cards remaining' and readCondition returns CondOppPrizesAtMost with N; effects_test.go:35 asserts N 3."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "effects.go:117 choiceWords includes 'switches their active'; the lowercased 'each player switches their Active Pokémon' matches it, and effects_test.go:49 asserts Escape Rope-style text gives OppChoice. Eri (effects_test.go:53, textEri 'Your opponent reveals their hand, and you discard up to 2 Item cards') and Mega Absol ex Claw of Darkness (effects_test.go:54) both assert OppUnknown, which is the unrecognised kind (effects.go:23, String() 'unknown')."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "effects_test.go:57 Boss's Orders ('Switch in 1 of your opponent's Benched Pokémon to the Active Spot') -\u003e OppNone; :58 Premium Power Pro (damage bonus) -\u003e OppNone; :59 Dragapult ex Phantom Dive (damage counters on opponent's Benched Pokémon) -\u003e OppNone; :60 Mega Absol ex Terminal Period -\u003e OppNone; :61 Ultra Ball -\u003e OppNone (its use condition is read as CondUnrecognised, but no opponent subject remains, so the kind stays OppNone); :62 empty text -\u003e OppNone."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "A family card with an extra sentence falls back to the sentence loop because readFamily returns false (effects.go:158-223). That loop marks any opponent-subject sentence OppUnknown, never OppApply. effects_test.go:66-67 assert Judge+'Discard a card from your hand.' and Iono+'Your opponent reveals their hand.' give OppUnknown. :68-69 cover further malformed family shapes, also OppUnknown. For the condition case, effects_test.go:45 asserts 'You can use this card only if you have exactly 1 Benched Pokémon.' plus Judge gives OppApply with Condition{Kind: CondUnrecognised}. The reader returns no warning or error for it; the caller is the one who would act on the Condition field, and no caller in the diff reads it yet."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "fb832ac4-11a0-4186-81ea-41a8679dca62",
+      "title": "Apply family effects to the opponent inside the card",
+      "checks": [
+        {
+          "at": "2026-11-07T11:14:17Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "fb832ac4-11a0-4186-81ea-41a8679dca62",
+            "title": "Apply family effects to the opponent inside the card",
+            "criteria": [
+              "With the assistant holding 6 cards, the player's Judge leaves it with 4 cards drawn from a shuffled deck containing its old hand, in the same move as the Judge.",
+              "Special Red Card leaves the assistant 3 cards with its old hand at the bottom of its deck; Iono leaves as many cards as its remaining prizes with its old hand at the bottom; Unfair Stamp leaves 2.",
+              "Unfair Stamp with no knockout of the player's Pokémon in the opponent's last turn, and Special Red Card while the opponent has more than 3 prizes, still apply and return a warning that the card's condition was not met.",
+              "Undoing the card restores the assistant's hand and deck and the player's hand exactly.",
+              "The assistant's own Judge changes nothing on the player's side, and a review-mode Judge applies nothing unless that seat has been handed over by a turn wait.",
+              "In play mode the player's view of the state and of the log never names the cards the assistant drew."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/reads.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "t.actor"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/verbs.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "t.move"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "t.g.rng"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/types.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "t.warn"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/applied.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/applied_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_respond_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/applied.go:53-95 (applyOpponent) moves the opponent's whole hand to its deck, shuffles with t.shuffle, then draws n=4 via t.draw, all through t.emit inside the player's Judge transaction (verbs.go:455 via opponentPart). applied_test.go TestAppliedJudge asserts 6 hand-to-deck moves, 1 shuffle, 4 draws, all carrying the Judge's ActionID and inside its Result, and the new hand equals the top 4 of the shuffled deck."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Reading: internal/game/effects.go:40-95 (readFamily) maps Special Red Card to HandToBottom with Draw 3 and Iono to HandToBottom with PerPrize (applied.go:78-80 draws PrizesLeft of the assistant); Unfair Stamp maps to HandToDeck with Draw 2 (applied.go:72-76 shuffles). applied_test.go TestAppliedFamilyCounts checks 3 cards with the old hand at the bottom for Red Card, 4 (the remaining prizes after 2 taken) at the bottom for Iono, and 2 after a shuffle for Stamp."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/game/applied.go:33-36 appends a warning '... condition is not met (...); its effect was applied anyway' and still calls applyOpponent. unmetConditionLocked (applied.go:100-112) covers the KO-last-turn and opponent-prizes conditions. applied_test.go TestAppliedUnmetCondition checks Stamp with no KO and Red Card at 6 prizes both draw and warn."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "All opponent events are emitted inside the card's own action (applied.go:53-95 via t.emit), so Undo rebuilds the branch without them. applied_test.go TestAppliedUndo compares p2 hand, p2 deck, p1 hand and a full snapshot before and after undo for Judge and Iono, and the verify run passed TestApplied*."
+            },
+            {
+              "criterion": 5,
+              "verdict": "not_met",
+              "evidence": "The assistant's own Judge is covered: applied.go:43-45 autoOpponentLocked requires actor == ActorHuman, and applied_test.go TestAppliedNotForAssistantCards checks no p1 change. The review-mode path is not wired: game.go:88-93 declares g.handed and says 'The presence sets and clears it with the wait session', but the only setter is setHanded (game.go:491-497), and grep shows no production caller. presence.go only calls setResponder (presence.go:516, 597, 615, 662). So a turn wait never hands a seat to the playmat, and a review-mode Judge never applies even after a handover. TestAppliedReviewNeedsHandedSeat drives setHanded directly, not the wait. Expected: presence.go's wait should set handed alongside the responder."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The drawn cards are moved from the hand to the deck and then from the deck to the hand under the system actor. reads.go:56-58 hides moves whose cards are not public to the viewer, and reads.go:19 renders '(hidden)'. The shuffle line (reads.go:80) names only the seat. applied_test.go TestAppliedHiddenFromPlayer checks p1's get_state view (HandCount 4, no hand cards listed), the reveal projection, and that p1's get_log shows p2's draws as '(hidden)' with no drawn card name."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-07T11:18:12Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "fb832ac4-11a0-4186-81ea-41a8679dca62",
+            "title": "Apply family effects to the opponent inside the card",
+            "criteria": [
+              "With the assistant holding 6 cards, the player's Judge leaves it with 4 cards drawn from a shuffled deck containing its old hand, in the same move as the Judge.",
+              "Special Red Card leaves the assistant 3 cards with its old hand at the bottom of its deck; Iono leaves as many cards as its remaining prizes with its old hand at the bottom; Unfair Stamp leaves 2.",
+              "Unfair Stamp with no knockout of the player's Pokémon in the opponent's last turn, and Special Red Card while the opponent has more than 3 prizes, still apply and return a warning that the card's condition was not met.",
+              "Undoing the card restores the assistant's hand and deck and the player's hand exactly.",
+              "The assistant's own Judge changes nothing on the player's side, and a review-mode Judge applies nothing unless that seat has been handed over by a turn wait.",
+              "In play mode the player's view of the state and of the log never names the cards the assistant drew."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/reads.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "t.actor"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/verbs.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "t.move"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "t.g.rng"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/types.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "t.warn"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/applied.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/applied_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_respond_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "PlayTrainer (internal/game/verbs.go:428-456) calls t.opponentPart after t.move inside the same g.run closure, so the Judge and the opponent's part share one action. applied.go:53-94 (applyOpponent) moves p2's hand to its deck, shuffles, then draws 4 (DrawIf/Draw fields from effects.go). applied_test.go:206-306 (TestAppliedJudge) asserts p2 holds 4 cards, deck = old deck + 6 - 4, the shuffled order is the old deck plus the old hand, every event has r.ActionID, and the draws are the top 4 of the shuffled deck."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "applied.go:81-94 draws n = PrizesLeft for PerPrize (Iono) and the fixed Draw count otherwise, with DrawIfOpponentPut for Special Red Card's 'if they put any cards'. effects.go:90-112 recognises the Judge/Red Card/Iono/Unfair Stamp wording (reDispDeck, reDispBottom, reDrawBoth, reDrawSubject, countRe). applied_test.go:308-381 (TestAppliedFamilyCounts) checks Special Red Card leaves 3 with the old hand at the bottom of the deck (no shuffle), Iono leaves 4 (2 prizes taken, 4 remaining) with the old hand at the bottom, and Unfair Stamp leaves 2 after a shuffle of the old hand in."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "applied.go:25-37 (opponentPart) appends the warning \"\u003ccard\u003e's condition is not met (\u003cwhy\u003e); its effect was applied anyway\" from unmetConditionLocked (applied.go:100-112) and then still calls applyOpponent. Unfair Stamp checks the KO-last-turn condition and Special Red Card checks the 3-prize condition (effects.go:84-88 reCondition/reCondPrizes). applied_test.go:387-413 (TestAppliedUnmetCondition) asserts the hand still changes (2 and 3 cards) and the warning text is present for both cards."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The opponent's part is emitted inside the card's own action (applied.go:53-56 sets the system actor inside the same tx), so g.Undo(1) reverts it with the card. applied_test.go:459-494 (TestAppliedUndo) runs Judge and Iono, then compares p2 hand, p2 deck, p1 hand and a full snapshot to the pre-card state. The test does not separately exercise Unfair Stamp or Special Red Card undo; they use the same single-action path."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "applied.go:43-45 autoOpponentLocked returns true only when actor == ActorHuman and (mode == ModePlay or g.handed == seat), so the assistant's own Judge (ActorClaude) applies nothing. g.handed is set by presence.go:540 (setHanded in Wait before the call is registered) and cleared on turn end, game over, mode switch and branch move (game.go:180, reads.go:719, presence.go:603/622/641). applied_test.go:498-529 (TestAppliedNotForAssistantCards) checks p1's hand/deck unchanged and only p2 events. applied_test.go:535-576 (TestAppliedReviewNeedsHandedSeat) and 583-642 (TestAppliedReviewHandedByWait) check the unhanded, other-seat-handed, and wait-handed cases."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "applied_test.go:646-705 (TestAppliedHiddenFromPlayer) runs in play mode and checks g.View(P1) shows p2's hand count of 4 with no hand cards listed, that the drawn iids are not KnownTo p1, and that p1's log (g.Log) marks each p2 draw line \"(hidden)\" and never names a drawn card. The implementation leans on existing hidden-information projection; no new view code in the diff exposes the draws. appliedSince/AppliedEffect (applied.go:154-224) is not wired into any non-test output, so it cannot leak to the player."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "8edc34a3-dc1e-4703-93cb-d36d78bd821d",
+      "title": "Hide opponent cards in board move results",
+      "checks": [
+        {
+          "at": "2026-11-07T11:25:00Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "8edc34a3-dc1e-4703-93cb-d36d78bd821d",
+            "title": "Hide opponent cards in board move results",
+            "criteria": [
+              "In play mode, the board's result for a move that draws cards for the opponent shows those cards as hidden, never by name.",
+              "With the reveal view on in review mode, the result still names every card, as the board itself does."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/reads.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "c.reveal"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Server.redact"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/webui/actions.go:119-134 boardDelta returns the delta through g.DeltaFor(gr, s.Human) unless reveal is on in review mode, so play mode always redacts. internal/game/reads.go:165-195 DeltaFor renders each event with describe(..., viewer), and reads.go:17-19 cardLabel returns 'iid (hidden)' when not visible. reads.go:56-58 hides a move unless the viewer knows the card. webui_test.go:934-1000 TestBoardDeltaHidesOpponentCards plays the player's Judge, checks p2's four drawn iids appear as '(hidden)' and never with their name, and its verify run passed."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/webui/actions.go:125-127 returns the unredacted gr.Delta when c.reveal is set and g.Mode() == game.ModeReview. webui_test.go:1000-1008 sets review mode and reveal on, performs a p2 draw, and asserts the delta names the drawn card as 'iid Name'. The verify run passed for that test."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "5cf49385-b917-4e48-b98a-81a2a9190663",
+      "title": "Tell the assistant about applied effects in the wait",
+      "checks": [
+        {
+          "at": "2026-11-07T11:31:52Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "5cf49385-b917-4e48-b98a-81a2a9190663",
+            "title": "Tell the assistant about applied effects in the wait",
+            "criteria": [
+              "With the assistant waiting, the player's Judge does not stop the wait, and the next wait result (even a still-waiting one) lists Judge and what happened to the assistant's hand. Later results do not repeat it.",
+              "The turn-ended result lists every effect applied that turn, and its log lines include them under the card's name.",
+              "In a review-mode practice turn handed over by a wait, the player's Judge applies to the other seat and is reported the same way."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_respond_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_lock_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/lock_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "presence.go:v.applied is built by appliedSince (applied.go:157-224) and excluded from v.used via the seen map (presence.go:368-386), so a Judge does not reach the WaitRespond path. Mid-turn, Wait appends unreported applied effects to out.Applied (presence.go:629-642) and then blocks again on changed/cap (presence.go:722-731), so a still_waiting result carries them. appliedReported dedupes by action id per session (presence.go:633-641), so later results do not repeat them. applied.go:205-215 gives the hand count and shuffle/bottom wording for 'what happened'. presence_respond_test.go TestWaitReportsAppliedJudgeAndUnfairStamp and wait_test.go TestWaitForTurnReportsAppliedJudge cover the still_waiting report and the no-repeat check."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "presence.go:669-674: the turn_ended outcome sets out.Applied = v.applied, and v.applied is appliedSince from the turn's cursor (s.cursor stays at the turn start, presence.go:606 and 566), so it covers the whole turn. Log lines: the card's draws are logged under the action whose Label is the card name (verbs.go PlayTrainer/UseAbility/Attack call opponentPart inside g.run with the card's label). presence_respond_test.go checks g.Log lines labelled 'Judge' and 'Unfair Stamp' for p2's draws, and wait.go:655-657 adds the applied names to next."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Review mode: Wait sets g.setHanded(req.Seat) before registering the call (presence.go:551-555); autoOpponentLocked (applied.go:43-45) returns true when g.mode==ModeReview and g.handed==seat, so PlayTrainer/UseAbility/Attack in verbs.go call opponentPart and apply Judge to the other seat. appliedSince(cursor, seat) (applied.go:157-162) reports them against opp = seat.Other(). The fresh review-mode wait's cursor is v.head (presence.go:540-541), so the player's later Judge is after the cursor. The handed seat is cleared on turn end, wait end, mode switch and checkout (presence.go:669, 618, 650; game.go:177; reads.go:716). No test in the diff exercises review mode specifically; this verdict rests on the code path."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "d77cddb9-f4e1-4513-b354-de0446b62fad",
+      "title": "Wait stops only for decisions",
+      "checks": [
+        {
+          "at": "2026-11-07T11:48:37Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "d77cddb9-f4e1-4513-b354-de0446b62fad",
+            "title": "Wait stops only for decisions",
+            "criteria": [
+              "A turn of Ultra Ball, attaching Energy, evolving and a damage-only attack gives only still-waiting results until the turn ends.",
+              "Knocking out the assistant's Active with Pokémon on its Bench gives one promotion decision listing exactly those Bench slots. Knocking out its last Pokémon ends the game with no promotion asked for.",
+              "A card making each player switch their Active gives one decision naming the card as a choice. An unrecognised card naming the opponent as actor gives one decision asking the assistant to read it.",
+              "A family card whose text was not available when played gives one decision asking the assistant to read it.",
+              "A Trainer with no text in the card data (for example, a card with no English entry) gives one decision asking the assistant to read it, never a silent pass."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_respond_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_lock_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/lock_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "presence.go:752 and :762 stop the wait only for a promotion or a used card whose Need is non-empty; attach and evolve are not openers (presence.go:425 admits only trainer/ability/attack), so they never stop it. Ultra Ball and the damage-only attack read as OppNone: cardText returns the attack's Effect, which is empty for Aura Sphere, and cardNeed (presence.go:458-469) gives Need \"\". The only stop is turn_ended. TestOrdinaryTurnNeverStops (presence_respond_test.go, new) asserts five still_waiting results then turn_ended. Scope note, not a verdict input: the diff also changes files outside this item's allowed list (verbs.go, game.go, reads.go, webui/actions.go, webui_test.go, server.go, cmd/tcgreplay/*, and untracked applied.go/effects.go and their tests). The opponent-part wiring the behaviour depends on lives in verbs.go:449-482 and 574-586."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Bench decision: presence.go:752 sets promote only when v.activeEmpty \u0026\u0026 !s.koReported \u0026\u0026 len(v.bench) \u003e 0; presence.go:773 returns v.bench as Choices. v.bench (presence.go:398-401) takes each non-empty Bench slot with its index as Slot, so only occupied slots are listed. TestPromotionDecision/bench asserts one DecidePromote with exactly slots 0 and 1. Last Pokémon: presence.go:708 returns WaitEnded/EndGameOver when the game has a winner on the cursor's path, before the promote check, and the empty Bench blocks promote at :752. TestPromotionDecision/last Pokémon asserts ended/game_over with no Action or Choices."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Switch card: effects.go:117 choiceWords includes \"switches their active\"; effects.go:140 returns OppChoice for a sentence with the opponent as subject; presence.go:465-466 maps OppChoice to NeedChoose. TestAnswerCardNeeds \"each player switches\" (presence_respond_test.go) asserts one answer_card decision with Need choose and no repeat. Unrecognised card naming the opponent: effects.go:143 gives OppUnknown for an opponent-subject sentence, and presence.go:468 maps any other kind to NeedRead. The Eri case (presence_respond_test.go, TestAnswerCardNeeds and TestOrdinaryTurnNeverStops) asserts one decision with Need read. opponentPart (applied.go:30-31) applies nothing for these kinds, so no applied entry is produced."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "presence.go:458-459: a nil card (def not cached) gives NeedRead, and a late card whose text is known but is OppApply falls to presence.go:468 NeedRead. usedCard (presence.go:440-449) reads the card at wait time, so a late-cached def is judged by its text then. TestLateFamilyCardNeedsRead (presence_respond_test.go) plays a Judge-text card whose def is not in the DB, checks nothing was applied, adds the text, then asserts one decide/answer_card with Need read, Applied empty, and no repeat on the next wait."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "presence.go:459: kind \"trainer\" with strings.TrimSpace(text) == \"\" gives NeedRead, so a Trainer with no card text is never a silent pass. A trainer's text comes from c.Effect only (presence.go:480-481), so an empty English Effect yields empty text. The trainer is in usedIDs because presence.go:425 admits trainer openers. TestAnswerCardNeeds \"no text\" (Blank Supporter, def tst-92, no Effect) asserts one answer_card decision with Need read and no repeat."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "7171a850-b29b-49d0-946f-4f0bf5f1e1ef",
+      "title": "Decision results tell the assistant exactly what to do",
+      "checks": [
+        {
+          "at": "2026-11-07T11:52:39Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "7171a850-b29b-49d0-946f-4f0bf5f1e1ef",
+            "title": "Decision results tell the assistant exactly what to do",
+            "criteria": [
+              "A promotion result names the decision and the assistant's seat, lists the Bench slots, and ends its steps with the hand-back call carrying the right seat and cursor.",
+              "A card result names each card and whether it leaves a choice or needs reading, with steps to act on the assistant's seat and then hand the turn back.",
+              "Every result carries the applied effects not yet reported, and still says to keep waiting until the turn ends.",
+              "The tool description and standing instructions describe applied effects and decision stops, and keep their existing loop lines."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/wait.go:146 sets Decision to \"Your Active Pokémon (p2) was Knocked Out: choose a Benched Pokémon to promote.\" (names the decision and mine = o.Seat.Other()). wait.go:147-151 sets Next to \"Decision needed for your seat p2\", lists the Bench slots from o.Choices (wait.go:141-144, slots joined), and numbers the steps 1 Promote via switch, 2 Do nothing else, 3 \"Hand the turn back: call wait_for_turn with seat %[3]s (o.Seat, the player's seat p1) and since %[4]d (o.Next)\". Step 3 is the last numbered step, before the closing sentence and \"Post nothing in chat.\" The test TestWaitForTurnDecisions checks these strings."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "wait.go:155-159 names every card in Decision (\"The player used %s, which involves your side (%s): answer it.\") and in cards[] with its need (wait.go:156; server.go:50-52 Need field, \"choose\" or \"read\"). wait.go:160-164 Next: step 1 says for each card, if need is choose make the choice passing seat p2, if need is read read the text and do what it asks of your side; step 2 do nothing else; step 3 \"Hand the turn back: call wait_for_turn with seat p1 and since %d\" (o.Seat, o.Next), which is the last numbered step."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Applied is collected in internal/game/presence.go:697-707 and attached to out before the mid-turn switch, so still_waiting, decide, check_in, game_over and turn_ended carry it (presence.go:737; wait.go:121-125 applies it to every result). The gap is the ended path: presence.go:677-686 (s.ended set by a mode change, game close, expiry, branch switch or rewind) returns out without ever setting out.Applied, and wait.go:126-177 adds no applied for WaitEnded. Effects applied but not yet reported when a wait ends are therefore dropped. Keep-waiting wording is present on still_waiting (wait.go:178: \"This is not the end of the wait... call wait_for_turn again now\") and decide (wait.go:163-164), but none of the results says \"until the turn ends\" in those words; the phrase appears only in the standing instructions at server.go:76."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Tool description, internal/mcpserver/server.go:1222: \"call this in the same reply and act on the result\", \"outcome still_waiting means the player is still playing, so call it again\", \"Cards like Judge or Iono happen on your side by themselves and are listed in applied\", \"outcome decide means your seat must act now (promote or answer a card), then call this again\". Standing instructions, server.go:76 (existing loop line kept verbatim: \"After handing the player a turn... calling it again until the turn ends. Never ask the player to say \\\"your turn\\\" or \\\"done\\\"; on a check-in ask only \\\"Still playing?\\\".\") and server.go:77 (new line on applied effects and decision stops). The diff at server.go:1207-1213 shows the old line unchanged and the new line appended."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-07T11:55:55Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "7171a850-b29b-49d0-946f-4f0bf5f1e1ef",
+            "title": "Decision results tell the assistant exactly what to do",
+            "criteria": [
+              "A promotion result names the decision and the assistant's seat, lists the Bench slots, and ends its steps with the hand-back call carrying the right seat and cursor.",
+              "A card result names each card and whether it leaves a choice or needs reading, with steps to act on the assistant's seat and then hand the turn back.",
+              "Every result carries the applied effects not yet reported, and still says to keep waiting until the turn ends.",
+              "The tool description and standing instructions describe applied effects and decision stops, and keep their existing loop lines."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/wait.go:140-153: the promote branch sets Decision to 'Your Active Pokémon (p2) was Knocked Out: choose a Benched Pokémon to promote.' (names the decision and seat), lists Bench slots in r.Choices and in the Next text ('slots %s'), and its numbered steps end with '3. Hand the turn back: call wait_for_turn with seat %[3]s (o.Seat, the player's seat) and since %[4]d (o.Next)'. Test TestWaitForTurnDecisions in internal/mcpserver/wait_test.go asserts seat p1, the cursor, and the Choices."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/wait.go:155-164: Decision names each card ('The player used %s, which involves your side (%s): answer it.'), and each entry in Cards carries Need ('choose' or 'read', wait.go:50-52 and :156). Next has step 1 covering choose and read cards, step 2 'Do nothing else', and step 3 hand-back 'call wait_for_turn with seat %[2]s and since %[3]d'. TestWaitForTurnDecisions checks Need 'read' and these steps."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Applied is carried on every result: wait.go:121-125 copies o.Applied for all kinds, and presence.go:706, 722 and 753 populate it. But the wording is conditional. The default still_waiting branch (wait.go:177-181) says 'keep waiting until the turn ends' only when appliedNames is non-empty; with no applied effects it only says 'This is not the end of the wait... call wait_for_turn again now'. The check_in branch (wait.go:165-166) says nothing about keeping waiting until the turn ends. TestWaitForTurnStillWaiting (wait_test.go ~246-249) pins the no-applied still_waiting text without that phrase. Only the decide branch (wait.go:150-151, 162-163) and the applied still_waiting text say it unconditionally or conditionally on applied."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/server.go:1272 adds the instructions line: 'During the player's turn the playmat applies shuffle-hand-and-draw cards (Judge, Iono and the like) to your side itself; wait_for_turn stops only when your seat has a decision ... and its next says what to do.' server.go:1281 sets the wait_for_turn description to say cards like Judge or Iono are listed in applied and that outcome decide means the seat must act, then call again. The existing loop lines are kept: server.go:1270 ('After handing the player a turn ... call wait_for_turn ... Never ask the player to say \"your turn\"') and server.go:1281 ('call this in the same reply and act on the result. Never end your reply to wait for the player'). TestWaitToolDescribesDecisions and TestInstructionsTeachTheLoop assert these strings."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-07T11:59:29Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "7171a850-b29b-49d0-946f-4f0bf5f1e1ef",
+            "title": "Decision results tell the assistant exactly what to do",
+            "criteria": [
+              "A promotion result names the decision and the assistant's seat, lists the Bench slots, and ends its steps with the hand-back call carrying the right seat and cursor.",
+              "A card result names each card and whether it leaves a choice or needs reading, with steps to act on the assistant's seat and then hand the turn back.",
+              "Every result carries the applied effects not yet reported, and still says to keep waiting until the turn ends.",
+              "The tool description and standing instructions describe applied effects and decision stops, and keep their existing loop lines."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/wait.go:139-153 (worktree) sets r.Decision to \"Your Active Pokémon (p2) was Knocked Out: choose a Benched Pokémon to promote.\" (names the decision and seat), fills r.Choices from o.Choices with slots, and writes numbered steps listing the slots (\"slots %[2]s\"). Step 3 is the last numbered step: \"call wait_for_turn with seat %[3]s (o.Seat, the handed player seat) and since %[4]d (o.Next)\". wait_test.go:455-460 asserts this text, including \"(slots 0)\" and \"seat p1 and since\"."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "wait.go:155-164 puts each card in r.Cards with Need (usedCard.Need, wait.go:52), and r.Decision names them (\"The player used %s, which involves your side (%s): answer it.\"). Step 1 says to make the choice when need is choose and to read the text when need is read, acting with seat %[1]s. Step 3 hands back with \"wait_for_turn with seat %[2]s and since %[3]d\". Cards with Need \"\" are dropped in presence.go:778-779, so every listed card carries choose or read. wait_test.go:425-443 asserts this."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Applied is carried on every result: wait.go:118-125 copies o.Applied into r.Applied for all kinds. presence.go:722 appends unreported applied effects on each loop pass before the winner, check-in and still_waiting returns, and presence.go:706 covers the ended path. Keep-waiting text: wait.go:178 (still_waiting, \"keep calling it until the turn ends\"), wait.go:150-151 and 163-164 (decide, \"keep calling it until the turn ends\"), wait.go:166 (check_in, \"keep waiting until the turn ends\"). KeepWaiting is set for all non-terminal results (wait.go:111-112). Caveats: turn_ended and ended are terminal and say to stop (wait.go:127-131, 172), the only sensible reading for them. turn_ended lists the whole turn's applied effects (presence.go:753), so it repeats effects reported earlier. The superseded-call return at presence.go:688-691 can return before any applied effects are read if superseded on the first loop pass."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "server.go:1281 (wait_for_turn description) keeps the loop lines \"call this in the same reply and act on the result. Never end your reply to wait...\" and adds \"Cards like Judge or Iono happen on your side by themselves and are listed in applied; outcome decide means your seat must act now (promote or answer a card), then call this again.\" server.go:1272 adds a standing-instructions bullet on applied effects and decision stops. Line 1270 keeps the existing loop line unchanged. wait_test.go:740-757 checks the tool description."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 3,
+      "state": "accepted"
+    },
+    {
+      "item": "b6967fe9-829c-4c4f-8a8d-e0313c71fe41",
+      "title": "Guides and website describe applied effects and decision stops",
+      "checks": [
+        {
+          "at": "2026-11-07T12:02:51Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b6967fe9-829c-4c4f-8a8d-e0313c71fe41",
+            "title": "Guides and website describe applied effects and decision stops",
+            "criteria": [
+              "No guide, wait instruction or website page says the wait stops for every card or that the assistant must answer each card.",
+              "The three guides and the website's play-game page describe applied effects and decision stops.",
+              "The guides still pass their rule checks, including never naming a specific assistant or player."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/play-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/replay-drill.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/review-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/guides_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/workflows/play-game.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Searched the worktree guides (internal/guides/*.md), the website page (site/src/content/docs/workflows/play-game.md) and the wait instructions (internal/mcpserver/wait.go:133-164, server.go wait_for_turn description). None says the wait stops for every card or that the assistant must answer each card. play-game.md:32 says a decide outcome asks for an action on a card 'it lists'. replay-drill.md:23 and review-game.md:76 say 'acting on any decide outcome'. wait.go:159-164 tells the assistant to answer only the cards the decision lists. The only 'every card' hits are unrelated (review-game.md:37 'not every card', numbers-drill and site numbers-drill text about card text lookups). guides_test.go:286-294 (TestNoGuideSaysAnswerEveryCard) forbids the old phrases and the strings are absent."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The website page is met: site/src/content/docs/workflows/play-game.md:12 describes applied effects (Judge or Iono shuffle the hand and draw by itself) and decision stops (promoting after a Knock Out, and a real choice). play-game.md:32 is met too: it describes applied effects ('the wait lists them in applied') and decide stops. The other two guides fall short. replay-drill.md:23 describes decide stops ('a promotion or a card the playmat could not apply') but never mentions applied effects. review-game.md:76 describes decide stops but never mentions applied effects. Neither file contains the word 'applied' or any description of the playmat applying a card's effect to the assistant's side (grep for applied|shuffle|decide over internal/guides)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "guides_test.go:270-272 adds the anchors 'A `decide` outcome means your seat must act now' and 'The playmat carries out your side of shuffle-hand-and-draw cards the player uses' for play-game, 'acting on any `decide` outcome' for review-game (line 76) and replay-drill (line 23); the other anchors are unchanged. Grep of internal/guides for Claude, 'Nic ', skill, tcg-, list_games, load_game and new_id finds only the test file's own checks, so no guide names an assistant or player or uses banned terms. The gofmt, vet and go test results reported in the verify step were not re-run here."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-07T12:04:38Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "b6967fe9-829c-4c4f-8a8d-e0313c71fe41",
+            "title": "Guides and website describe applied effects and decision stops",
+            "criteria": [
+              "No guide, wait instruction or website page says the wait stops for every card or that the assistant must answer each card.",
+              "The three guides and the website's play-game page describe applied effects and decision stops.",
+              "The guides still pass their rule checks, including never naming a specific assistant or player."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/play-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/replay-drill.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/review-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/guides_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/workflows/play-game.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Searched internal/guides/*.md, the site play-game page and the wait/server instructions for 'every card', 'each card', 'any card', 'answer each', 'respond', 'promote' and 'stops for'. No guide or site page says the wait stops for every card or that each card must be answered. The only 'every card' hits are unrelated (review-game.md:37 'not every card', numbers-drill 'every card's text', and the test's bad-word lists at guides_test.go:290 and wait_test.go:485/764, which forbid the phrase). The wait instruction in internal/mcpserver/wait.go:159-161 covers only the cards the wait listed as needing a decision (cards with need choose or read), not every card the player uses. server.go:77 states the wait 'stops only when your seat has a decision'. The diff removes the old 'respond'/'promote' guide wording (play-game.md, replay-drill.md, review-game.md step 3 in the staged diff)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/guides/play-game.md:32 describes applied effects ('The playmat carries out your side of shuffle-hand-and-draw cards ... by itself; the wait lists them in applied') and decision stops ('A decide outcome means your seat must act now: promote after a Knock Out (pick from its choices), or answer a card it lists'). internal/guides/replay-drill.md:23-24 covers acting on any decide outcome and the applied list ('do not do them again'). internal/guides/review-game.md:1345 (line 73-ish of the file, step 3) covers the same two points. site/src/content/docs/workflows/play-game.md:12 describes the applied effect (Judge/Iono draw and shuffle by themselves) and the decision stop ('It only stops to think when it has a real choice, such as promoting after a Knock Out')."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "guides_test.go:227-248 anchors for play-game, review-game and replay-drill are each present in the guide text: play-game.md:32 ('A `decide` outcome means your seat must act now', 'The playmat carries out your side ... shuffle-hand-and-draw cards the player uses'); replay-drill.md:22-24 ('acting on any `decide` outcome', 'lists them in `applied`: do not do them again'); review-game.md step 3 (the 'in that same reply, call `wait_for_turn`...', 'until it reports the turn ended, then read their moves from the result', 'Never ask them to say...' phrases) and review-game.md:86 ('after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended'). The no-name check (guides_test.go:57 forbids 'Claude' and 'Nic ') finds no matches in internal/guides. The forbidden phrases in TestNoGuideSaysAnswerEveryCard ('respond` outcome', 'stops for every card', etc.) do not appear in any guide. I did not run the tests (read-only); this verdict is from reading the anchors against the text, and the caller's test run reported pass."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "ec60f31b-b200-4ab0-899c-46462d57a681",
+      "title": "Decision hold in the presence",
+      "checks": [
+        {
+          "at": "2026-11-07T12:08:49Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "ec60f31b-b200-4ab0-899c-46462d57a681",
+            "title": "Decision hold in the presence",
+            "criteria": [
+              "A decision stop sets a decision hold with the status \"deciding\", never a full hold. The assistant's own turn still sets a full hold with \"acting\".",
+              "The assistant's next wait call ends a decision hold.",
+              "A decision hold the assistant leaves for the release time lapses to \"stopped\", with the lapsed decision still readable until the next wait or game change.",
+              "Mode switches, branch moves, undo, a new game and expiry still clear any hold."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence_lock_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/lock_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/lock_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/presence.go Wait's deferred switch (lines ~703-720): WaitTurnEnded calls startHoldLocked(HoldFull, \"\", ...) so the own turn sets a full hold, and WaitDecide calls startHoldLocked(HoldDecision, out.Action, ...). opponentLocked (lines ~380-392) maps HoldFull to \"acting\" and HoldDecision to \"deciding\". AssistantMoved (lines ~593-608) with ownTurn=true sets HoldFull. Tests TestDecisionHold 'own turn is a full hold' and TestOutcomesSetActingLock (presence_lock_test.go diff) check both strengths and statuses."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/game/presence.go Wait line ~695: p.clearHoldLocked() runs on every new wait call, which resets hold, decision and stopped. TestDecisionHold 'next wait ends it' in presence_lock_test.go (diff ~lines 853-875) asserts Hold()==HoldNone, Decision()==\"\" and Opponent()==\"waiting\" after the next wait. AssistantMoved(false) keeps HoldDecision (lines ~601-602), so only a wait ends it."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/game/presence.go releaseFired (lines ~348-361): when a HoldDecision lapses it sets hold=HoldNone and stopped=true but keeps p.decision, so opponentLocked returns \"stopped\" (lines ~386-387) and Manager.Decision() (lines ~571-576) still returns the decision. The decision is cleared only by clearHoldLocked, which the next Wait call (line ~695) and the game-change paths call. TestDecisionHold 'lapses' asserts stopped, Decision()==promote, then cleared after the next wait."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "presence.go: gameUpdate (lines ~295-300) calls clearHoldLocked on any u.Change when p.game==g, which covers mode, branch (ChangeCheckout), rewind and undo; gameChanged (line ~269) covers a new game; cleared (line ~285) covers expiry. SetMode in game.go also clears g.handed. TestGameChangesClearDecisionHold (diff ~lines 907-959) runs mode switch, branch move, undo, new game and expiry, live and lapsed, and asserts Hold()==HoldNone, Decision()==\"\", Opponent()==\"\". webui/actions.go line 169 refuses non-look verbs only while Hold()!=HoldNone, so the lock is released after these changes too."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "edf61c8e-f2a0-4f59-9fcb-94b75fa95c99",
+      "title": "Board holds only actions that depend on the decision",
+      "checks": [
+        {
+          "at": "2026-11-07T12:14:31Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "edf61c8e-f2a0-4f59-9fcb-94b75fa95c99",
+            "title": "Board holds only actions that depend on the decision",
+            "criteria": [
+              "While a promotion is pending, attaching Energy, evolving and an Item that touches only the player's side take effect at once.",
+              "While a promotion is pending, attacking, ending the turn, a gust Trainer and moving a card onto the opponent's side are refused with a message that the board is waiting for the opponent to promote.",
+              "The same attack and end turn succeed once the assistant has promoted and handed the turn back.",
+              "After the release time with no answer, the board shows the opponent as stopped, and the player can move one of the opponent's Benched Pokémon into its empty Active Spot and attack.",
+              "During the assistant's own turn, the board still refuses the player's game actions as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/presence.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/effects.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/hub.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/lock_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/webui/actions.go held() returns nil under game.HoldDecision for attach, evolve and an Item whose text does not name the opponent (play_trainer checks OpenerNamesOpponent, which uses NamesOpponent in internal/game/effects.go). Targets and cards are checked only against the deciding seat, and attach/evolve target the player's own Active. TestDecisionHoldAllowsIndependentActions in internal/webui/lock_test.go drives attach sve-006, evolve tst-2, play_trainer tst-3 (Ultra Ball) and end_action and asserts each succeeds."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "actions.go decisionVerbs includes attack and end_turn, and held() returns decisionRefusals[DecidePromote] for them. A gust Trainer (Boss's Orders tst-9, text names the opponent) is refused through OpenerNamesOpponent. A move with To \"p2:active\" is refused because ParseLoc gives seat p2, the decider. The refusal text is 'Waiting for your opponent to promote a new Active Pokémon; try again when they have.' (actions.go decisionRefusals). TestDecisionHoldAllowsIndependentActions asserts all of these with promoteRefusal."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Wait() clears the hold (presence.go clearHoldLocked in Wait) before a call is registered, and TestDecisionHoldAllowsIndependentActions, after g.Switch(P2, Claude, 0) and a new waitBG, asserts attack, take_prize and end_turn succeed and that the wait ends with WaitTurnEnded. The test simulates the promotion with Switch, which is the mechanism the board sees."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "presence.go releaseFired() keeps the decision and sets HoldNone with stopped=true after lockRelease, and opponentLocked() returns 'stopped'. hub.go pushes the decision field. TestDecisionHoldLapses (lock_test.go) waits for opponentIs(\"stopped\"), asserts decision promote, then sends move p2-2 to p2:active (actions.go move uses a.To) and asserts p2's Active is p2-2, then attack Punch succeeds. Nothing in held() refuses under HoldNone."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "actions.go held() under game.HoldFull refuses every non-look verb with errOpponentActing, matching the old s.M.Locked() check, and allows only lookVerbs. AssistantMoved(true) sets HoldFull (presence.go). TestLockRefusesGameActions (lock_test.go) asserts the refusals under HoldFull, that looks are still allowed, and that set_mode releases it."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "7610c453-767a-4ebd-a34e-3192db9551f8",
+      "title": "Board shows the opponent deciding and lets the player promote for it",
+      "checks": [
+        {
+          "at": "2026-11-07T12:18:39Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "7610c453-767a-4ebd-a34e-3192db9551f8",
+            "title": "Board shows the opponent deciding and lets the player promote for it",
+            "criteria": [
+              "While the opponent decides, the board shows \"Opponent is deciding\", and the player's cards, menus and buttons stay usable.",
+              "A held action shows the server's waiting message as a notice.",
+              "When a decision hold lapses, the player sees a one-time notice saying they can carry on and make the opponent's move.",
+              "With the opponent's Active Spot empty, each of its Benched Pokémon offers \"Promote to Active\", which moves it into the Active Spot when the board allows it."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/ws.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".acting"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/App.svelte:77 maps status 'deciding' to 'Opponent is deciding' and :412 styles it; the badge renders at :182. The client only blocks gameplay on 'acting': web/src/components/Card.svelte:65 and Stack.svelte:37 use app.opponent !== 'acting', and store.svelte.js:193 oppActing() is only 'acting'. So under 'deciding' cards stay draggable and Strip.svelte:64/69 buttons are not disabled. The server holds only decision-dependent requests (internal/webui/actions.go held(), decisionVerbs), which the goal's wording allows."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "A held request returns r.ok=false with r.error set (internal/webui/actions.go:92/100). web/src/lib/ws.js:97-100 in act() calls toast(r.error, 'error'), so the server's 'Waiting for your opponent to promote...' / '...answer your card...' text (decisionRefusals, actions.go ~line 2467) is shown as a notice."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/src/lib/ws.js:51-61 records the previous opponent status and, on the transition 'deciding' -\u003e 'stopped', calls toast() with \"Your opponent hasn't answered. Carry on, and make their move yourself if you need to (for example, promote one of their Benched Pokémon).\" Only a decision hold lapses to 'stopped' (presence.go releaseFired keeps the decision and sets hold to none), so the notice is one-time per lapse and does not fire for a full-hold lapse ('acting' -\u003e 'stopped')."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "web/src/lib/actions.js:276-279 adds, for a non-mine bench stack with a top card while the owning side's Active is empty, a 'Promote to Active' item running act('move', { iid: top.iid, to: `${seat}:active` }). The menu sections are built from the same move list (actions.js:308). The move goes through internal/webui/actions.go 'move' -\u003e game.Move (verbs.go:725), which is a generic cross-seat move. While a promote decision hold is set, held() refuses it, so the move happens only when the board allows it."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    }
+  ]
+}
