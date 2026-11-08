@@ -90,19 +90,7 @@ func buildHandlers(a, b string) []handler {
 			return r.toBench(seat, iid)
 		}),
 		h(`{P} played (.+) to the Stadium spot\.`, func(r *replay, m []string, n, _ *Node) error {
-			seat := r.seat(m[1])
-			iid, err := r.take(seat, []state.Zone{state.Hand}, m[2])
-			if err != nil {
-				return err
-			}
-			if old := r.st.Stadium; old != "" {
-				owner := r.st.Cards[old].Owner
-				if err := r.move(seat, old, state.Loc{Seat: owner, Zone: state.Discard}, "", ""); err != nil {
-					return err
-				}
-				r.lastStadium = old
-			}
-			return r.move(seat, iid, state.Loc{Zone: state.Stadium}, "", "")
+			return r.playStadium(r.seat(m[1]), m[2], n)
 		}),
 		h(`{P} drew (\d+) cards and played them to the Bench\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[1])
@@ -489,19 +477,28 @@ func buildHandlers(a, b string) []handler {
 		// Hand and deck manipulation.
 		h(`{P} discarded (\d+) cards\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[1])
+			// A replaced Stadium pair's halves, listed under one line.
+			if r.consumeReplaced(seat, n.Bullets()) {
+				return nil
+			}
 			return r.handTo(seat, count(m[2]), n.Bullets(), state.Loc{Seat: seat, Zone: state.Discard})
 		}),
 		h(`{P} discarded (.+)\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
-			if r.lastStadium != "" && r.bound[r.lastStadium] == m[2] && r.st.Cards[r.lastStadium].Owner == seat {
-				r.lastStadium = "" // the replaced Stadium, already discarded
-				return nil
+			if r.consumeReplaced(seat, []string{m[2]}) {
+				return nil // the replaced Stadium, already discarded
 			}
 			// An attack that discards the Stadium in play (Ground Melter)
 			// names it under the attack line, with the Stadium's owner as
-			// the player. An Ability's discard (Trade) is from the hand.
-			if s := r.st.Stadium; s != "" && r.bound[s] == m[2] && r.st.Cards[s].Owner == seat && parent != nil && attackRe.MatchString(parent.Text) {
-				return r.move(seat, s, state.Loc{Seat: seat, Zone: state.Discard}, "", "")
+			// the player. An Ability's discard (Trade) is from the hand. A
+			// pair goes in one move; the other half's line is then done.
+			if s := firstOf(r.st.Stadium); s != "" && r.bound[s] == m[2] && r.st.Cards[s].Owner == seat && parent != nil && attackRe.MatchString(parent.Text) {
+				old := slices.Clone(r.st.Stadium)
+				if err := r.discardStadium(seat); err != nil {
+					return err
+				}
+				r.lastStadium = old[1:]
+				return nil
 			}
 			iid, err := r.take(seat, []state.Zone{state.Hand, state.Deck}, m[2])
 			if err != nil {
@@ -920,4 +917,134 @@ func (r *replay) checkToolCredits(n *Node, actor state.Seat, defender state.Loc)
 			}
 		}
 	}
+}
+
+// firstOf returns the first card of a list, or "" for an empty one.
+func firstOf(xs []state.IID) state.IID {
+	if len(xs) == 0 {
+		return ""
+	}
+	return xs[0]
+}
+
+// pairLineRe splits a line naming both halves of a Stadium pair, "Legendary
+// Summit and Legendary Summit" (an assumed shape: no real log yet).
+var pairLineRe = regexp.MustCompile(`^(.+) and (.+)$`)
+
+// playStadium replays "<player> played <name> to the Stadium spot." A
+// Stadium pair is recognised from the log's own lines, never from card
+// data (knowledge architecture/importer-determinism.md): a second play of
+// the same name by the same player right after the first, onto that lone
+// card, joins it as its pair; one line naming the same Stadium twice
+// plays both halves together. Two plays of the same print (the log's card
+// codes say so) are not a pair: the second replaces the first, as before,
+// with a warning. The pair-line shapes are assumed from the single-Stadium
+// line; no real TCG Live log with a pair has been seen yet.
+func (r *replay) playStadium(seat state.Seat, name string, n *Node) error {
+	if pm := pairLineRe.FindStringSubmatch(name); pm != nil && pm[1] == pm[2] {
+		return r.playStadiumPair(seat, pm[1])
+	}
+	lone := firstOf(r.st.Stadium)
+	join := len(r.st.Stadium) == 1 && r.st.Cards[lone].Owner == seat && r.bound[lone] == name && r.sameAsLastHeadline(n)
+	iid, err := r.take(seat, []state.Zone{state.Hand}, name)
+	if err != nil {
+		return err
+	}
+	if join {
+		if c := r.codes[lone]; c != "" && c == r.codes[iid] {
+			r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("line %d: %s played twice from the same print (%s); a pair needs two different prints, so the second replaces the first", n.No, name, c))
+		} else {
+			return r.move(seat, iid, state.Loc{Zone: state.Stadium}, state.AsPair, "")
+		}
+	}
+	if err := r.replaceStadium(seat); err != nil {
+		return err
+	}
+	return r.move(seat, iid, state.Loc{Zone: state.Stadium}, "", "")
+}
+
+// playStadiumPair plays two of seat's hand cards named name together as a
+// Stadium pair, replacing what is in the spot.
+func (r *replay) playStadiumPair(seat state.Seat, name string) error {
+	a, err := r.take(seat, []state.Zone{state.Hand}, name)
+	if err != nil {
+		return err
+	}
+	b, err := r.pick(seat, []state.Zone{state.Hand}, name, []state.IID{a})
+	if err != nil {
+		return err
+	}
+	if err := r.bind(b, name); err != nil {
+		return err
+	}
+	if c := r.codes[a]; c != "" && c == r.codes[b] {
+		r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("line %d: %s and %s are the same print (%s); a pair needs two different prints", r.flat[r.pos].No, name, name, c))
+	}
+	if err := r.replaceStadium(seat); err != nil {
+		return err
+	}
+	from, err := r.st.Find(a)
+	if err != nil {
+		return err
+	}
+	return r.emit(seat, state.EvMove, state.MovePayload{IID: a, Pair: b, From: &from, To: state.Loc{Zone: state.Stadium}})
+}
+
+// replaceStadium sends what is in the Stadium spot to its owner's discard,
+// a pair in one move, and remembers it so the "discarded" sublines that
+// follow are not replayed again.
+func (r *replay) replaceStadium(seat state.Seat) error {
+	old := slices.Clone(r.st.Stadium)
+	if err := r.discardStadium(seat); err != nil {
+		return err
+	}
+	r.lastStadium = old
+	return nil
+}
+
+// discardStadium moves what is in the Stadium spot to its owner's discard.
+func (r *replay) discardStadium(seat state.Seat) error {
+	switch st := r.st.Stadium; len(st) {
+	case 0:
+		return nil
+	case 1:
+		return r.move(seat, st[0], state.Loc{Seat: r.st.Cards[st[0]].Owner, Zone: state.Discard}, "", "")
+	default:
+		from, err := r.st.Find(st[0])
+		if err != nil {
+			return err
+		}
+		return r.emit(seat, state.EvMove, state.MovePayload{IID: st[0], Pair: st[1], From: &from, To: state.Loc{Seat: r.st.Cards[st[0]].Owner, Zone: state.Discard}})
+	}
+}
+
+// consumeReplaced reports whether names are seat's replaced Stadium cards
+// (lastStadium), already discarded, and marks them done.
+func (r *replay) consumeReplaced(seat state.Seat, names []string) bool {
+	if len(names) == 0 || len(names) > len(r.lastStadium) {
+		return false
+	}
+	left := slices.Clone(r.lastStadium)
+	for _, name := range names {
+		i := slices.IndexFunc(left, func(iid state.IID) bool {
+			return r.bound[iid] == name && r.st.Cards[iid].Owner == seat
+		})
+		if i < 0 {
+			return false
+		}
+		left = slices.Delete(left, i, i+1)
+	}
+	r.lastStadium = left
+	return true
+}
+
+// sameAsLastHeadline reports whether the headline before n has n's text:
+// the same player played the same Stadium just before.
+func (r *replay) sameAsLastHeadline(n *Node) bool {
+	for i := r.pos - 1; i >= 0; i-- {
+		if r.flat[i].Depth == 0 {
+			return r.flat[i].Text == n.Text
+		}
+	}
+	return false
 }

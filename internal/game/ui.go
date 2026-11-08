@@ -128,6 +128,9 @@ func touched(e *state.Event, before *state.State) []state.IID {
 	}
 	switch p := p.(type) {
 	case *state.MovePayload:
+		if p.Pair != "" {
+			return []state.IID{p.IID, p.Pair}
+		}
 		return []state.IID{p.IID}
 	case *state.SwapPayload:
 		return append(top(p.A), top(p.B)...)

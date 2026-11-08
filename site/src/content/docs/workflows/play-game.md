@@ -13,4 +13,6 @@ Play a full game against your assistant on the board. Give it your decklist (exp
 
 **It doesn't peek.** The assistant plays its own side only on what that side could see: it never uses your hand or anything you showed it as your coach. Where it can, it plays each of its turns in a separate, fresh helper that is given only its own deck and the public board.
 
+**Stadiums played as a pair.** Some Stadiums, such as Delta Reign's Legendary Pyroduct, Summit and Trench, are played as two different cards of the same name together. On the board, drag one half onto the Stadium spot, then drag the other half onto it: both then show in the spot as one Stadium. Until the second half joins, a warning says the first needs its partner, and two copies of the same card warn too. Playing another Stadium over the pair puts both halves in the discard pile, and undo brings both back. The assistant plays both halves in one go.
+
 When the game ends, it offers to [review it with you](/docs/workflows/review-game).

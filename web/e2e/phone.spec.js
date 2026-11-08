@@ -261,3 +261,20 @@ test('the last timeline entry has no rewind button: rewinding there would change
   await expect(lines.last().getByTitle(/^Rewind to just after/)).toHaveCount(0);
   await expect(lines.nth(-2).getByTitle(/^Rewind to just after/)).toHaveCount(1);
 });
+
+test('a Stadium pair shows both halves side by side, on screen and clear of the Active', async ({ page }, testInfo) => {
+  test.skip(!isPhone(testInfo), 'the phone board');
+  const pair = ['p1-59', 'p1-60']; // the two prints of Twin Peak (webtest.TwinPeak)
+  for (const iid of pair) await act(page, 'move', { iid, to: 'hand' });
+  await act(page, 'play_trainer', { iid: pair[0], pair_iid: pair[1] });
+  const stadium = page.getByRole('region', { name: 'Stadium' });
+  const active = await region(page, 'p1 Active').locator('.card').first().boundingBox();
+  for (const iid of pair) {
+    const half = stadium.locator(`.card[title="Twin Peak (${iid})"]`);
+    await expect(half).toBeInViewport();
+    const box = await half.boundingBox();
+    const apart = box.x + box.width <= active.x || active.x + active.width <= box.x || box.y + box.height <= active.y || active.y + active.height <= box.y;
+    expect(apart, `${iid} overlaps the Active`).toBe(true);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});

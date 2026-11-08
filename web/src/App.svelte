@@ -449,6 +449,9 @@
     gap: 6px;
     z-index: 60;
     max-width: min(420px, calc(100vw - 32px));
+    /* A toast never takes a touch: on a phone it lies over the hand, where
+       the card it talks about (a pair's second half) waits to be dragged. */
+    pointer-events: none;
   }
   .toast { padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 16px #0008; font-size: 13px; }
   .toast.error { background: #b71c1c; color: #fff; }

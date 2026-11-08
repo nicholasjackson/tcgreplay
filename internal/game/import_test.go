@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 )
 
@@ -562,5 +564,44 @@ func TestDrawsLikeMain(t *testing.T) {
 	}
 	if !slices.ContainsFunc(r.Warnings, func(w string) bool { return strings.Contains(w, "not in p1's deck") }) {
 		t.Errorf("no warning that main's card is gone; warnings %q", r.Warnings)
+	}
+}
+
+// TestImportedLoneHalfWarns: a log in which one half of a pair-played
+// Stadium is played alone imports it as a single Stadium (the importer
+// reads no card data), and the playmat then flags the lone half from the
+// card's pair mark. The log is the synthetic pair log cut to one half.
+func TestImportedLoneHalfWarns(t *testing.T) {
+	deckText, err := os.ReadFile("../../testdata/decks/mega-lucario-ex-v12.txt")
+	if err != nil {
+		t.Skip("no test corpus")
+	}
+	b, err := os.ReadFile("../../testdata/logs/synthetic_2026-11-08_ledjo23_legendary-summit-pair.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := strings.Replace(string(b), "LeDjo23 played (me6_97) Legendary Summit to the Stadium spot.\n", "", 1)
+	text = strings.Replace(text, "NicJackson played Gravity Mountain to the Stadium spot.\n- LeDjo23 discarded (me6_96) Legendary Summit.\n- LeDjo23 discarded (me6_97) Legendary Summit.\n", "", 1)
+	db := cardstest.New()
+	const rule = "You cannot play this card by itself. You must combine 2 different Legendary Summit from your hand to play as 1 Stadium card."
+	for _, id := range []string{"me06-096", "me06-097"} {
+		db[id] = &cards.Card{ID: id, Name: "Legendary Summit", Category: "Trainer", TrainerType: "Stadium", PlayedAsPair: true, Effect: rule}
+	}
+	m := NewManager(t.TempDir(), db)
+	res, err := m.Import(context.Background(), ImportRequest{Log: text, Deck: string(deckText), Seed: 1, ID: "lone"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Report.Problems {
+		t.Errorf("line %d %q: %s", p.Line, p.Text, p.Err)
+	}
+	st := res.Game.State()
+	if len(st.Stadium) != 1 || st.Cards[st.Stadium[0]].Def == "" {
+		t.Fatalf("Stadium spot %v, want one Legendary Summit with a def", st.Stadium)
+	}
+	lone := st.Stadium[0]
+	want := fmt.Sprintf("Legendary Summit (%s) is played as a pair", lone)
+	if ws := res.Game.Warnings(); !slices.ContainsFunc(ws, func(w string) bool { return strings.Contains(w, want) }) {
+		t.Errorf("warnings %q lack %q", ws, want)
 	}
 }

@@ -70,6 +70,7 @@ const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules
 - Locations: "active", "bench:N" (0-based), "hand", "deck", "deck:top", "deck:bottom", "discard", "lost", "prizes:N", "stadium". Prefix a seat to target the other side: "p1:active".
 - In play mode you act as your own seat and only on your turn (promoting after a knockout is allowed any time). In review mode either seat may act at any time (pass seat; it defaults to the seat whose turn it is), though only the turn in progress can be ended.
 - play_trainer, use_ability and attack open a compound action: following verbs join it until end_action, another opener, or end_turn. attach, bench, evolve and retreat join only if the card's text mentions doing so; otherwise they stand alone and close it. Effects on the opponent's side (the switch of Boss's Orders, Iono's draws) join it when you pass the opponent's seat.
+- A Stadium whose card_text says it is played as a pair goes down with play_trainer naming both halves (iid and pair_iid); the playmat keeps the two as one Stadium.
 - Every write returns the events and a delta, so you rarely need to re-read the board. Warnings are advisory, never blocking.
 - Turns count both players: turn N is the first player's Nth turn and the second player's Nth turn. Logs show "T<N> <seat>"; always name the seat with a turn.
 - Quote card text from card_text, not memory.
@@ -345,6 +346,11 @@ type (
 	IIDArg struct {
 		SeatArg
 		IID string `json:"iid"`
+	}
+	PlayTrainerArg struct {
+		SeatArg
+		IID  string `json:"iid"`
+		Pair string `json:"pair_iid,omitempty" jsonschema:"For a Stadium played as a pair: the second, different print to play together with iid"`
 	}
 	BenchArg struct {
 		SeatArg
@@ -642,9 +648,9 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Attach(seat, actor, iid(in.IID), l, in.As)
 		})
 	})
-	add(s, srv, "play_trainer", "Play an Item, Supporter or Stadium from hand (Tools use attach). Opens a compound action; follow with the verbs that resolve it, then end_action.", func(ctx context.Context, in IIDArg) (any, error) {
+	add(s, srv, "play_trainer", "Play an Item, Supporter or Stadium from hand (Tools use attach). Opens a compound action; follow with the verbs that resolve it, then end_action. For a Stadium played as a pair (its card text says so), pass the second print as pair_iid; playing one half onto a lone half completes the pair.", func(ctx context.Context, in PlayTrainerArg) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
-			return g.PlayTrainer(seat, actor, iid(in.IID))
+			return g.PlayTrainerWith(seat, actor, iid(in.IID), iid(in.Pair))
 		})
 	})
 	add(s, srv, "use_ability", "Declare an Ability. Opens a compound action; follow with the verbs that resolve it, then end_action.", func(ctx context.Context, in Ability) (any, error) {

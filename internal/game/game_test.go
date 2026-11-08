@@ -339,7 +339,7 @@ func TestStadiumReplacesAndEffectsExpire(t *testing.T) {
 	}
 	must(t)(g.PlayTrainer(state.P2, cl, "p2-18"))
 	st := g.State()
-	if st.Stadium != "p2-18" || !slices.Contains(st.Sides[state.P1].Discard, "p1-17") {
+	if !slices.Equal(st.Stadium, []state.IID{"p2-18"}) || !slices.Contains(st.Sides[state.P1].Discard, "p1-17") {
 		t.Fatal("stadium not replaced into owner's discard")
 	}
 	must(t)(g.EndTurn(state.P2, cl))

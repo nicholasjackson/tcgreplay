@@ -495,3 +495,47 @@ func TestCardImageList(t *testing.T) {
 		})
 	}
 }
+
+// The pair mark is one optional core fact: a marked print converts into a
+// runtime card with the mark, an unmarked one into a card without it, and
+// a set with no marked print writes no trace of the field.
+func TestPairMark(t *testing.T) {
+	s := testSet()
+	before := mustMarshal(t, s)
+	if bytes.Contains(before, []byte("playedAsPair")) {
+		t.Fatal("a set with no marked print writes playedAsPair")
+	}
+	plain, err := s.Card("tst-010", "en")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plain.PlayedAsPair {
+		t.Error("an unmarked print converted into a marked card")
+	}
+
+	p, _ := s.Print("tst-010")
+	p.PlayedAsPair = true
+	b := mustMarshal(t, s)
+	if !bytes.Contains(b, []byte("\"regulationMark\": \"J\",\n      \"playedAsPair\": true,\n      \"images\"")) {
+		t.Errorf("playedAsPair not written in its place in the core:\n%s", b)
+	}
+	got, err := Decode(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gp, _ := got.Print("tst-010"); !gp.PlayedAsPair {
+		t.Error("the mark did not survive a round trip")
+	}
+	c, err := got.Card("tst-010", "en")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !c.PlayedAsPair {
+		t.Error("a marked print converted into an unmarked card")
+	}
+
+	p.PlayedAsPair = false
+	if after := mustMarshal(t, s); !bytes.Equal(after, before) {
+		t.Error("removing the mark did not give back the original bytes")
+	}
+}

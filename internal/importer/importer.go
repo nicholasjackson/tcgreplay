@@ -490,7 +490,7 @@ func (r *replay) line(n, parent *Node, isHead bool) {
 			if !h.keepKO {
 				r.lastKO = nil
 			}
-			r.lastStadium, r.lastDevolved, r.lastRef = "", "", nil
+			r.lastStadium, r.lastDevolved, r.lastRef = nil, "", nil
 		}
 		snap := r.save()
 		if err := h.fn(r, m, n, parent); err != nil {

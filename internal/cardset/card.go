@@ -44,6 +44,7 @@ func (p Print) Card(lang string) (*cards.Card, error) {
 		EnergyType:     p.EnergyType,
 		Effect:         t.Effect,
 		RegulationMark: p.RegulationMark,
+		PlayedAsPair:   p.PlayedAsPair,
 	}
 	c.Images = cardImages(p.Images)
 	if len(c.Images) > 0 {
