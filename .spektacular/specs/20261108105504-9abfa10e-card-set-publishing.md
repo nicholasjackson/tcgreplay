@@ -31,25 +31,25 @@ Built card sets are published to the playmat's online storage, and the playmat r
 -->
 ## Requirements
 
-- [ ] **Publish sets**
+- [x] **Publish sets**
   Built sets can be published to the playmat's online storage. Only sets that changed are uploaded, and earlier published versions of a set stay retrievable.
-- [ ] **Playmat reads card data only from published storage**
+- [x] **Playmat reads card data only from published storage**
   The playmat gets every card definition from published sets, never from the upstream card sources while running, and the released program carries none.
-- [ ] **Published changes picked up while running**
+- [x] **Published changes picked up while running**
   A running playmat picks up newly published or changed sets without a restart, both on a regular check and when an admin asks for it from the admin page.
-- [ ] **Open games keep their cards**
+- [x] **Open games keep their cards**
   A game in progress keeps the card definitions it started with until it ends, even when a newer version of a set is picked up. A game started, imported or reopened afterwards uses the current published definitions.
-- [ ] **Desktop works offline after first use**
+- [x] **Desktop works offline after first use**
   The desktop playmat keeps a local copy of the published sets it has loaded, and uses that copy when it cannot reach online storage.
-- [ ] **Card images still shown**
+- [x] **Card images still shown**
   Card images keep showing on the board as they do today, from the image source each built print names.
-- [ ] **A publish reaches every viewer**
+- [x] **A publish reaches every viewer**
   After a publish, every playmat and every request for a changed set gets the new version, and any image whose source changed is shown from the new source rather than an old copy.
-- [ ] **On-demand card data retired**
+- [x] **On-demand card data retired**
   The playmat no longer fetches, refreshes or clears card definitions from upstream sources. A one-off maintainer clean-up removes the card data left over from that approach in online storage, and the playmat ignores any left in local caches.
-- [ ] **Every built set published before the switch**
+- [x] **Every built set published before the switch**
   Every built set is published before on-demand card data is retired, so saved games, game records and imported logs from before the switch still show full card definitions.
-- [ ] **Documentation for publishing**
+- [x] **Documentation for publishing**
   The project documentation describes how sets are published and how playmats pick up a publish.
 
 <!--
@@ -79,11 +79,11 @@ Built card sets are published to the playmat's online storage, and the playmat r
 -->
 ## Acceptance Criteria
 
-- [ ] **Publish uploads only what changed**
+- [x] **Publish uploads only what changed**
   Publishing after changing one set uploads no other set's data. A previously published version of that set is still retrievable, byte for byte, after the publish.
-- [ ] **Playmat makes no upstream card requests**
+- [x] **Playmat makes no upstream card requests**
   A playmat running a full game (import a log, play turns, read card text) makes no requests to the upstream card data sources. Its card definitions match the published sets.
-- [ ] **No card data in the program**
+- [x] **No card data in the program**
   The released program contains no card definitions. A playmat started with no access to published storage and no local copy shows cards as unknown rather than with definitions.
 - [ ] **Published change appears without restart**
   After a set is published with a changed card, a running hosted playmat shows the changed card in a new game:
@@ -91,19 +91,19 @@ Built card sets are published to the playmat's online storage, and the playmat r
   - at once after an admin asks for a check from the admin page.
 
   A running desktop playmat that is online shows the changed card in a new game within 10 minutes, with no restart.
-- [ ] **Open game unaffected by a new version**
+- [x] **Open game unaffected by a new version**
   A game started before a set's new version is picked up still shows the card text it started with for the rest of that game. A game started or reopened after the pickup shows the new text.
-- [ ] **Desktop offline after first use**
+- [x] **Desktop offline after first use**
   A desktop playmat that has loaded sets once, then started with no network, plays a game with full card text from its local copy.
 - [ ] **Images still shown**
   On a hosted board, a Delta Reign card with an image source shows its image. Where the hosted image copy exists, the image is served from the content delivery network.
 - [ ] **Publish reaches every viewer**
   After a publish that changes a set, a fresh request for that set's current version, through the content delivery network, returns the new version, not the old one. An image whose source changed in that publish is shown from the new source.
-- [ ] **Old card-data path gone**
+- [x] **Old card-data path gone**
   The admin page no longer offers to clear card definitions, while clearing images is still offered. After the maintainer clean-up, online storage holds no card data from the on-demand approach. A playmat whose local cache still holds card data from that approach does not use it, and its definitions match the published sets.
-- [ ] **Existing records still work**
+- [x] **Existing records still work**
   A game record saved and a battle log imported before the switch, using cards from sets other than Delta Reign, load after the switch with full card text for every card.
-- [ ] **Docs describe publishing**
+- [x] **Docs describe publishing**
   The documentation describes publishing a set and how quickly playmats pick it up.
 
 <!--

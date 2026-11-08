@@ -162,3 +162,13 @@
   - User answered: wait for their deploy steps; don't override. Run paused: no child running. paired-stadiums worktree exists (unstarted). On resume: close publishing's 1e0644d4/0cd658d7 via a child (triggers wrap-up), merge, then start paired-stadiums.
 - 2026-11-08: user turned off App Platform Autodeploy in DO console (equivalent to doctl apps update deploy_on_push:false). Remaining for 1e0644d4: push main / first Deploy playmat run, confirm 'card sets: loaded'. Then 0cd658d7 cleanup-legacy.
 - 2026-11-08: user ran sets cleanup-legacy -delete: 401 tcgdex/ objects deleted, re-run 0 (0cd658d7 done). main not pushed yet (ahead 12) — first Deploy playmat run still pending for 1e0644d4.
+- 2026-11-08: main pushed by user; Publish card sets OK (206 unchanged); Deploy playmat first failed (TCGREPLAY_APP_ID invalid uuid), user fixed secret, re-run success: deployment 80f3ccd9-c690-439c-ae03-3423fa423b06 ACTIVE 18:42 UTC. 1e0644d4 now done. Starting child to close publishing's human tasks + wrap-up.
+- publishing close child QUESTION: 1e0644d4 criterion 3 'hand-started deploy succeeds' not met (only a hand re-run of push run, no workflow_dispatch). Answered option 2 (accept, re-run counts) under user's 'just let it run' — avoids a deploy that drops games.
+- card-set-publishing: all 17 tasks closed, wrap-up done, merged again; status done. Spec 8/11 ACs (3 need live manual checks MR1-3). Starting paired-stadiums child.
+- paired-stadiums QUESTION at human task 'Supply a real Stadium pair battle log' (1ac769ec): 6/9 done. Options: supply log or defer (rec). Rollout note: pre-change playmats can't decode rebuilt me06, keep old catalogue, stop taking updates until upgraded. Put to user.
+  - User answered: defer (no pair log available).
+  - User follow-up: 'You might need to make up a log' -> switch from defer to a synthetic log: importer recognises plausible shapes (two consecutive Stadium-spot lines for 2 different Legendary halves; tolerate one line naming it), fixture clearly marked synthetic, verify against real log later.
+  - User: 'you have to play each stadium half over two turns' — conflicts with printed rule (combine 2 from hand as 1 Stadium). Asking user to clarify before relaying.
+  - User answered: same turn, together (printed rule stands). No change sent to child.
+- paired-stadiums: DONE (4ae4fb7) and MERGED (d0ef766). 9/9 tasks (importer on synthetic log, accepted shortfall). Spec 16/19. Knowledge: gotchas/stadium-pair-log-format-unverified.md (new). Proposed follow-up spec: verify Stadium-pair import against a real TCG Live log.
+- EPIC IMPLEMENT RUN COMPLETE: 3/3 done. main ahead of origin by 2 (not pushed).

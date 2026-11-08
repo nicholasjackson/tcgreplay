@@ -213,7 +213,7 @@ Tests are standard Go tests beside the code they change, plus the board's existi
 
 **Validation point**: The state and verb tests pass with made-up pair-played Stadiums: a pair is played, completed, replaced, discarded and undone as one, and each warning shows without blocking. Removing the mark from the test card makes it an ordinary Stadium. The existing corpus, record and board tests still pass.
 
-#### - [ ] Task: Pair mark in card data
+#### - [x] Task: Pair mark in card data
 **Id:** ba448b36-faa3-4065-b50d-62412c2bec0f
 **Repo:** tcgreplay
 **Depends on:** none
@@ -224,12 +224,12 @@ Adds an optional "played as a pair" mark to each print in the built card-set for
 *Technical detail:* [context.md#task-pair-mark-in-card-data](./context.md#task-pair-mark-in-card-data)
 
 **Acceptance criteria**:
-- [ ] A print marked as played as a pair becomes a runtime card with the mark, and an unmarked print becomes one without it.
-- [ ] A correction can set the mark on a print, and the import keeps it on every re-import.
-- [ ] A marked card's text is its data text alone, with no line generated from the mark, and an unmarked card's text is unchanged.
-- [ ] Existing built sets are unchanged, byte for byte, by the new field.
+- [x] A print marked as played as a pair becomes a runtime card with the mark, and an unmarked print becomes one without it.
+- [x] A correction can set the mark on a print, and the import keeps it on every re-import.
+- [x] A marked card's text is its data text alone, with no line generated from the mark, and an unmarked card's text is unchanged.
+- [x] Existing built sets are unchanged, byte for byte, by the new field.
 
-#### - [ ] Task: Stadium spot holds a pair
+#### - [x] Task: Stadium spot holds a pair
 **Id:** 4053fd2f-5557-402a-82f2-637258dc41d2
 **Repo:** tcgreplay
 **Depends on:** none
@@ -240,13 +240,13 @@ Lets the game state's Stadium spot hold two cards as one Stadium. A move can car
 *Technical detail:* [context.md#task-stadium-spot-holds-a-pair](./context.md#task-stadium-spot-holds-a-pair)
 
 **Acceptance criteria**:
-- [ ] Two cards moved into an empty Stadium spot together occupy it as one Stadium, and every card is still in exactly one place.
-- [ ] A card can join a spot holding exactly one card as its pair, and a plain move into an occupied spot is still refused.
-- [ ] A pair moved out of the spot in one step puts each half on its owner's side.
-- [ ] The board view shows the Stadium with its second half nested in it, and existing readers of the Stadium still see the first half.
-- [ ] Every existing battle log, game record and saved game still replays to the same board.
+- [x] Two cards moved into an empty Stadium spot together occupy it as one Stadium, and every card is still in exactly one place.
+- [x] A card can join a spot holding exactly one card as its pair, and a plain move into an occupied spot is still refused.
+- [x] A pair moved out of the spot in one step puts each half on its owner's side.
+- [x] The board view shows the Stadium with its second half nested in it, and existing readers of the Stadium still see the first half.
+- [x] Every existing battle log, game record and saved game still replays to the same board.
 
-#### - [ ] Task: Play, replace and discard Stadium pairs
+#### - [x] Task: Play, replace and discard Stadium pairs
 **Id:** dcf69aa9-ae33-4b60-b152-19246998167e
 **Repo:** tcgreplay
 **Depends on:**
@@ -259,13 +259,13 @@ Teaches the playmat's play and move actions the pair rule, read from the card's 
 *Technical detail:* [context.md#task-play,-replace-and-discard-stadium-pairs](./context.md#task-play,-replace-and-discard-stadium-pairs)
 
 **Acceptance criteria**:
-- [ ] Playing two different prints of a pair-played Stadium together puts both in the Stadium spot as one Stadium, in one action.
-- [ ] Playing one half alone, and then the other, completes the pair, and one undo removes both when the second joined the first's play.
-- [ ] Playing a different Stadium over a pair puts both halves in their owner's discard pile. Undoing it returns both to the Stadium spot, and the log shows one line for the pair's move.
-- [ ] Discarding a pair from the Stadium spot moves both halves in one logged action, and undoing it returns both.
-- [ ] A lone half, a pair of two identical prints, and a Stadium played while one of the same name is in play each show a warning while the action is still carried out. The lone-half and identical-print warnings last only while the spot holds them.
-- [ ] Removing the mark from the test Stadium makes it behave as an ordinary Stadium, with no program change.
-- [ ] Completing a pair is not reported as playing a second Stadium that turn.
+- [x] Playing two different prints of a pair-played Stadium together puts both in the Stadium spot as one Stadium, in one action.
+- [x] Playing one half alone, and then the other, completes the pair, and one undo removes both when the second joined the first's play.
+- [x] Playing a different Stadium over a pair puts both halves in their owner's discard pile. Undoing it returns both to the Stadium spot, and the log shows one line for the pair's move.
+- [x] Discarding a pair from the Stadium spot moves both halves in one logged action, and undoing it returns both.
+- [x] A lone half, a pair of two identical prints, and a Stadium played while one of the same name is in play each show a warning while the action is still carried out. The lone-half and identical-print warnings last only while the spot holds them.
+- [x] Removing the mark from the test Stadium makes it behave as an ordinary Stadium, with no program change.
+- [x] Completing a pair is not reported as playing a second Stadium that turn.
 
 ### Milestone 2: Players and the assistant can play a pair
 
@@ -273,7 +273,7 @@ Teaches the playmat's play and move actions the pair rule, read from the card's 
 
 **Validation point**: The MCP round-trip test plays a pair with `play_trainer`. The board tests show both halves in the spot at desktop and phone widths and complete a pair by dragging, with the lone-half warning shown and then gone.
 
-#### - [ ] Task: Assistant plays Stadium pairs
+#### - [x] Task: Assistant plays Stadium pairs
 **Id:** 8bcd43bb-ce27-43e9-8a8a-5a0c35885e50
 **Repo:** tcgreplay
 **Depends on:**
@@ -285,12 +285,12 @@ Gives the assistant's play-Trainer tool an optional second card, so the assistan
 *Technical detail:* [context.md#task-assistant-plays-stadium-pairs](./context.md#task-assistant-plays-stadium-pairs)
 
 **Acceptance criteria**:
-- [ ] The assistant can play both halves of a pair-played Stadium in one play action.
-- [ ] The card text the assistant reads for a pair-played Stadium includes the pair rule, taken from the card's data.
-- [ ] The assistant's playing instructions explain how to play a pair.
-- [ ] Playing a single Trainer with the tool works exactly as before.
+- [x] The assistant can play both halves of a pair-played Stadium in one play action.
+- [x] The card text the assistant reads for a pair-played Stadium includes the pair rule, taken from the card's data.
+- [x] The assistant's playing instructions explain how to play a pair.
+- [x] Playing a single Trainer with the tool works exactly as before.
 
-#### - [ ] Task: Board shows and plays Stadium pairs
+#### - [x] Task: Board shows and plays Stadium pairs
 **Id:** db242fa7-8da4-45b4-854d-2be909c1ecab
 **Repo:** tcgreplay
 **Depends on:**
@@ -302,10 +302,10 @@ Shows a Stadium pair on the board as one Stadium with both halves visible, at de
 *Technical detail:* [context.md#task-board-shows-and-plays-stadium-pairs](./context.md#task-board-shows-and-plays-stadium-pairs)
 
 **Acceptance criteria**:
-- [ ] On desktop and phone widths, the board shows both halves of a Stadium pair in the Stadium spot, and either can be opened in the zoom.
-- [ ] Dragging the second half onto a lone first half completes the pair.
-- [ ] The single-half warning shows while the first half is alone and is gone once the pair is complete.
-- [ ] A single Stadium still shows and plays as before, including replacing one Stadium with another by dragging.
+- [x] On desktop and phone widths, the board shows both halves of a Stadium pair in the Stadium spot, and either can be opened in the zoom.
+- [x] Dragging the second half onto a lone first half completes the pair.
+- [x] The single-half warning shows while the first half is alone and is gone once the pair is complete.
+- [x] A single Stadium still shows and plays as before, including replacing one Stadium with another by dragging.
 
 ### Milestone 3: Delta Reign's Legendary Stadiums play as pairs everywhere
 
@@ -313,7 +313,7 @@ Shows a Stadium pair on the board as one Stadium with both halves visible, at de
 
 **Validation point**: The committed-data test shows every Delta Reign Legendary Stadium print marked and carrying the rule text, and the set check passes. A real pair log imports cleanly as part of the corpus, or its deferral is recorded. The documentation covers pair play. On the hosted playmat, the three Legendary Stadiums read with the rule and play as pairs.
 
-#### - [ ] Task: Mark Delta Reign's Legendary Stadiums
+#### - [x] Task: Mark Delta Reign's Legendary Stadiums
 **Id:** ef13bcef-35f2-46e9-955c-d4333ef954e9
 **Repo:** tcgreplay
 **Depends on:**
@@ -325,12 +325,12 @@ Records in Delta Reign's corrections that each print of Legendary Pyroduct, Summ
 *Technical detail:* [context.md#task-mark-delta-reign's-legendary-stadiums](./context.md#task-mark-delta-reign's-legendary-stadiums)
 
 **Acceptance criteria**:
-- [ ] Every Delta Reign print of Legendary Pyroduct, Summit and Trench is marked as played as a pair in the built set, and its English text includes the pair rule.
-- [ ] The marks come from recorded corrections with reasons, and survive a re-import.
-- [ ] Delta Reign's report has nothing open, and the set check passes over every committed set.
-- [ ] No other Delta Reign card changes.
+- [x] Every Delta Reign print of Legendary Pyroduct, Summit and Trench is marked as played as a pair in the built set, and its English text includes the pair rule.
+- [x] The marks come from recorded corrections with reasons, and survive a re-import.
+- [x] Delta Reign's report has nothing open, and the set check passes over every committed set.
+- [x] No other Delta Reign card changes.
 
-#### - [ ] Task: Supply a real Stadium pair battle log
+#### - [x] Task: Supply a real Stadium pair battle log
 **Id:** 1ac769ec-378c-4977-86d6-b4dfbf31b8bc
 **Repo:** tcgreplay
 **Depends on:** none
@@ -341,9 +341,9 @@ The user exports a TCG Live battle log from a game in which a player plays a Leg
 *Technical detail:* [context.md#task-supply-a-real-stadium-pair-battle-log](./context.md#task-supply-a-real-stadium-pair-battle-log)
 
 **Acceptance criteria**:
-- [ ] A real TCG Live battle log that plays a Legendary Stadium pair, and its decklist, are available to the implementer, or the user has confirmed none is available yet.
+- [x] A real TCG Live battle log that plays a Legendary Stadium pair, and its decklist, are available to the implementer, or the user has confirmed none is available yet.
 
-#### - [ ] Task: Import battle logs with a Stadium pair
+#### - [x] Task: Import battle logs with a Stadium pair
 **Id:** 34004346-c1aa-404f-92d0-7875ce7f8773
 **Repo:** tcgreplay
 **Depends on:**
@@ -357,10 +357,10 @@ Makes the TCG Live log importer replay a Stadium pair into the Stadium spot as o
 
 **Acceptance criteria**:
 - [ ] Importing the real battle log succeeds with no problems reported, and the board then shows the pair in the Stadium spot (or both halves in the discard where the log replaces it).
-- [ ] Every existing battle log in the test corpus imports exactly as before, for every seed.
-- [ ] If no real log was available, the requirement is recorded as deferred to a follow-up, and the importer still imports every existing log.
+- [x] Every existing battle log in the test corpus imports exactly as before, for every seed.
+- [x] If no real log was available, the requirement is recorded as deferred to a follow-up, and the importer still imports every existing log.
 
-#### - [ ] Task: Pair play documentation
+#### - [x] Task: Pair play documentation
 **Id:** e53f2613-04cd-468b-96c9-5169e90a2592
 **Repo:** tcgreplay
 **Depends on:**
@@ -374,9 +374,9 @@ Documents pair-played Stadiums: for players, how to play and complete a pair on 
 *Technical detail:* [context.md#task-pair-play-documentation](./context.md#task-pair-play-documentation)
 
 **Acceptance criteria**:
-- [ ] The player-facing documentation describes playing a pair-played Stadium on the board, including completing a lone half.
-- [ ] The design documentation describes how the assistant plays a pair and how the game records it.
-- [ ] The card-set guide describes marking a card as played as a pair, with an example correction, and says a marked print must also carry its printed pair rule in its effect text, recorded by correction if the sources lack it.
+- [x] The player-facing documentation describes playing a pair-played Stadium on the board, including completing a lone half.
+- [x] The design documentation describes how the assistant plays a pair and how the game records it.
+- [x] The card-set guide describes marking a card as played as a pair, with an example correction, and says a marked print must also carry its printed pair rule in its effect text, recorded by correction if the sources lack it.
 
 ## Open Questions
 
@@ -394,3 +394,177 @@ Documents pair-played Stadiums: for players, how to play and complete a pair on 
 - **A dedicated "play as pair" control on the board.** Pairs are played on the board by dragging the two halves in turn. A menu item or multi-select for playing both at once is not added.
 - **Fixing the board's 8th bench-slot hint for Stadiums.** The board reads an `effect` field that `/api/card` never sends (found during discovery). It is unrelated to pairs and is left for a separate fix.
 - **Rarity, alternate prints and other card fields.** Only the pair mark is added to the format.
+
+## Changelog
+
+
+### 2026-11-08 — Task: Pair mark in card data
+
+**What was done**: Added the optional, language-independent `playedAsPair` field to `cardset.Print` (after `regulationMark`, `omitempty`, format stays 1) and to `cards.Card`, and `Print.Card` copies it. `Card.Text()` is unchanged. The test pool gained two made-up pair-played Stadium prints, `tst-10` and `tst-11` "Twin Peak", each carrying its pair rule in its effect text.
+
+**Deviations**: None. The existing correction apply already creates an absent member and decodes strictly, so `internal/cardset/corrections.go` needed no change. `internal/cards/cards_test.go` did not exist and was added.
+
+**Files changed**:
+- `internal/cardset/format.go`
+- `internal/cardset/card.go`
+- `internal/cardset/format_test.go`
+- `internal/cardset/corrections_test.go`
+- `internal/cards/cards.go`
+- `internal/cards/cards_test.go`
+- `internal/cards/cardstest/cardstest.go`
+
+**Discoveries**: `cards.Card.Text()` renders a Trainer's kind as `Trainer: Stadium`. The Twin Peak fixtures sit after `sve-006` in the pool so gofmt keeps the existing entries' alignment.
+
+### 2026-11-08 — Task: Stadium spot holds a pair
+
+**What was done**: `state.State.Stadium` is now `[]IID` (at most two, first played first). `MovePayload` gained `Pair` (the other half moves in the same event, each to its owner's side) and the `as: "pair"` role (`state.AsPair`, join a lone card in the spot). `applyPairMove` validates and applies a pair move as the two single moves in turn; a plain move into an occupied spot is still refused, and a pair cannot go into a stack or prize slot. `Find`, `remove`, `Clone`, `Locations` and `Check` (new "more than a pair" problem) treat the spot as a list. The board view's `stadium` is a `StadiumView` that embeds the first half's `CardView` and nests the second as `stadium.pair`. `describe` writes one line naming both halves, `touched` highlights both, and `findCard` on the board finds the nested half. `PlayTrainer`, `benchWarnings` and the importer got compile fixes only, keeping today's behaviour.
+
+**Deviations**: The plan said a Stadium-bound move with a role other than `""`/`pair` is an error. The goal reviewer pointed out that the state used to ignore such a role, so a saved game with a `move` to the Stadium carrying one would stop replaying. The state now ignores a stack role on a Stadium move as it always did, and only `pair` changes the rule. The importer's attack-discard check uses a small `firstOf` helper.
+
+**Files changed**:
+- `internal/state/state.go`
+- `internal/state/types.go`
+- `internal/state/events.go`
+- `internal/state/apply.go`
+- `internal/state/invariants.go`
+- `internal/state/view.go`
+- `internal/state/apply_test.go`
+- `internal/game/reads.go`
+- `internal/game/ui.go`
+- `internal/game/verbs.go`
+- `internal/game/describe_test.go`
+- `internal/game/game_test.go`
+- `internal/importer/handlers.go`
+- `internal/importer/importer_test.go`
+- `internal/webui/webtest/webtest_test.go`
+- `web/src/lib/actions.js`
+
+**Discoveries**: `State.Apply` is not atomic (a failed event may leave the state half changed); callers apply to a clone, so a pair move can be applied as two single moves once it is validated. `state.Check()` expects 60 cards a side, so state tests build full decks.
+
+### 2026-11-08 — Task: Play, replace and discard Stadium pairs
+
+**What was done**: `Game.PlayTrainer` now delegates to the new `PlayTrainerWith(seat, actor, iid, pair)`. Given two halves, it plays them in one move event after replacing the spot. Given one pair-played half while the spot holds a lone half of the same name and owner, it completes the pair (`as: "pair"`) and joins that half's play action while it is still open. Otherwise it replaces the spot, with a pair going to its owner's discard in one event. `Game.Move` moves both halves when either leaves a two-card spot, and completes a lone half on the same terms. New warnings: standing lone-half and identical-print warnings (`stadiumWarnings`, computed from state and shown in every phase), a per-play same-name warning for any Stadium, and a mismatch warning for a pair that is not two halves of one pair-played Stadium. The "played N Stadiums this turn" count ignores a completion.
+
+**Deviations**: Joining the open action needed a hook in `internal/game/game.go`, which the plan did not list: `actionSpec.joinOpen`, a predicate run under the lock in `runLocked`, which lets an opener carry on the seat's open action without closing it. A `pair_iid` whose card is not a Stadium is refused for either card when the card is known.
+
+**Files changed**:
+- `internal/game/game.go`
+- `internal/game/verbs.go`
+- `internal/game/reads.go`
+- `internal/game/stadium_pair_test.go`
+
+**Discoveries**: The Stadium count in `turnWarnings` now counts only events that move a card into the spot (not as pair), instead of every event of a Stadium trainer action. The test deck `pairDeck` is `testDeck` with `TST 10`/`TST 11` Twin Peak, because `cardstest.Resolve` maps any TST number to `tst-N`.
+
+### 2026-11-08 — Task: Assistant plays Stadium pairs
+
+**What was done**: MCP `play_trainer` now takes a `PlayTrainerArg` with an optional `pair_iid` and calls `PlayTrainerWith`. Its description and the server instructions (one line after the compound-action line) explain pair play, and the `play-game` guide has a "Stadium pairs" bullet in the player's-turns section. `card_text` is unchanged: the pair rule reaches the assistant through the card's effect text in the data.
+
+**Deviations**: The new MCP tests are in a new file, `internal/mcpserver/pair_test.go`, with its own `pairServer` helper (a manager on the `cardstest` pool, a review-mode game), instead of in `server_test.go`.
+
+**Files changed**:
+- `internal/mcpserver/server.go`
+- `internal/mcpserver/pair_test.go`
+- `internal/guides/play-game.md`
+
+**Discoveries**: `wait_test.go`'s `cardGame` replaces `tst-10` with Eri in its own copy of the pool, so it does not clash with the Twin Peak fixture.
+
+### 2026-11-08 — Task: Board shows and plays Stadium pairs
+
+**What was done**: The board's `play_trainer` action takes `pair_iid` (covered by the held/decider lock check) and calls `PlayTrainerWith`. The Stadium spot (`Strip.svelte`) draws a pair's two halves, each its own zoomable card: fanned in a widened spot on desktop and tablet, side by side on a phone. Dropping the second half from the hand onto a lone half completes the pair through the existing `play_trainer` drop. The board test deck gained the two Twin Peak prints as `p1-59`/`p1-60` (`webtest.TwinPeak`). New Playwright tests cover dragging both halves with the lone-half warning shown and then gone, zooming each half, and a phone-only check that a seeded pair is on screen and clear of the Active. A Go test covers the board action with `pair_iid` and with the halves played in turn.
+
+**Deviations**:
+- The Twin Peaks start in the deck, not in p1's hand as the plan said, so the fixed position (8 cards in hand, deck counts, card numbers) and every existing e2e test stay unchanged. Pair tests move them to the hand first.
+- `web/src/app.css`: clicking a Stadium on a mouse board never opened the zoom, for a single Stadium too. The shared hover rule set `position: relative` on `.stadium` (the `:has()` argument's specificity beat the scoped `position: absolute`), so the spot jumped from under the pointer on hover. The Stadium now changes only its `z-index` on hover.
+- `web/src/App.svelte`: the toast layer is `pointer-events: none`. On a phone the lone-half warning toast lay over the hand card the player had to drag next.
+
+**Files changed**:
+- `internal/webui/actions.go`
+- `internal/webui/pair_test.go`
+- `internal/webui/webtest/webtest.go`
+- `internal/webui/webtest/webtest_test.go`
+- `web/src/components/Strip.svelte`
+- `web/src/lib/actions.js`
+- `web/src/app.css`
+- `web/src/App.svelte`
+- `web/e2e/drag.spec.js`
+- `web/e2e/phone.spec.js`
+
+**Discoveries**: The hand fans each newer card over the one before, so an e2e drag from a card's centre can pick up the next card: drag the most recently added card first. A decklist may repeat a section header (a second `Trainer: 2` after Energy) to number cards last.
+
+### 2026-11-08 — Task: Mark Delta Reign's Legendary Stadiums
+
+**What was done**: Added six `/playedAsPair` corrections, with reasons, to `cardsets/corrections/me06.json`, one for each Legendary Pyroduct, Summit and Trench print (me06-094 to me06-099), next to their existing rule-text corrections. Delta Reign was rebuilt with `tcgreplay sets import me06`. The only change to the built set is `"playedAsPair": true` on those six prints, the report has nothing open, and a second import gives identical bytes. `TestCommittedDeltaReign` now checks that every Legendary Stadium is marked, that no other print is, and that six reasoned pair-mark corrections exist.
+
+**Deviations**: None. The report file was unchanged by the rebuild.
+
+**Files changed**:
+- `cardsets/corrections/me06.json`
+- `cardsets/sets/me06.json`
+- `internal/cardset/committed_test.go`
+
+**Discoveries**: Open question on rollout, resolved against the landed loader (`internal/catalog/loader.go` `check`/`download`). A playmat built before `playedAsPair` decodes built sets strictly, so it cannot decode the rebuilt `me06`. The download then fails as a whole, and the loader keeps its current snapshot and local copy, logging "check failed; keeping version …". Old playmats therefore keep their whole catalogue (including the previous Delta Reign) but take no later card-set updates until they are upgraded. Only an old binary with no local copy at all would start empty. The hosted playmat redeploys on the same merge. No stop was needed.
+
+### 2026-11-08 — Task: Supply a real Stadium pair battle log
+
+**What was done**: A person's task. The maintainer confirmed, through the epic orchestrator, that no real TCG Live battle log with a Legendary Stadium pair is available yet. No log was added. The confirmation is recorded in the run's working context.
+
+**Deviations**: None. The criterion allows the user's confirmation that no log is available.
+
+**Files changed**:
+- none
+
+**Discoveries**: None of the 13 logs in `testdata/logs/` contains a Legendary card.
+
+### 2026-11-08 — Task: Import battle logs with a Stadium pair
+
+**What was done**: No real TCG Live log with a Legendary Stadium pair exists. The user first chose to defer, then changed the answer to building against a made-up log, which is what was done. The importer recognises a pair from log lines only, never from the card's pair mark (`playStadium` in `internal/importer/handlers.go`):
+- two consecutive `<player> played <name> to the Stadium spot.` headlines by the same player, the second onto that player's lone card of the same name, join as `as: "pair"`;
+- one line naming the same Stadium twice (`<name> and <name>`) plays both halves in one pair move;
+- two plays of the same print, which the log's card codes reveal, are not a pair: the second replaces the first, as before, with an importer warning;
+- a lone half imports as a single Stadium, as before, and the playmat's standing warning flags it from card data.
+
+Replacing a pair sends both halves to their owner's discard in one move. `lastStadium` became the list of replaced cards, so their `discarded <name>` sublines, or a `discarded 2 cards` bullet list, count as already done. An attack discarding a pair moves both halves, and the other half's line counts as done. `iidsOf` covers a pair move's second card. The new fixture, `testdata/logs/synthetic_2026-11-08_ledjo23_legendary-summit-pair.txt`, is the LeDjo23 donk log with a coded Legendary Summit pair (me6_96 and me6_97) and its replacement by Gravity Mountain. It is in `testdata/index.json` marked `"synthetic": true` with a "SYNTHETIC, NOT A REAL TCG LIVE LOG" note, and the index description says synthetic entries are not real games.
+
+**Deviations**: Accepted shortfall. Criterion 1, which needs the real log to import, is left unticked: no real log exists, and the user asked for a synthetic stand-in with that criterion unticked. The goal check ran out of retries on it and the user's answer was recorded as `accept`. Manual follow-up: verify the importer against the first real TCG Live log with a Legendary Stadium pair, and add that log to the corpus in place of, or beside, the synthetic one. The battle-log format has no comment syntax, so the fixture is marked synthetic by its file name and its index entry, not by a header.
+
+**Files changed**:
+- `internal/importer/handlers.go`
+- `internal/importer/replay.go`
+- `internal/importer/importer.go`
+- `internal/importer/repair.go`
+- `internal/importer/importer_test.go`
+- `internal/game/import_test.go`
+- `testdata/logs/synthetic_2026-11-08_ledjo23_legendary-summit-pair.txt`
+- `testdata/index.json`
+
+**Discoveries**: The pair-log line shapes are assumed and unverified (knowledge entry written). `internal/game`'s `TestImportCorpus` globs every file in `testdata/logs/`, so the synthetic log runs there too.
+
+### 2026-11-08 — Task: Pair play documentation
+
+**What was done**: Documented pair-played Stadiums in four places:
+- **Players** (`site/src/content/docs/workflows/play-game.md`): drag one half onto the Stadium spot and then the other onto it. A warning shows until the pair is complete, a Stadium played over a pair discards both halves, and undo returns both.
+- **Developers** (`TCG Review Playmat Design and Build Plan.md`): the zones table (the Stadium spot holds up to two cards), the move event's `pair` field and `as: "pair"` role, `play_trainer(iid, pair_iid?)` and a "Stadium pairs" contract row, the Playmat UI, and an importer hazard noting that the pair log shape is assumed and backed only by a synthetic fixture.
+- **Maintainers** (`cardsets/README.md`): the `playedAsPair` field in the built format, an example `/playedAsPair` correction, and the rule that a marked print must carry its printed pair rule in its effect text, recorded as a `/text/en/effect` correction when the sources lack it.
+- **Rollout** (`cardsets/README.md`, new section "A new field in the format reaches older playmats as an error"): playmats built before `playedAsPair` cannot decode the rebuilt `me06`. They keep their catalogue but take no further card-set updates until upgraded. The hosted playmat redeploys on the same merge.
+
+**Deviations**: The design document is not in the task's scope list, but the plan names it as the design documentation. `README.md` needed no change. The rollout note was added at the orchestrator's request.
+
+**Files changed**:
+- `site/src/content/docs/workflows/play-game.md`
+- `TCG Review Playmat Design and Build Plan.md`
+- `cardsets/README.md`
+
+**Discoveries**: The docs agree with the assistant's `play-game` guide and the server instructions. `make site-test` builds the site and runs its browser suite (118 passed).
+
+### 2026-11-08 — Spec reconciliation
+
+**What was done**: 16 of the spec's 19 Requirements and Acceptance Criteria checkboxes are ticked. Three are left unticked:
+- **Requirement "Import logs with a pair"** and **acceptance criterion "Battle log with a pair imports"**: no real TCG Live log with a Legendary Stadium pair exists. The importer was built and tested against a clearly marked synthetic log, at the user's request. **Manual follow-up:** verify against the first real TCG Live log with a pair (test plan item 3; knowledge `gotchas/stadium-pair-log-format-unverified.md`).
+- **Acceptance criterion "Delta Reign's Legendary Stadiums play as pairs"** (on the hosted playmat): the data is marked and every automated check passes, but the hosted check can only happen after the merge publishes the rebuilt `me06` and redeploys the playmat (test plan items 1 and 2).
+
+**Deviations**: The spec text was not changed. Only checkboxes were flipped, and this note stands in for a reconciliation note in the spec.
+
+**Files changed**:
+- none (spec store only)
+
+**Discoveries**: None.

@@ -1,1 +1,0 @@
-- All agent tasks done. Open: 1e0644d4 (post-merge doctl apps update + first deploy), 0cd658d7 (cleanup-legacy after deploy). Feature wrap-up (test_plan, feature changelog, reconcile_spec) runs in the run that completes the last open task.

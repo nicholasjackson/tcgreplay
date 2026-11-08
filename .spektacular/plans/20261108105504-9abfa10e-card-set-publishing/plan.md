@@ -336,7 +336,7 @@ Today every push to `main` redeploys the hosted playmat and drops every open gam
 - [x] A deploy can also be started by hand.
 - [x] The deploy credential is read from a repository secret, never from a file.
 
-#### - [ ] Task: Set up publishing secrets and the published sets address
+#### - [x] Task: Set up publishing secrets and the published sets address
 **Id:** 1e0644d4-e712-47f3-9ec8-46bd7687f0dd
 **Repo:** tcgreplay
 **Depends on:**
@@ -349,8 +349,8 @@ The maintainer adds the storage keys, the CDN purge token, a deploy token and th
 *Technical detail:* [context.md#task-set-up-publishing-secrets-and-the-published-sets-address](./context.md#task-set-up-publishing-secrets-and-the-published-sets-address)
 
 **Acceptance criteria**:
-- [ ] The repository holds every secret the publish and deploy workflows read.
-- [ ] The bucket's public CDN address is recorded for the playmat's default.
+- [x] The repository holds every secret the publish and deploy workflows read.
+- [x] The bucket's public CDN address is recorded for the playmat's default.
 - [ ] A hand-started deploy succeeds.
 
 #### - [x] Task: Publish every built set
@@ -560,7 +560,7 @@ Brings the project's knowledge base in line with the new card data path, through
 - [x] The knowledge base describes how card sets are published and loaded, and how open games keep their cards.
 - [x] No knowledge entry still describes fetching, refreshing or clearing card definitions on demand as current behaviour.
 
-#### - [ ] Task: Remove legacy card data from the bucket
+#### - [x] Task: Remove legacy card data from the bucket
 **Id:** 0cd658d7-82c2-448b-8897-4e5730f65919
 **Repo:** tcgreplay
 **Depends on:**
@@ -573,8 +573,8 @@ Once the playmat reading published sets is deployed and working, the maintainer 
 *Technical detail:* [context.md#task-remove-legacy-card-data-from-the-bucket](./context.md#task-remove-legacy-card-data-from-the-bucket)
 
 **Acceptance criteria**:
-- [ ] The bucket holds no card data from the on-demand approach.
-- [ ] Image copies and published sets are still in the bucket.
+- [x] The bucket holds no card data from the on-demand approach.
+- [x] Image copies and published sets are still in the bucket.
 
 ## Open Questions
 
@@ -898,5 +898,30 @@ Once the playmat reading published sets is deployed and working, the maintainer 
 
 **Files changed**:
 - none in the code (knowledge store only)
+
+**Discoveries**: None.
+
+### 2026-11-08 — Task: Set up publishing secrets and the published sets address
+
+**What was done**: Done by the maintainer (a person's task), reported through the orchestrator; no agent touched GitHub settings, DigitalOcean or the bucket. All seven Actions secrets the workflows read are set (`gh secret list`: `DIGITALOCEAN_ACCESS_TOKEN`, `TCGREPLAY_APP_ID`, `TCGREPLAY_SPACES_ENDPOINT`, `_BUCKET`, `_KEY`, `_SECRET`, `_CDN_TOKEN`). The CDN address `https://tcgreplay.ams3.cdn.digitaloceanspaces.com` was given and is the built-in default (`defaultCardsetsURL` in `cmd/tcgreplay/main.go`, `…/cardsets/`). After `main` was pushed, "Publish card sets" (run 42510960904) succeeded with "unchanged: 206 sets" and "manifest unchanged", which proves the Spaces secrets. "Deploy playmat" (run 42510960863) succeeded on its second attempt: deployment `80f3ccd9-c690-439c-ae03-3423fa423b06` ACTIVE at 18:42 UTC.
+
+**Deviations**:
+- Autodeploy was switched off in the DigitalOcean console (App Platform → Settings → Autodeploy) instead of running `doctl apps update <app-id> --spec .do/app.yaml`, because the maintainer has no doctl. It is the same change: the only non-comment difference in `.do/app.yaml` is `deploy_on_push: false`, so a later `doctl apps update --spec` keeps it off.
+- The first attempt of the deploy run failed with `invalid uuid` because `TCGREPLAY_APP_ID` held the wrong value. The maintainer corrected the secret and re-ran the run by hand (attempt 2, started 18:39:42Z by nicholasjackson), which succeeded.
+- **Goal check: accepted shortfall.** Criteria 1 and 2 were judged met. Criterion 3, "A hand-started deploy succeeds", is left unticked: three reviews in round 1 judged it not met, because the only deploy run's event is `push` (a re-run keeps its original trigger) and no `workflow_dispatch` run exists. The maintainer, through the orchestrator, accepted the shortfall. Criterion 3 rests on the maintainer's hand re-run (a person started it and it succeeded with the corrected secrets), not on a `workflow_dispatch` run. No further deploy was started, because a code deploy drops every open game.
+
+**Files changed**:
+- none (repository settings and hosting configuration only)
+
+**Discoveries**: A GitHub Actions re-run keeps the original run's `event` (here `push`). Only Actions → Run workflow produces a `workflow_dispatch` run. App Platform's console Autodeploy toggle is the same setting as the app spec's `deploy_on_push`. A `doctl apps create-deployment` failing with `invalid uuid` means `TCGREPLAY_APP_ID` is not the app's id.
+
+### 2026-11-08 — Task: Remove legacy card data from the bucket
+
+**What was done**: Done by the maintainer (a person's task), reported through the orchestrator, after the switch to published sets was deployed (deployment `80f3ccd9`, 18:42 UTC). `tcgreplay sets cleanup-legacy` against bucket `tcgreplay` listed 401 objects, all under `tcgdex/`. `-delete` deleted all 401 with no refusals, and a re-run listed 0. The published manifest still answers 200 `application/json` on the CDN afterwards. Image copies under `images/` are outside the command's only prefix, `tcgdex/`, as the command's tests assert. No agent listed or wrote to the bucket.
+
+**Deviations**: None. The goal check accepted on the first attempt; its first reply had to be asked for again because it carried notes after the JSON.
+
+**Files changed**:
+- none (bucket only)
 
 **Discoveries**: None.
