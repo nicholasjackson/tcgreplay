@@ -1,5 +1,5 @@
 ---
-tags: [importer, tcgdex, cards, battle-log]
+tags: [importer, tcgdex, cards, battle-log, catalog]
 ---
 
 # TCG Live logs prefix card names with codes; TCGdex set codes collide
@@ -37,8 +37,8 @@ The mapping is a best guess, and some prints are not on TCGdex at all
 (`me5-5_66`). Always check that the TCGdex card's name matches before using the
 id, and fall back otherwise; `game/import.go`'s `DefOf` and `DefOfCode` do
 this. A print TCGdex has but without an image (new promos such as `mep-033`)
-gets the art of the same name's preferred print with the same moves from the
-board server (`webui` `borrowedArt`), keeping its own identity. The log may name a different print than the decklist (for
+gets the image list of the same name's preferred print with the same moves from
+the board server (`webui` `borrowedArt`), keeping its own identity. The log may name a different print than the decklist (for
 example a secret rare `sv10_226` against `DRI 176`), so match cards by name,
 never by print number.
 
@@ -47,7 +47,8 @@ abbreviation: `30th` and `30th-c` are both `30C`, and `cel25` and `cel25cc` are
 both `CEL`. The set-code index keeps the shorter id (the main set), so the result
 no longer depends on fetch order. Set codes that exports spell their own way
 (`30th`, `30TH`, `M30`) go straight to a set id through `setAliases` in
-`internal/cards`. The deck parser accepts set codes that start with digits
-(`30th`). The set-code index is not persisted: it is rebuilt in memory from the
-cached set files on each start (`internal/cards/catalog.go`), so a change to how
-it is built takes effect on restart with no cache file to bump or delete.
+`internal/catalog`. The deck parser accepts set codes that start with digits
+(`30th`). The set-code index is not persisted: each catalogue snapshot builds it
+in memory from the published sets (`indexes` in `internal/catalog/snapshot.go`),
+from each set header's `abbreviation` and `tcgOnline`, so a change to how it is
+built takes effect on the next start or pickup with nothing to bump or delete.

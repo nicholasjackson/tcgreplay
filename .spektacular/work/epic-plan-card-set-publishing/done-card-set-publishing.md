@@ -1,0 +1,12 @@
+Kept DONE summary for 20261108105504-9abfa10e-card-set-publishing (key rules):
+- Print.Card picks first showable image source (tcgdex or malie jpg) -- DIFFERS from import plan (first tcgdex image). Settle in step 6.
+- game.NewManager takes CardSource (Snapshot() cards.DB); Manager.DB removed; use Manager.CardDB()/Game.DB().
+- New card fields reach playmat only via Print.Card.
+- Published layout cardsets/manifest.json + cardsets/sets/<id>/<hash>.json.gz, manifest format:1.
+- sets gains publish, cleanup-legacy.
+- Deploys via .github/workflows/deploy.yml skipping cardsets/**-only; publish-cardsets.yml; deploy_on_push false.
+- -cardsets-url/TCGREPLAY_CARDSETS_URL, -cardsets-interval; -cache holds local copy; -offline local only.
+- /admin: image clears + Check now; card-data clear gone.
+- No program code names api.tcgdex.net (source-scan test) -- check vs import plan's importer fetchers (cmd/internal/cardset fetch TCGdex!).
+- Human tasks: publishing secrets; publish every built set; remove legacy card data from bucket.
+- Knowledge: architecture/games-read-cards-through-their-db.md (repo, tcgreplay).

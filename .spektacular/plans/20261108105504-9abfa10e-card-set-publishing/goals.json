@@ -1,0 +1,1845 @@
+{
+  "plan": "20261108105504-9abfa10e-card-set-publishing",
+  "items": [
+    {
+      "item": "f26662e6-4d47-4d0b-aba4-bc7912d4c0bd",
+      "title": "Card set publisher",
+      "checks": [
+        {
+          "at": "2026-11-08T15:26:46Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "f26662e6-4d47-4d0b-aba4-bc7912d4c0bd",
+            "title": "Card set publisher",
+            "criteria": [
+              "A first publish uploads every built set and a manifest naming each one, all publicly readable, with long-lived caching on set files and short-lived caching on the manifest.",
+              "After one set changes, a publish uploads only that set and the manifest, and the set's earlier file is still retrievable unchanged.",
+              "Publishing unchanged sets uploads nothing.",
+              "Publishing stops without uploading when the set check reports an open item, or when a published set is missing from the repository.",
+              "The manifest is purged from the CDN after a publish when a CDN token is available, and the publish warns when it is not."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "format.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "check.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/manifest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/publish.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/target.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/spacesstore.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/publish_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/spacestest/spacestest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cdn.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/publish.go:130-146 uploads each built set (gzipped) with Put(..., \"application/gzip\", SetCacheControl); publish.go:150 uploads the manifest with \"application/json\" and ManifestCacheControl. manifest.go:22-29 sets SetCacheControl = \"public, max-age=31536000, immutable\" and ManifestCacheControl = \"public, max-age=60\". target.go:33-35 SpacesTarget.Put sets Public: true, which client.go:107 turns into x-amz-acl public-read. publish_test.go:84-129 (TestPublishFirstUploadsEverySet) checks every set and the manifest are present, public, and carry these headers."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "publish.go:113-119 marks only sets whose manifest entry differs as Uploaded. Object names come from the hash (manifest.go:50-55 SetKey), so a changed set gets a new key. publish.go never deletes or overwrites objects. publish_test.go:131-167 (TestPublishOneChangedSet) asserts the PUTs are exactly the manifest and the new set key, that the old object is unchanged, and that the unchanged set's manifest entry is identical."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "publish.go:113-119 puts unchanged sets in Unchanged. publish.go:147-149 returns before any manifest Put when the manifest bytes are unchanged, and the set loop at publish.go:130 only runs over Uploaded. publish_test.go:169-192 (TestPublishUnchangedUploadsNothing) checks zero PUTs and identical manifest bytes on a second publish. Caveat: if the remote manifest was hand-formatted differently, the first republish rewrites it once, which is not an upload of sets."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "publish.go:68-82 runs Check(opts.Dir) and returns an error listing the open items before any Get or Put. publish.go:102-111 returns an error naming the missing set ids when a published manifest entry has no local built set, also before any upload. publish_test.go:194-225 (TestPublishRefuses) covers both cases and asserts zero PUTs. Scope note: internal/cardset/fetch.go is modified (comment only, ErrNotFound doc) but is not in the goal's file list, which breaks the scope rule. It does not affect this verdict."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "publish.go:153-160: when opts.Purge is non-nil, the manifest key is purged after the manifest is written, and a purge error is returned. When it is nil, publish.go:154 logs \"card sets: no CDN token; the manifest may be cached up to the CDN's TTL\". spaces.NewCDN(...).Purge is the real purger (cdn.go:56,73). publish_test.go:227-269 (TestPublishPurgesManifest, TestPublishWarnsWithoutCDNToken) covers purge-on-change, no purge when unchanged, purge failure, and the warning. Nuance: the warning is emitted only on a publish that writes a manifest, because an unchanged publish returns at publish.go:147-149 before the token check. There is nothing to purge in that case. Wiring a CDN token into the CLI is not in this diff (no caller of Publish exists outside the package)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "6d338ee2-fbf2-40b2-b80d-d38f7174e368",
+      "title": "Sets publish command",
+      "checks": [
+        {
+          "at": "2026-11-08T15:30:35Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "6d338ee2-fbf2-40b2-b80d-d38f7174e368",
+            "title": "Sets publish command",
+            "criteria": [
+              "Running the command with the storage settings publishes changed sets and reports which were uploaded and which were unchanged.",
+              "Running it with missing or partial storage settings fails with a message naming what is missing, and uploads nothing.",
+              "A dry run reports the sets that would be uploaded and writes nothing.",
+              "The playmat's own start-up and its refusal of unknown words are unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/config.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/cdn.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/sets.go:64-136 (setsPublish) reads the TCGREPLAY_SPACES_* settings via spaces.FromEnv, builds a spaces.Client and a SpacesTarget, and calls cardset.Publish. internal/cardset/publish.go:113-119 splits local sets into Uploaded (manifest entry differs from the published one) and Unchanged (equal). publish.go:130-146 uploads only the Uploaded sets, gzipped. sets.go:123-134 prints 'uploaded \u003cid\u003e (N prints)' per changed set, 'unchanged: N sets', and the manifest status. Tests TestSetsPublishToBucket (sets_test.go) cover the first run and a second run reporting 'unchanged: 1 sets' with no PUTs. Caveat: the publish logic lives in new untracked files internal/cardset/publish.go, target.go and manifest.go, which are outside the six files the goal names; this does not change the behaviour verdict but is a scope deviation."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/spaces/config.go:63-88 (FromEnv) returns set=false when none of the four settings is set, and otherwise an error from errors.Join naming each unset setting ('TCGREPLAY_SPACES_X is not set'), plus normalized() errors for a bad endpoint or a slash in the bucket. sets.go:89-97 prints the generic 'set TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET, or use -to' message with exit 2 when unset, and prints the named error with exit 2 when partial. Both paths return before cardset.Publish is called, so nothing is uploaded. TestSetsPublishSettingsErrors (sets_test.go, partial case) asserts the names in stderr and srv.Total()==0."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "sets.go:120-122 prints 'would upload' when -dry-run is set and sets.go:130-131 reports 'manifest would be updated (dry run: nothing written to ...)'. internal/cardset/publish.go:126-128 returns right after the comparison, before any Put, so nothing is written. The only Target calls before that point are read-only (Get, and Check on the local dir). internal/cardset/target.go DirTarget.Get is read-only. TestSetsPublishDryRun (sets_test.go) asserts 'would upload tst (2 prints)', zero keys in the bucket fake, and no entries created in the -to directory."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The diff for cmd/tcgreplay/main.go changes only the package doc comment (lines 17-21, which now mention 'sets publish'). The sets dispatch at main.go:135-137 and the playmat flag handling are untouched. The unknown-word refusal is intact at main.go:167-171 ('unknown command %q', flag.Usage, exit 2). No hunk in the diff touches main()'s start-up or the NArg check."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "0e1b48c4-41dc-4364-8308-7f0b66ee7fa7",
+      "title": "Publish on merge workflow",
+      "checks": [
+        {
+          "at": "2026-11-08T15:32:18Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "0e1b48c4-41dc-4364-8308-7f0b66ee7fa7",
+            "title": "Publish on merge workflow",
+            "criteria": [
+              "A push to `main` that changes card-set data starts the workflow, and other pushes do not.",
+              "The workflow can be started by hand.",
+              "The workflow checks the sets before publishing and fails without publishing if the check fails.",
+              "No credential appears in the repository: the workflow reads them from repository secrets."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".github/workflows/publish-cardsets.yml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": ".github/workflows/publish-cardsets.yml:28-31 sets `on: push: branches: [main]` with `paths: ['cardsets/**']`, so only pushes to main touching cardsets/ start it. Card-set data lives under cardsets/: internal/cardset/import.go:16 sets `DefaultDir = \"cardsets\"`, and manifest.go:20 sets `BucketPrefix = \"cardsets/\"`. Other pushes are filtered out by the paths rule."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": ".github/workflows/publish-cardsets.yml:32 has `workflow_dispatch:` under `on:`, which enables a manual run from the Actions tab (the file's header comment at lines 3-4 says so too)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": ".github/workflows/publish-cardsets.yml:50-51 runs `go run ./cmd/tcgreplay sets check` as a step before the `Publish card sets` step (line 52-53). GitHub Actions stops the job at a failing step by default, so publish does not run. `sets check` exits 1 when any open item exists (cmd/tcgreplay/sets.go:125-128). As a second guard, `sets publish` calls cardset.Check and refuses with exit 1 before uploading (internal/cardset/publish.go:68-81)."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The workflow passes all five values only as `${{ secrets.TCGREPLAY_SPACES_* }}` references (.github/workflows/publish-cardsets.yml:55-59), and no literal credential appears in it. A grep of the code root for token and key patterns found only test fixtures and the AWS documented example key (internal/spaces/sign_test.go:13-14 'AKIAIOSFODNN7EXAMPLE', internal/spaces/cdn_test.go:19 'dop_v1_secrettoken', cmd/tcgreplay/hosted_admin_test.go:119, internal/cards/images_clear_test.go:19), which are fakes rather than real credentials. The env var names are constants (internal/spaces/config.go:17), not values."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "101b9a9a-9891-40f8-8351-3f376043a009",
+      "title": "Deploy workflow that skips card data",
+      "checks": [
+        {
+          "at": "2026-11-08T15:33:52Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "101b9a9a-9891-40f8-8351-3f376043a009",
+            "title": "Deploy workflow that skips card data",
+            "criteria": [
+              "A push to `main` that changes code or documentation starts a deploy, and a push that changes only card-set data does not.",
+              "The hosting definition no longer deploys on every push by itself.",
+              "A deploy can also be started by hand.",
+              "The deploy credential is read from a repository secret, never from a file."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".github/workflows/deploy.yml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": ".github/workflows/deploy.yml:16-19 sets `on: push: branches: [main]` with `paths-ignore: ['cardsets/**']`. A push that touches code or docs has a path outside cardsets/, so the workflow runs. A push whose changed files are all under cardsets/ matches the ignore list and starts no run. The workflow file itself is outside cardsets/, so editing it still deploys."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": ".do/app.yaml:41-43 sets `deploy_on_push: false` with a comment saying .github/workflows/deploy.yml deploys instead. The diff hunk `@@ -31,7 +38,9 @@` shows the change from `deploy_on_push: true` to `false`. No other App Platform deploy trigger is set in the file."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": ".github/workflows/deploy.yml:20 has `workflow_dispatch:` under `on:`, so the deploy can be started by hand from the Actions tab."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": ".github/workflows/deploy.yml:35 passes `token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}` to digitalocean/action-doctl, and :39 passes `APP_ID: ${{ secrets.TCGREPLAY_APP_ID }}`. The file has no literal token and reads no credential from a file. Searched both files for token literals and found none. The TCGREPLAY_SPACES_CDN_TOKEN in .do/app.yaml:126-128 is the app's runtime secret, not the deploy credential."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "9065da89-fc46-4e58-8e8d-e200f180bfe5",
+      "title": "Catalogue snapshot",
+      "checks": [
+        {
+          "at": "2026-11-08T15:49:13Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "9065da89-fc46-4e58-8e8d-e200f180bfe5",
+            "title": "Catalogue snapshot",
+            "criteria": [
+              "Looking up cards by set code and number, by name with moves, and by id gives the same results as today's catalogue for the same set data.",
+              "Sets sharing a code resolve to the main set, and Pocket sets never answer a name lookup.",
+              "A Basic Energy print without art shows the borrowed art it shows today.",
+              "A snapshot built after one set changed shares every other set with the previous snapshot, and the previous snapshot still answers with the old data.",
+              "An empty snapshot answers every lookup as not found."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/snapshot.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "setData.cards"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/clear.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "prev.sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/snapshot_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/byname_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "By id and by set code/number the snapshot matches the old catalogue: Card/Cached read the same converted cards (snapshot.go:230-243, energy art applied via cardset/card.go:50), and Resolve/findNumber/normCode/setAliases mirror cards.go:655-729 (snapshot.go:248-282, 175-197). By name it differs. The snapshot ranks prints by c.Image after Print.Card, which already has the borrowed Energy art (cardset/card.go:50 calls cards.EnergyArt), so indexes() at snapshot.go:149-150 counts a Basic Energy without TCGdex art as having art. The old indexes() ranked on the raw TCGdex image (catalog.go:199-220, card.Image from setDetail, never energy-borrowed), so a no-art Basic Energy ranked below an older print with art. Example: a newer set's Basic Grass Energy with no TCGdex art now outranks an older set's print that has art, where today's catalogue picks the older one. ByName/prints results therefore differ for the same set data. Fix: rank on whether the print has a TCGdex image in its raw Images, not on the borrowed c.Image. No test in snapshot_test.go covers a no-art energy competing with an art print (TestPrintPreference uses art:true for every Fire Energy)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Shared codes: snapshot.go:133-139 keeps the shorter id, then the lower id, for both Abbreviation and TCGOnline, the same rule as catalog.go:203-209; TestSharedCodeKeepsMainSet (snapshot_test.go:83-97) checks both orders. Pocket: snapshot.go:141-142 skips serie 'tcgp' before any name is indexed, so byName never holds Pocket cards (TestPrintPreference, snapshot_test.go:111 expects no tcgp1 name hit). Pocket sets still enter setIndex before that skip (snapshot.go:129-139), so they resolve by code as before."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cardset/card.go:44-50 takes the TCGdex image, then calls cards.EnergyArt(c), which gives a Normal-type Energy with no image the Crown Zenith art of its type (cards.go:541-551, the same function the old loadCard used at cards.go:490). Special Energy is excluded by the EnergyType check. snapshot.go:61 converts through Print.Card. TestEnergyArtBorrowed (snapshot_test.go:173-183) checks Basic Fighting Energy gets swsh12.5/157 and a Special Energy gets none. The borrowed art is not written to the built set."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Next (snapshot.go:85-95) copies prev.sets into a fresh map and then overlays changed and removes removed. Unchanged sets are the same *setData pointers, and build (snapshot.go:97-106) makes fresh cards and index maps, so prev is not mutated. TestNextSharesUnchangedSets (snapshot_test.go:215-252) checks next.sets[\"svb\"] == old.sets[\"svb\"], shared card pointers, that old snapshot sva-001 keeps HP 60, and that the removed set still answers in old and not in next."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Empty is \u0026Snapshot{} (snapshot.go:50), and every read path is nil-safe: Card and Cached check nil and read a nil map (snapshot.go:230-243), Resolve reads setAliases and a nil setIndex (snapshot.go:248-265), ByName/prints check nil (snapshot.go:316-329), and SetID returns ErrUnknownSet (snapshot.go:350-352). TestEmptySnapshot (snapshot_test.go:254-279) covers Empty, nil and NewSnapshot(\"\", nil) for Card, Cached, Resolve, ByName and SetID."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T15:51:04Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "9065da89-fc46-4e58-8e8d-e200f180bfe5",
+            "title": "Catalogue snapshot",
+            "criteria": [
+              "Looking up cards by set code and number, by name with moves, and by id gives the same results as today's catalogue for the same set data.",
+              "Sets sharing a code resolve to the main set, and Pocket sets never answer a name lookup.",
+              "A Basic Energy print without art shows the borrowed art it shows today.",
+              "A snapshot built after one set changed shares every other set with the previous snapshot, and the previous snapshot still answers with the old data.",
+              "An empty snapshot answers every lookup as not found."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/snapshot.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "setData.cards"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/clear.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "prev.sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/snapshot_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/byname_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/catalog/snapshot.go is a line-for-line port of the old catalogue logic in internal/cards/cards.go and catalog.go: Resolve (cards.go:655-701, snapshot.go:253-270), findNumber (cards.go:716 vs snapshot.go:274), normCode and codeAliases (cards.go:578-612 vs snapshot.go:178-202), setAliases, ByName/prints/hasMoves (cards.go:750-802 vs snapshot.go:296-346), and indexes (catalog.go:180-241 vs snapshot.go:115-176) with the same print preference (art, then release date, then lowest number, then id) and the same tcgp skip. Art is derived from the print's own TCGdex image (snapshot.go:71), matching the old card.Image!=\"\" test, so borrowed Energy art does not rank. Card-by-id returns the converted card (snapshot.go:235-240). Card conversion goes through Print.Card (internal/cardset/card.go:18-58), which applies cards.EnergyArt as the old loadCard did (cards.go:490). No differential test against the old client exists, so parity rests on reading the code, not on a test run."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Shared codes: snapshot.go:141-145 keeps the set with the shorter id, then the lower id, for each upper-cased Abbreviation/TCGOnline code, so 30th beats 30th-c and cel25 beats cel25cc. snapshot_test.go:83-97 checks this for both load orders. Pocket: snapshot.go:146-148 skips Serie \"tcgp\" before adding name entries, so prints() never returns Pocket cards; snapshot_test.go:102-135 checks the Pocket name lookup fails while the Pocket code TP1 still resolves. Residual gap: setIndex (snapshot.go:134-145) is built before the tcgp skip, so a Pocket set sharing a code with a shorter id could still win a code; the fixtures do not cover that case, but the old code behaved the same way."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/cardset/card.go:50 calls cards.EnergyArt(c), so a Basic Energy with Category Energy, EnergyType Normal and no image gets the same Crown Zenith art (swsh12.5 numbers 152-159 from internal/cards/cards.go:529-551) that the old client applied at cards.go:490. snapshot.go:65 converts every print through Print.Card. snapshot_test.go:173-183 (TestEnergyArtBorrowed) asserts sv01-257 gets https://assets.tcgdex.net/en/swsh/swsh12.5/157 and the special Energy stays empty. snapshot.go:71 ranks borrowed art below own art, as the old indexes did."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "snapshot.go:90-100: Next copies prev.sets into a new map, deletes the removed ids, and overlays the changed ones, so every other *setData pointer is shared. build (snapshot.go:102-111) creates fresh maps and never writes to a setData, so the old snapshot is unchanged. snapshot_test.go:236-275 (TestNextSharesUnchangedSets) checks next.sets[\"svb\"] == old.sets[\"svb\"], shares the card pointer, returns HP 90 from the new snapshot and HP 60 from the old one, and keeps the removed set in the old snapshot only."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "snapshot.go:54 defines Empty as \u0026Snapshot{}, and every method is nil-safe: Card and Cached (snapshot.go:235-248), Resolve (snapshot.go:253-270, where the alias path returns not found when s is nil), ByName via prints (snapshot.go:321-334), SetID (snapshot.go:353-357), Sets, Prints and Version. snapshot_test.go:277-302 (TestEmptySnapshot) runs Empty, a nil *Snapshot and NewSnapshot(\"\", nil) through every lookup and expects ErrNotFound or ErrUnknownSet."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "c82fe60b-91bb-4ef8-a5a9-1a2210db3350",
+      "title": "Image source list and board fallback",
+      "checks": [
+        {
+          "at": "2026-11-08T16:01:13Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c82fe60b-91bb-4ef8-a5a9-1a2210db3350",
+            "title": "Image source list and board fallback",
+            "criteria": [
+              "A print whose only image is a malie.io image shows that image on the mat, in the zoom and in the preview.",
+              "A print with a TCGdex image shows it as today, from the hosted copy where one exists, with the TCGdex fallback.",
+              "When a print's first listed image is missing or fails to load, the board shows the next listed source, whether that is a TCGdex image or a complete file address.",
+              "A print whose every listed source fails, or which lists none, shows its text stand-in.",
+              "A listed image from a source the board cannot show is left out of the card's list.",
+              "Reordering a print's images changes which source the board tries first.",
+              "A Basic Energy print without art borrows the other print's whole image list."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".jpg"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".jpeg"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/card.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "info.images"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Zoom.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cardstest/cardstest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/tst/tst_en_009_std.jpg"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/webtest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/images.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/low.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/high.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/card.go cardImages (diff ~L193-203) keeps an https .jpg malie URL as a File ref; internal/webui/server.go serveCard (~L594-596) sends it as CardImage{Image, File:true} with image_file; web/src/lib/store.svelte.js imageCandidates (~L177-179) passes file entries through unchanged and imageSrc returns them for every size; Card.svelte:79-81, Zoom.svelte:18 and Modal.svelte:245 all render through imageSrc. web/e2e/images.spec.js 'a complete image file is loaded as is on the mat, in the zoom and in the preview' checks all three spots."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/webui/server.go serveCard (~L598-613) runs each base-path ref through s.Images.Image, setting Image to the hosted copy, Fallback to the TCGdex base when it differs, and Version only for a copy. store.svelte.js imageCandidates (~L181-183) appends /low.webp or /high.webp and then the image_fallback. Tests: internal/webui/webui_test.go TestCardImageList, TestCardImageSource, TestCardImageVersion; cmd/tcgreplay/hosted_cache_test.go boardCard reads the first entry of the list."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "store.svelte.js nextImageStage (~L197-198) returns stage+1 and imageCandidates lists every source in order, so a failed TCGdex base path (or its fallback) moves on to a later file entry and a failed file moves on to a later base path. Card.svelte:82, Zoom.svelte:19 and Modal.svelte:246 wire onerror to nextImageStage. e2e tests 'when a base path fails at its copy and its original, the next source, a file, is shown' and 'when a file fails, the next source, a base path, is loaded with its size' cover both directions."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Once stage is past the last candidate, imageSrc returns null (store.svelte.js ~L190-191). Card.svelte:79 then shows the Energy token and Card.svelte:83-88 shows the text-card. An empty images list yields no candidates (serveCard emits images:[] when no refs). e2e tests 'when every source fails, each is tried in order before the text stand-in' and 'a card with no image sources shows its text stand-in' check this."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "internal/cardset/card.go cardImages (diff ~L193-203): a URL not starting with https:// is skipped, a non-file non-TCGdex address is skipped, and a TCGdex base path must start with https://assets.tcgdex.net/. internal/cardset/format_test.go TestCardImageList 'unclassifiable left out' drops http, ftp and other-host entries and keeps only the TCGdex one."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Order is preserved at every hop: cardImages appends in print order (card.go ~L194-204); serveCard iterates refs in order (server.go ~L589-612); imageCandidates iterates info.images in order (store.svelte.js ~L175). e2e test 'the order of the sources decides which the board tries first' reverses the list and expects the other source first; webui_test.go TestCardImageList 'Reordered' checks the file entry first."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "internal/catalog/snapshot.go build (diff ~L363-382) replaces a borrowing card's Images and Image with the whole ImageList() of the print named by borrowedID(c.Image), copying the card rather than mutating it. internal/catalog/snapshot_test.go TestEnergyArtBorrowsWholeList expects [TCGdex base path, malie file] and checks the shared set card is unchanged. The borrowing applies only where the snapshot holds the borrowed print; otherwise only the base path is borrowed, which the criterion does not require otherwise."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "756dccd1-aad4-49cd-944e-07d674413ce1",
+      "title": "Catalogue loader with local copy",
+      "checks": [
+        {
+          "at": "2026-11-08T16:11:05Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "756dccd1-aad4-49cd-944e-07d674413ce1",
+            "title": "Catalogue loader with local copy",
+            "criteria": [
+              "After a set is published with a change, the loader picks it up on its next interval check, or at once when asked, with no restart.",
+              "A check downloads only the sets whose published version changed.",
+              "A loader that loaded once, started again with no network, serves the same definitions from its local copy.",
+              "A corrupt download, an unknown format or unreachable storage leaves the current catalogue unchanged and is reported.",
+              "Old card files left in the cache directory by the on-demand approach are never used.",
+              "With no reachable storage and no local copy, the catalogue is empty."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/loader.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sets.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcgdex-cache-never-expires.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/manifest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/breaker.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/loader_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards/x.json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "loader.go:181-199 Run ticks every Interval (DefaultInterval 5m, loader.go:30) and calls Check; loader.go:206 Check is callable at once and swaps the snapshot via l.swap (loader.go:303, 568) with no restart. loader_test.go:260-311 (TestLoaderCheckPicksUpPublish) and loader_test.go:315-348 (TestLoaderRunPicksUpPublishOnInterval) exercise both paths."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "loader.go:263-278 keeps every set whose manifest sha256 equals the loaded set's hash and queues only the rest in `need`; loader.go:293-299 and Next (loader.go:299, snapshot.go:90-100) share unchanged *setData. loader_test.go:376-428 (TestLoaderDownloadsOnlyChangedSets) asserts a check requests only the manifest and the one changed object, and that unchanged sets are the same pointers."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "loader.go:156-161 Start loads the local copy first via loadLocal (loader.go:507-539), which verifies every named set against its sha256 and the version file; Offline and unreachable-storage restarts keep it. loader_test.go:432-485 (TestLoaderServesLocalCopyWithoutNetwork) checks offline, stopped-server and missing-directory starts serve the same version, card and trainer text."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "A failed check returns an error before any swap: corrupt or mismatched objects fail in openSet (loader.go:349-372) via download (loader.go:311-345); an unsupported manifest format fails in cardset.DecodeManifest (manifest.go:74-76, called at loader.go:252); unreachable storage fails in fetch (loader.go:387-426). Check records LastError and logs once per outage (loader.go:206-237), and the snapshot and local copy are not touched (loader.go:281-304). loader_test.go:491-607 covers corrupt object, hash mismatch, format 2 manifest, server error and server stopped. Caveat: a set whose own entry has an unknown format is skipped with a log line rather than failing the check (loader.go:271-277), so the other sets still change; that path is logged, not put in Status.LastError."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "The loader reads and writes only \u003cCacheDir\u003e/cardsets/ (loader.go:41-43, 429-434); it never opens sets.json, sets/, cards/ or set-index*.json at the cache root. pruneLocal only walks cardsets/sets (loader.go:543-565). loader_test.go:609-648 (TestLoaderIgnoresLegacyCache) writes conflicting legacy files and shows the card is unknown with no local copy and the local copy's Pikachu wins with one."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "With no local copy and no reachable storage, loadLocal returns nil (loader.go:509-511), Current() returns Empty (loader.go:129-134), and Start logs 'none loaded' (loader.go:171-174). loader_test.go:652-684 (TestLoaderEmptyWithoutStorageOrLocalCopy) covers no address, stopped server, server error, missing directory and empty directory, asserting every lookup is not found and Status is empty."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c22f8109-e88b-419a-9fb1-71062e260ffc",
+      "title": "Games pin their catalogue snapshot",
+      "checks": [
+        {
+          "at": "2026-11-08T16:19:34Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c22f8109-e88b-419a-9fb1-71062e260ffc",
+            "title": "Games pin their catalogue snapshot",
+            "criteria": [
+              "A game started before a newer catalogue arrives keeps showing its original card text, HP and image in card text, on the board and in warnings until it ends.",
+              "A game started, imported or reopened from its record after the newer catalogue arrives shows the new text.",
+              "An import resolves every card against one catalogue, even if a newer one arrives during it.",
+              "With no game open, card text and the board's card details use the current catalogue."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/manager.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/import.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/verbs.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cardstest/cardstest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/webtest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/pin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Game.card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/cardlock_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "clear_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "A game pins its catalogue in g.db (internal/game/game.go:66, set by Load). Card text and warnings read it through g.card (game.go:497-502, now g.db.Cached only). HP reads it through g.hp (game.go:510-525). Card text (mcpserver/server.go:586-600) and /api/card image and HP (webui/server.go:205-215) go through Manager.CardDB() (internal/game/manager.go:80-87), which returns the open game's g.DB() while a game is current. internal/game/pin_test.go:56-144 (TestOpenGameKeepsItsCatalogue) checks old HP 130, old Stadium text in a warning, and the old DB after a swap. internal/webui/pin_test.go:37-62 checks the old image and HP through /api/card. The game still holds its old snapshot after a newer one arrives, so it keeps that text until it is replaced or ends."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Manager.New takes m.snapshot() once and passes it to Load (internal/game/manager.go:280-292). Import takes m.snapshot() and passes it to Load (internal/game/import.go:76, 157). Reopening from a record goes through Import with the record's log (import.go:60-69). A newer snapshot is therefore used for each new, imported or reopened game. internal/game/pin_test.go:129-136 checks the new HP 150 for a game started after the swap, and pin_test.go:216-221 checks that reopening from the record uses v2. Caveat, not a verdict driver: cmd/tcgreplay/main.go:236 and hosted.go:254 still wrap a fixed Client in game.Static, so no live catalogue swap reaches the running app yet."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Import calls m.snapshot() exactly once (internal/game/import.go:76). That db is passed to parseDeck for both lists (import.go:78, 86), to the DefOf and DefOfCode closures (import.go:91-128), and to Load (import.go:157). The ParseDeck method is not called on this path. internal/game/pin_test.go:192-226 (TestImportResolvesAgainstOneCatalogue) uses a source whose catalogue changes during the import and asserts src.calls == 1 and that every def came from v1 only."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "With no game current, Manager.CardDB() returns m.snapshot(), the current source snapshot (internal/game/manager.go:80-87). The card_text tool (mcpserver/server.go:586-600) and /api/card (webui/server.go:205) both use it. internal/mcpserver/pin_test.go:53-90 checks that card_text quotes the current text with no game open and after a game starts on the new catalogue. internal/webui/pin_test.go:47-61 checks the current HP 150 after m.Expire. The ParseDeck call at mcpserver/server.go:893 also uses the current snapshot."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "f82814b9-1498-4871-abff-ebd2e0c87dd8",
+      "title": "Admin page checks for published sets",
+      "checks": [
+        {
+          "at": "2026-11-08T16:25:12Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "f82814b9-1498-4871-abff-ebd2e0c87dd8",
+            "title": "Admin page checks for published sets",
+            "criteria": [
+              "An admin can ask for a check from the admin page, and a set published since the last check is picked up at once.",
+              "The page shows the loaded catalogue's version, set count, last check time and any last error.",
+              "The page no longer offers to clear card definitions, and still offers to clear images for everything or one set.",
+              "Non-admins still cannot reach the page."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/cacheadmin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/handler.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin/clear"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/page.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/cacheadmin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_admin_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cacheadmin/handler.go:24 mounts POST /admin/check to serveCheck, which calls Service.CheckNow (cacheadmin.go:231-248). CheckNow synchronously calls Catalog.Check, which is catalog.Loader.Check (internal/catalog/loader.go:206-237, serialised by checkMu, fetches the manifest and swaps in changed sets). The page's button is at page.go:52. The test TestRealCheckPicksUpAPublish (cacheadmin_test.go, added in the diff) publishes a new set after the loader starts, posts /admin/check, and asserts loader.Status().Version changed, Sets == 2 and Current().Cached(\"sv1-001\") != nil. Diff-only evidence; I did not run the tests."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "page.go:43-50 renders the catalogue block: Version (short(st.Version), first 12 hex digits, from Loader.Status), Sets and Prints ({{.Sets}} ({{.Prints}} cards)), Last check (LastCheck via when()), Last change, and Last error inside an {{if .LastError}} block (page.go:49). render() in page.go:128-142 fills these from s.Catalog.Status(). Loader.Status (loader.go:143-151) supplies the fields; Loader.Check sets LastCheck and LastError (loader.go:213-225)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The card-definition clear is gone from the page: page.go:39-62 has no 'clear everything' or card-cache wording. It offers only 'Clear images: everything' (page.go:54-56, POST /admin/clear all=1) and 'Clear images for one set' (page.go:57-58, POST /admin/clear set=...), both inside {{if .Images}}. The handler clear path calls Service.Start (cacheadmin.go:148-206), which now runs only s.Images.Clear (line 194); the s.Cards.Clear call was removed and the Cards interface replaced by Catalog. TestPageOffersNoCardDataClear in the diff asserts the absence of 'card cache', 'card data', 'clear everything' and similar strings. Note outside this verdict: cmd/tcgreplay/hosted_test.go is changed in the diff but is not in the goal's file list."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:212-214 wraps the admin handler: adminPage := a.RequireAdmin(admin.Handler()), mounted on both \"/admin\" and \"/admin/\". The new /admin/check route is in that same mux, so it inherits the guard. hostauth/admin.go:27-50 refuses signed-out requests with 401 or a login redirect and refuses signed-in non-admins with 403 before the handler runs. The diff's TestHostedAdminRefusesEveryoneElse extension posts /admin/check as signed-out and non-admin users and asserts 401 or 403 and no check recorded."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "5c84b8f7-2882-4ef0-b8e2-008092faf9ec",
+      "title": "Legacy card data clean-up command",
+      "checks": [
+        {
+          "at": "2026-11-08T16:27:23Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "5c84b8f7-2882-4ef0-b8e2-008092faf9ec",
+            "title": "Legacy card data clean-up command",
+            "criteria": [
+              "Without the delete switch, the command lists the old card data and its count and deletes nothing.",
+              "With the delete switch, it removes all old card data and reports any it could not remove.",
+              "Image copies and published sets are never listed or removed."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/sets.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/cards/x.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "images/en/sv/sv01/1/low.webp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/manifest.json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/sets.go (worktree, setsCleanupLegacy ~lines 89-126 of the diff's hunk) lists every key under legacyPrefix \"tcgdex/\" via cardset.SpacesTarget{C: c}.List (which pages through the full listing, internal/cardset/target.go:38-52), prints the count line \"N objects of the retired card cache under tcgdex/ in bucket ...\" and the keys (first 20), and returns 0 before any c.Delete call when -delete is absent. The only delete call is at sets.go after the `if !*del` return. TestSetsCleanupLegacyLists (sets_test.go in diff, ~lines 179-199) checks the count and the bucket still holds 4 objects with zero POST ?delete requests."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "With -delete, sets.go calls c.Delete(ctx, keys) over every listed key; Delete batches 1000 keys per DeleteObjects request (internal/spaces/client.go:255-280). On failure, errors.As finds *spaces.DeleteError and the command prints 'deleted N objects; M could not be deleted:' followed by each key and its S3 code, then exits 1 (sets.go error branch in diff). TestSetsCleanupLegacyDeletes checks the remaining bucket contents after deletion; TestSetsCleanupLegacyReportsFailures uses DenyDelete to check the reported failure line and exit 1. Caveat for the reviewer, not a failure of the criterion: the command treats everything under tcgdex/ as 'old', and internal/cards/spacesstore.go:14 defines spacesPrefix = \"tcgdex/\" while cmd/tcgreplay/hosted.go:352 still wires cards.NewSpacesStore into the hosted server. So at this commit the live on-demand cache writes to the same prefix the command deletes; the diff itself does not show that cache is retired."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The only prefix ever listed or deleted is legacyPrefix = \"tcgdex/\" (sets.go, const block), with a belt-and-braces slices.DeleteFunc that drops any key not starting with that prefix before counting or deleting. images/ and cardsets/ keys are never requested: the listing call is made with the prefix only. TestSetsCleanupLegacyLists asserts stdout does not contain \"images/\" or \"cardsets/\", and TestSetsCleanupLegacyDeletes asserts the bucket afterwards still holds cardsets/manifest.json and images/en/sv/sv01/1/low.webp. Staged status lists only cmd/tcgreplay/sets.go and sets_test.go as changed; no edits to tcgdex/sets.json, cardsets/manifest.json or image files appear in the diff."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "663730e9-51e0-41d3-9783-95cf5525cfbf",
+      "title": "Playmat reads published sets in every mode",
+      "checks": [
+        {
+          "at": "2026-11-08T18:06:29Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "663730e9-51e0-41d3-9783-95cf5525cfbf",
+            "title": "Playmat reads published sets in every mode",
+            "criteria": [
+              "A playmat in any mode plays a full game (import a log, play turns, read card text) with definitions equal to the published sets, making no other card-data requests.",
+              "A playmat started with no access to published storage and no local copy shows cards as unknown.",
+              "A desktop playmat that loaded sets once, restarted offline, plays with full card text.",
+              "Every battle log and game record in the project's test corpus imports with full card text for every card from the committed catalogue.",
+              "Hosted image copies and the image fallback work as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/daemon.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_cache_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted_admin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "guides_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "timing_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/corpus_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../cardsets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/decks"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".dev/cardsets-published"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "No non-test code path still builds a TCGdex client: grep of non-test .go files finds cards.NewClient only in the cards package and tests, and internal/game uses only the catalogue. newServer (cmd/tcgreplay/main.go ~L252), newHosted (cmd/tcgreplay/hosted.go ~L240-260) and runDaemon (daemon.go:162) all take a game.CardSource from catalog.Loader via newCatalog/startCatalog. cmd/tcgreplay/cardsets_test.go TestHostedPlaysFromPublishedSets plays a new_game, moves and card_text, then checks wantGameFromSets (every card's definition equals the published set's) and that a TCGdex stand-in got 0 requests and the host got only the manifest and set objects. TestEveryModeBuildsItsCatalogueFromConfig covers desktop, daemon and hosted. The log-import path is exercised per corpus log in internal/game/corpus_test.go via Manager.Import over the loader, not through the import_log tool in each mode, so 'import a log in every mode' is covered by the shared manager rather than a per-mode test."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/cardsets_test.go TestNoCardDataWithoutPublishedSets covers hosted with an unreachable address, desktop with an unreachable address, and desktop with no address at all and an empty cache. It asserts card_text for me01-001 reports not found, the in-game Pokemon resolve to empty Def and report unresolved, and the game still runs. internal/catalog/loader.go:178 logs 'card sets: none loaded; cards will show as unknown'. Server wording is at internal/mcpserver/server.go:579 ('is hidden or unresolved'). No test asserts the literal word 'unknown' in the UI."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/cardsets_test.go TestDesktopPlaysOfflineAfterFirstUse: a desktop run loads the published sets into a shared cacheDir, the published host is then closed, and the restart runs both with offline:true and with the server stopped. Each run plays a new_game and moves, checks card_text equals bulbasaurText, and checks wantGameFromSets. Loader.Start/loadLocal (internal/catalog/loader.go ~L157-182, L512-544) serve the local copy, verifying each set's hash."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/game/corpus_test.go TestCorpusResolvesFromCommittedCardSets publishes ../../cardsets/sets (206 committed set files present) and loads them. It imports every testdata/logs/*.txt (14 logs, matching testdata/index.json's 14 games) with the corpus deck, and for every resolved card calls wantDefined (name present; effect present for Trainer and special Energy). The deck entries are checked the same way. Caveats: unresolved cards are skipped silently (`if c.Def == \"\" { continue }`), and attack text is not asserted, so 'full card text' is verified for name and effect only."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go hostedImages (~L121-170) keeps the four-setting gate, warning and offline behaviour; the image cache is built with the same NewImageCache and Source/CDN logic as before (internal/cards/images.go unchanged in the diff). hosted_cache_test.go TestHostedImagesCopiedAndServedFromSharedStore checks the first answer is the source, the copy lands in the bucket, the later answer is the public address with the source as fallback, and only sv1-001 files are fetched. TestHostedImagesOffWithoutTheSharedStore and TestHostedImagesPartialSettingsWarn cover the off and warning cases. hosted_admin_test.go covers clear and purge against the image prefix."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "1811be10-d6c8-4a22-91ca-794fb3282713",
+      "title": "Remove the on-demand card client",
+      "checks": [
+        {
+          "at": "2026-11-08T18:11:38Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "1811be10-d6c8-4a22-91ca-794fb3282713",
+            "title": "Remove the on-demand card client",
+            "criteria": [
+              "The program no longer contains any code that fetches, refreshes, stores or clears card definitions from upstream sources.",
+              "A test fails if any program code other than the card-set import's TCGdex fetcher names the upstream card API, including any of the playmat's runtime packages.",
+              "Image copying, versions, the image fallback and image clearing behave as before.",
+              "The full test suite passes."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "fresh.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "flight.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "warm.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "spacesstore.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "clear.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "scope.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/scope.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "breaker.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/deck/live_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "images_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "images_clear_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "images_version_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "logcode_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/nofetch_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../cmd"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../internal"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "api.tcgdex.net"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/tcgdex.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "assets.tcgdex.net"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The on-demand client and its store, fetch, refresh and clear code are gone from internal/cards (cards.go, clear.go, tiered.go, store.go, catalog.go, fresh.go and their tests are staged deletions), and no non-test Go file references cards.NewClient, DefaultCacheDir, NewDiskStore, NewTieredStore or Warm. The remaining card-set upstream fetch is internal/cardset/tcgdex.go, which the criterion allows. One piece is left: cmd/tcgreplay/sets.go:262-314 (setsCleanupLegacy, run as 'tcgreplay sets cleanup-legacy [-delete]') lists and, with -delete, deletes every object under tcgdex/ in the bucket. Those objects are the retired on-demand cache's TCGdex card definitions, so the program still contains code that clears card definitions from an upstream source. cmd/tcgreplay/sets.go and sets_test.go are not in this item's listed files, so removing it would need a scope decision. Reading the criterion as covering that code, it is not met."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/catalog/nofetch_test.go:14 defines tcgdexAPI = \"api.tcgdex.net\", and :19 allows only internal/cardset/tcgdex.go. TestOnlyTheImportFetcherNamesTheTCGdexAPI (:69-79) walks the non-test Go files under cmd and internal and fails for any other file naming it, so the playmat's runtime packages are covered. A grep of the worktree for api.tcgdex.net finds it only in internal/cardset/tcgdex.go and that test (plus the scanner's own fixtures). The image host assets.tcgdex.net is not what this test scans, and it is used by the image copier (internal/cards/images.go:119) as the criterion 3 behaviour requires."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The only edit to internal/cards/images.go in the diff is a comment at line 65-66 ('Shared store failures follow one rule'), so the code is unchanged. The image tests images_test.go, images_clear_test.go, images_version_test.go and imageref_test.go are not in the diff and do not reference any deleted helper (grep for newFakeTCGdex, newTestClient, seedEnvelope, serveAll, newTiered and NewClient finds nothing). The symbols they depend on remain: SharedTimeout, SharedRetryAfter and RetryAfter in internal/cards/scope.go:56-62, breaker in breaker.go, listAll in scope.go:71, and energyArt/EnergyArt in cards.go:216-220. Image clearing goes through ImageCache.Clear (images.go:564), called from internal/cacheadmin/cacheadmin.go:194, which clears images only."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The verification summary reports go build, go vet, gofmt and 'go test -count=1 ./...' passing across all packages. I did not run the suite, since I am read-only. A static check found no dangling references to deleted symbols in non-test or test Go files (see criteria 1 and 3), and helpers_test.go supplies the test helpers the remaining cards tests use. This verdict rests on the reported passing run."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T18:13:46Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "1811be10-d6c8-4a22-91ca-794fb3282713",
+            "title": "Remove the on-demand card client",
+            "criteria": [
+              "The program no longer contains any code that fetches, refreshes, stores or clears card definitions from upstream sources.",
+              "A test fails if any program code other than the card-set import's TCGdex fetcher names the upstream card API, including any of the playmat's runtime packages.",
+              "Image copying, versions, the image fallback and image clearing behave as before.",
+              "The full test suite passes."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "fresh.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "flight.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "warm.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "spacesstore.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "clear.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "scope.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/scope.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "breaker.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/deck/live_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "images_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "images_clear_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "images_version_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "logcode_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog/nofetch_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../cmd"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../internal"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "api.tcgdex.net"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/tcgdex.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "assets.tcgdex.net"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The on-demand client is gone from internal/cards: the staged diff deletes catalog.go, clear.go, fresh.go, flight.go, store.go, spacesstore.go, tiered.go and warm.go. internal/cards/cards.go no longer imports net/http and has no Client, NewClient, Card-fetch, Cached or Clear code. A grep of internal/cards for http.Get/NewRequest/Client finds only the image copier in images.go:495. internal/cacheadmin/cacheadmin.go:50-52 now has only an Images clearer (no card-cache clearer). The only remaining code that fetches card data from upstream is internal/cardset/tcgdex.go, the maintainer's card-set import, which criterion 2 keeps. Note the criterion's wording could be read to cover that import too; I read it as the on-demand client, since criterion 2 explicitly exempts the import."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/catalog/nofetch_test.go:14 defines tcgdexAPI = \"api.tcgdex.net\" and :19 allows only internal/cardset/tcgdex.go. namesAPI (:24-63) walks cmd and internal, including every runtime package, skips testdata and dot-directories, and reports any non-test .go file containing the host. TestOnlyTheImportFetcherNamesTheTCGdexAPI (:69-79) fails on any hit. TestNamesAPIScanner (:83-105) checks the scanner itself. Grep confirms api.tcgdex.net appears in non-test Go code only at cardset/tcgdex.go:12. Caveat: the test matches only the API host. internal/cards/images.go:124 (Source: \"https://assets.tcgdex.net\") and internal/cards/cards.go:226 name the asset host, which the test does not cover; I judge that host is not the card API, so this does not defeat the criterion as written."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The only hunk in internal/cards/images.go is a comment change at images.go:66 (\"Shared store failures follow one rule\"). The copy, version, fallback and clear logic is unchanged: Image (images.go:185-218) returns the CDN address with the source fallback and a version; imageVersion/versionOf (:163-179) are unchanged; copyOne, put, fetch and Clear (:415-692) are intact. Scope.Image, listAll and the SharedTimeout/SharedRetryAfter/RetryAfter constants remain in scope.go:36-62. The image tests remain: images_test.go, images_clear_test.go, images_version_test.go and imageref_test.go in internal/cards. I did not run them; the verification summary reports the full suite passing."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The supplied verification summary records go build ./... and go vet ./... passing, gofmt -l clean, and go test -count=1 ./... passing for all packages. I did not re-run the suite (read-only review). Read-only checks found no remaining references to removed symbols in non-test code: cmd/tcgreplay/main.go:37-40 drops the cards import and uses catalog.DefaultCacheDir (internal/catalog/loader.go:29-36), and internal/deck/live_test.go is deleted. The test files that remain still reference the cards.DB methods, which are kept in cards.go."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "dac434a8-5cbd-46d6-a9cb-58b7a7d3cd1a",
+      "title": "Publishing documentation",
+      "checks": [
+        {
+          "at": "2026-11-08T18:17:59Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "dac434a8-5cbd-46d6-a9cb-58b7a7d3cd1a",
+            "title": "Publishing documentation",
+            "criteria": [
+              "The documentation describes publishing a set by hand and on merge.",
+              "The documentation states how quickly hosted and desktop playmats pick up a publish, and how an admin forces a check.",
+              "The documentation describes the offline copy, and that a first desktop run needs network access.",
+              "No documentation still describes fetching or clearing card definitions on demand."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".json.gz"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/desktop.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cardsets/README.md:299-324 ('## Publishing'): publishing on every merge to main that changes cardsets/ via the 'Publish card sets' workflow (.github/workflows/publish-cardsets.yml), and a 'To publish by hand' section with the bin/tcgreplay sets publish commands (lines 310-319). README.md:58-64 also describes publishing on merge or by hand."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cardsets/README.md:338-354 ('### How quickly playmats pick up a publish'): hosted and desktop playmats check every 5 minutes (-cardsets-interval / TCGREPLAY_CARDSETS_INTERVAL), so a publish is live within about 5 minutes; an admin forces a check with 'Check for published card sets now' on /admin (lines 343-345). The admin wording matches the code in internal/cacheadmin/cacheadmin.go (checks published card sets on demand)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cardsets/README.md:348-351: each playmat keeps a copy under \u003ccache\u003e/cardsets/ and plays from it when the bucket is unreachable or always with -offline; 'A desktop playmat's first run needs network access to download the card data once.' site/src/content/docs/desktop.md:52-60 ('## Card data') repeats it: 'the first run needs an internet connection' and the offline copy."
+            },
+            {
+              "criterion": 4,
+              "verdict": "not_met",
+              "evidence": "site/src/pages/privacy.astro:20 still says 'If you run tcgreplay on your own computer, nothing leaves your machine except card data fetched from TCGdex', and privacy.astro:96 says of TCGdex 'The playmat looks cards up there; no information about you is sent.' Both describe fetching card definitions from TCGdex at use time, which the retired on-demand cache did and the published-sets design no longer does (README.md:58-62, cardsets/README.md:273-275 say playmats read card definitions only from published sets). The statement should be reworded to say card data comes from the published card sets (copied locally), with TCGdex only for card images. Lesser stale spot: 'TCG Review Playmat Design and Build Plan.md' line 168 ('Tap any card to zoom with full TCGdex text') and line 206 ('mapping to TCGdex definitions needs a decklist') still refer to TCGdex card text; line 168 is a design-era UI note. Base.astro:62 ('Card data and images from TCGdex') is a source credit, not an on-demand fetch description, so it is not the failing item. Nothing in .github, Makefile, Dockerfile, .do/app.yaml, internal/guides or skills/ describes on-demand fetching or clearing card definitions; skills/card-set-import describes build-time import from TCGdex only."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T18:20:18Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "dac434a8-5cbd-46d6-a9cb-58b7a7d3cd1a",
+            "title": "Publishing documentation",
+            "criteria": [
+              "The documentation describes publishing a set by hand and on merge.",
+              "The documentation states how quickly hosted and desktop playmats pick up a publish, and how an admin forces a check.",
+              "The documentation describes the offline copy, and that a first desktop run needs network access.",
+              "No documentation still describes fetching or clearing card definitions on demand."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".json.gz"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/desktop.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cardsets/README.md, the new '## Publishing' section (diff lines 317-342): the first paragraph describes publishing on every merge to main that changes cardsets/ via the 'Publish card sets' workflow (.github/workflows/publish-cardsets.yml). The 'To publish by hand' paragraph and sh block give the manual steps (export the bucket settings, then 'bin/tcgreplay sets publish -dry-run' and 'bin/tcgreplay sets publish'). README.md (diff lines 157-163) also states publishing on merge or by hand. The workflow header at publish-cardsets.yml lines 3-9 agrees."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cardsets/README.md, '### How quickly playmats pick up a publish': hosted and desktop playmats check the manifest every 5 minutes (-cardsets-interval / TCGREPLAY_CARDSETS_INTERVAL, 10s to 10m), so a publish is live within about 5 minutes with no restart. An admin forces a check with 'Check for published card sets now' on /admin. The same forced-check wording appears in .github/workflows/publish-cardsets.yml lines 11-15 and in the 'Admin page' paragraph of README/app.yaml. desktop.md 'Card data' section says 'every few minutes'."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cardsets/README.md, '### How quickly playmats pick up a publish' bullet: 'Each playmat keeps a copy of what it loaded under \u003ccache\u003e/cardsets/ ... and plays from it when it cannot reach the bucket, or always with -offline. A desktop playmat's first run needs network access to download the card data once.' site/src/content/docs/desktop.md lines 404-412 ('## Card data'): 'the first run needs an internet connection. It keeps a copy on your computer and plays from it whenever you are offline.'"
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Searched the code root (excluding .spektacular) for on-demand, fetch, clear-cache, card cache and TCGdex-lookup wording in README.md, Makefile, Dockerfile, .do/app.yaml, .github/workflows/*.yml, skills/, internal/guides/, site/src/ and cmd/ help text. No doc describes fetching or clearing card definitions on demand. The old 'read cards from TCGdex on demand' and 'clear the card cache' text was replaced in the diff (cardsets/README.md line 9, README.md, .do/app.yaml, Makefile, Dockerfile, plan doc). The remaining 'tcgdex/' mentions in cardsets/README.md 'Cleaning up the old card cache' describe the retired cache as retired, not as current behaviour. The 'from TCGdex' hits in README.md line 45 and skills/card-set-import/SKILL.md line 9 describe the maintainer's import, not the playmat's runtime."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "2eb79741-e736-4cd5-bbd0-257f81caf59c",
+      "title": "Rewrite card cache knowledge entries",
+      "checks": [
+        {
+          "at": "2026-11-08T18:24:14Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "2eb79741-e736-4cd5-bbd0-257f81caf59c",
+            "title": "Rewrite card cache knowledge entries",
+            "criteria": [
+              "The knowledge base describes how card sets are published and loaded, and how open games keep their cards.",
+              "No knowledge entry still describes fetching, refreshing or clearing card definitions on demand as current behaviour."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcgdex-cache-never-expires.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/board-card-info-per-page-load.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/new-set-tcgdex-data-incomplete.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "learnings/card-text-always-english.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "text.en"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcg-live-log-card-codes.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/spaces-endpoint-is-region-not-bucket.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "architecture/published-card-sets.md covers publishing (cardset.Publish, sets publish, publish-cardsets.yml, bucket layout, manifest, publish refusals, rollback), loading (catalog.Loader, manifest fetch, hash-checked downloads, atomic Snapshot swap, checks at start/interval/on demand from /admin, failure keeps current snapshot), the local copy, and snapshot pinning ('a publish never changes an open game's cards'). architecture/games-read-cards-through-their-db.md lines 16-33 describe how a game takes its cards once from the CardSource at New/Import/reopen and keeps that snapshot for its life (Manager.CardDB for paths outside the game), with no background warming or prefetch (line 43). Both match the Go model the entries name, e.g. the Spaces-based loader and the Snapshot pinning in internal/catalog and internal/game, as far as the entries describe them. The export has no tcgdex-cache-never-expires entry (absent from learnings .list index, 32 entries)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "learnings/card-image-sources.md:7-8 says 'TCGdex, the playmat's card database, can return a print's card data with no image field', presenting TCGdex as the playmat's live card database, which is the retired on-demand design (published-card-sets.md says the playmat never asks TCGdex for definitions). This is a current-behaviour claim, not a historical note. The file is not in this item's scope list, so this item alone cannot correct it without breaking the scope rule; it needs a rewrite of that sentence (e.g. 'TCGdex is one of the upstream sources the card-set import reads; a print with no image in the built set ...') by whichever task owns that file. Other entries checked and not counted as failures: board-card-info-per-page-load.md describes the board's per-page /api/card memo served from the open game's snapshot (current, not a TCGdex fetch or clear), gotchas/new-set-tcgdex-data-incomplete.md:31-32 and published-card-sets.md:53 mention the retired on-demand cache only as past/retired, and cdn-purge-needs-cdn-delete.md concerns image-copy clearing, not card definitions. grep for on-demand/refresh/clear/fetch/cache across the export found no other current-behaviour claim about card definitions."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T18:25:45Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "2eb79741-e736-4cd5-bbd0-257f81caf59c",
+            "title": "Rewrite card cache knowledge entries",
+            "criteria": [
+              "The knowledge base describes how card sets are published and loaded, and how open games keep their cards.",
+              "No knowledge entry still describes fetching, refreshing or clearing card definitions on demand as current behaviour."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcgdex-cache-never-expires.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/board-card-info-per-page-load.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/new-set-tcgdex-data-incomplete.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "learnings/card-text-always-english.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "text.en"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcg-live-log-card-codes.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/catalog"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/spaces-endpoint-is-region-not-bucket.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "architecture/published-card-sets.md covers publishing (cardset.Publish, `tcgreplay sets publish`, publish-cardsets.yml, the sets/\u003cid\u003e/\u003chash\u003e.json.gz and manifest.json layout, the refusal rules) and loading (catalog.Loader, manifest fetch, hash-checked downloads, atomic catalog.Snapshot swap, the local copy under cache/cardsets, offline mode). architecture/games-read-cards-through-their-db.md covers how open games keep their cards: Manager.New and Manager.Import call the CardSource once and pin that snapshot, and a publish never changes an open game's cards. Code agrees: internal/catalog/snapshot.go:266-279 implements Card and Cached as lookups in the in-memory snapshot, and api.tcgdex.net appears only in internal/cardset/tcgdex.go and internal/catalog/nofetch_test.go."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Grep of the whole export for on-demand, refresh, expire, prefetch, fetch, clear and cache finds no entry describing card-definition fetching, refreshing or clearing as current. The only mentions of the old behaviour are marked as retired or historical: published-card-sets.md:53 ('retired on-demand cache'), :88-90 (clean-up of its tcgdex/ data), and new-set-tcgdex-data-incomplete.md:31-32 ('Before card sets were published, an on-demand TCGdex cache could freeze...'). games-read-cards-through-their-db.md:42-43 says a game never fetches a card and there is no prefetch. gotchas/tcgdex-cache-never-expires.md is absent from the export, as the goal says. Borderline point for the caller: gotchas/board-card-info-per-page-load.md:7-8 describes the browser asking /api/card for a definition the first time it needs it, once per page load. That is current on-demand fetching, but it reads the server's own open-game snapshot, not TCGdex, and is not the retired cache. I read it as outside the criterion's intent. A stricter reading would make this not_met until that entry is reworded. Code check: internal/catalog/snapshot.go:266-279 shows Card and Cached are in-memory lookups."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    }
+  ]
+}

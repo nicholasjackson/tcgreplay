@@ -1,10 +1,10 @@
 ---
-tags: [spaces, cdn, hosting, cache, digitalocean]
+tags: [spaces, cdn, hosting, publishing, digitalocean]
 ---
 
 # Purging the Spaces CDN needs the cdn:delete scope, not cdn:update
 
-The card cache admin page purges the bucket's CDN with a DigitalOcean personal
+The admin page's image clear, and `sets publish` (for the manifest), purge the bucket's CDN with a DigitalOcean personal
 access token (`TCGREPLAY_SPACES_CDN_TOKEN`). The playmat makes two API calls:
 
 - `GET /v2/cdn/endpoints` to find the bucket's endpoint by its origin: `cdn:read`.
