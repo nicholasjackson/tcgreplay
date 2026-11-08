@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -70,11 +71,17 @@ type SetRef struct {
 
 // Card is a card definition.
 type Card struct {
-	ID             string      `json:"id"`
-	LocalID        string      `json:"localId"`
-	Name           string      `json:"name"`
-	Category       string      `json:"category"` // Pokemon, Trainer, Energy
-	Image          string      `json:"image,omitempty"`
+	ID       string `json:"id"`
+	LocalID  string `json:"localId"`
+	Name     string `json:"name"`
+	Category string `json:"category"` // Pokemon, Trainer, Energy
+	// Image is the first of Images (empty when the card has no art), for
+	// readers that only ask whether a card has art.
+	Image string `json:"image,omitempty"`
+	// Images is the print's whole ordered list of image sources, in the
+	// order the board tries them; empty means no art. Cards that set only
+	// Image (test pools) are read through ImageList.
+	Images         []ImageRef  `json:"images,omitempty"`
 	Set            SetRef      `json:"set"`
 	HP             int         `json:"hp,omitempty"`
 	Types          []string    `json:"types,omitempty"`
@@ -90,6 +97,38 @@ type Card struct {
 	EnergyType     string      `json:"energyType,omitempty"`  // Normal, Special
 	Effect         string      `json:"effect,omitempty"`
 	RegulationMark string      `json:"regulationMark,omitempty"`
+}
+
+// ImageRef is one source of a card's image.
+type ImageRef struct {
+	URL string `json:"url"`
+	// File marks a complete image file used for every size (a malie.io
+	// jpg, say). Otherwise URL is a TCGdex base path, to which the board
+	// appends /low.webp or /high.webp.
+	File bool `json:"file,omitempty"`
+}
+
+// ImageList is the card's ordered image sources: Images, or one entry
+// made from Image when only Image is set, or nil for a card with no art.
+func (c *Card) ImageList() []ImageRef {
+	if len(c.Images) > 0 {
+		return c.Images
+	}
+	if c.Image != "" {
+		return []ImageRef{{URL: c.Image, File: ImageIsFile(c.Image)}}
+	}
+	return nil
+}
+
+// ImageIsFile reports whether an image address names a complete image
+// file (its last path segment ends in .jpg, .jpeg, .png or .webp) rather
+// than a TCGdex base path, which ends in the card number.
+func ImageIsFile(addr string) bool {
+	if u, err := url.Parse(addr); err == nil {
+		addr = u.Path
+	}
+	ext := strings.ToLower(path.Ext(path.Base(addr)))
+	return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp"
 }
 
 // IsPokemon reports whether the card is a Pokémon.
@@ -545,6 +584,7 @@ func energyArt(c *Card) {
 	for t, n := range basicEnergyArt {
 		if strings.Contains(c.Name, t) {
 			c.Image = "https://assets.tcgdex.net/en/swsh/swsh12.5/" + n
+			c.Images = []ImageRef{{URL: c.Image}}
 			return
 		}
 	}

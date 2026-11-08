@@ -434,7 +434,8 @@ func artSource(t *testing.T, images string) *httptest.Server {
 	return s
 }
 
-// boardCard asks a hosted board built over db and images for card y.
+// boardCard asks a hosted board built over db and images for card y and
+// returns the first entry of its image list (empty when it has none).
 func boardCard(t *testing.T, db *cards.Client, images *cards.ImageCache) map[string]any {
 	t.Helper()
 	m := game.NewManager(t.TempDir(), db)
@@ -449,11 +450,16 @@ func boardCard(t *testing.T, db *cards.Client, images *cards.ImageCache) map[str
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("/api/card: %d", resp.StatusCode)
 	}
-	var got map[string]any
+	var got struct {
+		Images []map[string]any `json:"images"`
+	}
 	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
 		t.Fatal(err)
 	}
-	return got
+	if len(got.Images) == 0 {
+		return map[string]any{}
+	}
+	return got.Images[0]
 }
 
 func TestHostedImagesCopiedAndServedFromSharedStore(t *testing.T) {
@@ -590,11 +596,16 @@ func TestDesktopBoardHasNoImageSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var got map[string]any
+	var got struct {
+		Images []map[string]any `json:"images"`
+	}
 	json.NewDecoder(resp.Body).Decode(&got)
 	resp.Body.Close()
-	if _, ok := got["image_fallback"]; ok || got["image"] != host.URL+"/en/sv/sv1/1" {
-		t.Errorf("desktop answer = %v", got)
+	if len(got.Images) != 1 || got.Images[0]["image"] != host.URL+"/en/sv/sv1/1" {
+		t.Fatalf("desktop answer = %v", got)
+	}
+	if _, ok := got.Images[0]["image_fallback"]; ok {
+		t.Errorf("desktop answer has a fallback: %v", got)
 	}
 	if srv.Total() != 0 || host.count() != 0 {
 		t.Errorf("desktop reached the shared store (%d) or image host (%d)", srv.Total(), host.count())

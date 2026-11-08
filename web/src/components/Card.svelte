@@ -76,9 +76,9 @@
       {#if card.known}<span class="known" aria-label="known: {card.known}">{card.known}</span>{/if}
     {:else if unknown}
       <div class="back-art unknown"><span>?</span></div>
-    {:else if info?.category === 'Energy' && (!info.image || stage === 2)}
+    {:else if info?.category === 'Energy' && !imageSrc(info, 'low.webp', stage)}
       <div class="token" data-type={energyType(info.name)} title={info.name}>{energyType(info.name).slice(0, 1)}</div>
-    {:else if info?.image && stage < 2}
+    {:else if imageSrc(info, 'low.webp', stage)}
       <img src={imageSrc(info, 'low.webp', stage)} alt={card.name} loading="lazy" draggable="false" onerror={() => (stage = nextImageStage(info, stage))} />
     {:else}
       <div class="text-card" data-cat={info?.category ?? ''}>

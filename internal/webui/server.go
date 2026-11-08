@@ -46,7 +46,9 @@ type Server struct {
 	hub    *hub
 }
 
-// ImageSource decides where the board loads a card image from. Image is
+// ImageSource decides where the board loads a card image from. It is
+// called once for each TCGdex base-path entry of a card's image list
+// (complete image files, such as malie.io jpgs, never reach it). Image is
 // given the card's TCGdex image base address and returns the base address
 // to load (to which the board appends /low.webp or /high.webp), when that
 // differs from src the address to fall back to, and the content version of
@@ -100,13 +102,14 @@ func (s *Server) Handler() http.Handler {
 	return localOnly(mux)
 }
 
-// borrowedArt is the art for a card TCGdex has no image for (a new promo,
-// say): the image of the print of the same name and moves that the card
-// database prefers, which is one with art. Only the picture is borrowed;
-// the card keeps its identity. "" if there is none.
-func (s *Server) borrowedArt(ctx context.Context, c *cards.Card) string {
+// borrowedArt is the art for a card with no image of its own (a new
+// promo, say): the whole image list of the print of the same name and
+// moves that the card database prefers, which is one with art. Only the
+// pictures are borrowed; the card keeps its identity. Nil if there is
+// none.
+func (s *Server) borrowedArt(ctx context.Context, c *cards.Card) []cards.ImageRef {
 	if c.Category == "Energy" {
-		return "" // Basic Energy art is borrowed by the card database
+		return nil // Basic Energy art is borrowed by the card database
 	}
 	var moves []string
 	for _, a := range c.Attacks {
@@ -117,13 +120,13 @@ func (s *Server) borrowedArt(ctx context.Context, c *cards.Card) string {
 	}
 	id, err := s.M.DB.ByName(ctx, c.Name, moves...)
 	if err != nil || id == "" || id == c.ID {
-		return ""
+		return nil
 	}
 	alt, err := s.M.DB.Card(ctx, id)
 	if err != nil || !cards.SameName(alt.Name, c.Name) {
-		return ""
+		return nil
 	}
-	return alt.Image
+	return alt.ImageList()
 }
 
 // StartHub runs the update hub until ctx is done, for use with Handler.
@@ -171,19 +174,29 @@ type CardInfo struct {
 	Retreat     int             `json:"retreat,omitempty"`
 	Attacks     []cards.Attack  `json:"attacks,omitempty"`
 	Abilities   []cards.Ability `json:"abilities,omitempty"`
-	// Image is the base address to load the card's image from (the CDN
-	// copy in hosted mode with the shared store, else TCGdex); append
-	// /low.webp or /high.webp.
-	Image string `json:"image,omitempty"`
-	// ImageFallback is the TCGdex base address, set only when Image
-	// differs from it; the board loads it if Image fails.
-	ImageFallback string `json:"image_fallback,omitempty"`
-	// ImageVersion is the content version of the copy at Image, set only
-	// when Image is a copy. The board appends ?v=<image_version> to the
-	// Image address with its size (never to the fallback), so a browser or
-	// CDN holding an old copy fetches changed art again.
-	ImageVersion string `json:"image_version,omitempty"`
-	Text         string `json:"text"`
+	// Images lists every source of the card's image, in the order the
+	// board tries them; empty for a card with no art.
+	Images []CardImage `json:"images"`
+	Text   string      `json:"text"`
+}
+
+// CardImage is one source of a card's image.
+type CardImage struct {
+	// Image is, without File, the base address to load the image from
+	// (the CDN copy in hosted mode with the shared store, else TCGdex), to
+	// which the board appends /low.webp or /high.webp; with File, a
+	// complete image file loaded as is for every size.
+	Image string `json:"image"`
+	// File marks Image as a complete image file.
+	File bool `json:"image_file,omitempty"`
+	// Fallback is the TCGdex base address, set only when Image is a copy
+	// that differs from it; the board loads it if Image fails.
+	Fallback string `json:"image_fallback,omitempty"`
+	// Version is the content version of the copy at Image, set only when
+	// Image is a copy. The board appends ?v=<image_version> to the Image
+	// address with its size (never to the fallback), so a browser or CDN
+	// holding an old copy fetches changed art again.
+	Version string `json:"image_version,omitempty"`
 }
 
 func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
@@ -199,18 +212,31 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	img, fb, ver := c.Image, "", ""
-	if img == "" {
-		img = s.borrowedArt(ctx, c)
+	refs := c.ImageList()
+	if len(refs) == 0 {
+		refs = s.borrowedArt(ctx, c)
 	}
-	if src := img; s.Images != nil && src != "" {
-		img, fb, ver = s.Images.Image(src)
-		if fb == img {
-			fb = ""
+	images := make([]CardImage, 0, len(refs))
+	for _, ref := range refs {
+		if ref.URL == "" {
+			continue
 		}
-		if img == src {
-			ver = "" // a version only ever names a copy
+		if ref.File {
+			images = append(images, CardImage{Image: ref.URL, File: true})
+			continue
 		}
+		img := CardImage{Image: ref.URL}
+		if s.Images != nil {
+			var fb, ver string
+			img.Image, fb, ver = s.Images.Image(ref.URL)
+			if fb != img.Image {
+				img.Fallback = fb
+			}
+			if img.Image != ref.URL {
+				img.Version = ver // a version only ever names a copy
+			}
+		}
+		images = append(images, img)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	// Revalidate: what is served for a card (e.g. borrowed Energy art) can
@@ -220,6 +246,6 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		ID: c.ID, Name: c.Name, Category: c.Category, Stage: c.Stage,
 		TrainerType: c.TrainerType, EnergyType: c.EnergyType, HP: c.HP,
 		Types: c.Types, EvolveFrom: c.EvolveFrom, Retreat: c.Retreat,
-		Attacks: c.Attacks, Abilities: c.Abilities, Image: img, ImageFallback: fb, ImageVersion: ver, Text: c.Text(),
+		Attacks: c.Attacks, Abilities: c.Abilities, Images: images, Text: c.Text(),
 	})
 }

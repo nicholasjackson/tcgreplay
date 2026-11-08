@@ -242,7 +242,7 @@
       <textarea readonly rows="3" onfocus={(ev) => ev.target.select()}>{m.text}</textarea>
     {/if}
   </div>
-  {#if previewInfo?.image && previewStage < 2}
+  {#if imageSrc(previewInfo, 'high.webp', previewStage)}
     <img class="preview" src={imageSrc(previewInfo, 'high.webp', previewStage)} alt={preview.name} onerror={() => (previewStage = nextImageStage(previewInfo, previewStage))} />
   {/if}
 {/if}

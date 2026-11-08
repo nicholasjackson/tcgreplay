@@ -106,8 +106,39 @@ func build(version string, sets map[string]*setData) *Snapshot {
 			s.cards[c.ID] = c
 		}
 	}
+	// A card showing borrowed art (a Basic Energy without its own) takes
+	// the whole image list of the print it borrows from, when this
+	// snapshot holds that print. The card is copied, never changed: its
+	// set may be shared with snapshots holding another version of the
+	// print it borrows from.
+	for _, d := range sets {
+		for i, c := range d.cards {
+			if d.art[i] || c.Image == "" {
+				continue
+			}
+			from := s.cards[borrowedID(c.Image)]
+			if from == nil || from == c || len(from.ImageList()) == 0 {
+				continue
+			}
+			cc := *c
+			cc.Images = from.ImageList()
+			cc.Image = cc.Images[0].URL
+			s.cards[c.ID] = &cc
+		}
+	}
 	s.setIndex, s.byName = indexes(sets)
 	return s
+}
+
+// borrowedID is the card id of the print a borrowed TCGdex image address
+// belongs to: https://assets.tcgdex.net/en/swsh/swsh12.5/157 is
+// swsh12.5-157.
+func borrowedID(addr string) string {
+	parts := strings.Split(strings.TrimSuffix(addr, "/"), "/")
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[len(parts)-2] + "-" + parts[len(parts)-1]
 }
 
 // indexes derives the set-code index and the by-name index from the sets.

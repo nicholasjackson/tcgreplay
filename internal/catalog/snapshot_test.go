@@ -182,6 +182,30 @@ func TestEnergyArtBorrowed(t *testing.T) {
 	}
 }
 
+// A Basic Energy print without art borrows the whole image list of the
+// Crown Zenith print it takes its art from, when the snapshot holds it.
+func TestEnergyArtBorrowsWholeList(t *testing.T) {
+	const malie = "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/swsh12pt5/swsh12pt5_en_157_std.jpg"
+	cz := builtSet(header{id: "swsh12.5", serie: "swsh", abbr: "CRZ"}, pr{local: "157", name: "Fighting Energy", art: true, cat: "Energy", energy: "Normal"})
+	cz.Prints[0].Images = append(cz.Prints[0].Images, cardset.Image{Source: "malie", URL: malie})
+	s := snapshotOf(t, cz, builtSet(header{id: "sv01", serie: "sv"}, pr{local: "257", name: "Basic Fighting Energy", cat: "Energy", energy: "Normal"}))
+	want := []cards.ImageRef{{URL: "https://assets.tcgdex.net/en/swsh/swsh12.5/157"}, {URL: malie, File: true}}
+	c := s.Cached("sv01-257")
+	if c == nil || !slices.Equal(c.Images, want) || c.Image != want[0].URL {
+		t.Errorf("borrowed list %+v", c)
+	}
+	// The set's own converted card is untouched (sets are shared between
+	// snapshots).
+	if got := s.sets["sv01"].cards[0].Images; len(got) != 1 {
+		t.Errorf("shared set card changed: %+v", got)
+	}
+	// Without the Crown Zenith set, the borrowed base path alone.
+	alone := snapshotOf(t, builtSet(header{id: "sv01", serie: "sv"}, pr{local: "257", name: "Basic Fighting Energy", cat: "Energy", energy: "Normal"}))
+	if c := alone.Cached("sv01-257"); c == nil || !slices.Equal(c.Images, want[:1]) {
+		t.Errorf("borrowed without the print: %+v", c)
+	}
+}
+
 // Borrowed art does not count as art in a name lookup: a newer Basic
 // Energy print showing borrowed art ranks below an older print with art of
 // its own, as in today's catalogue, which ranks on the print's own image.

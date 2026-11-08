@@ -52,8 +52,8 @@ func TestCardBorrowsArtWhenItHasNone(t *testing.T) {
 	t.Cleanup(ts.Close)
 
 	got := cardJSON(t, ts, "tst-2")
-	if got["image"] != art {
-		t.Fatalf("imageless Lucario image = %v, want the same Pokémon's art %s", got["image"], art)
+	if firstImage(t, got)["image"] != art {
+		t.Fatalf("imageless Lucario image = %v, want the same Pokémon's art %s", firstImage(t, got)["image"], art)
 	}
 	if got["id"] != "tst-2" || got["hp"] != float64(130) {
 		t.Errorf("borrowing art changed the card: id %v, hp %v", got["id"], got["hp"])
@@ -63,15 +63,22 @@ func TestCardBorrowsArtWhenItHasNone(t *testing.T) {
 	}
 
 	// A card with art keeps its own.
-	if got := cardJSON(t, ts, "tst-20"); got["image"] != art {
-		t.Errorf("Lucario with art: image %v, want %s", got["image"], art)
+	if got := cardJSON(t, ts, "tst-20"); firstImage(t, got)["image"] != art {
+		t.Errorf("Lucario with art: image %v, want %s", firstImage(t, got)["image"], art)
 	}
 	// Nothing to borrow from: still no image.
-	if _, ok := cardJSON(t, ts, "tst-7")["image"]; ok {
+	if _, ok := firstImage(t, cardJSON(t, ts, "tst-7"))["image"]; ok {
 		t.Error("Makuhita, with no print that has art, got an image")
 	}
+	// The whole image list is borrowed, in order.
+	malie := "https://cdn.malie.io/x/me1_en_188_std.jpg"
+	db.FakeDB["tst-20"].Images = []cards.ImageRef{{URL: art}, {URL: malie, File: true}}
+	imgs := cardImages(t, cardJSON(t, ts, "tst-2"))
+	if len(imgs) != 2 || imgs[0]["image"] != art || imgs[1]["image"] != malie || imgs[1]["image_file"] != true {
+		t.Errorf("borrowed list %v, want the whole list of tst-20", imgs)
+	}
 	// Energy is left to the card database's own borrowing.
-	if _, ok := cardJSON(t, ts, "sve-006")["image"]; ok {
+	if _, ok := firstImage(t, cardJSON(t, ts, "sve-006"))["image"]; ok {
 		t.Error("Energy borrowed art in the board server")
 	}
 }

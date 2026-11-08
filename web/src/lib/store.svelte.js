@@ -156,30 +156,46 @@ export function cardInfo(def) {
   return null;
 }
 
-// A card image is tried in stages: 0 loads info.image (with
-// ?v=<info.image_version> when the server gives a copy's content version,
-// so changed art gets a new address past browser and CDN caches), 1 loads
-// info.image_fallback (the card source, when the image is a CDN copy), and
-// 2 means both failed, so the board shows its text stand-in or Energy
-// token. Each image spot keeps its own stage and resets it to 0 when it
-// shows another card.
+// A card image is tried in stages, one per candidate address, in the
+// order info.images lists its sources. A base-path entry gives its address
+// with the size file appended (with ?v=<image_version> when the server
+// gives a copy's content version, so changed art gets a new address past
+// browser and CDN caches), then its image_fallback with the size file (the
+// card source, when the address is a CDN copy). A file entry
+// (image_file) gives its address as is, for every size. When an image
+// fails to load the board moves to the next stage; past the last one
+// nothing is left to load, so it shows its text stand-in or Energy token.
+// Each image spot keeps its own stage and resets it to 0 when it shows
+// another card.
 
-// imageSrc is the address of an image file (low.webp or high.webp) for
-// info at stage, or null when the stage has nothing to load.
-export function imageSrc(info, size, stage) {
-  if (!info?.image) return null;
-  if (stage === 0) {
-    const v = info.image_version ? `?v=${encodeURIComponent(info.image_version)}` : '';
-    return `${info.image}/${size}${v}`;
+// imageCandidates lists the addresses to try for info's image at size
+// (low.webp or high.webp), in order.
+export function imageCandidates(info, size) {
+  const out = [];
+  for (const img of info?.images ?? []) {
+    if (!img?.image) continue;
+    if (img.image_file) {
+      out.push(img.image);
+      continue;
+    }
+    const v = img.image_version ? `?v=${encodeURIComponent(img.image_version)}` : '';
+    out.push(`${img.image}/${size}${v}`);
+    if (img.image_fallback) out.push(`${img.image_fallback}/${size}`);
   }
-  if (stage === 1 && info.image_fallback) return `${info.image_fallback}/${size}`;
-  return null;
+  return out;
 }
 
-// nextImageStage is the stage after the image at stage failed to load:
-// the fallback when there is one and it has not been tried, else broken.
+// imageSrc is the address of the image file at size for info at stage, or
+// null when the stage has nothing to load.
+export function imageSrc(info, size, stage) {
+  return imageCandidates(info, size)[stage] ?? null;
+}
+
+// nextImageStage is the stage after the image at stage failed to load.
+// Every size has the same number of candidates, so the stage counts the
+// same for the mat, the zoom and the preview.
 export function nextImageStage(info, stage) {
-  return stage === 0 && info?.image_fallback ? 1 : 2;
+  return stage + 1;
 }
 
 // ownerOf returns the seat that owns a card from its iid ("p1-12" -> p1).
