@@ -172,3 +172,4 @@
   - User answered: same turn, together (printed rule stands). No change sent to child.
 - paired-stadiums: DONE (4ae4fb7) and MERGED (d0ef766). 9/9 tasks (importer on synthetic log, accepted shortfall). Spec 16/19. Knowledge: gotchas/stadium-pair-log-format-unverified.md (new). Proposed follow-up spec: verify Stadium-pair import against a real TCG Live log.
 - EPIC IMPLEMENT RUN COMPLETE: 3/3 done. main ahead of origin by 2 (not pushed).
+- 2026-11-08 20:13Z: user pushed paired-stadiums; publish uploaded me06 only; deploy finished (see run 42519053742).

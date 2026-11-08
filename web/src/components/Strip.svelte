@@ -27,6 +27,14 @@
   // On a phone the Stadium sits on the side of whoever played it: left of
   // your Active, or right of the opponent's.
   const theirs = $derived(!!b.stadium && ownerOf(b.stadium.iid) !== app.human);
+  // The two halves of a pair-played Stadium form one picture, left half the
+  // lower collector number, so they show in print order whichever was
+  // played first.
+  const halves = $derived.by(() => {
+    if (!b.stadium?.pair) return [];
+    const both = [b.stadium, b.stadium.pair];
+    return both.sort((x, y) => (x.def || '').localeCompare(y.def || '', undefined, { numeric: true }));
+  });
   function whoseTurn() {
     if (setup) return 'Setup';
     if (phone) return `T${b.turn} · ${b.current === app.human ? 'You' : nameOf(b.current)}`;
@@ -42,8 +50,9 @@
     {#if b.stadium?.pair}
       <!-- A Stadium played as a pair: both halves, each zoomable. -->
       <div class="halves">
-        <Card card={b.stadium} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
-        <Card card={b.stadium.pair} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
+        {#each halves as half (half.iid)}
+          <Card card={half} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
+        {/each}
       </div>
     {:else if b.stadium}
       <Card card={b.stadium} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />

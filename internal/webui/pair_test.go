@@ -60,3 +60,23 @@ func TestPlayTrainerPairAction(t *testing.T) {
 		t.Fatalf("stadium = %v after playing the halves in turn, want [%s %s]", st.Stadium, a, b)
 	}
 }
+
+// TestCardInfoPlayedAsPair: /api/card marks a pair-played Stadium's prints
+// played_as_pair, which the hand uses to stack them apart, and leaves the
+// key out for every other card.
+func TestCardInfoPlayedAsPair(t *testing.T) {
+	m := webtest.NewManager(t.TempDir())
+	if err := webtest.Reset(context.Background(), m); err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(New(m, state.P1).Handler())
+	t.Cleanup(ts.Close)
+	for _, def := range []string{"tst-10", "tst-11"} {
+		if got := cardJSON(t, ts, def)["played_as_pair"]; got != true {
+			t.Errorf("%s played_as_pair = %v, want true", def, got)
+		}
+	}
+	if got, ok := cardJSON(t, ts, "tst-1")["played_as_pair"]; ok {
+		t.Errorf("tst-1 played_as_pair = %v, want the key left out", got)
+	}
+}

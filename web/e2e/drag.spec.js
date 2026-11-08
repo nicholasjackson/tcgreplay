@@ -342,3 +342,25 @@ test('each half of a Stadium pair opens in the zoom', async ({ page }) => {
     await expect(page.locator('.zoom')).toHaveCount(0);
   }
 });
+
+test('the hand stacks the two prints of a pair-played Stadium apart, so either half can be chosen', async ({ page }) => {
+  const [a, b] = twinPeak;
+  for (const iid of twinPeak) await act(page, 'move', { iid, to: 'hand' });
+  // One fan slot per print, each holding a single card: not one "×2" stack.
+  const slots = hand(page).getByRole('listitem').filter({ has: page.locator('.card[title^="Twin Peak"]') });
+  await expect(slots).toHaveCount(2);
+  for (const iid of [a, b]) {
+    const slot = hand(page).getByRole('listitem').filter({ has: titled(page, `Twin Peak (${iid})`) });
+    await expect(slot.locator('.dup')).toHaveCount(0);
+  }
+});
+
+test('the halves of a Stadium pair show in print order whichever was played first', async ({ page }) => {
+  // a is TST 10, b TST 11: playing b first still shows a on the left.
+  const [a, b] = twinPeak;
+  for (const iid of twinPeak) await act(page, 'move', { iid, to: 'hand' });
+  await act(page, 'play_trainer', { iid: b, pair_iid: a });
+  const halves = page.getByRole('region', { name: 'Stadium' }).locator('.card');
+  await expect(halves).toHaveCount(2);
+  await expect.poll(() => halves.evaluateAll((els) => els.map((e) => e.getAttribute('title')))).toEqual([`Twin Peak (${a})`, `Twin Peak (${b})`]);
+});

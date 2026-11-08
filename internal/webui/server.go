@@ -174,6 +174,10 @@ type CardInfo struct {
 	Retreat     int             `json:"retreat,omitempty"`
 	Attacks     []cards.Attack  `json:"attacks,omitempty"`
 	Abilities   []cards.Ability `json:"abilities,omitempty"`
+	// PlayedAsPair marks a card whose two different prints are played
+	// together as one card (a Legendary Stadium), so the hand keeps the
+	// prints apart for the player to choose between.
+	PlayedAsPair bool `json:"played_as_pair,omitempty"`
 	// Images lists every source of the card's image, in the order the
 	// board tries them; empty for a card with no art.
 	Images []CardImage `json:"images"`
@@ -248,6 +252,7 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		ID: c.ID, Name: c.Name, Category: c.Category, Stage: c.Stage,
 		TrainerType: c.TrainerType, EnergyType: c.EnergyType, HP: c.HP,
 		Types: c.Types, EvolveFrom: c.EvolveFrom, Retreat: c.Retreat,
-		Attacks: c.Attacks, Abilities: c.Abilities, Images: images, Text: c.Text(),
+		Attacks: c.Attacks, Abilities: c.Abilities, PlayedAsPair: c.PlayedAsPair,
+		Images: images, Text: c.Text(),
 	})
 }

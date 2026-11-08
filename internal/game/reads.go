@@ -440,6 +440,9 @@ func (g *Game) Warnings() []string {
 // standing warnings about the Stadium in play.
 func (g *Game) turnWarnings() []string {
 	w := g.stadiumWarnings()
+	if g.st.Phase == state.PhaseSetup {
+		return append(w, g.setupWarnings()...)
+	}
 	if g.st.Phase != state.PhasePlaying {
 		return w
 	}
@@ -499,6 +502,49 @@ func (g *Game) turnWarnings() []string {
 		w = append(w, fmt.Sprintf("%s retreated %d times this turn", seat, retreats))
 	}
 	return append(w, g.benchWarnings()...)
+}
+
+// setupPlays names, in the order they are warned about, the kinds of action
+// that wait for the game to start: during setup a player only places Basic
+// Pokémon (and mulligans).
+var setupPlays = []struct{ kind, what string }{
+	{"trainer", "played a Trainer"},
+	{"attach", "attached a card"},
+	{"evolve", "evolved a Pokémon"},
+	{"ability", "used an Ability"},
+	{"retreat", "retreated"},
+	{"attack", "attacked"},
+}
+
+// setupWarnings flags, while the game is still in setup, each kind of
+// action a seat took that only belongs to a turn: playing a Trainer,
+// attaching, evolving, an Ability, a retreat or an attack.
+func (g *Game) setupWarnings() []string {
+	done := map[state.Seat]map[string]bool{}
+	for id := g.log.Head(); id != 0; {
+		e := g.log.Event(id)
+		if e == nil {
+			break
+		}
+		id = e.Parent
+		a := g.log.Action(e.Action)
+		if a == nil || !a.Seat.Valid() {
+			continue
+		}
+		if done[a.Seat] == nil {
+			done[a.Seat] = map[string]bool{}
+		}
+		done[a.Seat][a.Kind] = true
+	}
+	var w []string
+	for _, seat := range state.Seats {
+		for _, p := range setupPlays {
+			if done[seat][p.kind] {
+				w = append(w, fmt.Sprintf("%s %s during setup: that waits until the game starts (start_game)", seat, p.what))
+			}
+		}
+	}
+	return w
 }
 
 // playsStadium reports whether e puts a Stadium into the spot other than as
