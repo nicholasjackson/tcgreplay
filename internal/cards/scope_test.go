@@ -2,39 +2,6 @@ package cards
 
 import "testing"
 
-func TestScopeKey(t *testing.T) {
-	cases := []struct {
-		set, key string
-		want     bool
-	}{
-		{"", "sets", true},
-		{"", "sets/me01", true},
-		{"", "cards/sv1-001", true},
-		{"me01", "sets/me01", true},
-		{"me01", "cards/me01-001", true},
-		{"me01", "cards/me01-TG05", true},
-		{"me01", "sets", false},
-		{"me01", "sets/me01.5", false},
-		{"me01", "cards/me01.5-001", false},
-		{"me01", "cards/me010-001", false},
-		{"me01", "cards/xme01-001", false},
-		{"sv03", "cards/sv03-001", true},
-		{"sv03", "sets/sv03.5", false},
-		{"sv03", "cards/sv03.5-001", false},
-		{"sv03.5", "cards/sv03.5-001", true},
-		{"sv03.5", "cards/sv03-001", false},
-		{"swsh12", "cards/swsh12-001", true},
-		{"swsh12", "cards/swsh12tg-TG01", false},
-		{"swsh12", "cards/swsh12.5-157", false},
-		{"swsh12", "sets/swsh12tg", false},
-	}
-	for _, c := range cases {
-		if got := (Scope{Set: c.set}).Key(c.key); got != c.want {
-			t.Errorf("Scope{%q}.Key(%q) = %v, want %v", c.set, c.key, got, c.want)
-		}
-	}
-}
-
 func TestScopeImage(t *testing.T) {
 	cases := []struct {
 		set, rel string

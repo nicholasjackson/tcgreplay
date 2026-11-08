@@ -63,7 +63,7 @@ var ImageFiles = []string{"low.webp", "high.webp"}
 // admin's Clear deletes copies, after which the next view copies the
 // source's current art again.
 //
-// Shared store failures follow the card cache's rule: each request is
+// Shared store failures follow one rule: each request is
 // bounded by SharedTimeout, and a failure skips copies for
 // SharedRetryAfter, logged once when the outage starts and once when it
 // ends. A copy skipped meanwhile, or dropped from a full queue, is queued

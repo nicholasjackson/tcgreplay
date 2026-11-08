@@ -26,6 +26,16 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/cardset"
 )
 
+// DefaultCacheDir is where the playmat keeps its local copy of published
+// card sets by default: $XDG_CACHE_HOME/tcgreplay or ~/.cache/tcgreplay
+// (the copy itself is in its cardsets/ subdirectory).
+func DefaultCacheDir() string {
+	if d, err := os.UserCacheDir(); err == nil {
+		return filepath.Join(d, "tcgreplay")
+	}
+	return filepath.Join(os.TempDir(), "tcgreplay-cache")
+}
+
 // DefaultInterval is how often a running playmat checks for a publish.
 const DefaultInterval = 5 * time.Minute
 

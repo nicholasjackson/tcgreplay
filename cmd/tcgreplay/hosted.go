@@ -175,7 +175,7 @@ func idleText(d time.Duration) string {
 //     Google's callback, /healthz) are open;
 //   - /mcp serves MCP over Streamable HTTP, every session sharing srv, and
 //     needs an access token;
-//   - /admin is the card cache admin page, admin, for admins only (see
+//   - /admin is the card sets and images admin page, admin, for admins only (see
 //     hostauth.RequireAdmin);
 //   - the board page is at /board and needs a session. It goes through
 //     reg's front door to the signed-in account's own board, which still

@@ -37,7 +37,6 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
@@ -147,7 +146,7 @@ func main() {
 	}
 	var c config
 	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for the playmat's log and daemon files")
-	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the local copy of published card sets")
+	flag.StringVar(&c.cacheDir, "cache", catalog.DefaultCacheDir(), "directory for the local copy of published card sets")
 	flag.StringVar(&c.seat, "seat", "p2", "seat Claude plays")
 	flag.BoolVar(&c.offline, "offline", false, "use only the local copy of published card sets")
 	flag.StringVar(&c.cardsetsURL, "cardsets-url", envOr("TCGREPLAY_CARDSETS_URL", defaultCardsetsURL), "where card sets are published: an https address or a directory (default $TCGREPLAY_CARDSETS_URL, else the project's CDN)")

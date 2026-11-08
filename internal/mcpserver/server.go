@@ -571,7 +571,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return w, nil
 	})
-	add(s, srv, "card_text", "Card text from the TCGdex cache. Quote this rather than memory.", func(ctx context.Context, in CardText) (any, error) {
+	add(s, srv, "card_text", "Card text from the published card sets. Quote this rather than memory.", func(ctx context.Context, in CardText) (any, error) {
 		def := strings.TrimSpace(in.Card)
 		if g, err := s.m(ctx).Current(); err == nil {
 			if c, ok := g.State().Cards[state.IID(def)]; ok {
