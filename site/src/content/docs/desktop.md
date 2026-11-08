@@ -49,6 +49,16 @@ Replace `/home/you/go/bin/tcgreplay` with your path. Save the file and **restart
 What can the tcgreplay playmat do?
 ```
 
+## Card data
+
+The playmat downloads its card data (every card's text and art addresses)
+from the project the first time it runs, so **the first run needs an internet
+connection**. It keeps a copy on your computer and plays from it whenever you
+are offline. While you are online it checks for new card data every few
+minutes, so new sets and fixes appear within minutes, with no update to
+install. A game you already have open keeps the cards it started with; the
+next game you start or import uses the new data.
+
 ## The board
 
 The board is at **http://127.0.0.1:7777**. Open it in your browser while you play: there is no sign-in on the desktop. It keeps running across app restarts.

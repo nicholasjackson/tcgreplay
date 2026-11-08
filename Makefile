@@ -72,12 +72,15 @@ dev-ui: web/node_modules
 # website at PUBLIC_URL and the board at PUBLIC_URL/board. Hosted mode needs
 # a Google sign-in client: export TCGREPLAY_GOOGLE_CLIENT_ID and
 # TCGREPLAY_GOOGLE_CLIENT_SECRET first (redirect URI
-# $(PUBLIC_URL)/auth/google/callback). To keep the card cache in a Spaces
-# bucket, also export TCGREPLAY_SPACES_ENDPOINT, TCGREPLAY_SPACES_BUCKET,
-# TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET (optional). To use the
-# card cache admin page at /admin, export TCGREPLAY_ADMINS (Google account
-# emails), and TCGREPLAY_SPACES_CDN_TOKEN for clears to purge the CDN
-# (both optional).
+# $(PUBLIC_URL)/auth/google/callback). Card sets load from the published
+# copy (TCGREPLAY_CARDSETS_URL, default the project's CDN; export it to use
+# another, such as a directory from `tcgreplay sets publish -to`, mounted
+# into the container), checked every TCGREPLAY_CARDSETS_INTERVAL. To copy
+# card images to a Spaces bucket, also export TCGREPLAY_SPACES_ENDPOINT,
+# TCGREPLAY_SPACES_BUCKET, TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET
+# (optional). To use the admin page at /admin, export TCGREPLAY_ADMINS
+# (Google account emails), and TCGREPLAY_SPACES_CDN_TOKEN for image clears
+# to purge the CDN (both optional).
 IMAGE ?= tcgreplay
 PUBLIC_URL ?= http://localhost:8080
 
@@ -88,6 +91,7 @@ docker-run:
 	docker run --rm -p 8080:8080 -e TCGREPLAY_PUBLIC_URL=$(PUBLIC_URL) \
 		-e TCGREPLAY_GOOGLE_CLIENT_ID -e TCGREPLAY_GOOGLE_CLIENT_SECRET \
 		-e TCGREPLAY_RATE_LIMIT -e TCGREPLAY_MAX_USERS \
+		-e TCGREPLAY_CARDSETS_URL -e TCGREPLAY_CARDSETS_INTERVAL \
 		-e TCGREPLAY_SPACES_ENDPOINT -e TCGREPLAY_SPACES_BUCKET \
 		-e TCGREPLAY_SPACES_KEY -e TCGREPLAY_SPACES_SECRET \
 		-e TCGREPLAY_ADMINS -e TCGREPLAY_SPACES_CDN_TOKEN $(IMAGE)

@@ -4,8 +4,9 @@ This directory holds the playmat's card data, built ahead of time by the
 maintainer: one file per English card set, the hand corrections that every
 import keeps, and the report of the last import. It is data, not code: it is
 never embedded in the program and never copied into the container image
-(`.dockerignore` leaves it out). The card-set-publishing work serves it to the
-playmat; until then the playmat still reads cards from TCGdex on demand.
+(`.dockerignore` leaves it out). It reaches players by being published to the
+playmat's Spaces bucket (see [Publishing](#publishing)); every playmat reads its
+card definitions only from the published sets, never from TCGdex or malie.io.
 
 ```
 cardsets/
@@ -105,7 +106,13 @@ between the facts and every language's text.
 
 English text is required for every print: game logic reads it. Other
 languages may be added by hand under `text`; the import writes English only
-and keeps the rest. `images` lists every source that has art, TCGdex first.
+and keeps the rest. `images` lists every source that has art, TCGdex first. The board tries them
+in that order and falls back to the next when one is missing or fails to load,
+so reordering a print's images (with a correction) changes which art shows
+first. A TCGdex image is a base path (the board adds `/low.webp` or
+`/high.webp`, and the hosted playmat serves its copy from the CDN); any other
+source must be an https address of a complete image file (`.jpg`, `.jpeg`,
+`.png` or `.webp`), which the board loads as is. Anything else is left out.
 
 ## Recording a correction
 
@@ -172,3 +179,83 @@ English names or text), `markup` (HTML in text), `corrections-invalid` and
 `correction-dangling` (a correction whose card or path no longer resolves).
 These are fixed in the files, not acknowledged. The Go test suite runs the same
 check over everything here, so a bad edit fails `go test ./...`.
+
+## Publishing
+
+Players get card data from the published sets, so a change here reaches them
+without a new release of the playmat. Publishing is automatic: every merge to
+`main` that changes `cardsets/` runs the "Publish card sets" GitHub Actions
+workflow (`.github/workflows/publish-cardsets.yml`), which runs `sets check` and
+then `sets publish`, and fails without publishing if the check finds an open
+item. The workflow can also be started by hand from the Actions tab. A merge
+that changes only `cardsets/` never redeploys the hosted playmat (see
+`.github/workflows/deploy.yml`), so games in progress carry on.
+
+To publish by hand, export the bucket settings and run the command:
+
+```sh
+export TCGREPLAY_SPACES_ENDPOINT=https://ams3.digitaloceanspaces.com  # the region endpoint, not the bucket's own address
+export TCGREPLAY_SPACES_BUCKET=… TCGREPLAY_SPACES_KEY=… TCGREPLAY_SPACES_SECRET=…
+export TCGREPLAY_SPACES_CDN_TOKEN=…   # optional: purges the manifest from the CDN (scopes cdn:read and cdn:delete)
+bin/tcgreplay sets publish -dry-run   # what would be uploaded; writes nothing
+bin/tcgreplay sets publish            # uploads changed sets, then the manifest
+bin/tcgreplay sets publish -to /tmp/published   # publish to a local directory instead (development)
+```
+
+`sets publish` refuses to publish while `sets check` has an open item, or when a
+set already published is missing from `cardsets/sets/` (a set is never
+unpublished by accident). It prints each set it uploaded and how many were
+unchanged; a publish with nothing changed uploads nothing.
+
+### The published layout
+
+```
+cardsets/manifest.json                    which object is each set's current version (cached for a minute, purged after each publish)
+cardsets/sets/<set-id>/<hash>.json.gz     a built set, gzipped, named by the first 16 hex of the sha256 of its file (cached for a year, never changed)
+```
+
+Set objects are content-addressed and never overwritten or deleted, so every
+earlier version of a set stays in the bucket byte for byte. To roll back,
+publish an older commit's `cardsets/`: its objects are still there, so only the
+manifest changes.
+
+### How quickly playmats pick up a publish
+
+- Hosted and desktop playmats check the manifest every 5 minutes
+  (`-cardsets-interval` or `TCGREPLAY_CARDSETS_INTERVAL`, from 10s to 10m), so a
+  publish is live within about 5 minutes with no restart.
+- An admin can make the hosted playmat check at once with "Check for published
+  card sets now" on `/admin`, which also shows the loaded catalogue's version,
+  set count and last check.
+- A game already open keeps the cards it started with until it ends; new,
+  imported and reopened games use the latest.
+- Each playmat keeps a copy of what it loaded under `<cache>/cardsets/` (the
+  `-cache` directory, `~/.cache/tcgreplay` by default) and plays from it when it
+  cannot reach the bucket, or always with `-offline`. A desktop playmat's first
+  run needs network access to download the card data once.
+- `-cardsets-url` (or `TCGREPLAY_CARDSETS_URL`) points a playmat at another
+  published copy: an https address or a local directory such as the output of
+  `sets publish -to`.
+
+### Secrets the workflows need
+
+In the GitHub repository's Settings → Secrets and variables → Actions:
+`TCGREPLAY_SPACES_ENDPOINT` (the region endpoint,
+`https://<region>.digitaloceanspaces.com`), `TCGREPLAY_SPACES_BUCKET`,
+`TCGREPLAY_SPACES_KEY`, `TCGREPLAY_SPACES_SECRET` and
+`TCGREPLAY_SPACES_CDN_TOKEN` for publishing; `DIGITALOCEAN_ACCESS_TOKEN` (able to
+create App Platform deployments) and `TCGREPLAY_APP_ID` for the deploy workflow.
+
+### Cleaning up the old card cache
+
+Before card sets were published, the hosted playmat cached TCGdex card data in
+the bucket under `tcgdex/`. Once the playmat reading published sets is
+deployed, remove it once:
+
+```sh
+bin/tcgreplay sets cleanup-legacy           # lists the old objects and their count; deletes nothing
+bin/tcgreplay sets cleanup-legacy -delete   # deletes them
+```
+
+It only ever touches `tcgdex/`, never image copies (`images/`) or published sets
+(`cardsets/`).

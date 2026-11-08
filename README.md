@@ -55,11 +55,21 @@ the set: its `card-set-import` skill works through the report and records
 corrections. See [cardsets/README.md](cardsets/README.md) for the format, the
 report kinds and how to record a correction or an acknowledgement.
 
+The playmat carries no card data. Built sets are published to the project's
+DigitalOcean Spaces bucket on every merge to `main` that changes `cardsets/`
+(or by hand with `tcgreplay sets publish`), and every playmat, hosted and
+desktop, loads its card definitions only from there: at start, then every 5
+minutes, keeping a local copy for offline play. Open games keep the cards they
+started with. See [Publishing](cardsets/README.md#publishing) for the layout,
+pickup times, settings and secrets.
+
 The hosted playmat runs the same binary with `-hosted` in a container
-(`make docker-build`, `make docker-run`; deployed from `.do/app.yaml`). It adds
-Google sign-in, per-account games, rate limits and, optionally, a DigitalOcean
-Spaces bucket that keeps the card cache across deploys and serves card images
-from its CDN. Its settings are documented in `.do/app.yaml` and in the
-comments above `docker-run` in the `Makefile`.
+(`make docker-build`, `make docker-run`). It is deployed by the "Deploy playmat"
+GitHub Actions workflow on every merge to `main` that changes anything outside
+`cardsets/` (`.github/workflows/deploy.yml`; the app is defined in
+`.do/app.yaml`). It adds Google sign-in, per-account games, rate limits and,
+optionally, copies of card images in the Spaces bucket served from its CDN. Its
+settings are documented in `.do/app.yaml` and in the comments above
+`docker-run` in the `Makefile`.
 
 Design notes are in [TCG Review Playmat Design and Build Plan.md](TCG%20Review%20Playmat%20Design%20and%20Build%20Plan.md).

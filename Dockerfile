@@ -5,13 +5,16 @@
 # Settings: TCGREPLAY_PUBLIC_URL (the address users reach it at), PORT,
 # TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET (required:
 # users sign in with Google), TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS,
-# and optionally TCGREPLAY_SPACES_ENDPOINT, TCGREPLAY_SPACES_BUCKET,
-# TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET (all four: keep the card
-# cache in a DigitalOcean Spaces bucket across deploys, and copy card
-# images there to serve them from the bucket's CDN), TCGREPLAY_ADMINS (the
-# Google accounts that may clear the card cache at /admin) and
-# TCGREPLAY_SPACES_CDN_TOKEN (a DigitalOcean API token, so a clear also
-# purges the bucket's CDN).
+# TCGREPLAY_CARDSETS_URL (where card sets are published; default the
+# project's CDN) and TCGREPLAY_CARDSETS_INTERVAL (how often to check for a
+# publish; default 5m), and optionally TCGREPLAY_SPACES_ENDPOINT,
+# TCGREPLAY_SPACES_BUCKET, TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET
+# (all four: copy card images to a DigitalOcean Spaces bucket and serve
+# them from its CDN), TCGREPLAY_ADMINS (the Google accounts that may check
+# for published card sets and clear image copies at /admin) and
+# TCGREPLAY_SPACES_CDN_TOKEN (a DigitalOcean API token, so an image clear
+# also purges the bucket's CDN). The image carries no card data: card sets
+# are loaded from the published copy at start.
 
 # Build the board UI into the Go package (see web/vite.config.js).
 FROM node:22 AS web
@@ -45,8 +48,9 @@ COPY --from=site /src/internal/site/dist/app internal/site/dist/app
 ARG VERSION=dev
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/tcgreplay ./cmd/tcgreplay
 
-# Run as the distroless nonroot user. CA certificates are included for the
-# runtime TCGdex fetches; games and the card cache go under /home/nonroot.
+# Run as the distroless nonroot user. CA certificates are included for
+# loading the published card sets and copying card images over HTTPS; the
+# local copy of the card sets goes under /home/nonroot.
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/tcgreplay /usr/local/bin/tcgreplay
 EXPOSE 8080
