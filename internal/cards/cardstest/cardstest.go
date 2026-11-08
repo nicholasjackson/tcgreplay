@@ -35,6 +35,10 @@ func (f FakeDB) Card(_ context.Context, id string) (*cards.Card, error) {
 	return nil, fmt.Errorf("%s: %w", id, cards.ErrNotFound)
 }
 func (f FakeDB) Cached(id string) *cards.Card { return f[id] }
+
+// Snapshot makes the pool its own card source (game.CardSource): every
+// game pins the same pool.
+func (f FakeDB) Snapshot() cards.DB { return f }
 func (f FakeDB) ByName(_ context.Context, name string, _ ...string) (string, error) {
 	for id, c := range f {
 		if c.Name == name {

@@ -251,7 +251,7 @@ func newHosted(c config, db *cards.Client, images *cards.ImageCache, public *url
 	var a *hostauth.Auth // set below, before any board is built
 	reg = usergames.New(usergames.Config{
 		NewManager: func() *game.Manager {
-			m := game.NewManager(c.dataDir, db)
+			m := game.NewManager(c.dataDir, game.Static{DB: db}) // until the playmat reads published sets
 			m.Timing = c.timing
 			return m
 		},

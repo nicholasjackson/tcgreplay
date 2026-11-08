@@ -32,7 +32,7 @@ func eriCard(t *testing.T, m *Manager, g *Game, except ...state.IID) state.IID {
 // live state only, so an undo or checkout reverts it.
 func trainerCard(t *testing.T, m *Manager, g *Game, c *cards.Card, except ...state.IID) state.IID {
 	t.Helper()
-	m.DB.(cardstest.FakeDB)[c.ID] = c
+	m.CardDB().(cardstest.FakeDB)[c.ID] = c
 	return renamedCard(t, g, c.ID, c.Name, except...)
 }
 
@@ -63,7 +63,7 @@ func toHand(t *testing.T, g *Game, seat state.Seat, iid state.IID) {
 func respondGame(t *testing.T) (*Manager, *Game, state.IID, state.IID) {
 	t.Helper()
 	m, g := startedManager(t)
-	db := m.DB.(cardstest.FakeDB)
+	db := m.CardDB().(cardstest.FakeDB)
 	db["sv01-176"] = &cards.Card{ID: "sv01-176", Name: "Judge", Category: "Trainer", TrainerType: "Supporter", Effect: judgeText}
 	db["sv06-165"] = &cards.Card{ID: "sv06-165", Name: "Unfair Stamp", Category: "Trainer", TrainerType: "Item", Effect: unfairStampText}
 
@@ -539,19 +539,8 @@ func TestLateFamilyCardNeedsRead(t *testing.T) {
 		t.Fatalf("p2 holds %d cards after the unknown Judge, want %d: it was applied", n, hand)
 	}
 
-	// The card's text arrives once the background fetch the play started
-	// (which found nothing) is over, so the DB is not written under it.
-	deadline := time.Now().Add(2 * time.Second)
-	for {
-		if _, running := g.warming.Load(def); !running {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("the background fetch of the unknown card never finished")
-		}
-		time.Sleep(time.Millisecond)
-	}
-	m.DB.(cardstest.FakeDB)[def] = &cards.Card{ID: def, Name: "Judge", Category: "Trainer", TrainerType: "Supporter", Effect: judgeText}
+	// The card's text arrives later.
+	m.CardDB().(cardstest.FakeDB)[def] = &cards.Card{ID: def, Name: "Judge", Category: "Trainer", TrainerType: "Supporter", Effect: judgeText}
 
 	out = waitNow(t, m, WaitRequest{Seat: state.P1, Since: intp(out.Next)})
 	want := []UsedCard{{IID: iid, Name: "Judge", Def: def, Kind: "trainer", Text: judgeText, Need: NeedRead}}

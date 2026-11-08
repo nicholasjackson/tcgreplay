@@ -46,7 +46,7 @@ func TestCardBorrowsArtWhenItHasNone(t *testing.T) {
 	// different Pokémon of the same name (other attack) has art too.
 	db.FakeDB["tst-20"] = &cards.Card{ID: "tst-20", Name: "Lucario", Category: "Pokemon", HP: 130, Attacks: []cards.Attack{{Name: "Aura Sphere", Damage: "130"}}, Image: art}
 	db.FakeDB["tst-21"] = &cards.Card{ID: "tst-21", Name: "Lucario", Category: "Pokemon", HP: 120, Attacks: []cards.Attack{{Name: "Other Move"}}, Image: "https://assets.tcgdex.net/en/other"}
-	m := game.NewManager(t.TempDir(), db)
+	m := game.NewManager(t.TempDir(), game.Static{DB: db})
 	s := New(m, state.P1)
 	ts := httptest.NewServer(s.Handler())
 	t.Cleanup(ts.Close)

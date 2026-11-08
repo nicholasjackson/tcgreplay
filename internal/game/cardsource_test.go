@@ -123,7 +123,7 @@ func sourceDownGame(t *testing.T, fetched time.Time, slow bool, deckP1 string) (
 	client := cards.NewClient(dir)
 	client.Base = src.URL
 	client.Timeout = 200 * time.Millisecond
-	m := NewManager(t.TempDir(), client)
+	m := NewManager(t.TempDir(), Static{DB: client})
 	m.Rand = func() *rand.Rand { return rand.New(rand.NewPCG(3, 99)) }
 	g, res, err := m.New(context.Background(), NewGameRequest{ID: "down", DeckP1: deckP1, DeckP2: testDeck})
 	if err != nil {

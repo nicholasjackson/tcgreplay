@@ -107,7 +107,7 @@ func (s *Server) Handler() http.Handler {
 // moves that the card database prefers, which is one with art. Only the
 // pictures are borrowed; the card keeps its identity. Nil if there is
 // none.
-func (s *Server) borrowedArt(ctx context.Context, c *cards.Card) []cards.ImageRef {
+func (s *Server) borrowedArt(ctx context.Context, db cards.DB, c *cards.Card) []cards.ImageRef {
 	if c.Category == "Energy" {
 		return nil // Basic Energy art is borrowed by the card database
 	}
@@ -118,11 +118,11 @@ func (s *Server) borrowedArt(ctx context.Context, c *cards.Card) []cards.ImageRe
 	for _, a := range c.Abilities {
 		moves = append(moves, a.Name)
 	}
-	id, err := s.M.DB.ByName(ctx, c.Name, moves...)
+	id, err := db.ByName(ctx, c.Name, moves...)
 	if err != nil || id == "" || id == c.ID {
 		return nil
 	}
-	alt, err := s.M.DB.Card(ctx, id)
+	alt, err := db.Card(ctx, id)
 	if err != nil || !cards.SameName(alt.Name, c.Name) {
 		return nil
 	}
@@ -201,20 +201,22 @@ type CardImage struct {
 
 func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 	def := r.URL.Query().Get("def")
-	if def == "" || s.M.DB == nil {
+	// The open game's own snapshot, so its cards never change under it.
+	db := s.M.CardDB()
+	if def == "" || db == nil {
 		http.Error(w, "unknown card", http.StatusNotFound)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
-	c, err := s.M.DB.Card(ctx, def)
+	c, err := db.Card(ctx, def)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	refs := c.ImageList()
 	if len(refs) == 0 {
-		refs = s.borrowedArt(ctx, c)
+		refs = s.borrowedArt(ctx, db, c)
 	}
 	images := make([]CardImage, 0, len(refs))
 	for _, ref := range refs {

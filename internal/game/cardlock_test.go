@@ -67,7 +67,7 @@ func newSlowGame(t *testing.T, mode string) (*Game, *slowDB) {
 	t.Helper()
 	db := &slowDB{FakeDB: cardstest.New(), def: "tst-3", mode: mode, gate: make(chan struct{})}
 	t.Cleanup(func() { close(db.gate) })
-	m := NewManager(t.TempDir(), db)
+	m := NewManager(t.TempDir(), Static{DB: db})
 	m.Rand = func() *rand.Rand { return rand.New(rand.NewPCG(7, 99)) }
 	g, _, err := m.New(context.Background(), NewGameRequest{ID: "slow", DeckP1: testDeck, DeckP2: testDeck})
 	if err != nil {
@@ -103,8 +103,8 @@ func iidOf(t *testing.T, g *Game, seat state.Seat, def string) state.IID {
 }
 
 // TestBoardReadsDoNotWaitOnHungFetch: with a card whose fetch hangs, board
-// reads and a play that looks the card up each return within one second,
-// and only one fetch of it is started however often it is looked up.
+// reads and a play that looks the card up each return within one second:
+// a game reads cards only from its snapshot and never fetches one.
 func TestBoardReadsDoNotWaitOnHungFetch(t *testing.T) {
 	g, db := newSlowGame(t, "hang")
 	for _, seat := range []state.Seat{state.P1, state.P2} {
@@ -133,8 +133,8 @@ func TestBoardReadsDoNotWaitOnHungFetch(t *testing.T) {
 		quick(t, "repeated View", func() { g.View(state.P1, "test", "test") })
 		quick(t, "repeated SearchDeck", func() { g.SearchDeck(state.P1, "", "test", "test") })
 	}
-	if n := db.calls.Load(); n != 1 {
-		t.Errorf("%d fetches of the hung card started, want 1 at a time", n)
+	if n := db.calls.Load(); n != 0 {
+		t.Errorf("%d fetches of the hung card started, want none", n)
 	}
 }
 
@@ -146,40 +146,26 @@ func TestBoardReadsWithFailingCard(t *testing.T) {
 		quick(t, "View", func() { g.View(state.P1, "test", "test") })
 		quick(t, "SearchDeck", func() { g.SearchDeck(state.P1, "", "test", "test") })
 	}
-	if db.calls.Load() == 0 {
-		t.Error("the missing card was never fetched in the background")
+	if n := db.calls.Load(); n != 0 {
+		t.Errorf("the missing card was fetched %d times, want never", n)
 	}
 }
 
-// TestMissingCardWarmedInBackground: a card missing from the cache when it
-// is first needed is fetched in the background, and later reads see it.
-func TestMissingCardWarmedInBackground(t *testing.T) {
+// TestMissingCardStaysUnknown: a card its snapshot lacks stays unknown
+// to the game, and the game never fetches it.
+func TestMissingCardStaysUnknown(t *testing.T) {
 	g, db := newSlowGame(t, "delay")
-	kindOf := func() string {
-		cards, err := g.SearchDeck(state.P1, "", "test", "test")
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, c := range cards {
-			if c.Def == "tst-3" {
-				return c.Category
-			}
-		}
-		return "absent"
+	cards, err := g.SearchDeck(state.P1, "", "test", "test")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if got := kindOf(); got == "absent" {
-		t.Skip("no Ultra Ball in P1's deck with this seed")
-	} else if got != "" {
-		t.Fatalf("uncached card already known as %q", got)
-	}
-	deadline := time.Now().Add(5 * time.Second)
-	for kindOf() != "Trainer" {
-		if time.Now().After(deadline) {
-			t.Fatal("background fetch never made the card visible")
+	for _, c := range cards {
+		if c.Def == "tst-3" && c.Category != "" {
+			t.Fatalf("missing card known as %q", c.Category)
 		}
-		time.Sleep(10 * time.Millisecond)
 	}
-	if n := db.calls.Load(); n != 1 {
-		t.Errorf("%d fetches, want 1", n)
+	time.Sleep(100 * time.Millisecond) // a background fetch would have finished
+	if n := db.calls.Load(); n != 0 {
+		t.Errorf("%d fetches, want none", n)
 	}
 }

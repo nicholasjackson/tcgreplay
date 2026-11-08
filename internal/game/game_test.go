@@ -931,7 +931,7 @@ func TestOpeningTurnWarnings(t *testing.T) {
 	hu, cl := state.ActorHuman, state.ActorClaude
 	// p1's Supporters draw only: the fixture Iono's effect would now be
 	// applied to p2's hand, which this test sets up by hand.
-	m.DB.(cardstest.FakeDB)["tst-90"] = &cards.Card{ID: "tst-90", Name: "Professor", Category: "Trainer", TrainerType: "Supporter", Effect: "Draw 3 cards."}
+	m.CardDB().(cardstest.FakeDB)["tst-90"] = &cards.Card{ID: "tst-90", Name: "Professor", Category: "Trainer", TrainerType: "Supporter", Effect: "Draw 3 cards."}
 	g.mu.Lock()
 	for _, iid := range []state.IID{"p1-13", "p1-14"} {
 		g.st.Cards[iid].Def, g.st.Cards[iid].Name = "tst-90", "Professor"
@@ -1078,7 +1078,7 @@ func TestBenchPastFive(t *testing.T) {
 	m, g := newTestGame(t)
 	hu, cl := state.ActorHuman, state.ActorClaude
 	// The Arena becomes a Stadium that lets each bench hold 8.
-	m.DB.(cardstest.FakeDB)["tst-5"].Effect = "Each player can have 8 Pokémon on their Bench."
+	m.CardDB().(cardstest.FakeDB)["tst-5"].Effect = "Each player can have 8 Pokémon on their Bench."
 	for _, iid := range []state.IID{"p1-1", "p1-2", "p1-3", "p1-4", "p1-5", "p1-6", "p1-7", "p1-17"} {
 		if l, _ := g.State().Find(iid); l.Zone != state.Hand {
 			must(t)(g.Move(state.P1, hu, iid, state.Loc{Zone: state.Hand}, "", ""))

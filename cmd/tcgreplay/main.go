@@ -233,7 +233,7 @@ func main() {
 // newServer builds the game manager and MCP server. boardURL is the board
 // link added to game-opening results in hosted mode; the desktop passes "".
 func newServer(c config, boardURL string) (*game.Manager, *mcp.Server) {
-	m := game.NewManager(c.dataDir, newCardDB(c))
+	m := game.NewManager(c.dataDir, game.Static{DB: newCardDB(c)}) // until the playmat reads published sets
 	m.Timing = c.timing
 	claude := state.Seat(c.seat)
 	return m, (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version, BoardURL: boardURL}).MCP()

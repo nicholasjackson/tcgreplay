@@ -473,9 +473,6 @@ func (s *Server) register(srv *mcp.Server) {
 		if err != nil {
 			return nil, err
 		}
-		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
-			res.Warnings = append(res.Warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
-		}
 		if res, err = s.redact(g, res); err != nil {
 			return nil, err
 		}
@@ -488,9 +485,6 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		g := res.Game
 		warnings := res.Warnings
-		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
-			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
-		}
 		return s.withBoard(ctx, map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings, "record": res.Record}), nil
 	})
 	add(s, srv, "set_opponent_deck", "Rebuild the current imported game with an assumed opponent list: same log and seed, so the player's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game; refuses when it has branches unless discard_branches is set (ask the player first: the branches are lost). Returns the updated record.", func(ctx context.Context, in OppDeck) (any, error) {
@@ -500,9 +494,6 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		g := res.Game
 		warnings := res.Warnings
-		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
-			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
-		}
 		return s.withBoard(ctx, map[string]any{"game": g.ID, "head": g.Head(), "observed": res.Report.Observed, "problems": res.Report.Problems, "warnings": warnings, "record": res.Record}), nil
 	})
 	add(s, srv, "get_record", "The current game's record: the battle log, the player's name, both decklists and the seed, as JSON the player can keep in a note and later pass to import_log to restore the identical game. Games started with new_game have none.", func(ctx context.Context, _ Empty) (any, error) {
@@ -590,10 +581,13 @@ func (s *Server) register(srv *mcp.Server) {
 				def = c.Def
 			}
 		}
-		if s.m(ctx).DB == nil {
+		// The open game's own snapshot, so its card text never changes
+		// under it; the current catalogue with no game open.
+		db := s.m(ctx).CardDB()
+		if db == nil {
 			return nil, errors.New("no card database")
 		}
-		c, err := s.m(ctx).DB.Card(ctx, def)
+		c, err := db.Card(ctx, def)
 		if err != nil {
 			return nil, err
 		}

@@ -315,9 +315,9 @@ func TestDesktopNeverUsesSharedStore(t *testing.T) {
 	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2"}
 
 	m, _ := newServer(c, "")
-	db, ok := m.DB.(*cards.Client)
+	db, ok := m.CardDB().(*cards.Client)
 	if !ok {
-		t.Fatalf("desktop card database is %T", m.DB)
+		t.Fatalf("desktop card database is %T", m.CardDB())
 	}
 	if _, tiered := db.Store.(interface{ Local() cards.Store }); tiered {
 		t.Error("desktop card database has a tiered store")
@@ -438,7 +438,7 @@ func artSource(t *testing.T, images string) *httptest.Server {
 // returns the first entry of its image list (empty when it has none).
 func boardCard(t *testing.T, db *cards.Client, images *cards.ImageCache) map[string]any {
 	t.Helper()
-	m := game.NewManager(t.TempDir(), db)
+	m := game.NewManager(t.TempDir(), game.Static{DB: db})
 	ui := hostedBoard(m, state.P1, nil, nil, images)
 	ts := httptest.NewServer(ui.Handler())
 	defer ts.Close()
@@ -585,7 +585,7 @@ func TestDesktopBoardHasNoImageSource(t *testing.T) {
 	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2"}
 	db := newCardDB(c)
 	db.Base = artSource(t, host.URL).URL
-	m := game.NewManager(t.TempDir(), db)
+	m := game.NewManager(t.TempDir(), game.Static{DB: db})
 	ui := webui.New(m, state.P1) // as startUI builds it
 	if ui.Images != nil {
 		t.Fatal("desktop board has an image source")

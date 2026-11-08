@@ -24,7 +24,7 @@ func clearedGame(t *testing.T, src *liveSource) (*Game, *cards.Client, *spaceste
 	client.Base = src.URL
 	client.Timeout = 300 * time.Millisecond
 	client.Store = cards.NewTieredStore(cards.NewDiskStore(dir), cards.NewSpacesStore(srv.Client(t)))
-	m := NewManager(t.TempDir(), client)
+	m := NewManager(t.TempDir(), Static{DB: client})
 	m.Rand = func() *rand.Rand { return rand.New(rand.NewPCG(5, 99)) }
 	g, _, err := m.New(context.Background(), NewGameRequest{ID: "clear", DeckP1: testDeck, DeckP2: testDeck})
 	if err != nil {

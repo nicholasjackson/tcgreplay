@@ -53,7 +53,7 @@ func (c appliedCards) undo(t *testing.T, g *Game) {
 func appliedGame(t *testing.T) (*Manager, *Game, appliedCards) {
 	t.Helper()
 	m, g, judge, stamp := respondGame(t)
-	db := m.DB.(cardstest.FakeDB)
+	db := m.CardDB().(cardstest.FakeDB)
 	db["me04-082"] = &cards.Card{ID: "me04-082", Name: "Special Red Card", Category: "Trainer", TrainerType: "Item", Effect: textSpecialRedCard}
 	db["sv02-185"] = &cards.Card{ID: "sv02-185", Name: "Iono", Category: "Trainer", TrainerType: "Supporter", Effect: textIono}
 
@@ -727,7 +727,7 @@ func TestAppliedAbilityAndAttack(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			m, g, _ := appliedGame(t)
-			db := m.DB.(cardstest.FakeDB)
+			db := m.CardDB().(cardstest.FakeDB)
 			riolu := *db["tst-1"]
 			riolu.Abilities = []cards.Ability{{Name: "Focus", Effect: textRedCard}}
 			riolu.Attacks = []cards.Attack{{Name: "Punch", Damage: "10", Effect: textRedCard}}
