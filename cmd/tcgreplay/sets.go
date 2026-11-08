@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -21,6 +22,7 @@ const setsUsage = `usage:
   tcgreplay sets import -all [-dir cardsets] [-no-malie]
   tcgreplay sets check [<set>...] [-dir cardsets]
   tcgreplay sets publish [-dir cardsets] [-to <directory>] [-dry-run]
+  tcgreplay sets cleanup-legacy [-delete]
 `
 
 // runSets runs the sets subcommand, which builds card sets into the
@@ -43,6 +45,8 @@ func runSetsTo(args []string, stdout, stderr io.Writer) int {
 		return setsCheck(args[1:], stdout, stderr)
 	case "publish":
 		return setsPublish(ctx, args[1:], os.Getenv, stdout, stderr)
+	case "cleanup-legacy":
+		return setsCleanupLegacy(ctx, args[1:], os.Getenv, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown sets command %q\n", args[0])
 		fmt.Fprint(stderr, setsUsage)
@@ -195,18 +199,8 @@ func setsPublish(ctx context.Context, args []string, getenv func(string) string,
 	if *to != "" {
 		opts.Target = cardset.DirTarget{Dir: *to}
 	} else {
-		cfg, set, err := spaces.FromEnv(getenv)
-		if !set {
-			fmt.Fprintln(stderr, "set TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET, or use -to")
-			return 2
-		}
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 2
-		}
-		c, err := spaces.New(cfg)
-		if err != nil {
-			fmt.Fprintln(stderr, err)
+		cfg, c, ok := bucketFromEnv(getenv, stderr, ", or use -to")
+		if !ok {
 			return 2
 		}
 		opts.Target = cardset.SpacesTarget{C: c}
@@ -241,5 +235,99 @@ func setsPublish(ctx context.Context, args []string, getenv func(string) string,
 	default:
 		fmt.Fprintf(stdout, "manifest updated in %s\n", where)
 	}
+	return 0
+}
+
+// bucketFromEnv builds a client for the bucket the TCGREPLAY_SPACES_*
+// settings name, printing what is missing (with hint after the list of
+// settings) when they are unset or partial.
+func bucketFromEnv(getenv func(string) string, stderr io.Writer, hint string) (spaces.Config, *spaces.Client, bool) {
+	cfg, set, err := spaces.FromEnv(getenv)
+	if !set {
+		fmt.Fprintln(stderr, "set TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET"+hint)
+		return cfg, nil, false
+	}
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return cfg, nil, false
+	}
+	c, err := spaces.New(cfg)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return cfg, nil, false
+	}
+	return cfg, c, true
+}
+
+// legacyPrefix is where the retired on-demand card cache kept card data in
+// the bucket. The clean-up lists and deletes nothing else.
+const legacyPrefix = "tcgdex/"
+
+// legacyListed is how many legacy keys the clean-up prints.
+const legacyListed = 20
+
+// setsCleanupLegacy lists the card data the retired on-demand card cache
+// left in the bucket (every object under tcgdex/) and, with -delete,
+// deletes it. It never lists or deletes image copies or published card
+// sets. It exits 1 when any object could not be listed or deleted, and 2
+// when the settings are missing or partial.
+func setsCleanupLegacy(ctx context.Context, args []string, getenv func(string) string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("tcgreplay sets cleanup-legacy", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	del := fs.Bool("delete", false, "delete the listed objects")
+	pos, err := parseInterspersed(fs, args)
+	if err != nil {
+		return 2
+	}
+	if len(pos) > 0 {
+		fmt.Fprintf(stderr, "sets cleanup-legacy takes no arguments: %q\n", pos)
+		fmt.Fprint(stderr, setsUsage)
+		return 2
+	}
+	cfg, c, ok := bucketFromEnv(getenv, stderr, "")
+	if !ok {
+		return 2
+	}
+	keys, err := cardset.SpacesTarget{C: c}.List(ctx, legacyPrefix)
+	if err != nil {
+		fmt.Fprintf(stderr, "list %s in bucket %s: %v\n", legacyPrefix, cfg.Bucket, err)
+		return 1
+	}
+	// Belt and braces: only ever touch keys under the legacy prefix.
+	keys = slices.DeleteFunc(keys, func(k string) bool { return !strings.HasPrefix(k, legacyPrefix) })
+	fmt.Fprintf(stdout, "%d objects of the retired card cache under %s in bucket %s\n", len(keys), legacyPrefix, cfg.Bucket)
+	for i, k := range keys {
+		if i == legacyListed {
+			fmt.Fprintf(stdout, "  ... and %d more\n", len(keys)-legacyListed)
+			break
+		}
+		fmt.Fprintf(stdout, "  %s\n", k)
+	}
+	if !*del {
+		if len(keys) > 0 {
+			fmt.Fprintln(stdout, "nothing deleted; run again with -delete to delete them")
+		}
+		return 0
+	}
+	if len(keys) == 0 {
+		return 0
+	}
+	if err := c.Delete(ctx, keys); err != nil {
+		var de *spaces.DeleteError
+		if errors.As(err, &de) {
+			failed := slices.Sorted(maps.Keys(de.Failed))
+			fmt.Fprintf(stdout, "deleted %d objects; %d could not be deleted:\n", len(keys)-len(failed), len(failed))
+			for _, k := range failed {
+				fmt.Fprintf(stdout, "  %s (%s)\n", k, de.Failed[k])
+			}
+			if de.Err != nil {
+				fmt.Fprintln(stderr, de.Err)
+			}
+			return 1
+		}
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "deleted %d objects\n", len(keys))
 	return 0
 }

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -331,5 +332,84 @@ func TestSetsPublishRefusesOpenItems(t *testing.T) {
 	}
 	if entries, _ := os.ReadDir(to); len(entries) != 0 {
 		t.Errorf("refused publish wrote %d entries", len(entries))
+	}
+}
+
+// legacyBucket is a stand-in bucket holding two objects of the retired
+// card cache, an image copy and a published manifest.
+func legacyBucket(t *testing.T) *spacestest.Server {
+	t.Helper()
+	srv := spacestest.New(t)
+	for _, k := range []string{"tcgdex/sets.json", "tcgdex/cards/x.json", "images/en/sv/sv01/1/low.webp", "cardsets/manifest.json"} {
+		srv.SetObject(k, []byte(k))
+	}
+	return srv
+}
+
+// Without -delete, cleanup-legacy lists the retired card data and its
+// count and deletes nothing.
+func TestSetsCleanupLegacyLists(t *testing.T) {
+	srv := legacyBucket(t)
+	setPublishEnv(t, srv.Config(), "")
+	code, stdout, stderr := runMain(t, "sets", "cleanup-legacy")
+	if code != 0 {
+		t.Fatalf("exit %d; stderr:\n%s", code, stderr)
+	}
+	for _, want := range []string{"2 objects of the retired card cache under tcgdex/", "tcgdex/sets.json", "tcgdex/cards/x.json", "nothing deleted"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("stdout lacks %q:\n%s", want, stdout)
+		}
+	}
+	for _, never := range []string{"images/", "cardsets/"} {
+		if strings.Contains(stdout, never) {
+			t.Errorf("listed %s:\n%s", never, stdout)
+		}
+	}
+	if got := len(srv.Keys("")); got != 4 || srv.Requests("POST", "?delete") != 0 {
+		t.Errorf("bucket holds %d objects after a listing, %d delete requests", got, srv.Requests("POST", "?delete"))
+	}
+}
+
+// With -delete, only the retired card data goes.
+func TestSetsCleanupLegacyDeletes(t *testing.T) {
+	srv := legacyBucket(t)
+	setPublishEnv(t, srv.Config(), "")
+	code, stdout, stderr := runMain(t, "sets", "cleanup-legacy", "-delete")
+	if code != 0 {
+		t.Fatalf("exit %d; stderr:\n%s", code, stderr)
+	}
+	if !strings.Contains(stdout, "deleted 2 objects") {
+		t.Errorf("stdout:\n%s", stdout)
+	}
+	want := []string{"cardsets/manifest.json", "images/en/sv/sv01/1/low.webp"}
+	if got := srv.Keys(""); !slices.Equal(got, want) {
+		t.Errorf("bucket = %v, want %v", got, want)
+	}
+	// A further listing finds nothing.
+	if _, stdout, _ := runMain(t, "sets", "cleanup-legacy"); !strings.Contains(stdout, "0 objects") {
+		t.Errorf("second listing:\n%s", stdout)
+	}
+}
+
+// An object the bucket refuses to delete is reported, with exit 1.
+func TestSetsCleanupLegacyReportsFailures(t *testing.T) {
+	srv := legacyBucket(t)
+	srv.DenyDelete("tcgdex/cards/x.json")
+	setPublishEnv(t, srv.Config(), "")
+	code, stdout, _ := runMain(t, "sets", "cleanup-legacy", "-delete")
+	if code != 1 || !strings.Contains(stdout, "deleted 1 objects; 1 could not be deleted") || !strings.Contains(stdout, "tcgdex/cards/x.json (AccessDenied)") {
+		t.Errorf("exit %d, stdout:\n%s", code, stdout)
+	}
+	if got := srv.Keys("tcgdex/"); !slices.Equal(got, []string{"tcgdex/cards/x.json"}) {
+		t.Errorf("left %v", got)
+	}
+}
+
+// Missing settings fail with the settings named.
+func TestSetsCleanupLegacyNeedsSettings(t *testing.T) {
+	setPublishEnv(t, spaces.Config{}, "")
+	code, _, stderr := runMain(t, "sets", "cleanup-legacy")
+	if code != 2 || !strings.Contains(stderr, "set TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET") {
+		t.Errorf("exit %d, stderr %q", code, stderr)
 	}
 }
