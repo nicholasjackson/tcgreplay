@@ -152,7 +152,8 @@ func (l *Loader) Status() Status {
 
 // Start loads the local copy, then, unless offline, checks the published
 // sets, bounded by wait, so the playmat serves the newest catalogue it can
-// get without waiting long on an outage. It logs what it loaded.
+// get without waiting long on an outage. With wait 0 the first check runs
+// in the background instead. It logs what it loaded.
 func (l *Loader) Start(ctx context.Context, wait time.Duration) {
 	from := "local copy"
 	if s, err := l.loadLocal(); err != nil {
@@ -160,7 +161,11 @@ func (l *Loader) Start(ctx context.Context, wait time.Duration) {
 	} else if s != nil {
 		l.swap(s)
 	}
-	if !l.Offline {
+	if !l.Offline && wait <= 0 {
+		// The first check runs in the background; the local copy serves
+		// meanwhile.
+		go l.Check(ctx)
+	} else if !l.Offline {
 		cctx, cancel := context.WithTimeout(ctx, wait)
 		res, err := l.Check(cctx)
 		cancel()

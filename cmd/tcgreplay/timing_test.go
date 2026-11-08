@@ -68,7 +68,7 @@ func TestConfigArgsCarryTiming(t *testing.T) {
 // configured timings.
 func TestManagersUseTiming(t *testing.T) {
 	timing := game.Timing{WaitCap: 7 * time.Second, CheckIn: 4 * time.Minute, LockRelease: time.Minute}
-	m, _ := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true, timing: timing}, "")
+	m, _ := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true, timing: timing}, "", nil)
 	if m.Timing != timing {
 		t.Errorf("desktop manager timing %+v, want %+v", m.Timing, timing)
 	}

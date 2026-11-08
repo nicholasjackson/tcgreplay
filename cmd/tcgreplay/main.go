@@ -31,12 +31,14 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
@@ -46,8 +48,15 @@ import (
 var version = "dev"
 
 type config struct {
+	// cacheDir holds the local copy of published card sets; offline uses
+	// that copy alone.
 	dataDir, cacheDir, seat, uiAddr string
 	offline                         bool
+	// cardsetsURL is where card sets are published (an https address or a
+	// directory); "" means none, so only the local copy is used.
+	// cardsetsInterval is how often a running playmat checks it.
+	cardsetsURL      string
+	cardsetsInterval time.Duration
 	// The rest are for hosted mode only.
 	publicURL, listen string
 	// googleClientID is the Google OAuth client users sign in with (its
@@ -68,8 +77,6 @@ type config struct {
 	timingErr error
 	// now, if set, is the per-account registry's clock (tests).
 	now func() time.Time
-	// cardBase, if set, is the card source's base URL (tests).
-	cardBase string
 	// imageBase, if set, is the card image source's prefix (tests).
 	imageBase string
 	// cdnAPI, if set, is the DigitalOcean API base the CDN purge client
@@ -80,7 +87,10 @@ type config struct {
 // args renders the config as flags for spawning the daemon. Unset wait
 // timings are left out, so the daemon uses its defaults.
 func (c config) args() []string {
-	args := []string{"-data", c.dataDir, "-cache", c.cacheDir, "-seat", c.seat, "-ui-addr", c.uiAddr, fmt.Sprintf("-offline=%t", c.offline)}
+	args := []string{"-data", c.dataDir, "-cache", c.cacheDir, "-seat", c.seat, "-ui-addr", c.uiAddr, fmt.Sprintf("-offline=%t", c.offline), "-cardsets-url", c.cardsetsURL}
+	if c.cardsetsInterval != 0 {
+		args = append(args, "-cardsets-interval", c.cardsetsInterval.String())
+	}
 	for _, t := range []struct {
 		flag string
 		d    time.Duration
@@ -137,9 +147,12 @@ func main() {
 	}
 	var c config
 	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for the playmat's log and daemon files")
-	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")
+	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the local copy of published card sets")
 	flag.StringVar(&c.seat, "seat", "p2", "seat Claude plays")
-	flag.BoolVar(&c.offline, "offline", false, "use only cached card data")
+	flag.BoolVar(&c.offline, "offline", false, "use only the local copy of published card sets")
+	flag.StringVar(&c.cardsetsURL, "cardsets-url", envOr("TCGREPLAY_CARDSETS_URL", defaultCardsetsURL), "where card sets are published: an https address or a directory (default $TCGREPLAY_CARDSETS_URL, else the project's CDN)")
+	interval, intervalErr := envWait("TCGREPLAY_CARDSETS_INTERVAL", catalog.DefaultInterval)
+	flag.DurationVar(&c.cardsetsInterval, "cardsets-interval", interval, "how often a running playmat checks for published card sets, from 10s to 10m (default $TCGREPLAY_CARDSETS_INTERVAL, else 5m)")
 	flag.StringVar(&c.uiAddr, "ui-addr", "127.0.0.1:7777", "address for the playmat UI; empty disables it")
 	noDaemon := flag.Bool("no-daemon", false, "serve MCP over stdio in-process instead of relaying to the daemon")
 	daemon := flag.Bool("daemon", false, "run the shared daemon (normally started by the shim)")
@@ -181,8 +194,14 @@ func main() {
 			checkErr = nil
 		case "lock-release":
 			lockErr = nil
+		case "cardsets-interval":
+			intervalErr = nil
 		}
 	})
+	if err := validCardsetsInterval(c.cardsetsInterval, intervalErr); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	c.timingErr = errors.Join(capErr, checkErr, lockErr)
 	if err := validTiming(c); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -230,25 +249,72 @@ func main() {
 	}
 }
 
-// newServer builds the game manager and MCP server. boardURL is the board
-// link added to game-opening results in hosted mode; the desktop passes "".
-func newServer(c config, boardURL string) (*game.Manager, *mcp.Server) {
-	m := game.NewManager(c.dataDir, game.Static{DB: newCardDB(c)}) // until the playmat reads published sets
+// newServer builds the game manager and MCP server over the card source
+// src (nil: no card data). boardURL is the board link added to
+// game-opening results in hosted mode; the desktop passes "".
+func newServer(c config, boardURL string, src game.CardSource) (*game.Manager, *mcp.Server) {
+	m := game.NewManager(c.dataDir, src)
 	m.Timing = c.timing
 	claude := state.Seat(c.seat)
 	return m, (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version, BoardURL: boardURL}).MCP()
 }
 
-// newCardDB returns the TCGdex card database for the config's cache.
-func newCardDB(c config) *cards.Client {
-	db := cards.NewClient(c.cacheDir)
-	db.Offline = c.offline
-	return db
+// defaultCardsetsURL is where the project publishes card sets: the
+// manifest and set files in the playmat's Spaces bucket, through its CDN.
+const defaultCardsetsURL = "https://tcgreplay.ams3.cdn.digitaloceanspaces.com/cardsets/"
+
+// startupWait bounds how long a playmat waits at start for the published
+// card sets before serving, so an early game does not pin an empty
+// catalogue and an outage does not stop the playmat starting.
+const startupWait = 30 * time.Second
+
+// Bounds of -cardsets-interval: a publish must reach a running playmat
+// within 10 minutes.
+const (
+	minCardsetsInterval = 10 * time.Second
+	maxCardsetsInterval = 10 * time.Minute
+)
+
+// validCardsetsInterval checks the check interval: from 10s to 10m. envErr
+// is an invalid TCGREPLAY_CARDSETS_INTERVAL whose flag was not given.
+func validCardsetsInterval(d time.Duration, envErr error) error {
+	if envErr != nil {
+		return envErr
+	}
+	if d < minCardsetsInterval || d > maxCardsetsInterval {
+		return fmt.Errorf("-cardsets-interval %s: must be from %s to %s", d, minCardsetsInterval, maxCardsetsInterval)
+	}
+	return nil
+}
+
+// envOr is the environment variable key, or def when it is unset.
+func envOr(key, def string) string {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		return v
+	}
+	return def
+}
+
+// newCatalog builds the card catalogue loader for the config: published
+// sets at cardsetsURL, the local copy under the cache directory, checked
+// every cardsetsInterval. The caller starts and runs it.
+func newCatalog(c config) *catalog.Loader {
+	return &catalog.Loader{Base: c.cardsetsURL, CacheDir: c.cacheDir, Offline: c.offline, Interval: c.cardsetsInterval}
+}
+
+// startCatalog loads the catalogue, waiting up to wait for the published
+// sets (0: the local copy only, checking in the background), and keeps it
+// up to date in the background until ctx ends.
+func startCatalog(ctx context.Context, c config, wait time.Duration) *catalog.Loader {
+	l := newCatalog(c)
+	l.Start(ctx, wait)
+	go l.Run(ctx)
+	return l
 }
 
 func runInProcess(ctx context.Context, c config) error {
-	m, srv := newServer(c, "")
-	log.Printf("tcgreplay %s in-process: data %s, cache %s, claude plays %s, %s", version, c.dataDir, c.cacheDir, c.seat, timingText(c.timing))
+	m, srv := newServer(c, "", startCatalog(ctx, c, startupWait))
+	log.Printf("tcgreplay %s in-process: data %s, card sets %s (local copy in %s), claude plays %s, %s", version, c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, timingText(c.timing))
 	if c.uiAddr != "" {
 		startUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)
 	}

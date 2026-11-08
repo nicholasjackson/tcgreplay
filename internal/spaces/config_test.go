@@ -177,3 +177,42 @@ func TestPublicBase(t *testing.T) {
 		}
 	}
 }
+
+// TestFromEnvRefusesBucketOrCDNHost: an endpoint naming the bucket's own
+// host (the control panel's "Origin Endpoint") or a CDN address is
+// refused, naming the setting and the expected form, never the values.
+// A path-style client would otherwise read every key under a bucket that
+// is not there and see 404 NoSuchKey for all of them.
+func TestFromEnvRefusesBucketOrCDNHost(t *testing.T) {
+	for name, endpoint := range map[string]string{
+		"bucket host":           "https://playmat-cache.ams3.digitaloceanspaces.com",
+		"bucket host, any case": "https://Playmat-Cache.AMS3.digitaloceanspaces.com/",
+		"bucket's CDN":          "https://playmat-cache.ams3.cdn.digitaloceanspaces.com",
+		"another bucket's CDN":  "https://other.ams3.cdn.digitaloceanspaces.com",
+	} {
+		t.Run(name, func(t *testing.T) {
+			m := fullEnv()
+			m[EnvEndpoint] = endpoint
+			_, set, err := FromEnv(env(m))
+			if !set || err == nil {
+				t.Fatalf("set=%v err=%v; want set and an error", set, err)
+			}
+			assertNamesWithoutSecrets(t, err, EnvEndpoint)
+			if !strings.Contains(err.Error(), "https://<region>.digitaloceanspaces.com") {
+				t.Errorf("error %q does not give the expected form", err)
+			}
+			if strings.Contains(err.Error(), "playmat-cache") {
+				t.Errorf("error %q echoes the bucket", err)
+			}
+		})
+	}
+	// The region endpoint, and a bucket whose name merely starts a label
+	// of another host, are fine.
+	for _, endpoint := range []string{"https://ams3.digitaloceanspaces.com", "https://playmat-cache-ams3.example.com"} {
+		m := fullEnv()
+		m[EnvEndpoint] = endpoint
+		if _, _, err := FromEnv(env(m)); err != nil {
+			t.Errorf("%s refused: %v", endpoint, err)
+		}
+	}
+}

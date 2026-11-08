@@ -107,6 +107,18 @@ func (c Config) normalized() (Config, error) {
 	case c.SecretKey == "":
 		return Config{}, fmt.Errorf("%s is not set", EnvSecret)
 	}
+	// The endpoint is the region's, never the bucket's own host (the
+	// "Origin Endpoint" the control panel shows) or its CDN: the client
+	// addresses the bucket path style, so either would make every key
+	// resolve under a bucket that is not there (404 NoSuchKey). Values are
+	// not echoed.
+	host := strings.ToLower(u.Hostname())
+	switch {
+	case strings.HasPrefix(host, strings.ToLower(c.Bucket)+"."):
+		return Config{}, fmt.Errorf("%s names the bucket's own host; set it to the region endpoint, https://<region>.digitaloceanspaces.com", EnvEndpoint)
+	case strings.HasSuffix(host, ".cdn.digitaloceanspaces.com"):
+		return Config{}, fmt.Errorf("%s names a CDN address; set it to the region endpoint, https://<region>.digitaloceanspaces.com", EnvEndpoint)
+	}
 	c.Endpoint = u.Scheme + "://" + u.Host
 	if c.Region == "" {
 		c.Region = "us-east-1"
