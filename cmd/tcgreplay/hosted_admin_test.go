@@ -139,7 +139,7 @@ func startHostedAdmin(t *testing.T, shared, token bool) *adminHosted {
 	if images != nil {
 		go images.Run(ctx)
 	}
-	h.admin = hostedAdmin(db, images)
+	h.admin = hostedAdmin(clientCatalog{db}, images)
 	go h.admin.Run(ctx)
 	h.db = db
 	ts := httptest.NewServer(hostedHandler(mcpSrv, reg, a, h.admin))
@@ -225,11 +225,12 @@ func TestHostedAdminClearsEverything(t *testing.T) {
 	if len(h.srv.Keys("tcgdex/")) == 0 {
 		t.Fatal("the game put no card data in the shared store")
 	}
-	before := h.src.count("/cards/me01-001")
+	cardData := h.srv.Keys("tcgdex/")
 
 	page := h.clearAndWait(t, cookie, url.Values{"all": {"1"}})
-	if keys := h.srv.Keys("tcgdex/"); len(keys) != 0 {
-		t.Errorf("card data left: %v", keys)
+	// The admin page clears images only, never card data.
+	if keys := h.srv.Keys("tcgdex/"); !slices.Equal(keys, cardData) {
+		t.Errorf("card data changed by an image clear: %v, was %v", keys, cardData)
 	}
 	if keys := h.srv.Keys(cards.ImagePrefix); len(keys) != 0 {
 		t.Errorf("image copies left: %v", keys)
@@ -237,7 +238,7 @@ func TestHostedAdminClearsEverything(t *testing.T) {
 	if got := h.cdn.Purges(); len(got) != 1 || !slices.Equal(got[0], []string{"images/*"}) {
 		t.Errorf("purges = %v, want [[images/*]]", got)
 	}
-	for _, want := range []string{"everything by one@example.com", "card entries removed from the shared store", "image copies removed", "CDN purged (1 paths)"} {
+	for _, want := range []string{"Images for everything by one@example.com", "image copies removed", "CDN purged (1 paths)"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("page lacks %q:\n%s", want, page)
 		}
@@ -258,18 +259,15 @@ func TestHostedAdminClearsEverything(t *testing.T) {
 		t.Errorf("card text after the clear = %q", text)
 	}
 
-	// The next import shows its cards, fetched from the card source again.
+	// The next game shows its cards.
 	callTool(t, cs, "new_game", map[string]any{"deck_p1": adminDeck, "deck_p2": adminDeck, "id": "live-2"})
 	for iid, c := range h.gameCards(t) {
 		if c.Def == "" || h.db.Cached(c.Def) == nil {
 			t.Errorf("new game's %s (%s) has no card", iid, c.Name)
 		}
 	}
-	if n := h.src.count("/cards/me01-001"); n <= before {
-		t.Errorf("card source requests for me01-001 = %d, was %d: not fetched again", n, before)
-	}
 	out := logs.String()
-	for _, want := range []string{"cache admin: one@example.com started clearing everything", "cache admin: cleared everything for one@example.com", "card images: CDN purge on clear: on"} {
+	for _, want := range []string{"cache admin: one@example.com started clearing images for everything", "cache admin: cleared images for everything for one@example.com", "card images: CDN purge on clear: on"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("log lacks %q", want)
 		}
@@ -295,9 +293,10 @@ func TestHostedAdminClearsOneSetByCodeAndByID(t *testing.T) {
 				t.Fatal(err)
 			}
 			page := h.clearAndWait(t, cookie, url.Values{"set": {name}})
+			// Only MEG's image copies go; card data is never cleared.
 			want := []string{
 				"images/en/sv/sv1/001/high.webp", "images/en/sv/sv1/001/low.webp",
-				"tcgdex/cards/sv1-001.json", "tcgdex/sets.json", "tcgdex/sets/sv1.json", "tcgdex/sets/sve.json",
+				"tcgdex/cards/me01-001.json", "tcgdex/cards/sv1-001.json", "tcgdex/sets.json", "tcgdex/sets/me01.json", "tcgdex/sets/sv1.json", "tcgdex/sets/sve.json",
 			}
 			if got := h.srv.Keys(""); !slices.Equal(got, want) {
 				t.Errorf("bucket = %v, want %v", got, want)
@@ -305,7 +304,7 @@ func TestHostedAdminClearsOneSetByCodeAndByID(t *testing.T) {
 			if got := h.cdn.Purges(); len(got) != 1 || !slices.Equal(got[0], []string{"images/en/me/me01/*"}) {
 				t.Errorf("purges = %v", got)
 			}
-			if !strings.Contains(page, "Mega Evolution (me01) by one@example.com") {
+			if !strings.Contains(page, "Images for Mega Evolution (me01) by one@example.com") {
 				t.Errorf("page:\n%s", page)
 			}
 		})
@@ -348,6 +347,25 @@ func TestHostedAdminRefusesEveryoneElse(t *testing.T) {
 	if resp, _ := h.clear(t, other, url.Values{"all": {"1"}}); resp.StatusCode != http.StatusForbidden {
 		t.Errorf("non-admin clear = %d, want 403", resp.StatusCode)
 	}
+	// Nor may they ask for a check for published card sets.
+	for name, cookie := range map[string]*http.Cookie{"signed out": nil, "non-admin": other} {
+		req, _ := http.NewRequest(http.MethodPost, h.ts.URL+"/admin/check", nil)
+		if cookie != nil {
+			req.AddCookie(cookie)
+		}
+		fromPlaymat(req)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusForbidden {
+			t.Errorf("%s check = %d, want refused", name, resp.StatusCode)
+		}
+	}
+	if _, ok := h.admin.LastCheck(); ok {
+		t.Error("a check was run")
+	}
 	check("non-admin")
 	if _, ok := h.admin.Status(); ok {
 		t.Error("a clear was started")
@@ -364,15 +382,16 @@ func TestHostedAdminWithoutTheSharedStore(t *testing.T) {
 	if _, err := h.db.Card(context.Background(), "me01-001"); err != nil {
 		t.Fatal(err)
 	}
-	page := h.clearAndWait(t, cookie, url.Values{"all": {"1"}})
-	if !strings.Contains(page, "card entries removed from local disk") || !strings.Contains(page, "1 card entries marked for refetch in memory") {
-		t.Errorf("page:\n%s", page)
+	// Without the shared store there are no image copies to clear.
+	resp, body := getWith(t, h.ts.URL+"/admin", cookie, nil)
+	if resp.StatusCode != http.StatusOK || !strings.Contains(body, "Images are not copied: the shared store is off.") || strings.Contains(body, `action="/admin/clear"`) {
+		t.Errorf("page = %d:\n%s", resp.StatusCode, body)
 	}
-	if tiers := page[strings.Index(page, "<ul>"):]; strings.Contains(tiers, "image copies") || strings.Contains(tiers, "CDN") {
-		t.Errorf("page shows image or CDN tiers without the shared store:\n%s", page)
+	if resp, body := h.clear(t, cookie, url.Values{"all": {"1"}}); resp.StatusCode != http.StatusConflict || !strings.Contains(body, "no image copies to clear") {
+		t.Errorf("clear without the shared store = %d", resp.StatusCode)
 	}
-	if _, err := h.db.Store.Get(context.Background(), "cards/me01-001"); err == nil {
-		t.Error("the card is still on disk")
+	if _, err := h.db.Store.Get(context.Background(), "cards/me01-001"); err != nil {
+		t.Errorf("card data was cleared: %v", err)
 	}
 	if strings.Contains(logs.String(), "warning") {
 		t.Errorf("log has a warning: %q", logs.String())

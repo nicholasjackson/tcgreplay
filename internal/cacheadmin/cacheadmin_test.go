@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -15,21 +16,24 @@ import (
 	"time"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/cardset"
+	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 	"github.com/nicholasjackson/tcgreplay/internal/spaces/spacestest"
 )
 
-// fakeCards names me01 by MEG, me01 or ME01, records the scopes it is
-// cleared with, and can hold a clear until released.
-type fakeCards struct {
-	mu      sync.Mutex
-	scopes  []cards.Scope
-	reports []cards.TierReport
-	hold    chan struct{}
+// fakeCatalog names me01 by MEG, me01 or ME01, answers checks with the
+// result or error it holds, and reports a fixed status.
+type fakeCatalog struct {
+	mu     sync.Mutex
+	checks int
+	result catalog.CheckResult
+	err    error
+	status catalog.Status
 }
 
-func (f *fakeCards) SetID(_ context.Context, name string) (string, string, error) {
+func (f *fakeCatalog) SetID(name string) (string, string, error) {
 	switch name {
 	case "MEG", "me01", "ME01":
 		return "me01", "Mega Evolution", nil
@@ -37,7 +41,28 @@ func (f *fakeCards) SetID(_ context.Context, name string) (string, string, error
 	return "", "", fmt.Errorf("%q: %w", name, cards.ErrUnknownSet)
 }
 
-func (f *fakeCards) Clear(ctx context.Context, s cards.Scope) []cards.TierReport {
+func (f *fakeCatalog) Check(ctx context.Context) (catalog.CheckResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.checks++
+	if _, ok := ctx.Deadline(); !ok {
+		return catalog.CheckResult{}, errors.New("check without a deadline")
+	}
+	return f.result, f.err
+}
+
+func (f *fakeCatalog) Status() catalog.Status { return f.status }
+
+// fakeImages records the scopes it is cleared with, reports what it
+// holds, and can hold a clear until released.
+type fakeImages struct {
+	mu      sync.Mutex
+	scopes  []cards.Scope
+	reports []cards.TierReport
+	hold    chan struct{}
+}
+
+func (f *fakeImages) Clear(_ context.Context, s cards.Scope) []cards.TierReport {
 	f.mu.Lock()
 	f.scopes = append(f.scopes, s)
 	hold, reports := f.hold, f.reports
@@ -46,27 +71,15 @@ func (f *fakeCards) Clear(ctx context.Context, s cards.Scope) []cards.TierReport
 		<-hold
 	}
 	if reports == nil {
-		reports = []cards.TierReport{{Tier: "shared", Removed: 5}, {Tier: "disk", Removed: 5}, {Tier: "memory", Removed: 2}}
+		reports = []cards.TierReport{{Tier: "images", Removed: 4}, {Tier: "cdn", Err: cards.ErrCDNNotConfigured}}
 	}
 	return reports
 }
 
-func (f *fakeCards) cleared() []cards.Scope {
+func (f *fakeImages) cleared() []cards.Scope {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.scopes)
-}
-
-type fakeImages struct {
-	mu     sync.Mutex
-	scopes []cards.Scope
-}
-
-func (f *fakeImages) Clear(_ context.Context, s cards.Scope) []cards.TierReport {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.scopes = append(f.scopes, s)
-	return []cards.TierReport{{Tier: "images", Removed: 4}, {Tier: "cdn", Err: cards.ErrCDNNotConfigured}}
 }
 
 // logLines collects log lines.
@@ -116,8 +129,13 @@ func getPage(t *testing.T, ts *httptest.Server) (int, string) {
 
 func post(t *testing.T, ts *httptest.Server, form url.Values) (int, string, string) {
 	t.Helper()
+	return postTo(t, ts, "/admin/clear", form)
+}
+
+func postTo(t *testing.T, ts *httptest.Server, path string, form url.Values) (int, string, string) {
+	t.Helper()
 	noFollow := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
-	resp, err := noFollow.PostForm(ts.URL+"/admin/clear", form)
+	resp, err := noFollow.PostForm(ts.URL+path, form)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,19 +144,29 @@ func post(t *testing.T, ts *httptest.Server, form url.Values) (int, string, stri
 	return resp.StatusCode, resp.Header.Get("Location"), string(b)
 }
 
-func newService(c Cards, i Images) (*Service, *logLines) {
+func newService(c Catalog, i Images) (*Service, *logLines) {
 	l := &logLines{}
-	s := &Service{Cards: c, Logf: l.logf}
+	s := &Service{Catalog: c, Logf: l.logf}
 	if i != nil {
 		s.Images = i
 	}
 	return s, l
 }
 
-func TestPageShowsTheAdminAndBothActions(t *testing.T) {
-	s, _ := newService(&fakeCards{}, nil)
+func TestPageShowsTheCatalogueAndTheActions(t *testing.T) {
+	c := &fakeCatalog{status: catalog.Status{
+		Version: "0123456789abcdef0123", Sets: 206, Prints: 21439, Base: "https://cdn.example/cardsets/",
+		LastCheck: time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC), LastChange: time.Date(2026, 11, 8, 11, 0, 0, 0, time.UTC), LastError: "GET manifest: 503",
+	}}
+	s, _ := newService(c, &fakeImages{})
 	status, body := getPage(t, serve(t, s))
-	for _, want := range []string{"Signed in as admin@example.com", `name="all" value="1"`, "Clear everything", `name="set"`, "MEG or me01", "No clear since the playmat started", `<a href="/board">Back to the board</a>`} {
+	for _, want := range []string{
+		"Signed in as admin@example.com",
+		"0123456789ab", "206 (21439 cards)", "https://cdn.example/cardsets/", "2026-11-08 12:00:00 UTC", "2026-11-08 11:00:00 UTC", "GET manifest: 503",
+		`action="/admin/check"`, "Check for published card sets now",
+		"Clear images: everything", `name="all" value="1"`, "Clear images for one set", `name="set"`, "MEG or me01",
+		"No clear since the playmat started", `<a href="/board">Back to the board</a>`,
+	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page lacks %q", want)
 		}
@@ -148,23 +176,35 @@ func TestPageShowsTheAdminAndBothActions(t *testing.T) {
 	}
 }
 
-func TestClearEverythingClearsCardsAndImagesAndShowsEachTier(t *testing.T) {
-	c, i := &fakeCards{}, &fakeImages{}
-	s, logs := newService(c, i)
+// The page no longer offers to clear card definitions: only images.
+func TestPageOffersNoCardDataClear(t *testing.T) {
+	s, _ := newService(&fakeCatalog{}, &fakeImages{})
+	_, body := getPage(t, serve(t, s))
+	lower := strings.ToLower(body)
+	for _, gone := range []string{"card cache", "card data", "card entries", "clear everything", "cached card"} {
+		if strings.Contains(lower, gone) {
+			t.Errorf("page still offers %q:\n%s", gone, body)
+		}
+	}
+	if n := strings.Count(body, `action="/admin/clear"`); n != 2 {
+		t.Errorf("page has %d clear forms, want the two image forms", n)
+	}
+}
+
+func TestClearEverythingClearsImagesAndShowsEachTier(t *testing.T) {
+	i := &fakeImages{}
+	s, logs := newService(&fakeCatalog{}, i)
 	ts := serve(t, s)
 	status, loc, _ := post(t, ts, url.Values{"all": {"1"}})
 	if status != http.StatusSeeOther || loc != "/admin" {
 		t.Fatalf("POST all = %d to %q, want 303 to /admin", status, loc)
 	}
 	s.wait()
-	if got := c.cleared(); !slices.Equal(got, []cards.Scope{{}}) {
-		t.Errorf("cards cleared %v", got)
-	}
-	if !slices.Equal(i.scopes, []cards.Scope{{}}) {
-		t.Errorf("images cleared %v", i.scopes)
+	if got := i.cleared(); !slices.Equal(got, []cards.Scope{{}}) {
+		t.Errorf("images cleared %v", got)
 	}
 	_, body := getPage(t, ts)
-	for _, want := range []string{"Last clear", "everything by admin@example.com", "5 card entries removed from the shared store", "5 card entries removed from local disk", "2 card entries marked for refetch in memory", "4 image copies removed", "CDN not purged (no TCGREPLAY_SPACES_CDN_TOKEN)"} {
+	for _, want := range []string{"Last clear", "Images for everything by admin@example.com", "4 image copies removed", "CDN not purged (no TCGREPLAY_SPACES_CDN_TOKEN)"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page lacks %q:\n%s", want, body)
 		}
@@ -173,36 +213,35 @@ func TestClearEverythingClearsCardsAndImagesAndShowsEachTier(t *testing.T) {
 		t.Error("finished clear shown as failed or still refreshing")
 	}
 	log := logs.all()
-	if !strings.Contains(log, "cache admin: admin@example.com started clearing everything") || !strings.Contains(log, "cache admin: cleared everything for admin@example.com in ") {
+	if !strings.Contains(log, "cache admin: admin@example.com started clearing images for everything") || !strings.Contains(log, "cache admin: cleared images for everything for admin@example.com in ") {
 		t.Errorf("log = %q", log)
 	}
 }
 
 func TestClearOneSetByCodeOrID(t *testing.T) {
 	for _, name := range []string{"MEG", "me01", "ME01", " MEG "} {
-		c := &fakeCards{}
 		i := &fakeImages{}
-		s, logs := newService(c, i)
+		s, logs := newService(&fakeCatalog{}, i)
 		ts := serve(t, s)
 		if status, _, body := post(t, ts, url.Values{"set": {name}}); status != http.StatusSeeOther {
 			t.Fatalf("POST set=%q = %d %s", name, status, body)
 		}
 		s.wait()
-		if got := c.cleared(); !slices.Equal(got, []cards.Scope{{Set: "me01"}}) || !slices.Equal(i.scopes, []cards.Scope{{Set: "me01"}}) {
-			t.Errorf("set=%q cleared cards %v images %v, want me01", name, got, i.scopes)
+		if got := i.cleared(); !slices.Equal(got, []cards.Scope{{Set: "me01"}}) {
+			t.Errorf("set=%q cleared images %v, want me01", name, got)
 		}
-		if _, body := getPage(t, ts); !strings.Contains(body, "Mega Evolution (me01) by admin@example.com") {
+		if _, body := getPage(t, ts); !strings.Contains(body, "Images for Mega Evolution (me01) by admin@example.com") {
 			t.Errorf("page does not name the set")
 		}
-		if !strings.Contains(logs.all(), "started clearing Mega Evolution (me01)") {
+		if !strings.Contains(logs.all(), "started clearing images for Mega Evolution (me01)") {
 			t.Errorf("log = %q", logs.all())
 		}
 	}
 }
 
 func TestUnknownOrEmptySetIsRefusedAndNothingCleared(t *testing.T) {
-	c, i := &fakeCards{}, &fakeImages{}
-	s, _ := newService(c, i)
+	i := &fakeImages{}
+	s, _ := newService(&fakeCatalog{}, i)
 	ts := serve(t, s)
 	for _, form := range []url.Values{{"set": {"XYZ"}}, {"set": {"  "}}, {}, {"all": {"0"}}} {
 		status, _, body := post(t, ts, form)
@@ -218,20 +257,37 @@ func TestUnknownOrEmptySetIsRefusedAndNothingCleared(t *testing.T) {
 		}
 	}
 	s.wait()
-	if len(c.cleared()) != 0 || len(i.scopes) != 0 {
-		t.Errorf("cleared cards %v images %v, want nothing", c.cleared(), i.scopes)
+	if len(i.cleared()) != 0 {
+		t.Errorf("cleared images %v, want nothing", i.cleared())
+	}
+}
+
+// Without the shared store there are no image copies: the page says so
+// and offers no clear, and a clear is refused.
+func TestNoImageClearWithoutTheSharedStore(t *testing.T) {
+	s, _ := newService(&fakeCatalog{}, nil)
+	ts := serve(t, s)
+	_, body := getPage(t, ts)
+	if !strings.Contains(body, "Images are not copied: the shared store is off.") || strings.Contains(body, `action="/admin/clear"`) {
+		t.Errorf("page without the shared store:\n%s", body)
+	}
+	if !strings.Contains(body, "Check for published card sets now") {
+		t.Error("page lacks the check")
+	}
+	if status, _, body := post(t, ts, url.Values{"all": {"1"}}); status != http.StatusConflict || !strings.Contains(body, "no image copies to clear") {
+		t.Errorf("clear without images = %d:\n%s", status, body)
 	}
 }
 
 func TestOneClearAtATime(t *testing.T) {
-	c := &fakeCards{hold: make(chan struct{})}
-	s, _ := newService(c, nil)
+	i := &fakeImages{hold: make(chan struct{})}
+	s, _ := newService(&fakeCatalog{}, i)
 	ts := serve(t, s)
 	if status, _, _ := post(t, ts, url.Values{"all": {"1"}}); status != http.StatusSeeOther {
 		t.Fatal(status)
 	}
 	_, body := getPage(t, ts)
-	if !strings.Contains(body, `<meta http-equiv="refresh" content="2">`) || !strings.Contains(body, "Clearing everything for admin@example.com") {
+	if !strings.Contains(body, `<meta http-equiv="refresh" content="2">`) || !strings.Contains(body, "Clearing images for everything for admin@example.com") {
 		t.Errorf("running page:\n%s", body)
 	}
 	status, _, body := post(t, ts, url.Values{"set": {"MEG"}})
@@ -241,13 +297,13 @@ func TestOneClearAtATime(t *testing.T) {
 	if _, err := s.Start(context.Background(), "x", "", true); !errors.Is(err, ErrBusy) {
 		t.Errorf("Start while running = %v, want ErrBusy", err)
 	}
-	close(c.hold)
+	close(i.hold)
 	s.wait()
 	if _, body := getPage(t, ts); strings.Contains(body, `http-equiv="refresh"`) {
 		t.Error("page still refreshes after the clear ended")
 	}
-	if len(c.cleared()) != 1 {
-		t.Errorf("cleared %v, want one clear", c.cleared())
+	if len(i.cleared()) != 1 {
+		t.Errorf("cleared %v, want one clear", i.cleared())
 	}
 	// Once it has ended another may start.
 	if status, _, _ := post(t, ts, url.Values{"set": {"me01"}}); status != http.StatusSeeOther {
@@ -257,23 +313,23 @@ func TestOneClearAtATime(t *testing.T) {
 }
 
 func TestAFailedTierIsShownAndClearingAgainIsAllowed(t *testing.T) {
-	c := &fakeCards{reports: []cards.TierReport{{Tier: "shared", Err: errors.New("spaces: 403 AccessDenied: no")}, {Tier: "disk", Removed: 3}, {Tier: "memory", Removed: 1}}}
-	s, logs := newService(c, nil)
+	i := &fakeImages{reports: []cards.TierReport{{Tier: "images", Removed: 3, Err: errors.New("spaces: 403 AccessDenied: no")}, {Tier: "cdn", Removed: 1}}}
+	s, logs := newService(&fakeCatalog{}, i)
 	ts := serve(t, s)
 	post(t, ts, url.Values{"all": {"1"}})
 	s.wait()
 	_, body := getPage(t, ts)
-	for _, want := range []string{"with failures", "0 card entries removed from the shared store, then failed: spaces: 403 AccessDenied: no", "3 card entries removed from local disk"} {
+	for _, want := range []string{"with failures", "3 image copies removed, then failed: spaces: 403 AccessDenied: no", "CDN purged (1 paths)"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page lacks %q:\n%s", want, body)
 		}
 	}
-	if !strings.Contains(logs.all(), "error: spaces: 403 AccessDenied") {
+	if !strings.Contains(logs.all(), "spaces: 403 AccessDenied") {
 		t.Errorf("log = %q", logs.all())
 	}
-	c.mu.Lock()
-	c.reports = nil
-	c.mu.Unlock()
+	i.mu.Lock()
+	i.reports = nil
+	i.mu.Unlock()
 	if status, _, _ := post(t, ts, url.Values{"all": {"1"}}); status != http.StatusSeeOther {
 		t.Fatalf("clearing again = %d", status)
 	}
@@ -284,8 +340,7 @@ func TestAFailedTierIsShownAndClearingAgainIsAllowed(t *testing.T) {
 }
 
 func TestJobOutlivesTheRequestAndIsBounded(t *testing.T) {
-	c := &slowCards{}
-	s, _ := newService(c, nil)
+	s, _ := newService(&fakeCatalog{}, &slowImages{})
 	s.Timeout = 50 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	if _, err := s.Start(ctx, "admin@example.com", "", true); err != nil {
@@ -299,52 +354,87 @@ func TestJobOutlivesTheRequestAndIsBounded(t *testing.T) {
 	}
 }
 
-// slowCards clears until its context ends, then reports why.
-type slowCards struct{ fakeCards }
+// slowImages clears until its context ends, then reports why.
+type slowImages struct{}
 
-func (s *slowCards) Clear(ctx context.Context, _ cards.Scope) []cards.TierReport {
+func (slowImages) Clear(ctx context.Context, _ cards.Scope) []cards.TierReport {
 	<-ctx.Done()
-	return []cards.TierReport{{Tier: "shared", Err: ctx.Err()}}
+	return []cards.TierReport{{Tier: "images", Err: ctx.Err()}}
 }
 
-// TestRealPiecesClearOneSet runs the page over the real card database (a
-// tiered store over a temp directory and the stand-in Spaces, against a
-// stand-in TCGdex) and the real image cache with the stand-in CDN API.
+// An admin's check runs the catalogue's check at once, bounded, and the
+// page shows what it picked up; a failed check is shown and logged.
+func TestCheckNow(t *testing.T) {
+	c := &fakeCatalog{result: catalog.CheckResult{Version: "fedcba9876543210", Changed: []string{"me06"}}}
+	s, logs := newService(c, &fakeImages{})
+	ts := serve(t, s)
+	status, loc, _ := postTo(t, ts, "/admin/check", nil)
+	if status != http.StatusSeeOther || loc != "/admin" {
+		t.Fatalf("POST /admin/check = %d to %q", status, loc)
+	}
+	if c.checks != 1 {
+		t.Errorf("catalogue checked %d times, want 1", c.checks)
+	}
+	_, body := getPage(t, ts)
+	if !strings.Contains(body, "Last check now by admin@example.com") || !strings.Contains(body, "picked up version fedcba987654: changed me06, removed none") {
+		t.Errorf("page lacks the check outcome:\n%s", body)
+	}
+	if !strings.Contains(logs.all(), "cache admin: admin@example.com checked published card sets: picked up version fedcba987654") {
+		t.Errorf("log = %q", logs.all())
+	}
+
+	c.result, c.err = catalog.CheckResult{}, errors.New("GET manifest.json: 503 Service Unavailable")
+	status, _, body = postTo(t, ts, "/admin/check", nil)
+	if status != http.StatusBadGateway || !strings.Contains(body, "The check for published card sets failed: GET manifest.json: 503 Service Unavailable") {
+		t.Errorf("failed check = %d:\n%s", status, body)
+	}
+	if !strings.Contains(logs.all(), "checked published card sets: GET manifest.json: 503") {
+		t.Errorf("log = %q", logs.all())
+	}
+}
+
+// TestRealPiecesClearOneSet runs the page over the real catalogue (a
+// loader over a published directory) and the real image cache over the
+// stand-in Spaces and CDN API: clearing MEG's images leaves the other
+// set's copies and everything else in the bucket.
 func TestRealPiecesClearOneSet(t *testing.T) {
-	src := newTCGdex(t)
-	srv := spacestest.New(t)
-	sc := srv.Client(t)
 	dir := t.TempDir()
-	db := cards.NewClient(dir)
-	db.Base = src.URL
-	db.Store = cards.NewTieredStore(cards.NewDiskStore(dir), cards.NewSpacesStore(sc))
-	ctx := context.Background()
-	for _, id := range []string{"me01-001", "sv1-001"} {
-		if _, err := db.Card(ctx, id); err != nil {
+	for _, s := range []*cardset.Set{
+		builtSet("me01", "me", "MEG", "Mega Evolution", "Bulbasaur"),
+		builtSet("sv1", "sv", "SVI", "Scarlet & Violet", "Pineco"),
+	} {
+		if err := cardset.Write(filepath.Join(dir, "sets", s.Set.ID+".json"), s); err != nil {
 			t.Fatal(err)
 		}
 	}
-	for _, rel := range []string{"en/me/me01/001", "en/sv/sv1/1"} {
+	published := t.TempDir()
+	if _, err := cardset.Publish(context.Background(), cardset.PublishOptions{Dir: dir, Target: cardset.DirTarget{Dir: published}, Logf: t.Logf}); err != nil {
+		t.Fatal(err)
+	}
+	loader := &catalog.Loader{Base: published, CacheDir: t.TempDir(), Logf: t.Logf}
+	loader.Start(context.Background(), 10*time.Second)
+
+	srv := spacestest.New(t)
+	sc := srv.Client(t)
+	for _, rel := range []string{"en/me/me01/001", "en/sv/sv1/001"} {
 		for _, f := range cards.ImageFiles {
 			srv.SetObject(cards.ImagePrefix+rel+"/"+f, []byte(rel+f))
 		}
 	}
+	srv.SetObject("cardsets/manifest.json", []byte("{}"))
 	cdn := spacestest.NewCDN(t, "test-bucket.lon1.digitaloceanspaces.com", "tok")
 	images := cards.NewImageCache(sc, srv.Config().PublicBase())
 	purger := spaces.NewCDN(spaces.Config{Endpoint: "https://lon1.digitaloceanspaces.com", Bucket: "test-bucket"}, "tok")
 	purger.API = cdn.URL
 	images.CDN = purger
 
-	s, _ := newService(db, images)
+	s, _ := newService(loader, images)
 	ts := serve(t, s)
 	if status, _, body := post(t, ts, url.Values{"set": {"MEG"}}); status != http.StatusSeeOther {
 		t.Fatalf("POST = %d %s", status, body)
 	}
 	s.wait()
-	want := []string{
-		"images/en/sv/sv1/1/high.webp", "images/en/sv/sv1/1/low.webp",
-		"tcgdex/cards/sv1-001.json", "tcgdex/sets.json", "tcgdex/sets/sv1.json",
-	}
+	want := []string{"cardsets/manifest.json", "images/en/sv/sv1/001/high.webp", "images/en/sv/sv1/001/low.webp"}
 	if got := srv.Keys(""); !slices.Equal(got, want) {
 		t.Errorf("bucket after clearing MEG = %v, want %v", got, want)
 	}
@@ -352,33 +442,58 @@ func TestRealPiecesClearOneSet(t *testing.T) {
 		t.Errorf("purges = %v", got)
 	}
 	_, body := getPage(t, ts)
-	for _, want := range []string{"Mega Evolution (me01)", "2 card entries removed from the shared store", "2 image copies removed", "CDN purged (1 paths)"} {
+	for _, want := range []string{"Mega Evolution (me01)", "2 image copies removed", "CDN purged (1 paths)", "2 (2 cards)"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page lacks %q:\n%s", want, body)
 		}
 	}
 }
 
-// newTCGdex is a stand-in TCGdex with sets me01 (code MEG) and sv1 (SVI),
-// one card each.
-func newTCGdex(t *testing.T) *httptest.Server {
-	t.Helper()
-	bodies := map[string]string{
-		"/sets":           `[{"id":"me01"},{"id":"sv1"}]`,
-		"/sets/me01":      `{"id":"me01","name":"Mega Evolution","releaseDate":"2025-09-26","serie":{"id":"me"},"abbreviation":{"official":"MEG"},"cards":[{"id":"me01-001","localId":"001","name":"Bulbasaur"}]}`,
-		"/sets/sv1":       `{"id":"sv1","name":"Scarlet & Violet","releaseDate":"2023-03-31","serie":{"id":"sv"},"abbreviation":{"official":"SVI"},"cards":[{"id":"sv1-001","localId":"001","name":"Pineco"}]}`,
-		"/cards/me01-001": `{"id":"me01-001","localId":"001","name":"Bulbasaur","category":"Pokemon","hp":70,"image":"https://assets.tcgdex.net/en/me/me01/001","set":{"id":"me01","name":"Mega Evolution"}}`,
-		"/cards/sv1-001":  `{"id":"sv1-001","localId":"001","name":"Pineco","category":"Pokemon","hp":70,"image":"https://assets.tcgdex.net/en/sv/sv1/1","set":{"id":"sv1","name":"Scarlet & Violet"}}`,
+// builtSet is a one-print built set that passes the set check.
+func builtSet(id, serie, code, name, card string) *cardset.Set {
+	return &cardset.Set{
+		Format: cardset.Format,
+		Set:    cardset.SetHeader{ID: id, Serie: serie, Abbreviation: code, Text: map[string]cardset.SetText{"en": {Name: name}}},
+		Prints: []cardset.Print{{
+			ID: id + "-001", LocalID: "001", Category: "Trainer", TrainerType: "Item",
+			Images: []cardset.Image{{Source: "tcgdex", URL: "https://assets.tcgdex.net/en/" + serie + "/" + id + "/001"}},
+			Text:   map[string]cardset.PrintText{"en": {Name: card, Effect: "Draw a card."}},
+		}},
 	}
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b, ok := bodies[r.URL.Path]
-		if !ok {
-			http.NotFound(w, r)
-			return
+}
+
+// With the real catalogue loader, a set published since the last check is
+// picked up at once when an admin asks for a check.
+func TestRealCheckPicksUpAPublish(t *testing.T) {
+	dir, published := t.TempDir(), t.TempDir()
+	publish := func(s *cardset.Set) {
+		t.Helper()
+		if err := cardset.Write(filepath.Join(dir, "sets", s.Set.ID+".json"), s); err != nil {
+			t.Fatal(err)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, b)
-	}))
-	t.Cleanup(ts.Close)
-	return ts
+		if _, err := cardset.Publish(context.Background(), cardset.PublishOptions{Dir: dir, Target: cardset.DirTarget{Dir: published}, Logf: t.Logf}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	publish(builtSet("me01", "me", "MEG", "Mega Evolution", "Bulbasaur"))
+	loader := &catalog.Loader{Base: published, CacheDir: t.TempDir(), Logf: t.Logf}
+	loader.Start(context.Background(), 10*time.Second)
+	before := loader.Status().Version
+
+	publish(builtSet("sv1", "sv", "SVI", "Scarlet & Violet", "Pineco"))
+	s, _ := newService(loader, nil)
+	ts := serve(t, s)
+	if status, _, body := postTo(t, ts, "/admin/check", nil); status != http.StatusSeeOther {
+		t.Fatalf("check = %d %s", status, body)
+	}
+	st := loader.Status()
+	if st.Version == before || st.Sets != 2 || loader.Current().Cached("sv1-001") == nil {
+		t.Errorf("after the check: %+v; want the new set picked up", st)
+	}
+	_, body := getPage(t, ts)
+	for _, want := range []string{"2 (2 cards)", "changed sv1, removed none", st.Version[:12]} {
+		if !strings.Contains(body, want) {
+			t.Errorf("page lacks %q:\n%s", want, body)
+		}
+	}
 }

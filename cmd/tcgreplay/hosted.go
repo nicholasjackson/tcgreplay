@@ -18,6 +18,7 @@ import (
 
 	"github.com/nicholasjackson/tcgreplay/internal/cacheadmin"
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
@@ -141,17 +142,31 @@ func adminText(n int) string {
 	return fmt.Sprintf("%d cache admins", n)
 }
 
-// hostedAdmin builds the cache admin page's service over the card
-// database and, when the shared store is on, the image cache. The caller
-// runs it.
-func hostedAdmin(db *cards.Client, images *cards.ImageCache) *cacheadmin.Service {
-	svc := &cacheadmin.Service{Cards: db}
+// hostedAdmin builds the admin page's service over the card catalogue
+// and, when the shared store is on, the image cache. The caller runs it.
+func hostedAdmin(cat cacheadmin.Catalog, images *cards.ImageCache) *cacheadmin.Service {
+	svc := &cacheadmin.Service{Catalog: cat}
 	// A nil *ImageCache in the interface would not be nil.
 	if images != nil {
 		svc.Images = images
 	}
 	return svc
 }
+
+// clientCatalog names sets for the admin page through the card client,
+// until the playmat loads published card sets: it has no published sets
+// to check for.
+type clientCatalog struct{ c *cards.Client }
+
+func (c clientCatalog) SetID(name string) (string, string, error) {
+	return c.c.SetID(context.Background(), name)
+}
+
+func (clientCatalog) Check(context.Context) (catalog.CheckResult, error) {
+	return catalog.CheckResult{}, errors.New("this playmat does not load published card sets yet")
+}
+
+func (clientCatalog) Status() catalog.Status { return catalog.Status{} }
 
 // signInText describes, for the start-up log, whether sign-ins outlast a
 // restart.
@@ -394,7 +409,7 @@ func runHosted(ctx context.Context, c config) error {
 	if images != nil {
 		go images.Run(ctx)
 	}
-	admin := hostedAdmin(db, images)
+	admin := hostedAdmin(clientCatalog{db}, images)
 	go admin.Run(ctx)
 	if shared {
 		go warmCatalog(ctx, db)
