@@ -6,7 +6,7 @@
 import Base from '../layouts/Base.astro';
 import { limits, site } from '../lib/facts';
 
-const updated = '6 November 2026';
+const updated = '8 November 2026';
 ---
 <Base
   title="Privacy"
@@ -17,8 +17,9 @@ const updated = '6 November 2026';
     <p class="updated">Last updated {updated}.</p>
     <p>
       This page covers the hosted playmat at <a href={site.publicURL}>{site.publicURL.replace('https://', '')}</a>.
-      If you run tcgreplay on your own computer, nothing leaves your machine except card data fetched from TCGdex. This
-      website itself sets no cookies and loads nothing from other sites.
+      If you run tcgreplay on your own computer, nothing leaves your machine except the download of the project's
+      published card data and the card images your browser loads. This website itself sets no cookies and loads
+      nothing from other sites.
     </p>
 
     <section id="sign-in" aria-labelledby="h-sign-in">
@@ -93,10 +94,13 @@ const updated = '6 November 2026';
       <ul>
         <li><strong>Google</strong>, for signing in.</li>
         <li>
-          <strong>TCGdex</strong>, for card data. The playmat looks cards up there; no information about you is sent.
+          <strong>TCGdex</strong> and <strong>malie.io</strong>, the sources of the card data, which the project builds
+          and publishes ahead of time; the playmat reads only that published copy, so nothing about you is sent to
+          them.
         </li>
         <li>
-          <strong>Card images</strong> are loaded by your browser, from the playmat's own image store or from TCGdex.
+          <strong>Card images</strong> are loaded by your browser, from the playmat's own image store, TCGdex or
+          malie.io.
         </li>
         <li>
           <strong>DigitalOcean</strong> hosts the playmat, and <strong>Cloudflare</strong> delivers its traffic.

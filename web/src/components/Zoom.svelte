@@ -15,7 +15,7 @@
 {#if card}
   <div class="backdrop" onclick={() => (app.zoom = null)} role="presentation">
     <div class="zoom" role="dialog" aria-label={card.name}>
-      {#if info?.image && stage < 2}
+      {#if imageSrc(info, 'high.webp', stage)}
         <img src={imageSrc(info, 'high.webp', stage)} alt={card.name} onerror={() => (stage = nextImageStage(info, stage))} />
       {/if}
       <div class="text">

@@ -159,7 +159,10 @@ func runDaemon(ctx context.Context, c config, replace bool) error {
 	}
 	defer os.Remove(infoPath(c))
 
-	m, srv := newServer(c, "")
+	// The shim is already waiting on the socket, so the daemon serves from
+	// its local copy at once and checks for published sets in the
+	// background.
+	m, srv := newServer(c, "", startCatalog(ctx, c, 0))
 	log.Printf("tcgreplay %s daemon (pid %d): socket %s, data %s, claude plays %s, %s", version, os.Getpid(), sock, c.dataDir, c.seat, timingText(c.timing))
 	if c.uiAddr != "" {
 		go keepUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)

@@ -141,11 +141,10 @@ func adminText(n int) string {
 	return fmt.Sprintf("%d cache admins", n)
 }
 
-// hostedAdmin builds the cache admin page's service over the card
-// database and, when the shared store is on, the image cache. The caller
-// runs it.
-func hostedAdmin(db *cards.Client, images *cards.ImageCache) *cacheadmin.Service {
-	svc := &cacheadmin.Service{Cards: db}
+// hostedAdmin builds the admin page's service over the card catalogue
+// and, when the shared store is on, the image cache. The caller runs it.
+func hostedAdmin(cat cacheadmin.Catalog, images *cards.ImageCache) *cacheadmin.Service {
+	svc := &cacheadmin.Service{Catalog: cat}
 	// A nil *ImageCache in the interface would not be nil.
 	if images != nil {
 		svc.Images = images
@@ -176,7 +175,7 @@ func idleText(d time.Duration) string {
 //     Google's callback, /healthz) are open;
 //   - /mcp serves MCP over Streamable HTTP, every session sharing srv, and
 //     needs an access token;
-//   - /admin is the card cache admin page, admin, for admins only (see
+//   - /admin is the card sets and images admin page, admin, for admins only (see
 //     hostauth.RequireAdmin);
 //   - the board page is at /board and needs a session. It goes through
 //     reg's front door to the signed-in account's own board, which still
@@ -241,17 +240,17 @@ func toBoard() http.Handler {
 // live connections. The registry keeps the user cap, so a place follows
 // activity. Every MCP request and board action counts against its
 // account's request limit, and tool calls, board actions and board page
-// loads count as the account's activity. db is the card database every
-// account shares (see hostedCardDB); images, when not nil, is where every
-// board loads card images from (see hostedCardDB). google is as for
-// hostedAuth.
-func newHosted(c config, db *cards.Client, images *cards.ImageCache, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
+// loads count as the account's activity. src is the card catalogue every
+// account's games pin their snapshots from (a *catalog.Loader); images,
+// when not nil, is where every board loads card images from (see
+// hostedImages). google is as for hostedAuth.
+func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
 	human := state.Seat(c.seat).Other()
 	var reg *usergames.Registry
 	var a *hostauth.Auth // set below, before any board is built
 	reg = usergames.New(usergames.Config{
 		NewManager: func() *game.Manager {
-			m := game.NewManager(c.dataDir, db)
+			m := game.NewManager(c.dataDir, src)
 			m.Timing = c.timing
 			return m
 		},
@@ -288,59 +287,49 @@ func hostedBoard(m *game.Manager, human state.Seat, public *url.URL, limit func(
 	return ui
 }
 
-// hostedCardDB builds hosted mode's card database. With all four
-// TCGREPLAY_SPACES_* settings present and the playmat online, its cache is
-// local disk backed by the shared store in DigitalOcean Spaces, so it
-// outlasts a deploy, and shared reports true. With none set it caches on
-// local disk only, as the desktop does. Partial or invalid settings are a
-// warning, not an error: the cache is optional and must never stop play.
-// Only hosted mode reads these settings.
-//
-// With the shared store on, images is the card image cache on the same
-// bucket: card images are copied there and boards load them from its
-// public (CDN) address. It is nil otherwise, and boards load images from
-// the card source. The caller runs it. With TCGREPLAY_SPACES_CDN_TOKEN
-// set too, an admin's clear also purges the bucket's CDN; the token is
-// ignored without the shared store.
-func hostedCardDB(c config) (db *cards.Client, shared bool, images *cards.ImageCache) {
-	db = newCardDB(c)
-	if c.cardBase != "" {
-		db.Base = c.cardBase
-	}
+// hostedImages builds hosted mode's card image cache. With all four
+// TCGREPLAY_SPACES_* settings present and the playmat online, card images
+// are copied to the bucket under images/ and boards load them from its
+// public (CDN) address; the caller runs the cache. It is nil otherwise,
+// and boards load images from their sources. Partial or invalid settings
+// are a warning, not an error: image copies are optional and must never
+// stop play. With TCGREPLAY_SPACES_CDN_TOKEN set too, an admin's image
+// clear also purges the bucket's CDN; the token is ignored without the
+// image cache. Card data never comes from these settings: it is published
+// separately (see -cardsets-url).
+func hostedImages(c config) *cards.ImageCache {
 	token := strings.TrimSpace(os.Getenv("TCGREPLAY_SPACES_CDN_TOKEN"))
 	ignored := func() {
 		if token != "" {
-			log.Printf("card cache: TCGREPLAY_SPACES_CDN_TOKEN ignored without the shared store")
+			log.Printf("card images: TCGREPLAY_SPACES_CDN_TOKEN ignored without the shared store")
 		}
 	}
 	cfg, set, err := spaces.FromEnv(os.Getenv)
 	switch {
 	case !set:
-		log.Printf("card cache: local only, in %s (no TCGREPLAY_SPACES_* settings)", c.cacheDir)
+		log.Printf("card images: not copied, loaded from their sources (no TCGREPLAY_SPACES_* settings)")
 		ignored()
-		return db, false, nil
+		return nil
 	case err != nil:
-		log.Printf("warning: card cache: %s; using the local cache only", strings.ReplaceAll(err.Error(), "\n", "; "))
+		log.Printf("warning: card images: %s; loading images from their sources", strings.ReplaceAll(err.Error(), "\n", "; "))
 		ignored()
-		return db, false, nil
+		return nil
 	case c.offline:
-		log.Printf("card cache: offline, shared store %s not used", cfg)
+		log.Printf("card images: offline, shared store %s not used", cfg)
 		ignored()
-		return db, false, nil
+		return nil
 	}
 	sc, err := spaces.New(cfg)
 	if err != nil {
-		log.Printf("warning: card cache: %v; using the local cache only", err)
+		log.Printf("warning: card images: %v; loading images from their sources", err)
 		ignored()
-		return db, false, nil
+		return nil
 	}
-	db.Store = cards.NewTieredStore(db.Store, cards.NewSpacesStore(sc))
-	log.Printf("card cache: %s backed by shared store %s", c.cacheDir, cfg)
-	images = cards.NewImageCache(sc, cfg.PublicBase())
+	images := cards.NewImageCache(sc, cfg.PublicBase())
 	if c.imageBase != "" {
 		images.Source = c.imageBase
 	}
-	log.Printf("card images: copied from the card source to the shared store, served from %s/%s", images.Public, cards.ImagePrefix)
+	log.Printf("card images: copied from the card source to the shared store %s, served from %s/%s", cfg, images.Public, cards.ImagePrefix)
 	if token != "" {
 		cdn := spaces.NewCDN(cfg, token)
 		if c.cdnAPI != "" {
@@ -351,24 +340,7 @@ func hostedCardDB(c config) (db *cards.Client, shared bool, images *cards.ImageC
 	} else {
 		log.Printf("card images: CDN purge on clear: off (no TCGREPLAY_SPACES_CDN_TOKEN)")
 	}
-	return db, true, images
-}
-
-// catalogWarmTimeout bounds the start-up catalog warm.
-const catalogWarmTimeout = 2 * time.Minute
-
-// warmCatalog builds the card catalog in the background at start-up, so
-// the first import after a deploy does not wait for it, and logs how it
-// went.
-func warmCatalog(ctx context.Context, db *cards.Client) {
-	start := time.Now()
-	wctx, cancel := context.WithTimeout(ctx, catalogWarmTimeout)
-	defer cancel()
-	if err := db.Warm(wctx); err != nil {
-		log.Printf("card cache: catalog warm failed after %s: %v", time.Since(start).Round(time.Millisecond), err)
-		return
-	}
-	log.Printf("card cache: catalog warmed in %s", time.Since(start).Round(time.Millisecond))
+	return images
 }
 
 // runHosted serves MCP and the playmat over one plain-HTTP listener until
@@ -385,26 +357,29 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	db, shared, images := hostedCardDB(c)
-	reg, srv, a, err := newHosted(c, db, images, public, oauth2.Endpoint{})
+	images := hostedImages(c)
+	loader := newCatalog(c)
+	reg, srv, a, err := newHosted(c, loader, images, public, oauth2.Endpoint{})
 	if err != nil {
 		return err
 	}
+	// Hosted starts with an empty disk on every deploy: wait (bounded) for
+	// the published card sets before serving, so the first games do not
+	// pin an empty catalogue.
+	loader.Start(ctx, startupWait)
+	go loader.Run(ctx)
 	go reg.Run(ctx)
 	if images != nil {
 		go images.Run(ctx)
 	}
-	admin := hostedAdmin(db, images)
+	admin := hostedAdmin(loader, images)
 	go admin.Run(ctx)
-	if shared {
-		go warmCatalog(ctx, db)
-	}
 
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s", version, ln.Addr(), public, c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
 	hs := &http.Server{Handler: hostedHandler(srv, reg, a, admin), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})

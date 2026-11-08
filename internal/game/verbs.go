@@ -1,7 +1,6 @@
 package game
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -822,26 +821,4 @@ func (g *Game) nameOf(iid state.IID) string {
 		return string(iid)
 	}
 	return g.st.Name(iid)
-}
-
-// PrefetchCards loads every card definition in the game into the cache.
-func (g *Game) PrefetchCards(ctx context.Context) []error {
-	g.mu.Lock()
-	defs := map[string]bool{}
-	for _, c := range g.st.Cards {
-		if c.Def != "" {
-			defs[c.Def] = true
-		}
-	}
-	g.mu.Unlock()
-	var errs []error
-	for d := range defs {
-		if g.db == nil {
-			break
-		}
-		if _, err := g.db.Card(ctx, d); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return errs
 }

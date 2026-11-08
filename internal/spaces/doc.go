@@ -3,8 +3,8 @@
 // them path-style (<endpoint>/<bucket>/<key>) and signing each request with
 // AWS Signature Version 4, on the standard library alone.
 //
-// It knows nothing about cards. The card cache keeps its data in it, and
-// card image copies and admin cache clearing build on the same client.
+// It knows nothing about cards. Card image copies, the admin's image
+// clear, publishing card sets and the legacy clean-up build on it.
 // Timeouts and failure policy belong to the caller: each call is bounded by
 // the context it is given.
 package spaces

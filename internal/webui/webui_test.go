@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -783,6 +784,100 @@ func cardJSON(t *testing.T, ts *httptest.Server, def string) map[string]any {
 	return m
 }
 
+// cardImages is the images list of a card's JSON, failing the test when
+// the key is missing or is not a list.
+func cardImages(t *testing.T, card map[string]any) []map[string]any {
+	t.Helper()
+	raw, ok := card["images"].([]any)
+	if !ok {
+		t.Fatalf("card has no images list: %v", card)
+	}
+	out := make([]map[string]any, len(raw))
+	for i, r := range raw {
+		out[i] = r.(map[string]any)
+	}
+	return out
+}
+
+// firstImage is the first entry of a card's images list, or an empty map
+// for a card with no art.
+func firstImage(t *testing.T, card map[string]any) map[string]any {
+	t.Helper()
+	imgs := cardImages(t, card)
+	if len(imgs) == 0 {
+		return map[string]any{}
+	}
+	return imgs[0]
+}
+
+// TestCardImageList: /api/card sends the card's whole image list in its
+// order. A base-path entry goes through the image source (copy, version,
+// fallback); a complete image file goes as is, marked image_file, with no
+// version or fallback and without asking the image source. A card with no
+// art sends an empty list.
+func TestCardImageList(t *testing.T) {
+	const (
+		src   = "https://assets.tcgdex.net/en/sv/sv1/1"
+		cdn   = "https://cdn.example/images/en/sv/sv1/1"
+		malie = "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/tst/tst_en_001_std.jpg"
+	)
+	db := cardstest.New()
+	db["tst-1"].Images = []cards.ImageRef{{URL: src}, {URL: malie, File: true}}
+	db["tst-1"].Image = src
+	db["tst-3"].Images = []cards.ImageRef{{URL: malie, File: true}, {URL: src}}
+	db["tst-3"].Image = malie
+	m := game.NewManager(t.TempDir(), db)
+	s := New(m, state.P1)
+	stub := &stubImages{answer: func(s string) (string, string) { return cdn, s }}
+	s.Images = versionedStub{stub, "abc123"}
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+
+	imgs := cardImages(t, cardJSON(t, ts, "tst-1"))
+	if len(imgs) != 2 {
+		t.Fatalf("images %v, want 2 entries", imgs)
+	}
+	if imgs[0]["image"] != cdn || imgs[0]["image_fallback"] != src || imgs[0]["image_version"] != "abc123" {
+		t.Errorf("base-path entry %v", imgs[0])
+	}
+	if _, ok := imgs[0]["image_file"]; ok {
+		t.Errorf("base-path entry marked as a file: %v", imgs[0])
+	}
+	if imgs[1]["image"] != malie || imgs[1]["image_file"] != true {
+		t.Errorf("file entry %v", imgs[1])
+	}
+	for _, k := range []string{"image_fallback", "image_version"} {
+		if _, ok := imgs[1][k]; ok {
+			t.Errorf("file entry has %s: %v", k, imgs[1])
+		}
+	}
+	if !slices.Equal(stub.asked, []string{src}) {
+		t.Errorf("image source asked %v, want only the base path", stub.asked)
+	}
+
+	// Reordered: the file comes first.
+	imgs = cardImages(t, cardJSON(t, ts, "tst-3"))
+	if len(imgs) != 2 || imgs[0]["image"] != malie || imgs[1]["image"] != cdn {
+		t.Errorf("reordered list %v", imgs)
+	}
+
+	// No art and nothing to borrow: an empty list.
+	if imgs := cardImages(t, cardJSON(t, ts, "tst-7")); len(imgs) != 0 {
+		t.Errorf("Makuhita images %v, want none", imgs)
+	}
+}
+
+// versionedStub gives a stubImages answer a content version.
+type versionedStub struct {
+	*stubImages
+	version string
+}
+
+func (v versionedStub) Image(src string) (string, string, string) {
+	img, fb, _ := v.stubImages.Image(src)
+	return img, fb, v.version
+}
+
 func TestCardImageSource(t *testing.T) {
 	const src = "https://assets.tcgdex.net/en/sv/sv1/1"
 	const cdn = "https://cdn.example/images/en/sv/sv1/1"
@@ -796,14 +891,14 @@ func TestCardImageSource(t *testing.T) {
 	t.Run("no image source", func(t *testing.T) {
 		s.Images = nil
 		got := cardJSON(t, ts, "tst-1")
-		if got["image"] != src {
-			t.Fatalf("image = %v, want %s", got["image"], src)
+		if firstImage(t, got)["image"] != src {
+			t.Fatalf("image = %v, want %s", firstImage(t, got)["image"], src)
 		}
-		if _, ok := got["image_fallback"]; ok {
+		if _, ok := firstImage(t, got)["image_fallback"]; ok {
 			t.Fatalf("image_fallback present without an image source: %v", got)
 		}
 		got = cardJSON(t, ts, "tst-2")
-		if _, ok := got["image"]; ok {
+		if _, ok := firstImage(t, got)["image"]; ok {
 			t.Fatalf("imageless card has an image: %v", got)
 		}
 	})
@@ -812,17 +907,17 @@ func TestCardImageSource(t *testing.T) {
 		stub := &stubImages{answer: func(s string) (string, string) { return cdn, s }}
 		s.Images = stub
 		got := cardJSON(t, ts, "tst-1")
-		if got["image"] != cdn || got["image_fallback"] != src {
-			t.Fatalf("image = %v, fallback = %v; want %s, %s", got["image"], got["image_fallback"], cdn, src)
+		if firstImage(t, got)["image"] != cdn || firstImage(t, got)["image_fallback"] != src {
+			t.Fatalf("image = %v, fallback = %v; want %s, %s", firstImage(t, got)["image"], firstImage(t, got)["image_fallback"], cdn, src)
 		}
 		if len(stub.asked) != 1 || stub.asked[0] != src {
 			t.Fatalf("source asked %v, want [%s]", stub.asked, src)
 		}
 		got = cardJSON(t, ts, "tst-2")
-		if _, ok := got["image"]; ok {
+		if _, ok := firstImage(t, got)["image"]; ok {
 			t.Fatalf("imageless card has an image: %v", got)
 		}
-		if _, ok := got["image_fallback"]; ok {
+		if _, ok := firstImage(t, got)["image_fallback"]; ok {
 			t.Fatalf("imageless card has a fallback: %v", got)
 		}
 		if len(stub.asked) != 1 {
@@ -833,15 +928,15 @@ func TestCardImageSource(t *testing.T) {
 	t.Run("source keeps the address", func(t *testing.T) {
 		s.Images = &stubImages{answer: func(s string) (string, string) { return s, "" }}
 		got := cardJSON(t, ts, "tst-1")
-		if got["image"] != src {
-			t.Fatalf("image = %v, want %s", got["image"], src)
+		if firstImage(t, got)["image"] != src {
+			t.Fatalf("image = %v, want %s", firstImage(t, got)["image"], src)
 		}
-		if _, ok := got["image_fallback"]; ok {
+		if _, ok := firstImage(t, got)["image_fallback"]; ok {
 			t.Fatalf("image_fallback present when the source keeps the address: %v", got)
 		}
 		// A source that echoes the address as its own fallback adds none.
 		s.Images = &stubImages{answer: func(s string) (string, string) { return s, s }}
-		if _, ok := cardJSON(t, ts, "tst-1")["image_fallback"]; ok {
+		if _, ok := firstImage(t, cardJSON(t, ts, "tst-1"))["image_fallback"]; ok {
 			t.Fatal("image_fallback equal to image was not dropped")
 		}
 	})
@@ -875,10 +970,10 @@ func TestCardImageVersion(t *testing.T) {
 	t.Run("a versioned copy carries its version", func(t *testing.T) {
 		s.Images = versionedImages{cdn: cdn, version: "abc123def456"}
 		got := cardJSON(t, ts, "tst-1")
-		if got["image"] != cdn || got["image_fallback"] != src || got["image_version"] != "abc123def456" {
+		if firstImage(t, got)["image"] != cdn || firstImage(t, got)["image_fallback"] != src || firstImage(t, got)["image_version"] != "abc123def456" {
 			t.Fatalf("card = %v; want image %s, fallback %s, version abc123def456", got, cdn, src)
 		}
-		if _, ok := cardJSON(t, ts, "tst-2")["image_version"]; ok {
+		if _, ok := firstImage(t, cardJSON(t, ts, "tst-2"))["image_version"]; ok {
 			t.Fatal("imageless card has a version")
 		}
 	})
@@ -890,7 +985,7 @@ func TestCardImageVersion(t *testing.T) {
 			"address kept":         versionedImages{keep: true, version: "abc123def456"},
 		} {
 			s.Images = src
-			if _, ok := cardJSON(t, ts, "tst-1")["image_version"]; ok {
+			if _, ok := firstImage(t, cardJSON(t, ts, "tst-1"))["image_version"]; ok {
 				t.Errorf("%s: image_version present", name)
 			}
 		}

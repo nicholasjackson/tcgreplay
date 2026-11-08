@@ -1,6 +1,7 @@
-// Package cacheadmin is the hosted playmat's card cache admin page: a page
-// from which an admin clears the card cache, everything or one set, and
-// the clear job behind it. It is served only in hosted mode, and only
+// Package cacheadmin is the hosted playmat's admin page: a page from which
+// an admin checks for published card sets at once and sees the loaded
+// catalogue, and clears the card image copies, everything or one set,
+// with the clear job behind it. It is served only in hosted mode, and only
 // behind hostauth.RequireAdmin.
 package cacheadmin
 
@@ -14,14 +15,35 @@ import (
 	"time"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 )
 
-// Cards is the card database a clear empties (a *cards.Client).
-type Cards interface {
-	// SetID names a set by its TCGdex id or decklist code; an unknown
-	// name is cards.ErrUnknownSet.
-	SetID(ctx context.Context, name string) (id, setName string, err error)
-	Clear(ctx context.Context, s cards.Scope) []cards.TierReport
+// Catalog is the playmat's card catalogue (a *catalog.Loader): it names
+// sets for an image clear, checks for published card sets on demand and
+// reports what it has loaded.
+type Catalog interface {
+	// SetID names a set by its id or decklist code; an unknown name is
+	// cards.ErrUnknownSet.
+	SetID(name string) (id, setName string, err error)
+	// Check checks for published card sets now.
+	Check(ctx context.Context) (catalog.CheckResult, error)
+	// Status reports the loaded catalogue.
+	Status() catalog.Status
+}
+
+// ErrNoImages means there are no image copies to clear: the shared store
+// is off.
+var ErrNoImages = errors.New("there are no image copies to clear (the shared store is off)")
+
+// CheckTimeout bounds an admin's check for published card sets.
+const CheckTimeout = 2 * time.Minute
+
+// Check is the outcome of an admin's check for published card sets.
+type Check struct {
+	By     string
+	At     time.Time
+	Result catalog.CheckResult
+	Err    error
 }
 
 // Images is the card image cache a clear empties (a *cards.ImageCache).
@@ -70,11 +92,12 @@ func (j Job) Failed() bool {
 	return false
 }
 
-// Service runs one clear job at a time, in the background, so a long clear
-// is never cut off by a request time limit, and keeps the current or last
-// job for the page. Job state is in memory only.
+// Service runs one image clear job at a time, in the background, so a
+// long clear is never cut off by a request time limit, keeps the current
+// or last job for the page, and runs admins' checks for published card
+// sets. State is in memory only.
 type Service struct {
-	Cards Cards
+	Catalog Catalog
 	// Images is nil without the shared store: then there are no image
 	// copies to clear.
 	Images Images
@@ -85,10 +108,11 @@ type Service struct {
 	// Logf logs each job's start and end; nil means log.Printf.
 	Logf func(format string, args ...any)
 
-	mu  sync.Mutex
-	job *Job
-	ctx context.Context // the server's lifetime, set by Run
-	wg  sync.WaitGroup  // jobs running
+	mu    sync.Mutex
+	job   *Job
+	check *Check          // the last admin check
+	ctx   context.Context // the server's lifetime, set by Run
+	wg    sync.WaitGroup  // jobs running
 }
 
 func (s *Service) now() time.Time {
@@ -116,11 +140,15 @@ func (s *Service) Run(ctx context.Context) {
 	<-ctx.Done()
 }
 
-// Start starts clearing everything (all) or the set name names, for the
-// admin by, and returns the job as it starts. A set name is resolved
-// first, so an unknown or empty one (cards.ErrUnknownSet) starts nothing.
-// While a job runs, Start returns ErrBusy.
+// Start starts clearing the image copies of everything (all) or of the
+// set name names, for the admin by, and returns the job as it starts. A
+// set name is resolved first through the catalogue, so an unknown or
+// empty one (cards.ErrUnknownSet) starts nothing. While a job runs, Start
+// returns ErrBusy; without image copies, ErrNoImages.
 func (s *Service) Start(ctx context.Context, by, name string, all bool) (Job, error) {
+	if s.Images == nil {
+		return Job{}, ErrNoImages
+	}
 	if s.busy() {
 		return Job{}, ErrBusy
 	}
@@ -129,7 +157,10 @@ func (s *Service) Start(ctx context.Context, by, name string, all bool) (Job, er
 		if strings.TrimSpace(name) == "" {
 			return Job{}, cards.ErrUnknownSet
 		}
-		id, setName, err := s.Cards.SetID(ctx, name)
+		if s.Catalog == nil {
+			return Job{}, cards.ErrUnknownSet
+		}
+		id, setName, err := s.Catalog.SetID(name)
 		if err != nil {
 			return Job{}, err
 		}
@@ -155,15 +186,12 @@ func (s *Service) Start(ctx context.Context, by, name string, all bool) (Job, er
 	if timeout <= 0 {
 		timeout = DefaultTimeout
 	}
-	s.logf("cache admin: %s started clearing %s", by, j.Label())
+	s.logf("cache admin: %s started clearing images for %s", by, j.Label())
 	go func() {
 		defer s.wg.Done()
 		jctx, cancel := context.WithTimeout(base, timeout)
 		defer cancel()
-		reports := s.Cards.Clear(jctx, j.Scope)
-		if s.Images != nil {
-			reports = append(reports, s.Images.Clear(jctx, j.Scope)...)
-		}
+		reports := s.Images.Clear(jctx, j.Scope)
 		s.mu.Lock()
 		job.Reports, job.Ended, job.Running = reports, s.now(), false
 		done := job
@@ -172,7 +200,7 @@ func (s *Service) Start(ctx context.Context, by, name string, all bool) (Job, er
 		for i, r := range reports {
 			parts[i] = r.String()
 		}
-		s.logf("cache admin: cleared %s for %s in %s: %s", done.Label(), done.By, done.Ended.Sub(done.Started).Round(time.Millisecond), strings.Join(parts, "; "))
+		s.logf("cache admin: cleared images for %s for %s in %s: %s", done.Label(), done.By, done.Ended.Sub(done.Started).Round(time.Millisecond), strings.Join(parts, "; "))
 	}()
 	return j, nil
 }
@@ -195,6 +223,39 @@ func (s *Service) Status() (Job, bool) {
 	j := *s.job
 	j.Reports = append([]cards.TierReport(nil), j.Reports...)
 	return j, true
+}
+
+// CheckNow checks for published card sets at once, for the admin by, and
+// remembers the outcome for the page. It runs on the request, bounded by
+// CheckTimeout: a check is quick.
+func (s *Service) CheckNow(ctx context.Context, by string) (catalog.CheckResult, error) {
+	if s.Catalog == nil {
+		return catalog.CheckResult{}, errors.New("no card catalogue")
+	}
+	cctx, cancel := context.WithTimeout(ctx, CheckTimeout)
+	defer cancel()
+	res, err := s.Catalog.Check(cctx)
+	c := &Check{By: by, At: s.now(), Result: res, Err: err}
+	s.mu.Lock()
+	s.check = c
+	s.mu.Unlock()
+	if err != nil {
+		s.logf("cache admin: %s checked published card sets: %v", by, err)
+	} else {
+		s.logf("cache admin: %s checked published card sets: %s", by, res)
+	}
+	return res, err
+}
+
+// LastCheck returns the last admin check, and whether there has been one
+// since start.
+func (s *Service) LastCheck() (Check, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.check == nil {
+		return Check{}, false
+	}
+	return *s.check, true
 }
 
 // wait waits for every job started so far to end. It is for tests.

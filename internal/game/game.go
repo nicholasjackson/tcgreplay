@@ -4,7 +4,6 @@
 package game
 
 import (
-	"context"
 	crand "crypto/rand"
 	"encoding/json"
 	"errors"
@@ -15,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
@@ -91,9 +89,6 @@ type Game struct {
 	// applies it). The presence sets and clears it with the wait session; a
 	// mode switch and a branch move clear it too.
 	handed state.Seat
-	// warming holds the card defs being fetched in the background because
-	// card found them uncached; it keeps one fetch per def at a time.
-	warming sync.Map
 }
 
 // Options configure a new game.
@@ -496,34 +491,20 @@ func (g *Game) setHanded(seat state.Seat) {
 	g.handed = seat
 }
 
-// card returns a card's definition if it is cached, else nil. It is
-// called with g.mu held, so it never waits on the card source: a def not
-// cached yet is fetched in the background, and later calls see it.
+// card returns a card's definition from the game's own card database, or
+// nil. It is called with g.mu held and never waits: every card in a
+// catalogue snapshot is in memory.
 func (g *Game) card(st *state.State, iid state.IID) *cards.Card {
 	c, ok := st.Cards[iid]
 	if !ok || c.Def == "" || g.db == nil {
 		return nil
 	}
-	if cc := g.db.Cached(c.Def); cc != nil {
-		return cc
-	}
-	g.warm(c.Def)
-	return nil
+	return g.db.Cached(c.Def)
 }
 
-// warm fetches def into the card cache in the background, unless a fetch
-// of it is already running. It never touches g.mu.
-func (g *Game) warm(def string) {
-	if _, running := g.warming.LoadOrStore(def, true); running {
-		return
-	}
-	go func() {
-		defer g.warming.Delete(def)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		g.db.Card(ctx, def)
-	}()
-}
+// DB is the card database the game was loaded with: the catalogue
+// snapshot it pinned when it was created, imported or rebuilt.
+func (g *Game) DB() cards.DB { return g.db }
 
 // hp is a Pokémon's maximum HP: printed HP plus what its Tools add.
 func (g *Game) hp(def string, tools []string) int {

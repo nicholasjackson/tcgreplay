@@ -3,6 +3,7 @@ package cardset
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
 )
@@ -10,11 +11,14 @@ import (
 // Card turns the print into the playmat's runtime card definition in one
 // language. The set reference is left empty: Set.Card fills it.
 //
-// The card's single Image is the print's TCGdex image, as the playmat
-// shows today, and a Basic Energy without one borrows the art of its type
-// exactly as the playmat's card client does (cards.EnergyArt): the borrowed
-// art is never stored in the built set. Which other sources the board may
-// fall back to is decided by the card-set-publishing spec.
+// The card carries the print's whole ordered image list (Images), the
+// order the board tries them in: a TCGdex image under
+// https://assets.tcgdex.net/ is a base path (the board appends the size
+// file), an https address of a complete image file (a malie.io jpg, say)
+// is a file entry used as is, and anything else is left out. Image is the
+// first entry's address. A Basic Energy with no image borrows the art of
+// its type (cards.EnergyArt): the borrowed art is never stored in the
+// built set.
 func (p Print) Card(lang string) (*cards.Card, error) {
 	t, ok := p.Text[lang]
 	if !ok {
@@ -41,11 +45,9 @@ func (p Print) Card(lang string) (*cards.Card, error) {
 		Effect:         t.Effect,
 		RegulationMark: p.RegulationMark,
 	}
-	for _, img := range p.Images {
-		if img.Source == SourceTCGdex {
-			c.Image = img.URL
-			break
-		}
+	c.Images = cardImages(p.Images)
+	if len(c.Images) > 0 {
+		c.Image = c.Images[0].URL
 	}
 	cards.EnergyArt(c)
 	for i, a := range p.Abilities {
@@ -55,6 +57,26 @@ func (p Print) Card(lang string) (*cards.Card, error) {
 		c.Attacks = append(c.Attacks, cards.Attack{Cost: slices.Clone(a.Cost), Name: t.Attacks[i].Name, Effect: t.Attacks[i].Effect, Damage: a.Damage})
 	}
 	return c, nil
+}
+
+// tcgdexImages is where TCGdex serves card images; an address under it
+// with no file extension is a base path.
+const tcgdexImages = "https://assets.tcgdex.net/"
+
+// cardImages turns a print's image sources, in order, into the image list
+// the board can show, leaving out any it cannot.
+func cardImages(imgs []Image) []cards.ImageRef {
+	var out []cards.ImageRef
+	for _, img := range imgs {
+		switch {
+		case !strings.HasPrefix(img.URL, "https://"):
+		case cards.ImageIsFile(img.URL):
+			out = append(out, cards.ImageRef{URL: img.URL, File: true})
+		case img.Source == SourceTCGdex && strings.HasPrefix(img.URL, tcgdexImages):
+			out = append(out, cards.ImageRef{URL: img.URL})
+		}
+	}
+	return out
 }
 
 // Card returns the print with the given id as a runtime card definition in

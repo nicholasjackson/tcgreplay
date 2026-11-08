@@ -11,9 +11,10 @@ import (
 // DefaultTCGdexBase is the English TCGdex REST API.
 const DefaultTCGdexBase = "https://api.tcgdex.net/v2/en"
 
-// TCGdex reads raw set and card data from TCGdex, uncached. It is separate
-// from the playmat's caching card client on purpose: an import must always
-// see current upstream data.
+// TCGdex reads raw set and card data from TCGdex, uncached, for the
+// maintainer's import: an import must always see current upstream data.
+// It is the only program code that talks to the TCGdex API; the playmat
+// reads published card sets (internal/catalog).
 type TCGdex struct {
 	Base string // default DefaultTCGdexBase
 	get  httpGetter

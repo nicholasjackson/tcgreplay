@@ -14,7 +14,7 @@ import (
 // as the stdio caller does, and returns a client session on it.
 func desktopSession(t *testing.T) *mcp.ClientSession {
 	t.Helper()
-	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "")
+	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "", nil)
 	st, ct := mcp.NewInMemoryTransports()
 	if _, err := srv.Connect(context.Background(), st, nil); err != nil {
 		t.Fatal(err)

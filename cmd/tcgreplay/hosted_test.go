@@ -24,6 +24,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/oauth2"
 
+	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth/hostauthtest"
@@ -577,6 +578,8 @@ type hostedServer struct {
 	reg *usergames.Registry
 	// public is the address it is configured to be reached at.
 	public string
+	// cat is the card catalogue its games pin their cards from.
+	cat *catalog.Loader
 }
 
 // connect signs a connector in as g's current account, the way claude.ai
@@ -649,24 +652,18 @@ func startHosted(t *testing.T, public string) *hostedServer {
 // first.
 func startHostedWith(t *testing.T, public string, mod func(*config)) *hostedServer {
 	t.Helper()
-	u, err := hostedPublicURL(public, ":8080")
-	if err != nil {
-		t.Fatal(err)
-	}
 	g := hostauthtest.NewGoogle(t)
 	t.Setenv("TCGREPLAY_GOOGLE_CLIENT_SECRET", g.ClientSecret)
 	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true, googleClientID: g.ClientID}
 	if mod != nil {
 		mod(&c)
 	}
-	db := newCardDB(c)
-	reg, srv, a, err := newHosted(c, db, nil, u, g.Endpoint())
-	if err != nil {
-		t.Fatal(err)
-	}
-	ts := httptest.NewServer(hostedHandler(srv, reg, a, hostedAdmin(db, nil)))
-	t.Cleanup(ts.Close)
-	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String()}
+	// The catalogue is built from the config as runHosted builds it:
+	// offline with an empty cache it holds no card data and fetches
+	// nothing.
+	loader := newCatalog(c)
+	loader.Start(context.Background(), 5*time.Second)
+	return serveHosted(t, public, c, g, loader)
 }
 
 // callTool calls a tool with arguments and returns its text, failing the
@@ -935,7 +932,7 @@ func TestHostedBoardAcceptsPublicAddress(t *testing.T) {
 // TestDesktopServerHasNoBoardLinks: the desktop callers pass no public
 // address, so game-opening results carry no board link.
 func TestDesktopServerHasNoBoardLinks(t *testing.T) {
-	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "")
+	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "", nil)
 	st, ct := mcp.NewInMemoryTransports()
 	if _, err := srv.Connect(context.Background(), st, nil); err != nil {
 		t.Fatal(err)
@@ -1524,7 +1521,7 @@ func TestHostedRateLimitSetting(t *testing.T) {
 // TestDesktopServerHasNoLimit: the desktop MCP server counts nothing, so
 // more calls than the hosted default never get refused.
 func TestDesktopServerHasNoLimit(t *testing.T) {
-	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "")
+	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "", nil)
 	st, ct := mcp.NewInMemoryTransports()
 	if _, err := srv.Connect(context.Background(), st, nil); err != nil {
 		t.Fatal(err)

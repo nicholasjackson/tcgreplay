@@ -301,14 +301,16 @@ func TestCardConversion(t *testing.T) {
 		}},
 		{"tst-002", cards.Card{
 			ID: "tst-002", LocalID: "002", Name: "Lucario", Category: "Pokemon", Set: cards.SetRef{ID: "tst", Name: "Test Set"},
-			Image: "https://assets.tcgdex.net/en/me/tst/002",
-			HP:    130, Types: []string{"Fighting"}, Stage: "Stage1", EvolveFrom: "Riolu", Retreat: 2,
+			// The print lists its malie image first, so it shows first.
+			Image:  "https://malie.example/2.jpg",
+			Images: []cards.ImageRef{{URL: "https://malie.example/2.jpg", File: true}, {URL: "https://assets.tcgdex.net/en/me/tst/002"}},
+			HP:     130, Types: []string{"Fighting"}, Stage: "Stage1", EvolveFrom: "Riolu", Retreat: 2,
 			Attacks:    []cards.Attack{{Cost: []string{"Fighting", "Colorless"}, Name: "Aura Sphere", Effect: "This attack also does 20 damage to 1 of your opponent's Benched Pokémon.", Damage: "130"}},
 			Weaknesses: []cards.TypeValue{{Type: "Psychic", Value: "×2"}},
 		}},
 		{"tst-010", cards.Card{
 			ID: "tst-010", LocalID: "010", Name: "Ultra Ball", Category: "Trainer", Set: cards.SetRef{ID: "tst", Name: "Test Set"},
-			Image: "https://assets.tcgdex.net/en/me/tst/010", TrainerType: "Item", RegulationMark: "J",
+			Image: "https://assets.tcgdex.net/en/me/tst/010", Images: []cards.ImageRef{{URL: "https://assets.tcgdex.net/en/me/tst/010"}}, TrainerType: "Item", RegulationMark: "J",
 			Effect: "You can use this card only if you discard 2 other cards from your hand. Search your deck for a Pokémon & reveal it.",
 		}},
 		{"tst-TG01", cards.Card{
@@ -382,49 +384,58 @@ func TestCardConversionBasicEnergyArt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := cards.Card{ID: "sve-002", LocalID: "002", Name: "Basic Fire Energy", Category: "Energy", EnergyType: "Normal", Image: "https://assets.tcgdex.net/en/swsh/swsh12.5/153"}
+	want := cards.Card{ID: "sve-002", LocalID: "002", Name: "Basic Fire Energy", Category: "Energy", EnergyType: "Normal", Image: "https://assets.tcgdex.net/en/swsh/swsh12.5/153",
+		Images: []cards.ImageRef{{URL: "https://assets.tcgdex.net/en/swsh/swsh12.5/153"}}}
 	if !reflect.DeepEqual(*got, want) {
 		t.Errorf("Card()\n got %+v\nwant %+v", *got, want)
 	}
 }
 
 // Each built print converts into exactly the card the playmat builds today
-// from the same card's TCGdex body: the body decoded into cards.Card, with
-// the client's borrowed Basic Energy art.
+// from the same card's TCGdex body (the body decoded into cards.Card, with
+// the client's borrowed Basic Energy art), except that it carries the
+// print's whole image list, malie.io files included.
 func TestCardMatchesPlaymatCard(t *testing.T) {
 	tests := []struct {
-		name  string
-		body  string
-		print Print
+		name   string
+		body   string
+		print  Print
+		images []cards.ImageRef // the converted card's image list
 	}{
 		{"Pokémon", `{"category":"Pokemon","id":"me06-001","localId":"001","name":"Heracross","set":{"id":"me06","name":"Delta Reign"},"hp":130,"types":["Grass"],"stage":"Basic","attacks":[{"cost":["Grass"],"name":"Spike Draw","effect":"Draw 2 cards.","damage":20},{"cost":["Grass","Grass","Colorless"],"name":"High Horsepower","effect":"This Pokémon also does 30 damage to itself.","damage":130}],"weaknesses":[{"type":"Fire","value":"×2"}],"retreat":3,"regulationMark":"J","image":"https://assets.tcgdex.net/en/me/me06/001"}`,
 			Print{ID: "me06-001", LocalID: "001", Category: "Pokemon", HP: 130, Types: []string{"Grass"}, Stage: "Basic", Retreat: 3, RegulationMark: "J",
 				Attacks:    []AttackCore{{Cost: []string{"Grass"}, Damage: "20"}, {Cost: []string{"Grass", "Grass", "Colorless"}, Damage: "130"}},
 				Weaknesses: []cards.TypeValue{{Type: "Fire", Value: "×2"}},
 				Images:     []Image{{Source: "tcgdex", URL: "https://assets.tcgdex.net/en/me/me06/001"}, {Source: "malie", URL: "https://cdn.malie.io/x.jpg"}},
-				Text:       map[string]PrintText{"en": {Name: "Heracross", Attacks: []MoveText{{Name: "Spike Draw", Effect: "Draw 2 cards."}, {Name: "High Horsepower", Effect: "This Pokémon also does 30 damage to itself."}}}}}},
+				Text:       map[string]PrintText{"en": {Name: "Heracross", Attacks: []MoveText{{Name: "Spike Draw", Effect: "Draw 2 cards."}, {Name: "High Horsepower", Effect: "This Pokémon also does 30 damage to itself."}}}}},
+			[]cards.ImageRef{{URL: "https://assets.tcgdex.net/en/me/me06/001"}, {URL: "https://cdn.malie.io/x.jpg", File: true}}},
 		{"Stage 1 with ability", `{"category":"Pokemon","id":"sv01-002","localId":"002","name":"Forretress","set":{"id":"sv01","name":"Scarlet & Violet"},"hp":120,"types":["Grass"],"stage":"Stage1","evolveFrom":"Pineco","abilities":[{"type":"Ability","name":"Spiky Shell","effect":"Put 2 damage counters."}],"attacks":[{"cost":["Colorless","Colorless","Colorless"],"name":"Tackle","damage":"30+"}],"resistances":[{"type":"Water","value":"-30"}],"retreat":3}`,
 			Print{ID: "sv01-002", LocalID: "002", Category: "Pokemon", HP: 120, Types: []string{"Grass"}, Stage: "Stage1", Retreat: 3,
 				Abilities:   []AbilityCore{{Type: "Ability"}},
 				Attacks:     []AttackCore{{Cost: []string{"Colorless", "Colorless", "Colorless"}, Damage: "30+"}},
 				Resistances: []cards.TypeValue{{Type: "Water", Value: "-30"}},
-				Text:        map[string]PrintText{"en": {Name: "Forretress", EvolveFrom: "Pineco", Abilities: []MoveText{{Name: "Spiky Shell", Effect: "Put 2 damage counters."}}, Attacks: []MoveText{{Name: "Tackle"}}}}}},
+				Text:        map[string]PrintText{"en": {Name: "Forretress", EvolveFrom: "Pineco", Abilities: []MoveText{{Name: "Spiky Shell", Effect: "Put 2 damage counters."}}, Attacks: []MoveText{{Name: "Tackle"}}}}}, nil},
 		{"Trainer", `{"category":"Trainer","id":"sv01-170","localId":"170","name":"Electric Generator","set":{"id":"sv01","name":"Scarlet & Violet"},"image":"https://assets.tcgdex.net/en/sv/sv01/170","effect":"Look at the top 5 cards of your deck and attach up to 2 Basic {L} Energy cards.","trainerType":"Item","regulationMark":"G"}`,
 			Print{ID: "sv01-170", LocalID: "170", Category: "Trainer", TrainerType: "Item", RegulationMark: "G",
 				Images: []Image{{Source: "tcgdex", URL: "https://assets.tcgdex.net/en/sv/sv01/170"}},
-				Text:   map[string]PrintText{"en": {Name: "Electric Generator", Effect: "Look at the top 5 cards of your deck and attach up to 2 Basic {L} Energy cards."}}}},
+				Text:   map[string]PrintText{"en": {Name: "Electric Generator", Effect: "Look at the top 5 cards of your deck and attach up to 2 Basic {L} Energy cards."}}},
+			[]cards.ImageRef{{URL: "https://assets.tcgdex.net/en/sv/sv01/170"}}},
 		{"special Energy", `{"category":"Energy","id":"me06-132","localId":"132","name":"Bubbly Water Energy","set":{"id":"me06","name":"Delta Reign"},"energyType":"Special","effect":"As long as this card is attached to a Pokémon, it provides {W} Energy."}`,
 			Print{ID: "me06-132", LocalID: "132", Category: "Energy", EnergyType: "Special",
 				Images: []Image{{Source: "malie", URL: "https://cdn.malie.io/x.jpg"}},
-				Text:   map[string]PrintText{"en": {Name: "Bubbly Water Energy", Effect: "As long as this card is attached to a Pokémon, it provides {W} Energy."}}}},
+				Text:   map[string]PrintText{"en": {Name: "Bubbly Water Energy", Effect: "As long as this card is attached to a Pokémon, it provides {W} Energy."}}},
+			[]cards.ImageRef{{URL: "https://cdn.malie.io/x.jpg", File: true}}},
 		{"Basic Energy without art", `{"category":"Energy","id":"sve-002","localId":"002","name":"Basic Fire Energy","set":{"id":"sve","name":"Scarlet & Violet Energies"},"energyType":"Normal"}`,
-			Print{ID: "sve-002", LocalID: "002", Category: "Energy", EnergyType: "Normal", Text: map[string]PrintText{"en": {Name: "Basic Fire Energy"}}}},
+			Print{ID: "sve-002", LocalID: "002", Category: "Energy", EnergyType: "Normal", Text: map[string]PrintText{"en": {Name: "Basic Fire Energy"}}}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var want cards.Card
 			if err := json.Unmarshal([]byte(tt.body), &want); err != nil {
 				t.Fatal(err)
+			}
+			if len(tt.images) > 0 {
+				want.Images, want.Image = tt.images, tt.images[0].URL
 			}
 			cards.EnergyArt(&want)
 			s := &Set{Format: Format, Set: SetHeader{ID: want.Set.ID, Text: map[string]SetText{"en": {Name: want.Set.Name}}}, Prints: []Print{tt.print}}
@@ -434,6 +445,52 @@ func TestCardMatchesPlaymatCard(t *testing.T) {
 			}
 			if !reflect.DeepEqual(*got, want) {
 				t.Errorf("Card()\n got %+v\nwant %+v", *got, want)
+			}
+		})
+	}
+}
+
+// A print's image list converts in its own order: TCGdex base paths and
+// complete image files are kept, marked as such, and anything the board
+// cannot show is left out.
+func TestCardImageList(t *testing.T) {
+	const (
+		tcgdex = "https://assets.tcgdex.net/en/me/me06/001"
+		malie  = "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_001_std.jpg"
+	)
+	tests := []struct {
+		name   string
+		images []Image
+		want   []cards.ImageRef
+	}{
+		{"malie only", []Image{{Source: "malie", URL: malie}}, []cards.ImageRef{{URL: malie, File: true}}},
+		{"tcgdex then malie", []Image{{Source: "tcgdex", URL: tcgdex}, {Source: "malie", URL: malie}}, []cards.ImageRef{{URL: tcgdex}, {URL: malie, File: true}}},
+		{"malie first by correction", []Image{{Source: "malie", URL: malie}, {Source: "tcgdex", URL: tcgdex}}, []cards.ImageRef{{URL: malie, File: true}, {URL: tcgdex}}},
+		{"unclassifiable left out", []Image{
+			{Source: "other", URL: "https://example.com/card/001"},             // not TCGdex, not a file
+			{Source: "tcgdex", URL: "http://assets.tcgdex.net/en/me/me06/001"}, // not https
+			{Source: "malie", URL: "ftp://cdn.malie.io/x.jpg"},
+			{Source: "tcgdex", URL: tcgdex},
+		}, []cards.ImageRef{{URL: tcgdex}}},
+		{"none", nil, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := Print{ID: "me06-001", LocalID: "001", Category: "Trainer", TrainerType: "Item", Images: tt.images,
+				Text: map[string]PrintText{"en": {Name: "Thing", Effect: "Do it."}}}
+			c, err := p.Card("en")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(c.Images, tt.want) {
+				t.Errorf("Images = %+v, want %+v", c.Images, tt.want)
+			}
+			wantImage := ""
+			if len(tt.want) > 0 {
+				wantImage = tt.want[0].URL
+			}
+			if c.Image != wantImage {
+				t.Errorf("Image = %q, want %q", c.Image, wantImage)
 			}
 		})
 	}
