@@ -277,3 +277,68 @@ test('a press that barely moves is a tap, not a drag', async ({ page }, testInfo
   await expect(page.getByRole('dialog', { name: 'Riolu' })).toBeVisible();
   await expectUnchanged(page, before);
 });
+
+// The two prints of Twin Peak, a made-up Stadium played as a pair, start
+// in p1's deck (webtest.TwinPeak).
+const twinPeak = ['p1-59', 'p1-60'];
+
+// standingWarnings is the board's standing warnings: the header's ⚠ on a
+// mat, the list behind ☰ on a phone.
+async function standingWarnings(page, testInfo) {
+  if (!isPhone(testInfo)) {
+    const warn = page.locator('header .warn');
+    return (await warn.count()) ? (await warn.getAttribute('title')).split('\n') : [];
+  }
+  await page.getByRole('button', { name: 'Menu' }).tap();
+  const dropdown = page.locator('.dropdown');
+  await expect(dropdown).toBeVisible();
+  const lines = (await dropdown.locator('.warning').allInnerTexts()).map((w) => w.replace(/^⚠\s*/, ''));
+  await page.locator('.more .backdrop').tap({ position: { x: 5, y: 200 } });
+  await expect(dropdown).toHaveCount(0);
+  return lines;
+}
+
+test('dragging the two halves of a pair-played Stadium onto the Stadium plays them as one', async ({ page }, testInfo) => {
+  // The hand fans its newest card over the one before, so the second
+  // print moved to the hand is dragged first.
+  const [b, a] = twinPeak;
+  for (const iid of twinPeak) await act(page, 'move', { iid, to: 'hand' });
+  const stadium = page.getByRole('region', { name: 'Stadium' });
+  await expect(titled(hand(page), `Twin Peak (${b})`)).toHaveCount(1);
+  let before = await timelineLines(page);
+
+  // The first half replaces the Arena and warns that it needs its partner.
+  await drag(page, titled(hand(page), `Twin Peak (${a})`), stadium, testInfo);
+  await expectNewLines(page, before, ['p1 moved p1-11 Arena stadium → p1:discard', `p1 moved ${a} Twin Peak p1:hand → stadium`]);
+  await expect(titled(stadium, `Twin Peak (${a})`)).toBeVisible();
+  await expect.poll(async () => (await standingWarnings(page, testInfo)).join('\n')).toContain(`Twin Peak (${a}) is played as a pair`);
+
+  // The second half dropped on it completes the pair: both show, and the
+  // warning is gone.
+  before = await timelineLines(page);
+  await drag(page, titled(hand(page), `Twin Peak (${b})`), stadium, testInfo);
+  await expectNewLines(page, before, [`p1 moved ${b} Twin Peak p1:hand → stadium as pair`]);
+  await expect(titled(stadium, `Twin Peak (${a})`)).toBeVisible();
+  await expect(titled(stadium, `Twin Peak (${b})`)).toBeVisible();
+  await expect.poll(async () => (await standingWarnings(page, testInfo)).join('\n')).not.toContain('is played as a pair');
+});
+
+test('each half of a Stadium pair opens in the zoom', async ({ page }) => {
+  const [a, b] = twinPeak;
+  for (const iid of twinPeak) await act(page, 'move', { iid, to: 'hand' });
+  await act(page, 'play_trainer', { iid: a, pair_iid: b });
+  const stadium = page.getByRole('region', { name: 'Stadium' });
+  for (const iid of twinPeak) {
+    const half = titled(stadium, `Twin Peak (${iid})`);
+    await expect(half).toBeVisible();
+    // Click where the half shows: the first half's left edge (the second
+    // half lies over the rest of it), the second half's middle.
+    const box = await half.boundingBox();
+    const x = iid === a ? box.x + 8 : box.x + box.width / 2;
+    await page.mouse.click(x, box.y + box.height / 2);
+    await expect(page.locator('.zoom .meta').first(), `zoom of ${iid}`).toContainText(iid);
+    await page.keyboard.press('Escape');
+    await page.locator('.backdrop').first().click({ position: { x: 5, y: 5 } }).catch(() => {});
+    await expect(page.locator('.zoom')).toHaveCount(0);
+  }
+});

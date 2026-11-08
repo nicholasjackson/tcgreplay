@@ -348,6 +348,10 @@ type actionSpec struct {
 	// crossSeat joins an open action of the other seat, for effects on the
 	// opponent's side: the switch of Boss's Orders, the draws of Iono.
 	crossSeat bool
+	// joinOpen, on an opener, joins the seat's open action instead of
+	// opening a new one when it reports true for it: the second half of a
+	// Stadium pair joining the first half's play. It runs under g.mu.
+	joinOpen func(open *store.Action) bool
 }
 
 // run executes a verb atomically: either every event applies and is
@@ -367,7 +371,9 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 	if seat != "" && !seat.Valid() {
 		return nil, fmt.Errorf("unknown seat %q", seat)
 	}
-	joined := !spec.system && !spec.opener && g.open != nil &&
+	rejoin := spec.opener && !spec.system && spec.joinOpen != nil && g.open != nil &&
+		g.open.Seat == seat && spec.joinOpen(g.open)
+	joined := rejoin || !spec.system && !spec.opener && g.open != nil &&
 		(g.open.Seat == seat || spec.crossSeat) && g.joins(spec.joinIf)
 	// The opponent's part of an effect (Iono's draws) happens on the turn of
 	// the player whose action it joins. In play mode the assistant plays the
@@ -397,7 +403,9 @@ func (g *Game) runLocked(seat state.Seat, actor state.Actor, spec actionSpec, fn
 		return nil, err
 	}
 	var closing []string
-	if spec.opener && !spec.system {
+	if rejoin {
+		// The open action carries on, still open.
+	} else if spec.opener && !spec.system {
 		closing = g.unpaidLocked()
 		g.open, g.openText = &action, t.effect
 	} else if !joined && !spec.system && g.open != nil {

@@ -114,7 +114,7 @@ type replay struct {
 	pendingPrize   map[state.Seat][]state.IID
 	pendingRetreat map[state.Seat]bool
 	lastKO         *koInfo
-	lastStadium    state.IID
+	lastStadium    []state.IID // replaced (or attack-discarded) Stadium cards whose "discarded" sublines are done
 	lastDevolved   state.IID
 }
 

@@ -104,6 +104,12 @@ between the facts and every language's text.
 }
 ```
 
+A print may also carry `"playedAsPair": true`: two different prints of its
+name are played together as one card (Delta Reign's Legendary Stadiums). The
+playmat reads it to keep the two halves together as one Stadium. It is absent
+for every other card, and it is set by correction (see below), never by the
+sources.
+
 English text is required for every print: game logic reads it. Other
 languages may be added by hand under `text`; the import writes English only
 and keeps the rest. `images` lists every source that has art, TCGdex first. The board tries them
@@ -135,6 +141,26 @@ carries:
   "acknowledged": []
 }
 ```
+
+A Legendary Stadium print is also marked as played as a pair, with a second
+correction:
+
+```json
+{
+  "card": "me06-096",
+  "path": "/playedAsPair",
+  "value": true,
+  "reason": "Legendary Summit: a Legendary Stadium; the printed rule plays 2 different prints together as 1 Stadium"
+}
+```
+
+A print marked `playedAsPair` must also carry its printed pair rule in its
+effect text ("You cannot play this card by itself. You must combine 2
+different … from your hand to play as 1 Stadium card."), recorded as a
+`/text/en/effect` correction when the sources lack it, as they do for Delta
+Reign. The program never generates or checks that text: what a card reads
+comes from the data alone. Removing the mark makes the card an ordinary
+Stadium again, with no program change.
 
 Every later import applies it and never rewrites the file. A path the format
 does not define, or a card the set does not hold, makes the import and
@@ -236,6 +262,22 @@ manifest changes.
 - `-cardsets-url` (or `TCGREPLAY_CARDSETS_URL`) points a playmat at another
   published copy: an https address or a local directory such as the output of
   `sets publish -to`.
+
+### A new field in the format reaches older playmats as an error
+
+A playmat reads built sets strictly, refusing fields it does not know. When a
+release adds an optional field (`format` stays 1) and a set is rebuilt with it,
+a playmat built before that release cannot decode the rebuilt set. Its check
+then fails as a whole, so it keeps its current catalogue and local copy, still
+playable, but takes no further card-set updates until it is upgraded, and it
+logs `card sets: check failed (…); keeping version …`. A copy of such a
+playmat with no local copy yet would start with no cards.
+
+This happened with `playedAsPair` (Delta Reign's Legendary Stadiums,
+2026-11): from the publish of the rebuilt `me06`, desktop playmats older than
+that release stop picking up card-set updates until they are updated. The
+hosted playmat redeploys on the same merge, because the merge changes code as
+well as `cardsets/`.
 
 ### Secrets the workflows need
 

@@ -59,6 +59,13 @@ type SideView struct {
 	Bench      []*StackView `json:"bench"`
 }
 
+// StadiumView is the Stadium in play: its first card, and the second half
+// when the spot holds a pair.
+type StadiumView struct {
+	CardView
+	Pair *CardView `json:"pair,omitempty"`
+}
+
 // BoardView is a projection of the whole state.
 type BoardView struct {
 	View     View              `json:"view"`
@@ -69,7 +76,7 @@ type BoardView struct {
 	TurnOpen bool              `json:"turn_open"`
 	First    Seat              `json:"first,omitempty"`
 	Head     int               `json:"head"`
-	Stadium  *CardView         `json:"stadium,omitempty"`
+	Stadium  *StadiumView      `json:"stadium,omitempty"`
 	Effects  []EffectView      `json:"effects,omitempty"`
 	Coins    []string          `json:"last_coins,omitempty"`
 	Sides    map[Seat]SideView `json:"sides"`
@@ -182,9 +189,12 @@ func (s *State) Project(view View, viewer Seat, hp HPFunc) BoardView {
 		bv.Viewer = viewer
 	}
 	bv.Winner, bv.WinReason = s.Winner()
-	if s.Stadium != "" {
-		c := see(s.Stadium)
-		bv.Stadium = &c
+	if len(s.Stadium) > 0 {
+		bv.Stadium = &StadiumView{CardView: see(s.Stadium[0])}
+		if len(s.Stadium) > 1 {
+			c := see(s.Stadium[1])
+			bv.Stadium.Pair = &c
+		}
 	}
 	for _, seat := range Seats {
 		side := s.Sides[seat]

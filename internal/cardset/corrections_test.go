@@ -56,6 +56,11 @@ func TestCorrectionsChangeAnyField(t *testing.T) {
 				t.Errorf("images %v", p.Images)
 			}
 		}},
+		{"absent pair mark created", corr("tst-010", "/playedAsPair", `true`), func(t *testing.T, s *Set) {
+			if p, _ := s.Print("tst-010"); !p.PlayedAsPair {
+				t.Error("playedAsPair not set")
+			}
+		}},
 		{"escaped pointer token", corr("tst-001", "/text/a~1b~0c", `{"name":"Riolu"}`), func(t *testing.T, s *Set) {
 			if p, _ := s.Print("tst-001"); p.Text["a/b~c"].Name != "Riolu" {
 				t.Errorf("text %v, want a block under a/b~c", p.Text)
@@ -200,7 +205,8 @@ func TestImportAppliesCorrections(t *testing.T) {
     {"card": "tst-002", "path": "/text/en/effect", "value": "You cannot play this card by itself.", "reason": "Rule printed on the card"},
     {"card": "tst-001", "path": "/hp", "value": 80, "reason": "Printed HP is 80"},
     {"card": "tst-001", "path": "/types", "value": ["Fighting", "Metal"], "reason": "Printed types"},
-    {"card": "tst-003", "path": "/images", "value": [{"source": "tcgdex", "url": "https://assets.tcgdex.net/en/me/tst/003"}], "reason": "Art found"}
+    {"card": "tst-003", "path": "/images", "value": [{"source": "tcgdex", "url": "https://assets.tcgdex.net/en/me/tst/003"}], "reason": "Art found"},
+    {"card": "tst-002", "path": "/playedAsPair", "value": true, "reason": "Rule printed on the card"}
   ],
   "acknowledged": []
 }
@@ -220,7 +226,7 @@ func TestImportAppliesCorrections(t *testing.T) {
 		p2, _ := s.Print("tst-002")
 		p1, _ := s.Print("tst-001")
 		p3, _ := s.Print("tst-003")
-		if p2.Text["en"].Effect != "You cannot play this card by itself." || p1.HP != 80 ||
+		if p2.Text["en"].Effect != "You cannot play this card by itself." || !p2.PlayedAsPair || p1.PlayedAsPair || p1.HP != 80 ||
 			!reflect.DeepEqual(p1.Types, []string{"Fighting", "Metal"}) ||
 			!reflect.DeepEqual(p3.Images, []Image{{Source: "tcgdex", URL: "https://assets.tcgdex.net/en/me/tst/003"}}) {
 			t.Errorf("corrections not in the built set: %+v %+v %+v", p1, p2, p3)

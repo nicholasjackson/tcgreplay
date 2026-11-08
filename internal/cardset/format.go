@@ -75,9 +75,10 @@ type Print struct {
 	TrainerType    string               `json:"trainerType,omitempty"` // Item, Supporter, Stadium, Tool
 	EnergyType     string               `json:"energyType,omitempty"`  // Normal, Special
 	RegulationMark string               `json:"regulationMark,omitempty"`
-	Images         []Image              `json:"images,omitempty"`  // preferred first
-	Sources        []string             `json:"sources,omitempty"` // upstream sources that list the print, sorted
-	Text           map[string]PrintText `json:"text"`              // "en" required
+	PlayedAsPair   bool                 `json:"playedAsPair,omitempty"` // two different prints of this name are played together as one card
+	Images         []Image              `json:"images,omitempty"`       // preferred first
+	Sources        []string             `json:"sources,omitempty"`      // upstream sources that list the print, sorted
+	Text           map[string]PrintText `json:"text"`                   // "en" required
 }
 
 // AttackCore is the language-independent part of an attack.

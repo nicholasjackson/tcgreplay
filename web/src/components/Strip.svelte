@@ -38,8 +38,14 @@
 <!-- No bar: a thin midline between the halves. The Stadium straddles it
      left of the Active Spots, the turn controls float on the right. -->
 <div class="strip" class:phone={app.layout === 'phone'}>
-  <div class="stadium" class:theirs {@attach zone('stadium')} role="region" aria-label="Stadium">
-    {#if b.stadium}
+  <div class="stadium" class:theirs class:pair={!!b.stadium?.pair} {@attach zone('stadium')} role="region" aria-label="Stadium">
+    {#if b.stadium?.pair}
+      <!-- A Stadium played as a pair: both halves, each zoomable. -->
+      <div class="halves">
+        <Card card={b.stadium} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
+        <Card card={b.stadium.pair} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
+      </div>
+    {:else if b.stadium}
       <Card card={b.stadium} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
     {:else}
       <span>Stadium</span>
@@ -116,6 +122,13 @@
     transition: background 0.15s;
   }
   .stadium:has(.card) { border-color: transparent; }
+  /* A pair fans its second half over the first, in a spot widened to the
+     left so neither half reaches the Active Spot. */
+  .stadium.pair { width: calc(var(--cw) * 1.95); }
+  .halves { display: flex; align-items: center; }
+  .halves > :global(.card + .card) { margin-left: calc(var(--cw) * -0.55); transform: rotate(5deg); }
+  .halves > :global(.card) { position: relative; }
+  .halves > :global(.card.lift:hover) { z-index: 2; }
   .controls {
     position: absolute;
     top: 50%;
@@ -190,6 +203,9 @@
   .phone .buttons button { padding: 0 8px; font-size: 12px; white-space: nowrap; }
   .phone .stadium { position: absolute; left: 8px; top: calc(100% + 6px); bottom: auto; right: auto; transform: none; width: auto; min-width: 48px; min-height: 0; padding: 2px; }
   .phone .stadium.theirs { left: auto; right: 8px; top: auto; bottom: calc(100% + 6px); }
+  .phone .stadium.pair { width: auto; }
+  .phone .halves { gap: 2px; }
+  .phone .halves > :global(.card + .card) { margin-left: 0; transform: none; }
   .phone .controls { position: static; transform: none; flex-direction: row; flex-wrap: nowrap; align-items: center; max-width: none; gap: 5px; }
   .phone .effects { position: absolute; top: 100%; left: 8px; right: 8px; z-index: 3; }
   .phone .play { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; }

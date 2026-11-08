@@ -81,7 +81,7 @@ type State struct {
 	First      Seat           `json:"first,omitempty"`
 	Cards      map[IID]*Card  `json:"cards"`
 	Sides      map[Seat]*Side `json:"sides"`
-	Stadium    IID            `json:"stadium,omitempty"`
+	Stadium    []IID          `json:"stadium,omitempty"` // at most 2: a Stadium, or the two halves of a pair, first played first
 	Effects    []Effect       `json:"effects,omitempty"`
 	Coins      []string       `json:"coins,omitempty"` // results of the latest flip
 	Known      map[IID]uint8  `json:"known,omitempty"` // bitmask of seats that know a hidden card
@@ -109,6 +109,7 @@ func (s *State) Clone() *State {
 	for k, v := range s.Sides {
 		c.Sides[k] = v.clone()
 	}
+	c.Stadium = slices.Clone(s.Stadium)
 	c.Effects = slices.Clone(s.Effects)
 	c.Coins = slices.Clone(s.Coins)
 	c.Known = maps.Clone(s.Known)
@@ -243,7 +244,7 @@ func (s *State) StackLocs(seat Seat) []Loc {
 // Find returns the location of card iid. For deck cards Pos is set to the
 // card's index; for stacks the role is not reported.
 func (s *State) Find(iid IID) (Loc, error) {
-	if s.Stadium == iid && iid != "" {
+	if iid != "" && slices.Contains(s.Stadium, iid) {
 		return Loc{Zone: Stadium}, nil
 	}
 	for _, seat := range Seats {

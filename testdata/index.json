@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated": "2026-10-15",
-  "description": "Pokemon TCG Live battle logs from NicJackson's point of view, pasted verbatim, for replay-tool test data. 'expected' fields were derived by parsing each log and cross-checked against the hand-kept game ledger.",
+  "description": "Pokemon TCG Live battle logs from NicJackson's point of view, pasted verbatim, for replay-tool test data. 'expected' fields were derived by parsing each log and cross-checked against the hand-kept game ledger. Exception: entries marked \"synthetic\": true (files named synthetic_*) are made-up logs standing in for a shape no real log shows yet; they are not real games.",
   "source": "Pokemon TCG Live in-client battle log export (text)",
   "player": "NicJackson",
   "decks": [
@@ -543,6 +543,52 @@
         "Ground Melter discards the Stadium in play with a '<player> discarded <Stadium>.' subline under the attack."
       ],
       "note": "Chi-Yu (Twilight Masquerade 39) uses Ground Melter, which discards Team Rocket's Watchtower from play."
+    },
+    {
+      "id": "synthetic_2026-11-08_ledjo23_legendary-summit-pair",
+      "file": "logs/synthetic_2026-11-08_ledjo23_legendary-summit-pair.txt",
+      "bytes": 2390,
+      "lines": 66,
+      "sha256": "309e653a151b0281a6527ec380c2e3ff326b865b55de85c22a757d439de47b1a",
+      "date": "2026-11-08",
+      "synthetic": true,
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "LeDjo23",
+      "opponent_archetype": "Alakazam / Budew / Duskull, with a Legendary Summit pair",
+      "family": "hand scaler",
+      "expected": {
+        "coin_toss_winner": "LeDjo23",
+        "went_first": "NicJackson",
+        "turns": {
+          "NicJackson": 2,
+          "LeDjo23": 2
+        },
+        "total_turns": 2,
+        "prizes_taken": {
+          "NicJackson": 0,
+          "LeDjo23": 1
+        },
+        "winner": "LeDjo23",
+        "end_reason": "bench_out"
+      },
+      "observed": {
+        "Abra": 4,
+        "Legendary Summit": 2
+      },
+      "ledger_result": "none (synthetic)",
+      "borrowed_attacks": [],
+      "features": [
+        "synthetic",
+        "stadium_pair",
+        "stadium_pair_replaced",
+        "card_codes",
+        "stadium_replaced",
+        "hidden_opponent_draws",
+        "bench_out"
+      ],
+      "parser_quirks": [],
+      "note": "SYNTHETIC, NOT A REAL TCG LIVE LOG. Made from 2026-10-11_ledjo23_alakazam-donk by adding a Legendary Summit pair (two consecutive Stadium-spot lines with card codes me6_96 and me6_97) and its replacement by Gravity Mountain (two 'discarded' sublines). The pair-line shapes are assumed: no real log with a Legendary Stadium pair has been seen. Replace it with, or check it against, the first real one."
     }
   ]
 }

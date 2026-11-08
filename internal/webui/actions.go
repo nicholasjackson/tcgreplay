@@ -19,9 +19,11 @@ type request struct {
 
 // args is the union of every verb's arguments.
 type args struct {
-	Seat      string   `json:"seat,omitempty"`
-	IID       string   `json:"iid,omitempty"`
-	IIDs      []string `json:"iids,omitempty"`
+	Seat string   `json:"seat,omitempty"`
+	IID  string   `json:"iid,omitempty"`
+	IIDs []string `json:"iids,omitempty"`
+	// Pair is the second half of a Stadium played as a pair.
+	Pair      string   `json:"pair_iid,omitempty"`
 	Target    string   `json:"target,omitempty"`
 	To        string   `json:"to,omitempty"`
 	Face      string   `json:"face,omitempty"`
@@ -198,7 +200,7 @@ func (s *Server) held(g *game.Game, seat state.Seat, req request) error {
 		}
 	}
 	st := g.State()
-	for _, iid := range append([]string{a.IID}, a.IIDs...) {
+	for _, iid := range append([]string{a.IID, a.Pair}, a.IIDs...) {
 		if c := st.Cards[state.IID(iid)]; c != nil && c.Owner == decider {
 			return refuse
 		}
@@ -346,7 +348,7 @@ func (s *Server) do(ctx context.Context, c *client, req request, res *response) 
 			r, err = g.Attach(seat, human, state.IID(a.IID), l, a.As)
 		}
 	case "play_trainer":
-		r, err = g.PlayTrainer(seat, human, state.IID(a.IID))
+		r, err = g.PlayTrainerWith(seat, human, state.IID(a.IID), state.IID(a.Pair))
 	case "use_ability":
 		var l state.Loc
 		if l, err = loc(a.Target); err == nil {

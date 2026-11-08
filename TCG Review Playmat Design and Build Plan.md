@@ -51,7 +51,7 @@ Hidden cards from an import get an `iid` with `def: null` until an `assume` even
 | `prizes` | Ordered | Six slots |
 | `hand`, `discard`, `lost` | Unordered |  |
 | `active`, `bench[0..n]` | Stack | Evolution chain (top card current) plus attachments tagged `energy` or `tool`; bench size configurable |
-| `stadium` | Shared |  |
+| `stadium` | Shared | Up to two cards: a Stadium, or the two halves of a Stadium played as a pair (first played first) |
 
 **Event envelope**
 
@@ -80,7 +80,7 @@ Hidden cards from an import get an `iid` with `def: null` until an `assume` even
 | Type | Purpose |
 | --- | --- |
 | `setup` | Load decks with instance IDs |
-| `move` | Any card, any zone, optional `face` up or down |
+| `move` | Any card, any zone, optional `face` up or down. Optional `pair` names the other half of a Stadium pair, moved in the same event to the same zone (each to its owner's side), so a pair is played, replaced or discarded in one event; `as: "pair"` joins a card to the lone card in the Stadium spot. The state accepts a second Stadium card only by one of these two routes, and never reads card data to decide: the verb does, from the card's `playedAsPair` mark |
 | `shuffle` | Stores the resulting order, not a seed |
 | `coin` | Stores the result |
 | `damage` | Set the counter on a stack |
@@ -121,9 +121,10 @@ Claude plays a fixed seat (`p2` by default), inferred by the server rather than 
 | Group | Tools |
 | --- | --- |
 | Reading | `get_state(view)` with `seat`, `coach` (Nic's hand plus public board) or `reveal` (review mode only); `get_log(since)`; `get_warnings()`; `card_text(def)` |
-| Verbs | `draw(n)`, `bench(iid, slot)`, `evolve(iid, slot)`, `attach(iid, slot)`, `play_trainer(iid)`, `use_ability(slot, name)`, `retreat(to_slot, energy_iids)`, `switch(to_slot)`, `attack(name, target, damage)`, `knock_out(slot)`, `take_prize(prize_slot)`, `set_condition(slot, cond)`, `place_damage(slot, amount)`, `end_turn()` |
+| Verbs | `draw(n)`, `bench(iid, slot)`, `evolve(iid, slot)`, `attach(iid, slot)`, `play_trainer(iid, pair_iid?)`, `use_ability(slot, name)`, `retreat(to_slot, energy_iids)`, `switch(to_slot)`, `attack(name, target, damage)`, `knock_out(slot)`, `take_prize(prize_slot)`, `set_condition(slot, cond)`, `place_damage(slot, amount)`, `end_turn()` |
 | Deck and randomness | `search_deck(filter?)` returns the deck sorted, never in true order; `look_top(n)`; `shuffle()`; `coin_flip(n)` |
 | Compound actions | `play_trainer` and `use_ability` open an action; following verbs join it until `end_action()` |
+| Stadium pairs | A Stadium whose card data marks it `playedAsPair` (its card text carries the printed pair rule) is played with `play_trainer(iid, pair_iid)`, both halves in one action. `play_trainer` with one half while a lone half of the same name and owner is in the spot completes the pair, joining that half's play while it is still open. A Stadium played over a pair sends both halves to their owner's discard in one event. A lone half and two copies of one print are standing warnings; a Stadium played while one of the same name is in play warns once. None blocks |
 | Escape hatch | `move(iid, to, face?)` |
 | Game management | `new_game(deck_p1, deck_p2)` (TCG Live export format), `import_log(text, assumptions)`, `list_branches()`, `rewind(event_id)`, `checkout(branch)`, `set_mode(play or review)` |
 | Review loop | `next_game()`, `flag_finding(...)`, `create_scenario(spec)`, `start_scenario(id)`, `grade_attempt(attempt_id)`, `get_concept_stats()` |
@@ -166,6 +167,7 @@ A collapsible side panel holds the timeline and annotations.
 - Attached Energy and Tools tucked under the Pokémon, expandable on tap.
 - Lingering effects (e.g. an Item lock) shown as a badge with expiry.
 - Tap any card to zoom with its full card text.
+- The Stadium spot shows a pair as one Stadium with both halves visible (fanned on a mat, side by side on a phone), each zoomable. Dragging the second half from the hand onto a lone first half completes the pair.
 
 **Deck and zone actions:** draw, look at top N, search (sorted by type), shuffle, coin flip, all executed server-side. Clicking a prize takes it; the card is unknown until it lands in hand.
 
@@ -204,6 +206,7 @@ Nic's side of an imported game is always exact; the opponent's side is a plausib
 - **Inconsistent verbs.** "LeDjo23 played Abra" followed by Abra shuffled into the deck is an effect, not a card being played; interpreting it needs card text.
 - **Nested sub-events.** Triggered effects appear as their own lines with `-` and `•` indentation; parse the nesting as structure.
 - **Ambiguous card names** across sets; mapping to card definitions needs a decklist.
+- **Stadium pairs (assumed shape).** No real log with a Legendary Stadium pair has been seen. The importer recognises a pair from the log's own lines, never from card data: two consecutive Stadium-spot lines by the same player for the same name (the second joins the first as its pair, unless the card codes show the same print), or one line naming the Stadium twice. A replaced pair's halves are discarded in one event. Its only fixture is synthetic (`testdata/logs/synthetic_*`); check it against the first real log with a pair.
 
 **Filling hidden information**
 

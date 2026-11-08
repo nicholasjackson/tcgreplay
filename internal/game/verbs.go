@@ -7,6 +7,7 @@ import (
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
+	"github.com/nicholasjackson/tcgreplay/internal/store"
 )
 
 // Opening hand size.
@@ -423,11 +424,33 @@ func (g *Game) Attach(seat state.Seat, actor state.Actor, iid state.IID, target 
 }
 
 // PlayTrainer plays a Trainer from hand and opens a compound action. Items
-// and Supporters go to the discard; a Stadium replaces the current one.
+// and Supporters go to the discard; a Stadium replaces the current one, or
+// completes a lone half of a pair (see PlayTrainerWith).
 func (g *Game) PlayTrainer(seat state.Seat, actor state.Actor, iid state.IID) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: g.nameOf(iid), kind: "trainer", source: iid, opener: true}, func(t *tx) error {
+	return g.PlayTrainerWith(seat, actor, iid, "")
+}
+
+// PlayTrainerWith is PlayTrainer with an optional second card: the other
+// half of a Stadium played as a pair. Given both halves, it plays them
+// together into the Stadium spot in one move, replacing whatever is there.
+// Given one half of a pair-played Stadium while the spot holds a lone half
+// of the same name and owner, it completes the pair, joining that half's
+// play while it is still open. Pair rules come from the cards' pair mark;
+// mismatches warn and never block.
+func (g *Game) PlayTrainerWith(seat state.Seat, actor state.Actor, iid, pair state.IID) (*Result, error) {
+	spec := actionSpec{label: g.nameOf(iid), kind: "trainer", source: iid, opener: true}
+	if pair == "" {
+		spec.joinOpen = func(open *store.Action) bool {
+			return open.Kind == "trainer" && len(g.st.Stadium) == 1 && open.Source == g.st.Stadium[0] &&
+				inHand(g.st, seat, iid) == nil && g.completesPair(g.st, seat, iid)
+		}
+	}
+	return g.run(seat, actor, spec, func(t *tx) error {
 		if err := inHand(t.st, seat, iid); err != nil {
 			return err
+		}
+		if pair != "" {
+			return t.playPair(seat, iid, pair)
 		}
 		c := t.g.card(t.st, iid)
 		if c != nil {
@@ -440,11 +463,12 @@ func (g *Game) PlayTrainer(seat state.Seat, actor state.Actor, iid state.IID) (*
 			return fmt.Errorf("%s is a Pokémon Tool; use attach", c.Name)
 		}
 		if c != nil && c.TrainerType == "Stadium" {
-			if old := t.st.Stadium; old != "" {
-				owner := t.st.Cards[old].Owner
-				if err := t.move(old, loc(owner, state.Discard), "", ""); err != nil {
-					return err
-				}
+			if t.g.completesPair(t.st, seat, iid) {
+				return t.move(iid, state.Loc{Zone: state.Stadium}, state.AsPair, "")
+			}
+			t.sameStadiumWarning(c.Name)
+			if err := t.replaceStadium(); err != nil {
+				return err
 			}
 			return t.move(iid, state.Loc{Zone: state.Stadium}, "", "")
 		}
@@ -453,6 +477,83 @@ func (g *Game) PlayTrainer(seat state.Seat, actor state.Actor, iid state.IID) (*
 		}
 		return t.opponentPart(t.st.Name(iid))
 	})
+}
+
+// playPair plays two halves of a Stadium together in one move.
+func (t *tx) playPair(seat state.Seat, iid, pair state.IID) error {
+	if pair == iid {
+		return fmt.Errorf("a pair is two cards; %s was given twice", iid)
+	}
+	if err := inHand(t.st, seat, pair); err != nil {
+		return err
+	}
+	c, pc := t.g.card(t.st, iid), t.g.card(t.st, pair)
+	for _, x := range []*cards.Card{c, pc} {
+		if x != nil && (x.Category != "Trainer" || x.TrainerType != "Stadium") {
+			return fmt.Errorf("only a Stadium is played as a pair; %s is not a Stadium", x.Name)
+		}
+	}
+	if c != nil {
+		t.effect = &c.Effect
+	}
+	if c != nil && pc != nil && (!cards.SameName(c.Name, pc.Name) || !c.PlayedAsPair || !pc.PlayedAsPair) {
+		t.warn = append(t.warn, fmt.Sprintf("%s and %s are not two halves of one pair-played Stadium", c.Name, pc.Name))
+	}
+	t.sameStadiumWarning(t.st.Name(iid))
+	if err := t.replaceStadium(); err != nil {
+		return err
+	}
+	from, err := t.st.Find(iid)
+	if err != nil {
+		return err
+	}
+	return t.emit(t.seat, state.EvMove, state.MovePayload{IID: iid, Pair: pair, From: &from, To: state.Loc{Zone: state.Stadium}})
+}
+
+// replaceStadium sends whatever is in the Stadium spot to its owner's
+// discard: a pair in one move.
+func (t *tx) replaceStadium() error {
+	switch st := t.st.Stadium; len(st) {
+	case 0:
+		return nil
+	case 1:
+		return t.move(st[0], loc(t.st.Cards[st[0]].Owner, state.Discard), "", "")
+	default:
+		return t.movePair(st[0], st[1], loc(t.st.Cards[st[0]].Owner, state.Discard))
+	}
+}
+
+// movePair moves both halves of the Stadium pair in one event, each to its
+// owner's side of to's zone.
+func (t *tx) movePair(iid, pair state.IID, to state.Loc) error {
+	from, err := t.st.Find(iid)
+	if err != nil {
+		return err
+	}
+	return t.emit(t.seat, state.EvMove, state.MovePayload{IID: iid, Pair: pair, From: &from, To: to})
+}
+
+// sameStadiumWarning warns when a Stadium of the same name is in play.
+func (t *tx) sameStadiumWarning(name string) {
+	for _, iid := range t.st.Stadium {
+		if cards.SameName(t.st.Name(iid), name) {
+			t.warn = append(t.warn, fmt.Sprintf("a Stadium named %s is already in play", name))
+			return
+		}
+	}
+}
+
+// completesPair reports whether playing iid on its own completes a pair:
+// iid is a pair-played Stadium and the spot holds one other card of the
+// same name owned by seat.
+func (g *Game) completesPair(st *state.State, seat state.Seat, iid state.IID) bool {
+	if len(st.Stadium) != 1 || st.Stadium[0] == iid {
+		return false
+	}
+	lone := st.Stadium[0]
+	c := g.card(st, iid)
+	return c != nil && c.PlayedAsPair && c.TrainerType == "Stadium" &&
+		st.Cards[lone].Owner == seat && cards.SameName(st.Name(lone), c.Name)
 }
 
 // UseAbility opens a compound action for an Ability of the Pokémon at slot,
@@ -729,6 +830,18 @@ func (g *Game) Move(seat state.Seat, actor state.Actor, iid state.IID, to state.
 		}
 		if to.Zone != state.Stadium {
 			to.Seat = c.Owner
+		}
+		// A Stadium pair leaves the spot together, as a Pokémon leaves with
+		// its attachments; a lone half's partner joins it as its pair.
+		if st := t.st.Stadium; len(st) == 2 && slices.Contains(st, iid) && to.Zone != state.Stadium {
+			other := st[0]
+			if other == iid {
+				other = st[1]
+			}
+			return t.movePair(iid, other, to)
+		}
+		if to.Zone == state.Stadium && as == "" && t.g.completesPair(t.st, c.Owner, iid) {
+			as = state.AsPair
 		}
 		if ok, err := t.moveStack(iid, to, as); ok || err != nil {
 			return err

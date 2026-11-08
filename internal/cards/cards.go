@@ -95,6 +95,11 @@ type Card struct {
 	EnergyType     string      `json:"energyType,omitempty"`  // Normal, Special
 	Effect         string      `json:"effect,omitempty"`
 	RegulationMark string      `json:"regulationMark,omitempty"`
+	// PlayedAsPair marks a card whose two different prints of this name
+	// are played together as one card (a Legendary Stadium, say). It
+	// drives behaviour only: the card states its rule in its own Effect
+	// text, and Text adds nothing from the mark.
+	PlayedAsPair bool `json:"playedAsPair,omitempty"`
 }
 
 // ImageRef is one source of a card's image.

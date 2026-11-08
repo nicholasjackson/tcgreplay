@@ -47,6 +47,7 @@ export function findCard(iid) {
     }
   }
   if (b.stadium?.iid === iid) return b.stadium;
+  if (b.stadium?.pair?.iid === iid) return b.stadium.pair;
   return null;
 }
 
@@ -104,6 +105,8 @@ export async function dropOnZone(data, zone) {
   }
   if (zone === 'play') return act('play_trainer', { iid: data.iid, ...sa });
   if (zone === 'stadium') {
+    // A second half dropped on a lone half of a pair completes the pair:
+    // play_trainer and move both leave that to the playmat.
     if (data.from?.endsWith(':hand') && info?.trainer_type === 'Stadium') {
       return act('play_trainer', { iid: data.iid, ...sa });
     }

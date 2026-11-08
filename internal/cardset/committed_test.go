@@ -104,15 +104,22 @@ func TestCommittedDeltaReign(t *testing.T) {
 			t.Errorf("%s %s: no image source and no acknowledgement", p.ID, en.Name)
 		}
 	}
-	// The Legendary Stadiums carry the pair rule neither source has.
+	// The Legendary Stadiums carry the pair rule neither source has, and
+	// the pair mark; no other print is marked.
 	legendary := 0
 	for _, p := range s.Prints {
 		en := p.Text[English]
 		name, ok := strings.CutPrefix(en.Name, "Legendary ")
 		if !ok || p.TrainerType != "Stadium" {
+			if p.PlayedAsPair {
+				t.Errorf("%s %s: marked as played as a pair, but is no Legendary Stadium", p.ID, en.Name)
+			}
 			continue
 		}
 		legendary++
+		if !p.PlayedAsPair {
+			t.Errorf("%s %s: not marked as played as a pair", p.ID, en.Name)
+		}
 		rule := "You cannot play this card by itself. You must combine 2 different Legendary " + name + " from your hand to play as 1 Stadium card."
 		if !strings.Contains(en.Effect, rule) {
 			t.Errorf("%s %s: effect %q lacks the pair rule", p.ID, en.Name, en.Effect)
@@ -120,5 +127,15 @@ func TestCommittedDeltaReign(t *testing.T) {
 	}
 	if legendary != 6 {
 		t.Errorf("%d Legendary Stadium prints, want 6", legendary)
+	}
+	// The marks come from recorded corrections, with reasons.
+	marked := 0
+	for _, c := range corrs.Corrections {
+		if c.Path == "/playedAsPair" && string(c.Value) == "true" && c.Reason != "" {
+			marked++
+		}
+	}
+	if marked != 6 {
+		t.Errorf("%d pair-mark corrections with reasons, want 6", marked)
 	}
 }

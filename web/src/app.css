@@ -66,10 +66,13 @@ select { font: inherit; background: var(--input); color: var(--text); border: 1p
 code { background: #0005; padding: 1px 5px; border-radius: 4px; }
 
 /* A card enlarged on hover sits above the cards around it. */
-:where(.slot, .main, .att, .pile, .prize, .entry, .stadium):has(> * .card.lift:hover, > .card.lift:hover) {
+:where(.slot, .main, .att, .pile, .prize, .entry):has(> * .card.lift:hover, > .card.lift:hover) {
   position: relative;
   z-index: 30;
 }
+/* The Stadium spot is already positioned (absolutely, in the strip): only
+   its stacking changes, or hovering would move it from under the pointer. */
+.stadium:has(> * .card.lift:hover, > .card.lift:hover) { z-index: 30; }
 
 /* Dragging (lib/pointer.svelte.js): a touch on a card drags it
    rather than scrolling; while a drag is on, every drop zone is outlined

@@ -33,6 +33,7 @@ If you cannot start sub-agents, decide the turn from `get_state` view `seat` alo
 - After a Knock Out, the result reminds whose prizes to take. The player can turn the reminder off on the board.
 - `end_turn` refuses while a player with a Benched Pokémon has an empty Active Spot (promote first) or while prize cards are owed for the turn's Knock Outs (take them first). Pass `force` only when a card's effect changes the rule.
 - Costs count: an Item or Ability that asks for cards discarded from the hand (Ultra Ball, Lunar Cycle) warns when it closes unpaid. Discard them with `move` inside its action, never by playing them.
+- Stadium pairs: a Stadium whose `card_text` says it is played as a pair (Delta Reign's Legendary Stadiums) goes down with one `play_trainer` naming both halves, `iid` and `pair_iid`, two different prints. A lone half shows a warning until its partner joins it; `play_trainer` with the partner alone completes the pair. A Stadium played over a pair takes both halves to their owner's discard.
 
 ## Game over
 
