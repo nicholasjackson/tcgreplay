@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-// ErrNotFound means an upstream source has no such set or card.
+// ErrNotFound means an upstream source has no such set or card, or a
+// publish target has no object under a key.
 var ErrNotFound = errors.New("not found")
 
 // UserAgent is sent with every upstream request.

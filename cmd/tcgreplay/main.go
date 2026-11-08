@@ -16,7 +16,9 @@
 //
 // tcgreplay sets builds card sets into the project ahead of time, for the
 // maintainer: sets import <set> fetches and merges a set, sets check checks
-// the built sets (see internal/cardset). It never starts the playmat.
+// the built sets, and sets publish publishes them to the bucket the
+// playmat loads card data from (see internal/cardset). It never starts the
+// playmat.
 package main
 
 import (

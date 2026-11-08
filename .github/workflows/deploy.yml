@@ -1,0 +1,39 @@
+# Deploy the hosted playmat.
+#
+# The hosted playmat keeps every game in memory, so each deploy drops
+# every open game. Card-set data (cardsets/) is published to the bucket by
+# publish-cardsets.yml and picked up by the running playmat, so a push
+# that changes only card-set data must not redeploy it. App Platform's own
+# deploy-on-push cannot skip a path, so it is switched off in
+# .do/app.yaml and this workflow deploys instead: on every push to main
+# that changes anything outside cardsets/, and when started by hand.
+#
+# Repository secrets it needs (Settings > Secrets and variables > Actions):
+#   DIGITALOCEAN_ACCESS_TOKEN  a DigitalOcean API token that can create App Platform deployments
+#   TCGREPLAY_APP_ID           the app's id (doctl apps list)
+name: Deploy playmat
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['cardsets/**']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Deploy
+        run: doctl apps create-deployment "$APP_ID" --wait
+        env:
+          APP_ID: ${{ secrets.TCGREPLAY_APP_ID }}

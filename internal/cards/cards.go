@@ -728,8 +728,10 @@ func findNumber(s *setDetail, number string) (string, bool) {
 	return "", false
 }
 
-// nameKey normalises a card name for lookup: case and apostrophe style
+// NameKey normalises a card name for lookup: case and apostrophe style
 // differ between TCG Live and TCGdex.
+func NameKey(name string) string { return nameKey(name) }
+
 func nameKey(name string) string {
 	name = strings.NewReplacer("’", "'", "‘", "'").Replace(name)
 	return strings.ToLower(strings.Join(strings.Fields(name), " "))

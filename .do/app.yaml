@@ -2,8 +2,15 @@
 #
 # Create the app once:        doctl apps create --spec .do/app.yaml
 # Apply later edits to this:  doctl apps update <app-id> --spec .do/app.yaml
-# Deploying code needs only a push to main: App Platform builds the
-# Dockerfile and deploys it. Pushes to other branches do not deploy.
+# Deploys come from .github/workflows/deploy.yml, which runs
+# `doctl apps create-deployment` on every push to main that changes
+# anything outside cardsets/ (and when started by hand); App Platform then
+# builds the Dockerfile and deploys it. App Platform's own deploy-on-push
+# is off (deploy_on_push below), so a push that changes only card-set data
+# never restarts the playmat: that data is published to the bucket by
+# .github/workflows/publish-cardsets.yml and picked up while it runs.
+# Pushes to other branches do not deploy. Edits to this file still need
+# the `doctl apps update` above.
 #
 # Users sign in with Google (see TCGREPLAY_GOOGLE_CLIENT_ID below). Each
 # Google account has its own game, held in memory; games left idle are
@@ -18,10 +25,10 @@
 # or one set) without a redeploy.
 #
 # The playmat also serves the public website (built from site/ by the
-# Dockerfile) at / , with the board at /board. Every push to main
-# redeploys it, so a docs change also restarts the playmat and drops every
-# game. The limits below (TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS,
-# TCGREPLAY_IDLE_TIMEOUT) are also shown on the website, which reads them
+# Dockerfile) at / , with the board at /board. Every deploy (each push to
+# main outside cardsets/) restarts it, so a docs change also restarts the
+# playmat and drops every game. The limits below (TCGREPLAY_RATE_LIMIT,
+# TCGREPLAY_MAX_USERS, TCGREPLAY_IDLE_TIMEOUT) are also shown on the website, which reads them
 # from this file when it is built: this file stays the one place they are
 # set, and the site build fails if one goes missing.
 name: tcgreplay
@@ -31,7 +38,9 @@ services:
     github:
       repo: nicholasjackson/tcgreplay
       branch: main
-      deploy_on_push: true
+      # Off: .github/workflows/deploy.yml deploys instead, skipping pushes
+      # that change only cardsets/.
+      deploy_on_push: false
     dockerfile_path: Dockerfile
     source_dir: /
     # Plain HTTP; App Platform (and Cloudflare in front) provide HTTPS.
