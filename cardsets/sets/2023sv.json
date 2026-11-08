@@ -1,0 +1,760 @@
+{
+  "format": 1,
+  "set": {
+    "id": "2023sv",
+    "serie": "mc",
+    "releaseDate": "2023-08-01",
+    "abbreviation": "MCD23",
+    "text": {
+      "en": {
+        "name": "McDonald's Collection 2023"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "2023sv-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sprigatito",
+          "attacks": [
+            {
+              "name": "Scratch"
+            },
+            {
+              "name": "Leafage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fuecoco",
+          "attacks": [
+            {
+              "name": "Gnaw"
+            },
+            {
+              "name": "Combustion"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Quaxly",
+          "attacks": [
+            {
+              "name": "Pound"
+            },
+            {
+              "name": "Kick"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cetoddle",
+          "attacks": [
+            {
+              "name": "Icicle"
+            },
+            {
+              "name": "Sharp Fin"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "200-"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cetitan",
+          "evolveFrom": "Cetoddle",
+          "attacks": [
+            {
+              "name": "Hammer In"
+            },
+            {
+              "name": "Sweeping Tackle",
+              "effect": "This attack does 20 less damage for each damage counter on this"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu",
+          "attacks": [
+            {
+              "name": "Growl",
+              "effect": "During your opponent's next turn, the Defending Pokémon's attacks do 20 less damage (before applying Weakness and Resistance)."
+            },
+            {
+              "name": "Pika Bolt"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pawmi",
+          "attacks": [
+            {
+              "name": "Light Punch"
+            },
+            {
+              "name": "Zap Kick"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-8",
+      "localId": "8",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "140"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kilowattrel",
+          "evolveFrom": "Wattrel",
+          "attacks": [
+            {
+              "name": "Skill Dive",
+              "effect": "This attack does 50 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Thunder Blast",
+              "effect": "Discard a Lightning Energy from this Pokémon"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-9",
+      "localId": "9",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Flittle",
+          "attacks": [
+            {
+              "name": "Ram"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-10",
+      "localId": "10",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sandaconda",
+          "evolveFrom": "Silicobra",
+          "attacks": [
+            {
+              "name": "Skull Bash"
+            },
+            {
+              "name": "Sandstorm Spray",
+              "effect": "Discard 2 Energy from this Pokémon. If you discarded any Energy in this way, your opponent shuffles their Active Pokémon and all attached cards into their deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-11",
+      "localId": "11",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "130"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Klawf",
+          "attacks": [
+            {
+              "name": "Vise Grip"
+            },
+            {
+              "name": "Adrenaline Hammer",
+              "effect": "This Pokémon is now Confused."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-12",
+      "localId": "12",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "150"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Blissey",
+          "evolveFrom": "Chansey",
+          "attacks": [
+            {
+              "name": "Happy Cyclone",
+              "effect": "Move all Energy from this Pokémon to 1 of your Benched Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Busybody Nurse",
+              "effect": "Once during your turn, you may use this Ability. Your Active Pokémon recovers from all Special Conditions."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-13",
+      "localId": "13",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30x"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tandemaus",
+          "attacks": [
+            {
+              "name": "Double Hit",
+              "effect": "Flip 2 coins. This attack does 30 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-14",
+      "localId": "14",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cyclizar",
+          "attacks": [
+            {
+              "name": "Touring",
+              "effect": "Draw 2 cards."
+            },
+            {
+              "name": "Speed Attack"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2023sv-15",
+      "localId": "15",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kirlia",
+          "evolveFrom": "Ralts",
+          "attacks": [
+            {
+              "name": "Magical Shot"
+            },
+            {
+              "name": "Phychic",
+              "effect": "This attack does 20 more damage for each Energy attached to your opponent's Active Pokémon."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

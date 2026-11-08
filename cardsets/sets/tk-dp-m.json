@@ -1,0 +1,465 @@
+{
+  "format": 1,
+  "set": {
+    "id": "tk-dp-m",
+    "serie": "tk",
+    "releaseDate": "2007-09-01",
+    "abbreviation": "TK3M",
+    "text": {
+      "en": {
+        "name": "DP trainer Kit (Manaphy)"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "tk-dp-m-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "+10"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Buizel",
+          "attacks": [
+            {
+              "name": "Splash About",
+              "effect": "If Buizel has less Energy attached to it than the Defending Pokémon, this attack does 10 damage plus 10 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "+20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Floatzel",
+          "evolveFrom": "Buizel",
+          "attacks": [
+            {
+              "name": "Screw Tail",
+              "effect": "Flip a coin. If heads, discard an Energy attached to the Defending Pokémon."
+            },
+            {
+              "name": "Water Gun",
+              "effect": "Does 40 damage plus 20 more damage for each Water Energy attached to Floatzel but not used to pay for this attack's Energy cost. You can't add more than 40 damage in this way."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "+10"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Goldeen",
+          "attacks": [
+            {
+              "name": "Horn Attack"
+            },
+            {
+              "name": "Take Down",
+              "effect": "Goldeen does 10 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "+20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Manaphy",
+          "attacks": [
+            {
+              "name": "Call for Family",
+              "effect": "Search your deck for a Basic Pokémon and put it onto your Bench. Shuffle your deck afterward."
+            },
+            {
+              "name": "Aqua Ring",
+              "effect": "Switch Manaphy with 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "+10"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Piplup",
+          "attacks": [
+            {
+              "name": "Peck"
+            },
+            {
+              "name": "Water Splash",
+              "effect": "Flip a coin. If heads, this attack does 20 more damage plus 10 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "+20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Prinplup",
+          "evolveFrom": "Piplup",
+          "attacks": [
+            {
+              "name": "Aqua Shower",
+              "effect": "Does 10 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Brine",
+              "effect": "Choose 1 of your opponent's Pokémon that has any damage counters on it. This attack does 40 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "10×"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "+20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Seaking",
+          "evolveFrom": "Goldeen",
+          "attacks": [
+            {
+              "name": "Flail",
+              "effect": "Does 10 damage times the number of damage counters on Seaking."
+            },
+            {
+              "name": "Horn Drill"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-8",
+      "localId": "8",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "+10"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Totodile",
+          "attacks": [
+            {
+              "name": "Bite"
+            },
+            {
+              "name": "Shining Fang",
+              "effect": "If the Defending Pokémon already has any damage counters on it, this attack does 10 damage plus 10 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-9",
+      "localId": "9",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dusk Ball",
+          "effect": "Look at the 7 cards from the bottom of your deck. Choose 1 Pokémon you find there, show it to your opponent, and put it into your hand. Put the remaining cards back on top of your deck. Shuffle your deck afterward."
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-10",
+      "localId": "10",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Energy Search",
+          "effect": "Search your deck for a basic Energy card, show it to your opponent, and put it into your hand. Shuffle your deck afterward."
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-11",
+      "localId": "11",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Potion",
+          "effect": "Remove 2 damage counters from 1 of your Pokémon (remove 1 damage counter if that Pokémon has only 1)."
+        }
+      }
+    },
+    {
+      "id": "tk-dp-m-12",
+      "localId": "12",
+      "category": "Energy",
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Water Energy"
+        }
+      }
+    }
+  ]
+}

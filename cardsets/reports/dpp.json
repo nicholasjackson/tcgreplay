@@ -1,0 +1,29 @@
+{
+  "set": "dpp",
+  "summary": {
+    "set": "dpp",
+    "prints": 56,
+    "added": 0,
+    "changed": 0,
+    "gone": 0,
+    "open": 0
+  },
+  "items": [
+    {
+      "card": "dpp-DP03",
+      "name": "Piplup",
+      "kind": "missing-name",
+      "field": "/text/en/attacks/1/name",
+      "status": "acknowledged",
+      "reason": "Unverified: TCGdex has no name for this print, and its reprints disagree; the printed card has not been checked. Left for the maintainer (decision of 2026-11-08 to skip image reading for the older sets)."
+    },
+    {
+      "card": "dpp-DP31",
+      "name": "Heatran",
+      "kind": "no-attacks",
+      "field": "/attacks",
+      "status": "acknowledged",
+      "reason": "Unverified: TCGdex has no attacks for this print, and no identical reprint gives it; the printed card has not been checked. Left for the maintainer (decision of 2026-11-08 to skip image reading for the older sets)."
+    }
+  ]
+}

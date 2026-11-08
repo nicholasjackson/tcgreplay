@@ -1,0 +1,6393 @@
+{
+  "format": 1,
+  "set": {
+    "id": "mep",
+    "serie": "me",
+    "releaseDate": "2025-09-26",
+    "abbreviation": "MEP",
+    "text": {
+      "en": {
+        "name": "MEP Black Star Promos"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "mep-001",
+      "localId": "001",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "140"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_001_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Meganium",
+          "evolveFrom": "Bayleef",
+          "attacks": [
+            {
+              "name": "Solar Beam"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Wild Growth",
+              "effect": "Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-002",
+      "localId": "002",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "110"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_002_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Inteleon",
+          "evolveFrom": "Drizzile",
+          "attacks": [
+            {
+              "name": "Bring Down",
+              "effect": "Choose a Pokémon in play (yours or your opponent's) that has the least HP remaining, except for this Pokémon, and it is Knocked Out."
+            },
+            {
+              "name": "Water Shot",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-003",
+      "localId": "003",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_003_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Alakazam",
+          "evolveFrom": "Kadabra",
+          "attacks": [
+            {
+              "name": "Powerful Hand",
+              "effect": "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Psychic Draw",
+              "effect": "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-004",
+      "localId": "004",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_004_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lunatone",
+          "attacks": [
+            {
+              "name": "Power Gem"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Lunar Cycle",
+              "effect": "Once during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-005",
+      "localId": "005",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_005_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Drifloon",
+          "attacks": [
+            {
+              "name": "Pull",
+              "effect": "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-006",
+      "localId": "006",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "110"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_006_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Drifblim",
+          "evolveFrom": "Drifloon",
+          "attacks": [
+            {
+              "name": "Creepy Wind",
+              "effect": "Your opponent's Active Pokémon is now Confused."
+            },
+            {
+              "name": "Balloon Return",
+              "effect": "Put this Pokémon and all attached cards into your hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-007",
+      "localId": "007",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_007_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Psyduck",
+          "attacks": [
+            {
+              "name": "Ram"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Damp",
+              "effect": "Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-008",
+      "localId": "008",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_008_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Golduck",
+          "evolveFrom": "Psyduck",
+          "attacks": [
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 20 more damage for each {W} Energy attached to this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Damp",
+              "effect": "Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-009",
+      "localId": "009",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_009_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Alakazam",
+          "evolveFrom": "Kadabra",
+          "attacks": [
+            {
+              "name": "Powerful Hand",
+              "effect": "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Psychic Draw",
+              "effect": "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-010",
+      "localId": "010",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_010_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Riolu",
+          "attacks": [
+            {
+              "name": "Accelerating Stab",
+              "effect": "During your next turn, this Pokémon can't use Accelerating Stab."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-011",
+      "localId": "011",
+      "category": "Pokemon",
+      "hp": 280,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "40"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "300"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_011_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Latias ex",
+          "attacks": [
+            {
+              "name": "Strafe",
+              "effect": "You may switch this Pokémon with 1 of your Benched Pokémon."
+            },
+            {
+              "name": "Illusory Impulse",
+              "effect": "Discard all Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-012",
+      "localId": "012",
+      "category": "Pokemon",
+      "hp": 340,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "130"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "270"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_012_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Lucario ex",
+          "evolveFrom": "Riolu",
+          "attacks": [
+            {
+              "name": "Aura Jab",
+              "effect": "Attach up to 3 Basic {F} Energy cards from your discard pile to your Benched Pokémon in any way you like."
+            },
+            {
+              "name": "Mega Brave",
+              "effect": "During your next turn, this Pokémon can't use Mega Brave."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-013",
+      "localId": "013",
+      "category": "Pokemon",
+      "hp": 380,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Grass",
+            "Grass"
+          ],
+          "damage": "240"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 4,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_013_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Venusaur ex",
+          "evolveFrom": "Ivysaur",
+          "attacks": [
+            {
+              "name": "Jungle Dump",
+              "effect": "Heal 30 damage from this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Solar Transfer",
+              "effect": "As often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of your Pokémon to another of your Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-014",
+      "localId": "014",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "220"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_014_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ceruledge",
+          "evolveFrom": "Charcadet",
+          "attacks": [
+            {
+              "name": "Infernal Slash",
+              "effect": "Discard 4 Basic {R} Energy cards from your hand. If you can't discard 4 cards in this way, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-015",
+      "localId": "015",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "50+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_015_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zacian",
+          "attacks": [
+            {
+              "name": "Limit Break",
+              "effect": "If your opponent has 3 or fewer Prize cards remaining, this attack does 90 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-016",
+      "localId": "016",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "130"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_016_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Flygon",
+          "evolveFrom": "Vibrava",
+          "attacks": [
+            {
+              "name": "Cutting Wind"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Sandy Flapping",
+              "effect": "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-017",
+      "localId": "017",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_017_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Toxtricity",
+          "evolveFrom": "Toxel",
+          "attacks": [
+            {
+              "name": "Gentle Slap"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Sinister Surge",
+              "effect": "Once during your turn, you may use this Ability. Search your deck for a Basic {D} Energy card and attach it to 1 of your Benched {D} Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, place 2 damage counters on that Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-018",
+      "localId": "018",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_018_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cottonee",
+          "attacks": [
+            {
+              "name": "Collect",
+              "effect": "Draw a card."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-019",
+      "localId": "019",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_019_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Whimsicott",
+          "evolveFrom": "Cottonee",
+          "attacks": [
+            {
+              "name": "Healing Fluff",
+              "effect": "Heal all damage from 1 of your Benched Pokémon."
+            },
+            {
+              "name": "U-turn",
+              "effect": "Switch this Pokémon with 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-020",
+      "localId": "020",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_020_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sneasel",
+          "attacks": [
+            {
+              "name": "Dig Claws"
+            },
+            {
+              "name": "Scratch"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-021",
+      "localId": "021",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "60"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_021_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Weavile",
+          "evolveFrom": "Sneasel",
+          "attacks": [
+            {
+              "name": "Retaliatory Claw",
+              "effect": "If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage."
+            },
+            {
+              "name": "Cut"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-022",
+      "localId": "022",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ]
+        },
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_022_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charcadet",
+          "attacks": [
+            {
+              "name": "Gather Strength",
+              "effect": "Search your deck for up to 2 Basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck."
+            },
+            {
+              "name": "Chop"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-023",
+      "localId": "023",
+      "category": "Pokemon",
+      "hp": 360,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "90×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_023_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Charizard X ex",
+          "evolveFrom": "Charmeleon",
+          "attacks": [
+            {
+              "name": "Inferno X",
+              "effect": "Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-024",
+      "localId": "024",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "110"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_024_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Oricorio ex",
+          "attacks": [
+            {
+              "name": "Fire Wing"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Excited Turbo",
+              "effect": "As often as you like during your turn, if you have any {R} Mega Evolution Pokémon ex in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to 1 of your Benched {R} Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-025",
+      "localId": "025",
+      "category": "Pokemon",
+      "hp": 300,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "200+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_025_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Kangaskhan ex",
+          "attacks": [
+            {
+              "name": "Rapid-Fire Combo",
+              "effect": "Flip a coin until you get tails. This attack does 50 more damage for each heads."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Run Errand",
+              "effect": "Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Draw 2 cards. You can't use more than 1 Run Errand Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-026",
+      "localId": "026",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_026_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Meloetta",
+          "attacks": [
+            {
+              "name": "Soothing Melody",
+              "effect": "Heal 120 damage from 1 of your Benched {P} Pokémon."
+            },
+            {
+              "name": "Magical Shot"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-027",
+      "localId": "027",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_027_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Haunter",
+          "evolveFrom": "Gastly",
+          "attacks": [
+            {
+              "name": "Spooky Shot"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-028",
+      "localId": "028",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_028_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Celebratory Fanfare",
+          "effect": "Once during each player's turn, that player may heal 10 damage from each of their Pokémon. If a player healed any damage in this way, their turn ends."
+        }
+      }
+    },
+    {
+      "id": "mep-029",
+      "localId": "029",
+      "category": "Pokemon",
+      "hp": 360,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "90×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_029_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Charizard X ex",
+          "evolveFrom": "Charmeleon",
+          "attacks": [
+            {
+              "name": "Inferno X",
+              "effect": "Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-030",
+      "localId": "030",
+      "category": "Pokemon",
+      "hp": 360,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_030_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Charizard Y ex",
+          "evolveFrom": "Charmeleon",
+          "attacks": [
+            {
+              "name": "Explosion Y",
+              "effect": "Discard 3 Energy from this Pokémon, and this attack does 280 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-031",
+      "localId": "031",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "250"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_031_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "N's Zekrom",
+          "attacks": [
+            {
+              "name": "Shred",
+              "effect": "This attack's damage isn't affected by any effects on your opponent's Active Pokémon."
+            },
+            {
+              "name": "Rampaging Thunder",
+              "effect": "During your next turn, this Pokémon can't use attacks."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-032",
+      "localId": "032",
+      "category": "Pokemon",
+      "hp": 360,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "50×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_032_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Gardevoir ex",
+          "evolveFrom": "Kirlia",
+          "attacks": [
+            {
+              "name": "Overflowing Wishes",
+              "effect": "For each of your Benched Pokémon, search your deck for a Basic {P} Energy card and attach it to that Pokémon. Then, shuffle your deck."
+            },
+            {
+              "name": "Mega Symphonia",
+              "effect": "This attack does 50 damage for each {P} Energy attached to all of your Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-033",
+      "localId": "033",
+      "category": "Pokemon",
+      "hp": 340,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "130"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "270"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_033_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Lucario ex",
+          "evolveFrom": "Riolu",
+          "attacks": [
+            {
+              "name": "Aura Jab",
+              "effect": "Attach up to 3 Basic {F} Energy cards from your discard pile to your Benched Pokémon in any way you like."
+            },
+            {
+              "name": "Mega Brave",
+              "effect": "During your next turn, this Pokémon can't use Mega Brave."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-034",
+      "localId": "034",
+      "category": "Pokemon",
+      "hp": 360,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_034_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Meganium ex",
+          "evolveFrom": "Bayleef",
+          "attacks": [
+            {
+              "name": "Giant Bouquet",
+              "effect": "This attack does 50 more damage for each {G} Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-035",
+      "localId": "035",
+      "category": "Pokemon",
+      "hp": 380,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "320"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 4,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_035_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Emboar ex",
+          "evolveFrom": "Pignite",
+          "attacks": [
+            {
+              "name": "Crimson Blast",
+              "effect": "This Pokémon also does 60 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-036",
+      "localId": "036",
+      "category": "Pokemon",
+      "hp": 370,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "200+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_036_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Feraligatr ex",
+          "evolveFrom": "Croconaw",
+          "attacks": [
+            {
+              "name": "Mortal Crunch",
+              "effect": "If your opponent's Active Pokémon already has any damage counters on it, this attack does 200 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-037",
+      "localId": "037",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_037_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Bulbasaur",
+          "attacks": [
+            {
+              "name": "Leech Seed",
+              "effect": "Heal 10 damage from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-038",
+      "localId": "038",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_038_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charmander",
+          "attacks": [
+            {
+              "name": "Ember",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-039",
+      "localId": "039",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_039_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Squirtle",
+          "attacks": [
+            {
+              "name": "Bubble",
+              "effect": "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-040",
+      "localId": "040",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_040_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Turtwig",
+          "attacks": [
+            {
+              "name": "Razor Leaf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-041",
+      "localId": "041",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_041_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Chimchar",
+          "attacks": [
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 20 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-042",
+      "localId": "042",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_042_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Piplup",
+          "attacks": [
+            {
+              "name": "Peck"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-043",
+      "localId": "043",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_043_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Rowlet",
+          "attacks": [
+            {
+              "name": "Tackle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-044",
+      "localId": "044",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_044_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Litten",
+          "attacks": [
+            {
+              "name": "Fire Fang",
+              "effect": "Your opponent's Active Pokémon is now Burned."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-045",
+      "localId": "045",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_045_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Popplio",
+          "attacks": [
+            {
+              "name": "Disarming Voice",
+              "effect": "Your opponent's Active Pokémon is now Confused."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-046",
+      "localId": "046",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_046_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Chikorita",
+          "attacks": [
+            {
+              "name": "Razor Leaf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-047",
+      "localId": "047",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_047_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cyndaquil",
+          "attacks": [
+            {
+              "name": "Tackle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-048",
+      "localId": "048",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_048_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Totodile",
+          "attacks": [
+            {
+              "name": "Bite"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-049",
+      "localId": "049",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_049_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Snivy",
+          "attacks": [
+            {
+              "name": "Vine Whip"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-050",
+      "localId": "050",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_050_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tepig",
+          "attacks": [
+            {
+              "name": "Ember",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-051",
+      "localId": "051",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_051_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Oshawott",
+          "attacks": [
+            {
+              "name": "Razor Shell",
+              "effect": "Flip a coin. If heads, this attack does 30 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-052",
+      "localId": "052",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_052_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Grookey",
+          "attacks": [
+            {
+              "name": "Branch Poke"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-053",
+      "localId": "053",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "20×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_053_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Scorbunny",
+          "attacks": [
+            {
+              "name": "Double Kick",
+              "effect": "Flip 2 coins. This attack does 20 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-054",
+      "localId": "054",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_054_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sobble",
+          "attacks": [
+            {
+              "name": "Water Gun"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-055",
+      "localId": "055",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_055_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Treecko",
+          "attacks": [
+            {
+              "name": "Pound"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-056",
+      "localId": "056",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_056_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Torchic",
+          "attacks": [
+            {
+              "name": "Peck"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-057",
+      "localId": "057",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_057_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mudkip",
+          "attacks": [
+            {
+              "name": "Mud-Slap"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-058",
+      "localId": "058",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "10×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_058_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Chespin",
+          "attacks": [
+            {
+              "name": "Pin Missile",
+              "effect": "Flip 4 coins. This attack does 10 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-059",
+      "localId": "059",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_059_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fennekin",
+          "attacks": [
+            {
+              "name": "Scratch"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-060",
+      "localId": "060",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_060_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Froakie",
+          "attacks": [
+            {
+              "name": "Pound"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-061",
+      "localId": "061",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_061_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sprigatito",
+          "attacks": [
+            {
+              "name": "Leafage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-062",
+      "localId": "062",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_062_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fuecoco",
+          "attacks": [
+            {
+              "name": "Flamethrower",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-063",
+      "localId": "063",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_063_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Quaxly",
+          "attacks": [
+            {
+              "name": "Wing Attack"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-064",
+      "localId": "064",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "20×"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Grass"
+          ],
+          "damage": "100+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_064_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Serperior",
+          "evolveFrom": "Servine",
+          "attacks": [
+            {
+              "name": "Regal Command",
+              "effect": "This attack does 20 damage for each of your Pokémon in play."
+            },
+            {
+              "name": "Solar Coiling",
+              "effect": "If Rosa's Encouragement is in your discard pile, this attack does 150 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-065",
+      "localId": "065",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_065_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Barbaracle",
+          "evolveFrom": "Binacle",
+          "attacks": [
+            {
+              "name": "Hammer In"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Stone Arms",
+              "effect": "Once during your turn, you may use this Ability. Attach a Basic {F} Energy card from your hand to 1 of your {F} Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-066",
+      "localId": "066",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "160"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_066_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tyrantrum",
+          "evolveFrom": "Tyrunt",
+          "attacks": [
+            {
+              "name": "Wreak Havoc",
+              "effect": "Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Tyrannically Gutsy",
+              "effect": "If this Pokémon has any Special Energy attached, it gets +150 HP."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-067",
+      "localId": "067",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Grass",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_067_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Doublade",
+          "evolveFrom": "Honedge",
+          "attacks": [
+            {
+              "name": "Weaponized Swords",
+              "effect": "Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-068",
+      "localId": "068",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_068_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Makuhita",
+          "attacks": [
+            {
+              "name": "Corkscrew Punch"
+            },
+            {
+              "name": "Confront"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-069",
+      "localId": "069",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_069_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Chikorita",
+          "attacks": [
+            {
+              "name": "Razor Leaf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-070",
+      "localId": "070",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "20×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_070_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tyrunt",
+          "evolveFrom": "Antique Jaw Fossil",
+          "attacks": [
+            {
+              "name": "Get Angry",
+              "effect": "This attack does 20 damage for each damage counter on this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-071",
+      "localId": "071",
+      "category": "Pokemon",
+      "hp": 310,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "200"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_071_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Zygarde ex",
+          "attacks": [
+            {
+              "name": "Gaia Wave",
+              "effect": "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)."
+            },
+            {
+              "name": "Nullifying Zero",
+              "effect": "For each of your opponent's Pokémon, flip a coin. If heads, this attack does 150 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-072",
+      "localId": "072",
+      "category": "Pokemon",
+      "hp": 320,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "120+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_072_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Clefable ex",
+          "evolveFrom": "Clefairy",
+          "attacks": [
+            {
+              "name": "Shooting Moons",
+              "effect": "You may discard up to 4 Energy cards from your hand, and this attack does 40 more damage for each card you discarded in this way."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Luminous Wing",
+              "effect": "Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-073",
+      "localId": "073",
+      "category": "Pokemon",
+      "hp": 350,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "230"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_073_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Gengar ex",
+          "evolveFrom": "Haunter",
+          "attacks": [
+            {
+              "name": "Void Gale",
+              "effect": "Move an Energy from this Pokémon to 1 of your Benched Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Shadowy Concealment",
+              "effect": "If 1 of your {D} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn't stack."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-074",
+      "localId": "074",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "30×"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_074_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Delphox",
+          "evolveFrom": "Braixen",
+          "attacks": [
+            {
+              "name": "Energized Storm",
+              "effect": "This attack does 30 damage for each Energy attached to all Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Flaring Magic",
+              "effect": "Once during your turn, you may discard a Basic Fire Energy card from your hand in order to use this Ability. Draw cards until you have 7 cards in your hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-075",
+      "localId": "075",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "140"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_075_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ampharos",
+          "evolveFrom": "Flaaffy",
+          "attacks": [
+            {
+              "name": "Flashing Bolt",
+              "effect": "During your next turn, this Pokémon can't use Flashing Bolt."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Synchro Pulse",
+              "effect": "If you have the same number of cards in your hand as your opponent, attacks used by this Pokémon do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-076",
+      "localId": "076",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "80"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_076_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Crobat",
+          "evolveFrom": "Golbat",
+          "attacks": [
+            {
+              "name": "Poison Sound Wave",
+              "effect": "Your opponent's Active Pokémon is now Confused and Poisoned."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Nighttime Maneuvers",
+              "effect": "Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Search your deck for a card. Shuffle your deck, then put that card on top of it."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-077",
+      "localId": "077",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Psychic"
+          ],
+          "damage": "160"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_077_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Goodra",
+          "evolveFrom": "Sliggoo",
+          "attacks": [
+            {
+              "name": "Dragon Pulse",
+              "effect": "Discard the top card of your deck."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Slimy Sliding",
+              "effect": "When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-078",
+      "localId": "078",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_078_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Toxel",
+          "attacks": [
+            {
+              "name": "Call for Family",
+              "effect": "Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck."
+            },
+            {
+              "name": "Playful Kick"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-079",
+      "localId": "079",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_079_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charmeleon",
+          "evolveFrom": "Charmander",
+          "attacks": [
+            {
+              "name": "Steady Firebreathing"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-080",
+      "localId": "080",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_080_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fennekin",
+          "attacks": [
+            {
+              "name": "Call for Family",
+              "effect": "Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck."
+            },
+            {
+              "name": "Steady Firebreathing"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-081",
+      "localId": "081",
+      "category": "Pokemon",
+      "hp": 350,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "120+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_081_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Greninja ex",
+          "evolveFrom": "Frogadier",
+          "attacks": [
+            {
+              "name": "Ninja Spinner",
+              "effect": "You may put a {W} Energy attached to this Pokémon into your hand and have this attack do 80 more damage."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Mortal Shuriken",
+              "effect": "Once during your turn, if this Pokémon is in the Active Spot, you may discard a Basic {W} Energy card from your hand in order to use this Ability. Place 6 damage counters on 1 of your opponent's Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-082",
+      "localId": "082",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "90"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_082_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Miraidon",
+          "attacks": [
+            {
+              "name": "Thunder",
+              "effect": "This Pokémon also does 30 damage to itself."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Photon Cord",
+              "effect": "If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-083",
+      "localId": "083",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "50+"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "110"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_083_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Slowbro",
+          "evolveFrom": "Slowpoke",
+          "attacks": [
+            {
+              "name": "All Out",
+              "effect": "If you have no cards in your hand, this attack does 160 more damage."
+            },
+            {
+              "name": "Zen Headbutt"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-084",
+      "localId": "084",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "30+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_084_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dhelmise",
+          "attacks": [
+            {
+              "name": "Vengeful Anchor",
+              "effect": "If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-085",
+      "localId": "085",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "160"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Grass",
+          "value": "-30"
+        }
+      ],
+      "retreat": 4,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_085_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Bastiodon",
+          "evolveFrom": "Shieldon",
+          "attacks": [
+            {
+              "name": "Hammer In"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Ancient Bulwark",
+              "effect": "As long as this Pokémon is on your Bench, prevent all damage done to each of your Pokémon by attacks from your opponent's Pokémon that have 2 or less Energy attached."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-086",
+      "localId": "086",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_086_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Slowpoke",
+          "attacks": [
+            {
+              "name": "Super Psy Bolt"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Dopey Face",
+              "effect": "This Pokémon can't be Confused."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-087",
+      "localId": "087",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_087_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Binacle",
+          "attacks": [
+            {
+              "name": "Double Draw",
+              "effect": "Draw 2 cards."
+            },
+            {
+              "name": "Scratch"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-088",
+      "localId": "088",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "100+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_088_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zarude",
+          "attacks": [
+            {
+              "name": "Overhead Throw",
+              "effect": "This attack also does 30 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Shadowy Whip",
+              "effect": "If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-089",
+      "localId": "089",
+      "category": "Pokemon",
+      "hp": 270,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ],
+          "damage": "60×"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "150"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_089_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Zeraora ex",
+          "attacks": [
+            {
+              "name": "Thunderous Fist",
+              "effect": "This attack does 60 damage for each {L} Energy attached to this Pokémon."
+            },
+            {
+              "name": "Zepto Turn",
+              "effect": "Switch this Pokémon with 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-090",
+      "localId": "090",
+      "category": "Pokemon",
+      "hp": 280,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "110+"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Darkness"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_090_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Darkrai ex",
+          "attacks": [
+            {
+              "name": "Dusk Raid",
+              "effect": "If your Benched Pokémon have any damage counters on them, this attack does 110 more damage."
+            },
+            {
+              "name": "Abyss Eye",
+              "effect": "If your opponent's Active Pokémon is affected by a Special Condition, it is Knocked Out."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-091",
+      "localId": "091",
+      "category": "Pokemon",
+      "hp": 370,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "330"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "I",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_091_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mega Dragonite ex",
+          "evolveFrom": "Dragonair",
+          "attacks": [
+            {
+              "name": "Ryuno Glide",
+              "effect": "Discard 2 Energy from this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Sky Transport",
+              "effect": "Once during your turn, you may use this Ability. Switch your Active Pokémon with 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-092",
+      "localId": "092",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_092_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Paradise Resort",
+          "effect": "The Retreat Cost of each Psyduck in play (both yours and your opponent's) is {C} less."
+        }
+      }
+    },
+    {
+      "id": "mep-093",
+      "localId": "093",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "30+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu",
+          "attacks": [
+            {
+              "name": "Scrappy Spark",
+              "effect": "Flip a coin until you get tails. This attack does 30 more damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-094",
+      "localId": "094",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "150"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "retreat": 4,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_094_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Alolan Exeggutor",
+          "evolveFrom": "Exeggcute",
+          "attacks": [
+            {
+              "name": "Mega Drain",
+              "effect": "Heal 50 damage from this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Scale Up",
+              "effect": "If this Pokémon has 6 or more {G} Energy attached, it gets +250 HP."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-095",
+      "localId": "095",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_095_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lucario",
+          "evolveFrom": "Riolu",
+          "attacks": [
+            {
+              "name": "Aura Sphere",
+              "effect": "This attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-096",
+      "localId": "096",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "130"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_096_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Moltres",
+          "attacks": [
+            {
+              "name": "Fire Spin",
+              "effect": "Discard 2 Energy from this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Fiery Flapping",
+              "effect": "Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-097",
+      "localId": "097",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_097_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Articuno",
+          "attacks": [
+            {
+              "name": "Hail",
+              "effect": "This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Frosty Flapping",
+              "effect": "Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic {W} Energy card from your hand to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-098",
+      "localId": "098",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "210"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_098_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zapdos",
+          "attacks": [
+            {
+              "name": "Thundering Lightning",
+              "effect": "This Pokémon also does 60 damage to itself."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Flash-Pop Flapping",
+              "effect": "Once during your turn, if you have Moltres and Articuno in play, you may use this Ability. Attach a Basic {L} Energy card from your hand to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-099",
+      "localId": "099",
+      "category": "Pokemon",
+      "hp": 300,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "160"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_099_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Greninja ex",
+          "evolveFrom": "Frogadier",
+          "attacks": [
+            {
+              "name": "Stealthy Slash",
+              "effect": "This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Aqua Edge"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-100",
+      "localId": "100",
+      "category": "Pokemon",
+      "hp": 270,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_100_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sylveon ex",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Colorful Harmony",
+              "effect": "This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-101",
+      "localId": "101",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_101_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Nidorina",
+          "evolveFrom": "Nidoran♀",
+          "attacks": [
+            {
+              "name": "Bite"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Share Happiness",
+              "effect": "Once during your turn, you may use this Ability. Heal 30 damage from 1 of your Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-102",
+      "localId": "102",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_102_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Victini",
+          "attacks": [
+            {
+              "name": "Call for Family",
+              "effect": "Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck."
+            },
+            {
+              "name": "V-Flame"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-103",
+      "localId": "103",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_103_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zeraora",
+          "attacks": [
+            {
+              "name": "Rapid Draw",
+              "effect": "Draw a card."
+            },
+            {
+              "name": "Electrobullet",
+              "effect": "This attack also does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-104",
+      "localId": "104",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_104_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mewtwo",
+          "attacks": [
+            {
+              "name": "Empower",
+              "effect": "Attach up to 2 Basic Energy cards from your discard pile to 1 of your Pokémon."
+            },
+            {
+              "name": "Psydrive",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-105",
+      "localId": "105",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_105_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mew",
+          "attacks": [
+            {
+              "name": "Psychic",
+              "effect": "This attack does 40 more damage for each Energy attached to your opponent's Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-106",
+      "localId": "106",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_106_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ditto",
+          "attacks": [
+            {
+              "name": "Surprisingly Transform",
+              "effect": "Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-107",
+      "localId": "107",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "200"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu ex",
+          "attacks": [
+            {
+              "name": "Pika-Pika Parade",
+              "effect": "Search your deck for any number of Basic Pokémon and put them onto your Bench. Then, shuffle your deck."
+            },
+            {
+              "name": "Thunderbolt",
+              "effect": "Discard all Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-108",
+      "localId": "108",
+      "category": "Pokemon",
+      "hp": 260,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "30×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_108_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Espeon ex",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Solar Beatdown",
+              "effect": "This attack does 30 damage for each of your Pokémon in play."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-109",
+      "localId": "109",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ]
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "200"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu ex",
+          "attacks": [
+            {
+              "name": "Zip-Zap Frenzy",
+              "effect": "You may attach any number of Basic Energy cards from your hand to your Pokémon in any way you like."
+            },
+            {
+              "name": "Thunder",
+              "effect": "This Pokémon also does 30 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-110",
+      "localId": "110",
+      "category": "Pokemon",
+      "hp": 270,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "100+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_110_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Umbreon ex",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Lunatic Claw",
+              "effect": "If your opponent's Active Pokémon already has any damage counters on it, this attack does 140 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-111",
+      "localId": "111",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "50×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_111_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie"
+      ],
+      "text": {
+        "en": {
+          "name": "Masquerain",
+          "evolveFrom": "Surskit",
+          "attacks": [
+            {
+              "name": "Frightening Pattern",
+              "effect": "During your opponent's next turn, the Defending Pokémon can't use attacks."
+            },
+            {
+              "name": "Bug Out",
+              "effect": "Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-112",
+      "localId": "112",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_112_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie"
+      ],
+      "text": {
+        "en": {
+          "name": "Magmortar",
+          "evolveFrom": "Magmar",
+          "attacks": [
+            {
+              "name": "Heat Crash"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Buddy Boost",
+              "effect": "Once during your turn, you may use this Ability. Attach a Basic {R} Energy card, a Basic {L} Energy card, or 1 of each from your hand to your Electivire and Magmortar in any way you like."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-113",
+      "localId": "113",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_113_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie"
+      ],
+      "text": {
+        "en": {
+          "name": "Enamorus",
+          "attacks": [
+            {
+              "name": "Rising Heart",
+              "effect": "If your opponent's Active Pokémon is a Pokémon ex, this attack does 100 more damage."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Incarnate Solidarity",
+              "effect": "If you have Tornadus, Thundurus, Landorus, and Enamorus in play, ignore all {C} Energy in the costs of attacks used by this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-114",
+      "localId": "114",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "170"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_114_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie"
+      ],
+      "text": {
+        "en": {
+          "name": "Kommo-o",
+          "evolveFrom": "Hakamo-o",
+          "attacks": [
+            {
+              "name": "Hammer In"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Beat Scales",
+              "effect": "Once during your turn, you may use this Ability. Look at the top 6 cards of your deck and attach any number of Basic Energy cards you find there to your {N} Pokémon in any way you like. Shuffle the other cards back into your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-115",
+      "localId": "115",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_115_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie"
+      ],
+      "text": {
+        "en": {
+          "name": "Spritzee",
+          "attacks": [
+            {
+              "name": "Sweet Scent",
+              "effect": "Heal 30 damage from 1 of your Pokémon."
+            },
+            {
+              "name": "Ram"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-116",
+      "localId": "116",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_116_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie"
+      ],
+      "text": {
+        "en": {
+          "name": "Seel",
+          "attacks": [
+            {
+              "name": "Rain Splash"
+            },
+            {
+              "name": "Wave Splash"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-117",
+      "localId": "117",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "40"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_117_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie"
+      ],
+      "text": {
+        "en": {
+          "name": "Kyogre",
+          "attacks": [
+            {
+              "name": "Waterfall"
+            },
+            {
+              "name": "Brutal Whirlpool",
+              "effect": "If a Stadium that has \"Legendary\" in its name is in play, this attack also does 50 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mep-120",
+      "localId": "120",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "regulationMark": "J",
+      "images": [
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/mebsp/mebsp_en_120_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Celebratory Fanfare",
+          "effect": "Once during each player's turn, that player may heal 10 damage from each of their Pokémon. If a player healed any damage in this way, their turn ends."
+        }
+      }
+    },
+    {
+      "id": "mep-Museum",
+      "localId": "Museum",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "100"
+        },
+        {
+          "cost": [
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu at the Museum",
+          "attacks": [
+            {
+              "name": "Thunderbolt",
+              "effect": "Discard all Energy from this Pokémon."
+            },
+            {
+              "name": "The Best Collection!",
+              "effect": "Search your Pokémon TCG Collection for a Pokémon, reveal it, and put it into your hand."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "category": "Pokemon",
+  "id": "me06-023",
+  "localId": "023",
+  "name": "Heat Rotom ex",
+  "hp": 190,
+  "types": [
+    "Fire"
+  ],
+  "stage": "Basic",
+  "suffix": "EX",
+  "attacks": [
+    {
+      "cost": [
+        "Colorless",
+        "Colorless"
+      ],
+      "name": "Rewarm",
+      "effect": "This attack does 30 damage for each Basic <span class=\"energy-symbol Fire\" title=\"Fire\">Fire</span> Energy card in your discard pile. Then, shuffle those cards into your deck.",
+      "damage": "30×"
+    },
+    {
+      "cost": [
+        "Fire",
+        "Fire",
+        "Colorless"
+      ],
+      "name": "Strong Flare",
+      "effect": "Discard 2 Energy from this Pokémon.",
+      "damage": 170
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Water",
+      "value": "×2"
+    }
+  ],
+  "retreat": 1
+}

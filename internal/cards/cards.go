@@ -531,6 +531,11 @@ var basicEnergyArt = map[string]string{
 	"Psychic": "156", "Fighting": "157", "Darkness": "158", "Metal": "159",
 }
 
+// EnergyArt gives a Basic Energy card without an image the art of the same
+// type, as every card the client returns has it. Card definitions built
+// elsewhere (built card sets) use it to match the client's cards.
+func EnergyArt(c *Card) { energyArt(c) }
+
 // energyArt gives a Basic Energy card without an image the art of the
 // same type. Only the picture is borrowed; the card keeps its identity.
 func energyArt(c *Card) {

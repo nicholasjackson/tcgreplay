@@ -1,0 +1,843 @@
+{
+  "format": 1,
+  "set": {
+    "id": "tk-sm-r",
+    "serie": "tk",
+    "releaseDate": "2017-04-21",
+    "abbreviation": "TK10A",
+    "text": {
+      "en": {
+        "name": "SM trainer Kit (Alolan Raichu)"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "tk-sm-r-1",
+      "localId": "1",
+      "category": "Energy",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-2",
+      "localId": "2",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-3",
+      "localId": "3",
+      "category": "Energy",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Stufful",
+          "attacks": [
+            {
+              "name": "Tackle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-5",
+      "localId": "5",
+      "category": "Energy",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Golbat",
+          "evolveFrom": "Zubat",
+          "attacks": [
+            {
+              "name": "Super Poison Breath",
+              "effect": "Your opponent's Active Pokémon is now Poisoned."
+            },
+            {
+              "name": "Acrobatics",
+              "effect": "Flip 2 coins. This attack does 20 more damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-7",
+      "localId": "7",
+      "category": "Energy",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-8",
+      "localId": "8",
+      "category": "Energy",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-9",
+      "localId": "9",
+      "category": "Energy",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-10",
+      "localId": "10",
+      "category": "Energy",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-11",
+      "localId": "11",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zubat",
+          "attacks": [
+            {
+              "name": "Astonish",
+              "effect": "Choose a random card from your opponent's hand. Your opponent reveals that card and shuffles it into their deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-12",
+      "localId": "12",
+      "category": "Energy",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-13",
+      "localId": "13",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Spearow",
+          "attacks": [
+            {
+              "name": "Peck Bugs",
+              "effect": "If your opponent's Active Pokémon is a Grass Pokémon, this attack does 30 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-14",
+      "localId": "14",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "damage": "10"
+        },
+        {
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu",
+          "attacks": [
+            {
+              "name": "Tail Whap"
+            },
+            {
+              "name": "Spark",
+              "effect": "This attack does 10 damage to 1 of your opponent’s Benched Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-15",
+      "localId": "15",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Potion",
+          "effect": "Heal 30 damage from 1 of your Pokémon."
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-16",
+      "localId": "16",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Grubbin",
+          "attacks": [
+            {
+              "name": "Vice Grip"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-17",
+      "localId": "17",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "damage": "10+"
+        },
+        {
+          "damage": "70"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Alolan Raichu",
+          "evolveFrom": "Pikachu",
+          "attacks": [
+            {
+              "name": "Quick Attack",
+              "effect": "Flip a coin. If heads, this attack does 30 more damage."
+            },
+            {
+              "name": "Electric Surfer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-18",
+      "localId": "18",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "80+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Bewear",
+          "evolveFrom": "Stufful",
+          "attacks": [
+            {
+              "name": "Bear Hug",
+              "effect": "The Defending Pokémon can't retreat during your opponent's next turn."
+            },
+            {
+              "name": "Superpower",
+              "effect": "You may do 40 more damage. If you do, this Pokémon does 20 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-19",
+      "localId": "19",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hau",
+          "effect": "Draw 3 cards."
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-20",
+      "localId": "20",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Psychic Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-21",
+      "localId": "21",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Great Ball",
+          "effect": "Look at the top 7 cards of your deck. You may reveal a Pokémon you find there and put it into your hand. Shuffle the other cards back into your deck."
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-22",
+      "localId": "22",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10×"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Drowzee",
+          "attacks": [
+            {
+              "name": "Psychic Boom",
+              "effect": "This attack does 10 damage times the amount of Energy attached to your opponent's Active Pokémon."
+            },
+            {
+              "name": "Headbutt"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-23",
+      "localId": "23",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hau",
+          "effect": "Draw 3 cards."
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-24",
+      "localId": "24",
+      "category": "Energy",
+      "types": [
+        "Psychic"
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Psychic Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-25",
+      "localId": "25",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Great Ball",
+          "effect": "Look at the top 7 cards of your deck. You may reveal a Pokémon you find there and put it into your hand. Shuffle the other cards back into your deck."
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-26",
+      "localId": "26",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Lightning"
+          ],
+          "damage": "30×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Togedemaru",
+          "attacks": [
+            {
+              "name": "Defense Curl",
+              "effect": "Flip a coin. If heads, prevent all damage done to this Pokémon by attacks during your opponent's next turn."
+            },
+            {
+              "name": "Discharge",
+              "effect": "Discard all Lightning Energy from this Pokémon. This attack does 30 damage for each card you discarded in this way."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-27",
+      "localId": "27",
+      "category": "Energy",
+      "types": [
+        "Psychic"
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Psychic Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-28",
+      "localId": "28",
+      "category": "Energy",
+      "types": [
+        "Psychic"
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Psychic Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-29",
+      "localId": "29",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "damage": "10"
+        },
+        {
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu",
+          "attacks": [
+            {
+              "name": "Tail Whap"
+            },
+            {
+              "name": "Spark",
+              "effect": "This attack does 10 damage to 1 of your opponent’s Benched Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-sm-r-30",
+      "localId": "30",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "damage": "10+"
+        },
+        {
+          "damage": "70"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Alolan Raichu",
+          "evolveFrom": "Pikachu",
+          "attacks": [
+            {
+              "name": "Quick Attack",
+              "effect": "Flip a coin. If heads, this attack does 30 more damage."
+            },
+            {
+              "name": "Electric Surfer"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

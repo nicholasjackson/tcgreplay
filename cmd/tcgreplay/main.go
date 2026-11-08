@@ -13,6 +13,10 @@
 // Hosted mode requires Google sign-in for both, keeps one game per
 // signed-in account and drops games left idle (-idle-timeout); the desktop
 // modes never ask for sign-in and keep one game.
+//
+// tcgreplay sets builds card sets into the project ahead of time, for the
+// maintainer: sets import <set> fetches and merges a set, sets check checks
+// the built sets (see internal/cardset). It never starts the playmat.
 package main
 
 import (
@@ -125,6 +129,10 @@ func envWait(key string, def time.Duration) (time.Duration, error) {
 }
 
 func main() {
+	// sets is the one subcommand, dispatched before the playmat's flags.
+	if len(os.Args) > 1 && os.Args[1] == "sets" {
+		os.Exit(runSets(os.Args[2:]))
+	}
 	var c config
 	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for the playmat's log and daemon files")
 	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")
@@ -151,8 +159,9 @@ func main() {
 	lockRelease, lockErr := envWait("TCGREPLAY_LOCK_RELEASE", 2*time.Minute)
 	flag.DurationVar(&c.timing.LockRelease, "lock-release", lockRelease, "how long the assistant may go without a move before the board unlocks by itself (default $TCGREPLAY_LOCK_RELEASE, else 2m)")
 	flag.Parse()
-	// The binary has no subcommands: refuse any leftover word, so a removed
-	// one (such as install) fails instead of starting the shim.
+	// sets (dispatched above) is the only subcommand: refuse any other
+	// leftover word, so a removed one (such as install) fails instead of
+	// starting the shim.
 	if flag.NArg() > 0 {
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", flag.Arg(0))
 		flag.Usage()

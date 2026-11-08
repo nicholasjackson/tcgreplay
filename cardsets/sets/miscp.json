@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "set": {
+    "id": "miscp",
+    "serie": "misc",
+    "releaseDate": "1996-01-01",
+    "text": {
+      "en": {
+        "name": "Miscellaneous Promos"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "miscp-001",
+      "localId": "001",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ancient Mew",
+          "attacks": [
+            {
+              "name": "Psyche"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

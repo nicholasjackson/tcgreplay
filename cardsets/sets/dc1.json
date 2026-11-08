@@ -1,0 +1,1520 @@
+{
+  "format": 1,
+  "set": {
+    "id": "dc1",
+    "serie": "xy",
+    "releaseDate": "2015-03-25",
+    "abbreviation": "DCR",
+    "tcgOnline": "DCR",
+    "text": {
+      "en": {
+        "name": "Double Crisis"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "dc1-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/1"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Numel",
+          "attacks": [
+            {
+              "name": "Ember",
+              "effect": "Discard an Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/2"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Camerupt",
+          "evolveFrom": "Team Magma's Numel",
+          "attacks": [
+            {
+              "name": "Flame Ball",
+              "effect": "Move a basic Energy from this Pokémon to 1 of your Benched Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Burning Draft",
+              "effect": "Once during your turn (before your attack), you may attach a {F} or {R} Energy card from your discard pile to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/3"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Spheal",
+          "attacks": [
+            {
+              "name": "Water Gun"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60＋"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/4"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Sealeo",
+          "evolveFrom": "Team Aqua's Spheal",
+          "attacks": [
+            {
+              "name": "Splatter",
+              "effect": "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Hail Storm",
+              "effect": "If your opponent's Active Pokémon is a Team Magma Pokémon, this attack does 60 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "30×"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 4,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/5"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Walrein",
+          "evolveFrom": "Team Aqua's Sealeo",
+          "attacks": [
+            {
+              "name": "Power Blow",
+              "effect": "This attack does 30 damage times the amount of Energy attached to this Pokémon."
+            },
+            {
+              "name": "Dual Blizzard",
+              "effect": "Discard 2 {W} Energy attached to this Pokémon. This attack does 80 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Water"
+      ],
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "80＋"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 4,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/6"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Kyogre EX",
+          "attacks": [
+            {
+              "name": "Aqua Impact",
+              "effect": "This attack does 20 more damage for each {C} in your opponent's Active Pokémon's Retreat Cost."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Power Saver",
+              "effect": "If there are 4 or fewer Team Aqua Pokémon in play, this Pokémon can't attack."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/7"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Grimer",
+          "attacks": [
+            {
+              "name": "Pound"
+            },
+            {
+              "name": "Mud-Slap"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-8",
+      "localId": "8",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60＋"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/8"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Muk",
+          "evolveFrom": "Team Aqua's Grimer",
+          "attacks": [
+            {
+              "name": "Pester",
+              "effect": "If your opponent's Active Pokémon is affected by a Special Condition, this attack does 60 more damage."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Sludge Festival",
+              "effect": "The Retreat Cost of each Pokémon in play (except for Team Aqua Pokémon) is {C} more."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-9",
+      "localId": "9",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/9"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Seviper",
+          "attacks": [
+            {
+              "name": "Venomous Fang",
+              "effect": "Flip a coin. If heads, your opponent's Active Pokémon is now Poisoned."
+            },
+            {
+              "name": "Venom Tail",
+              "effect": "If your opponent's Active Pokémon is affected by a Special Condition, discard an Energy attached to that Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-10",
+      "localId": "10",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/10"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Baltoy",
+          "attacks": [
+            {
+              "name": "Telekinesis",
+              "effect": "This attack does 20 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-11",
+      "localId": "11",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/11"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Claydol",
+          "evolveFrom": "Team Magma's Baltoy",
+          "attacks": [
+            {
+              "name": "Power Beam"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Magma Switch",
+              "effect": "Once during your turn (before your attack), you may move a basic Energy from 1 of your Pokémon to 1 of your Team Magma Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-12",
+      "localId": "12",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/12"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Aron",
+          "attacks": [
+            {
+              "name": "Gnaw"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-13",
+      "localId": "13",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/13"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Lairon",
+          "evolveFrom": "Team Magma's Aron",
+          "attacks": [
+            {
+              "name": "Gnaw"
+            },
+            {
+              "name": "Take Down",
+              "effect": "This Pokémon does 10 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-14",
+      "localId": "14",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "40×"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 4,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/14"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Aggron",
+          "evolveFrom": "Team Magma's Lairon",
+          "attacks": [
+            {
+              "name": "Rock Stomp",
+              "effect": "Discard as many {F} Energy attached to your Pokémon as you like. This attack does 40 damage times the amount of {F} Energy you discarded."
+            },
+            {
+              "name": "Boulder Storm",
+              "effect": "This attack does 20 damage to each of your opponent's Benched Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-15",
+      "localId": "15",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Fighting"
+      ],
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "80＋"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 4,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/15"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Groudon EX",
+          "attacks": [
+            {
+              "name": "Magma Quake",
+              "effect": "If your opponent's Active Pokémon already has any damage counters on it, this attack does 80 more damage."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Power Saver",
+              "effect": "If there are 4 or fewer Team Magma Pokémon in play, this Pokémon can't attack."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-16",
+      "localId": "16",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/16"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Poochyena",
+          "attacks": [
+            {
+              "name": "Roar",
+              "effect": "Your opponent switches his or her Active Pokémon with 1 of his or her Benched Pokémon."
+            },
+            {
+              "name": "Bite"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-17",
+      "localId": "17",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/17"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Poochyena",
+          "attacks": [
+            {
+              "name": "Infiltrate",
+              "effect": "Your opponent reveals his or her hand."
+            },
+            {
+              "name": "Bite"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-18",
+      "localId": "18",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "30×"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/18"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Mightyena",
+          "evolveFrom": "Team Aqua's Poochyena",
+          "attacks": [
+            {
+              "name": "Teampact",
+              "effect": "Flip a coin for each Team Aqua Pokémon you have in play. This attack does 30 damage times the number of heads."
+            },
+            {
+              "name": "Crunch",
+              "effect": "Flip a coin. If heads, discard an Energy attached to your opponent's Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-19",
+      "localId": "19",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "80＋"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/19"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Mightyena",
+          "evolveFrom": "Team Magma's Poochyena",
+          "attacks": [
+            {
+              "name": "Bite"
+            },
+            {
+              "name": "Hostile Fang",
+              "effect": "If your opponent's Active Pokémon is a Team Aqua Pokémon, this attack does 40 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-20",
+      "localId": "20",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "10×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/20"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Carvanha",
+          "attacks": [
+            {
+              "name": "Fin Smack",
+              "effect": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-21",
+      "localId": "21",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/21"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Sharpedo",
+          "evolveFrom": "Team Aqua's Carvanha",
+          "attacks": [
+            {
+              "name": "Sharp Fang"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Aqua Search",
+              "effect": "Once during your turn (before your attack), you may search your deck for a Team Aqua Pokémon, reveal it, and put it into your hand. Shuffle your deck afterward."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-22",
+      "localId": "22",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/22"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Zangoose",
+          "attacks": [
+            {
+              "name": "Call for Family",
+              "effect": "Search your deck for up to 2 Basic Team Magma Pokémon and put them onto your Bench. Shuffle your deck afterward."
+            },
+            {
+              "name": "Team Play",
+              "effect": "This attack does 20 damage times the number of Team Magma Pokémon on your Bench."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dc1-23",
+      "localId": "23",
+      "category": "Trainer",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        }
+      ],
+      "trainerType": "Tool",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/23"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Aqua Diffuser",
+          "attacks": [
+            {
+              "name": "Aqua Diffuser",
+              "effect": "Your opponent's Active Pokémon is now Confused and Poisoned."
+            }
+          ],
+          "effect": "The Team Aqua Pokémon this card is attached to can also use the attack on this card. (You still need the necessary Energy to use this attack.)"
+        }
+      }
+    },
+    {
+      "id": "dc1-24",
+      "localId": "24",
+      "category": "Trainer",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ]
+        }
+      ],
+      "trainerType": "Tool",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/24"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magma Pointer",
+          "attacks": [
+            {
+              "name": "Magma Pointer",
+              "effect": "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "effect": "The Team Magma Pokémon this card is attached to can also use the attack on this card. (You still need the necessary Energy to use this attack.)"
+        }
+      }
+    },
+    {
+      "id": "dc1-25",
+      "localId": "25",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/25"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua Admin",
+          "effect": "Attach a basic Energy card from your discard pile to your Active Team Aqua Pokémon."
+        }
+      }
+    },
+    {
+      "id": "dc1-26",
+      "localId": "26",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/26"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua Grunt",
+          "effect": "Discard a card from your hand. (If you can't discard a card, you can't play this card.) Draw 3 cards. If you discarded a Team Aqua Pokémon, draw 1 more card."
+        }
+      }
+    },
+    {
+      "id": "dc1-27",
+      "localId": "27",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/27"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Great Ball",
+          "effect": "Search your deck for a Basic Team Aqua Pokémon and a basic {W} Energy card, reveal them, and put them into your hand. Shuffle your deck afterward."
+        }
+      }
+    },
+    {
+      "id": "dc1-28",
+      "localId": "28",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/28"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Aqua's Secret Base",
+          "effect": "The Retreat Cost of each Pokémon in play (except for Team Aqua Pokémon) is {C} more."
+        }
+      }
+    },
+    {
+      "id": "dc1-29",
+      "localId": "29",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/29"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma Admin",
+          "effect": "Put up to 3 Team Magma Pokémon from your discard pile into your hand."
+        }
+      }
+    },
+    {
+      "id": "dc1-30",
+      "localId": "30",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/30"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma Grunt",
+          "effect": "Discard a card from your hand. (If you can't discard a card, you can't play this card.) Draw 3 cards. If you discarded a Team Magma Pokémon, draw 1 more card."
+        }
+      }
+    },
+    {
+      "id": "dc1-31",
+      "localId": "31",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/31"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Great Ball",
+          "effect": "Search your deck for a Basic Team Magma Pokémon and a basic {F} Energy card, reveal them, and put them into your hand. Shuffle your deck afterward."
+        }
+      }
+    },
+    {
+      "id": "dc1-32",
+      "localId": "32",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/32"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Secret Base",
+          "effect": "Whenever any player puts a Basic Pokémon (except for Team Magma Pokémon) from his or her hand onto his or her Bench, put 2 damage counters on that Pokémon."
+        }
+      }
+    },
+    {
+      "id": "dc1-33",
+      "localId": "33",
+      "category": "Energy",
+      "energyType": "Special",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/33"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Double Aqua Energy",
+          "effect": "This card can only be attached to Team Aqua Pokémon. Discard this card at the end of the turn you attached it.\n\nThis card provides {W}{W} Energy only while it is attached to a Team Aqua Pokémon.\n\n(If this card is attached to anything other than a Team Aqua Pokémon, discard this card.)"
+        }
+      }
+    },
+    {
+      "id": "dc1-34",
+      "localId": "34",
+      "category": "Energy",
+      "energyType": "Special",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/xy/dc1/34"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Double Magma Energy",
+          "effect": "This card can only be attached to Team Magma Pokémon. Discard this card at the end of the turn you attached it.\n\nThis card provides {F}{F} Energy only while it is attached to a Team Magma Pokémon.\n\n(If this card is attached to anything other than a Team Magma Pokémon, discard this card.)"
+        }
+      }
+    }
+  ]
+}
