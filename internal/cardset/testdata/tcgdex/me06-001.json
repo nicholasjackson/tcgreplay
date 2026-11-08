@@ -1,0 +1,38 @@
+{
+  "category": "Pokemon",
+  "id": "me06-001",
+  "localId": "001",
+  "name": "Heracross",
+  "hp": 130,
+  "types": [
+    "Grass"
+  ],
+  "stage": "Basic",
+  "attacks": [
+    {
+      "cost": [
+        "Grass"
+      ],
+      "name": "Spike Draw",
+      "effect": "Draw 2 cards.",
+      "damage": 20
+    },
+    {
+      "cost": [
+        "Grass",
+        "Grass",
+        "Colorless"
+      ],
+      "name": "High Horsepower",
+      "effect": "This Pokémon also does 30 damage to itself.",
+      "damage": 130
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fire",
+      "value": "×2"
+    }
+  ],
+  "retreat": 3
+}

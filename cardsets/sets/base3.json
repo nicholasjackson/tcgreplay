@@ -1,0 +1,3330 @@
+{
+  "format": 1,
+  "set": {
+    "id": "base3",
+    "serie": "base",
+    "releaseDate": "1999-10-10",
+    "abbreviation": "FO",
+    "tcgOnline": "FO",
+    "text": {
+      "en": {
+        "name": "Fossil"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "base3-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/1"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Aerodactyl",
+          "attacks": [
+            {
+              "name": "Wing Attack"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Prehistoric Power",
+              "effect": "No more Evolution cards can be played. This power stops working while Aerodactyl is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water",
+            "Water"
+          ],
+          "damage": "50"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/2"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Articuno",
+          "attacks": [
+            {
+              "name": "Freeze Dry",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            },
+            {
+              "name": "Blizzard",
+              "effect": "Flip a coin. If heads, this attack does 10 damage to each of your opponent's Benched Pokémon. If tails, this attack does 10 damage to each of your own Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/3"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ditto",
+          "abilities": [
+            {
+              "name": "Transform",
+              "effect": "If Ditto is your Active Pokémon, treat it as if it were the same card as the Defending Pokémon, including type, Hit Points, Weakness, and so on, except Ditto can't evolve, always has this Pokémon Power, and you may treat any Energy attached to Ditto as Energy of any type. Ditto isn't a copy of any other Pokémon while Ditto is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40x"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/4"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragonite",
+          "evolveFrom": "Dragonair",
+          "attacks": [
+            {
+              "name": "Slam",
+              "effect": "Flip 2 coins. This attack does 40 damage times the number of heads."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Step In",
+              "effect": "Once during your turn (before you attack) if Dragonite is on your Bench, you may switch it with your Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/5"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gengar",
+          "evolveFrom": "Haunter",
+          "attacks": [
+            {
+              "name": "Dark Mind",
+              "effect": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Curse",
+              "effect": "Once during your turn (before your attack), you may move 1 damage counter from 1 of your opponent's Pokémon to another (even if it would Knock Out the other Pokémon). This power can't be used if Gengar is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "10"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/6"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Haunter",
+          "evolveFrom": "Gastly",
+          "attacks": [
+            {
+              "name": "Nightmare",
+              "effect": "The Defending Pokémon is now Asleep."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Transparency",
+              "effect": "Whenever an attack does anything to Haunter, flip a coin. If heads, prevent all effects of that attack, including damage, done to Haunter. This power stops working while Haunter is Asleep."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/7"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hitmonlee",
+          "attacks": [
+            {
+              "name": "Stretch Kick",
+              "effect": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 20 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "High Jump Kick"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-8",
+      "localId": "8",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/8"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hypno",
+          "evolveFrom": "Drowzee",
+          "attacks": [
+            {
+              "name": "Prophecy",
+              "effect": "Look at up to 3 cards from the top of either player's deck and rearrange them as you like."
+            },
+            {
+              "name": "Dark Mind",
+              "effect": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-9",
+      "localId": "9",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/9"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kabutops",
+          "evolveFrom": "Kabuto",
+          "attacks": [
+            {
+              "name": "Sharp Sickle"
+            },
+            {
+              "name": "Absorb",
+              "effect": "Remove a number of damage counters from Kabutops equal to half the damage done to Defending Pokémon (after applying Weakness and Resistance) (rounded up to the nearest 10). If Kabutops has fewer damage counters than that, remove all of them."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-10",
+      "localId": "10",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10+"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/10"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lapras",
+          "attacks": [
+            {
+              "name": "Water Gun",
+              "effect": "Does 10 damage plus 10 more damage for each Energy attached to Lapras but not used to pay for this attack's Energy cost. You can't add more than 20 damage this way."
+            },
+            {
+              "name": "Confuse Ray",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-11",
+      "localId": "11",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/11"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magneton",
+          "evolveFrom": "Magnemite",
+          "attacks": [
+            {
+              "name": "Sonicboom",
+              "effect": "Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            },
+            {
+              "name": "Selfdestruct",
+              "effect": "Does 20 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Magneton does 100 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-12",
+      "localId": "12",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Fire"
+          ],
+          "damage": "80"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/12"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Moltres",
+          "attacks": [
+            {
+              "name": "Wildfire",
+              "effect": "You may discard any number of R Energy cards attached to Moltres when you use this attack. If you do, discard that many cards from the top of your opponent's deck."
+            },
+            {
+              "name": "Dive Bomb",
+              "effect": "Flip a coin. If tails, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-13",
+      "localId": "13",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Grass"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/13"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Muk",
+          "evolveFrom": "Grimer",
+          "attacks": [
+            {
+              "name": "Sludge",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Toxic Gas",
+              "effect": "Ignore all Pokémon Powers other than Toxic Gases. This power stops working while Muk is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-14",
+      "localId": "14",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/14"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Raichu",
+          "evolveFrom": "Pikachu",
+          "attacks": [
+            {
+              "name": "Gigashock",
+              "effect": "Choose 3 of your opponent's Benched Pokémon and this attack does 10 damage to each of them. (Don't apply Weakness and Resistance for Benched Pokémon.) If your opponent has fewer than 3 Benched Pokémon, do the damage to each of them."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-15",
+      "localId": "15",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "40"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/15"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zapdos",
+          "attacks": [
+            {
+              "name": "Thunderstorm",
+              "effect": "For each of your opponent's Benched Pokémon, flip a coin. If heads, this attack does 20 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Then, Zapdos does 10 damage times the number of tails to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-16",
+      "localId": "16",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/16"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Aerodactyl",
+          "attacks": [
+            {
+              "name": "Wing Attack"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Prehistoric Power",
+              "effect": "No more Evolution cards can be played. This power stops working while Aerodactyl is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-17",
+      "localId": "17",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water",
+            "Water"
+          ],
+          "damage": "50"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/17"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Articuno",
+          "attacks": [
+            {
+              "name": "Freeze Dry",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            },
+            {
+              "name": "Blizzard",
+              "effect": "Flip a coin. If heads, this attack does 10 damage to each of your opponent's Benched Pokémon. If tails, this attack does 10 damage to each of your own Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-18",
+      "localId": "18",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/18"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ditto",
+          "abilities": [
+            {
+              "name": "Transform",
+              "effect": "If Ditto is your Active Pokémon, treat it as if it were the same card as the Defending Pokémon, including type, Hit Points, Weakness, and so on, except Ditto can't evolve, always has this Pokémon Power, and you may treat any Energy attached to Ditto as Energy of any type. Ditto isn't a copy of any other Pokémon while Ditto is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-19",
+      "localId": "19",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40x"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/19"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragonite",
+          "evolveFrom": "Dragonair",
+          "attacks": [
+            {
+              "name": "Slam",
+              "effect": "Flip 2 coins. This attack does 40 damage times the number of heads."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Step In",
+              "effect": "Once during your turn (before you attack) if Dragonite is on your Bench, you may switch it with your Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-20",
+      "localId": "20",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/20"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gengar",
+          "evolveFrom": "Haunter",
+          "attacks": [
+            {
+              "name": "Dark Mind",
+              "effect": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Curse",
+              "effect": "Once during your turn (before your attack), you may move 1 damage counter from 1 of your opponent's Pokémon to another (even if it would Knock Out the other Pokémon). This power can't be used if Gengar is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-21",
+      "localId": "21",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "10"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/21"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Haunter",
+          "evolveFrom": "Gastly",
+          "attacks": [
+            {
+              "name": "Nightmare",
+              "effect": "The Defending Pokémon is now Asleep."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Transparency",
+              "effect": "Whenever an attack does anything to Haunter, flip a coin. If heads, prevent all effects of that attack, including damage, done to Haunter. This power stops working while Haunter is Asleep."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-22",
+      "localId": "22",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/22"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hitmonlee",
+          "attacks": [
+            {
+              "name": "Stretch Kick",
+              "effect": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 20 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "High Jump Kick"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-23",
+      "localId": "23",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/23"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hypno",
+          "evolveFrom": "Drowzee",
+          "attacks": [
+            {
+              "name": "Prophecy",
+              "effect": "Look at up to 3 cards from the top of either player's deck and rearrange them as you like."
+            },
+            {
+              "name": "Dark Mind",
+              "effect": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-24",
+      "localId": "24",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/24"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kabutops",
+          "evolveFrom": "Kabuto",
+          "attacks": [
+            {
+              "name": "Sharp Sickle"
+            },
+            {
+              "name": "Absorb",
+              "effect": "Remove a number of damage counters from Kabutops equal to half the damage done to Defending Pokémon (after applying Weakness and Resistance) (rounded up to the nearest 10). If Kabutops has fewer damage counters than that, remove all of them."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-25",
+      "localId": "25",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10+"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/25"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lapras",
+          "attacks": [
+            {
+              "name": "Water Gun",
+              "effect": "Does 10 damage plus 10 more damage for each Energy attached to Lapras but not used to pay for this attack's Energy cost. You can't add more than 20 damage this way."
+            },
+            {
+              "name": "Confuse Ray",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-26",
+      "localId": "26",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/26"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magneton",
+          "evolveFrom": "Magnemite",
+          "attacks": [
+            {
+              "name": "Sonicboom",
+              "effect": "Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            },
+            {
+              "name": "Selfdestruct",
+              "effect": "Does 20 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Magneton does 100 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-27",
+      "localId": "27",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Fire"
+          ],
+          "damage": "80"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/27"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Moltres",
+          "attacks": [
+            {
+              "name": "Wildfire",
+              "effect": "You may discard any number of R Energy cards attached to Moltres when you use this attack. If you do, discard that many cards from the top of your opponent's deck."
+            },
+            {
+              "name": "Dive Bomb",
+              "effect": "Flip a coin. If tails, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-28",
+      "localId": "28",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Grass"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/28"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Muk",
+          "evolveFrom": "Grimer",
+          "attacks": [
+            {
+              "name": "Sludge",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Toxic Gas",
+              "effect": "Ignore all Pokémon Powers other than Toxic Gases. This power stops working while Muk is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-29",
+      "localId": "29",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/29"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Raichu",
+          "evolveFrom": "Pikachu",
+          "attacks": [
+            {
+              "name": "Gigashock",
+              "effect": "Choose 3 of your opponent's Benched Pokémon and this attack does 10 damage to each of them. (Don't apply Weakness and Resistance for Benched Pokémon.) If your opponent has fewer than 3 Benched Pokémon, do the damage to each of them."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-30",
+      "localId": "30",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "40"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/30"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zapdos",
+          "attacks": [
+            {
+              "name": "Thunderstorm",
+              "effect": "For each of your opponent's Benched Pokémon, flip a coin. If heads, this attack does 20 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Then, Zapdos does 10 damage times the number of tails to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-31",
+      "localId": "31",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/31"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Arbok",
+          "evolveFrom": "Ekans",
+          "attacks": [
+            {
+              "name": "Terror Strike",
+              "effect": "Flip a coin. If heads and if your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. (Do the damage before switching the Pokémon.)"
+            },
+            {
+              "name": "Poison Fang",
+              "effect": "The Defending Pokémon is now Poisoned."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-32",
+      "localId": "32",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "30x"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/32"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cloyster",
+          "evolveFrom": "Shellder",
+          "attacks": [
+            {
+              "name": "Clamp",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, this attack does nothing (not even damage)."
+            },
+            {
+              "name": "Spike Cannon",
+              "effect": "Flip 2 coins. This attack does 30 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-33",
+      "localId": "33",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ]
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/33"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gastly",
+          "attacks": [
+            {
+              "name": "Lick",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            },
+            {
+              "name": "Energy Conversion",
+              "effect": "Put up to 2 Energy cards from your discard pile into your hand. Gastly does 10 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-34",
+      "localId": "34",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/34"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Golbat",
+          "evolveFrom": "Zubat",
+          "attacks": [
+            {
+              "name": "Wing Attack"
+            },
+            {
+              "name": "Leech Life",
+              "effect": "Remove a number of damage counters from Golbat equal to the damage done to the Defending Pokémon (after applying Weakness and Resistance). If Golbat has fewer damage counters than that, remove all of them."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-35",
+      "localId": "35",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/35"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Golduck",
+          "evolveFrom": "Psyduck",
+          "attacks": [
+            {
+              "name": "Psyshock",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            },
+            {
+              "name": "Hyper Beam",
+              "effect": "If the Defending Pokémon has any Energy cards attached to it, choose 1 of them and discard it."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-36",
+      "localId": "36",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "60"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 4,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/36"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Golem",
+          "evolveFrom": "Graveler",
+          "attacks": [
+            {
+              "name": "Avalanche"
+            },
+            {
+              "name": "Selfdestruct",
+              "effect": "Does 20 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Golem does 100 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-37",
+      "localId": "37",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/37"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Graveler",
+          "evolveFrom": "Geodude",
+          "attacks": [
+            {
+              "name": "Harden",
+              "effect": "During your opponent's next turn, whenever 30 or less damage is done to Graveler (after applying Weakness and Resistance), prevent that damage. (Any other effects of attacks still happen.)"
+            },
+            {
+              "name": "Rock Throw"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-38",
+      "localId": "38",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10x"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/38"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kingler",
+          "evolveFrom": "Krabby",
+          "attacks": [
+            {
+              "name": "Flail",
+              "effect": "Does 10 damage times the number of damage counters on Kingler."
+            },
+            {
+              "name": "Crabhammer"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-39",
+      "localId": "39",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/39"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magmar",
+          "evolveFrom": "Magby",
+          "attacks": [
+            {
+              "name": "Smokescreen",
+              "effect": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            },
+            {
+              "name": "Smog",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-40",
+      "localId": "40",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "30x"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/40"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Omastar",
+          "evolveFrom": "Omanyte",
+          "attacks": [
+            {
+              "name": "Water Gun",
+              "effect": "Does 20 damage plus 10 more damage for each Energy attached to Omastar but not used to pay for this attack's Energy cost. You can't add more than 20 damage in this way."
+            },
+            {
+              "name": "Spike Cannon",
+              "effect": "Flip 2 coins. This attack does 30 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-41",
+      "localId": "41",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "20x"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Lightning",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/41"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sandslash",
+          "evolveFrom": "Sandshrew",
+          "attacks": [
+            {
+              "name": "Slash"
+            },
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 20 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-42",
+      "localId": "42",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/42"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Seadra",
+          "evolveFrom": "Horsea",
+          "attacks": [
+            {
+              "name": "Water Gun",
+              "effect": "Does 20 damage plus 10 more damage for each Energy attached to Seadra but not used to pay for this attack's Energy cost. You can't add more than 20 damage in this way."
+            },
+            {
+              "name": "Agility",
+              "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Seadra."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-43",
+      "localId": "43",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/43"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Slowbro",
+          "evolveFrom": "Slowpoke",
+          "attacks": [
+            {
+              "name": "Psyshock",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Strange Behavior",
+              "effect": "As often as you like during your turn (before your attack), you may move 1 damage counter from 1 of your Pokémon to Slowbro as long as you don't Knock Out Slowbro. This power can't be used if Slowbro is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-44",
+      "localId": "44",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/44"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tentacruel",
+          "evolveFrom": "Tentacool",
+          "attacks": [
+            {
+              "name": "Supersonic",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            },
+            {
+              "name": "Jellyfish Sting",
+              "effect": "The Defending Pokémon is now Poisoned."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-45",
+      "localId": "45",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/45"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Weezing",
+          "evolveFrom": "Koffing",
+          "attacks": [
+            {
+              "name": "Smog",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            },
+            {
+              "name": "Selfdestruct",
+              "effect": "Does 10 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Weezing does 60 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-46",
+      "localId": "46",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Grass"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/46"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ekans",
+          "attacks": [
+            {
+              "name": "Spit Poison",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            },
+            {
+              "name": "Wrap",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-47",
+      "localId": "47",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "10x"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/47"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Geodude",
+          "attacks": [
+            {
+              "name": "Stone Barrage",
+              "effect": "Flip a coin until you get tails. This attack does 10 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-48",
+      "localId": "48",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Grass"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/48"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Grimer",
+          "attacks": [
+            {
+              "name": "Nasty Goo",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            },
+            {
+              "name": "Minimize",
+              "effect": "All damage done by attacks to Grimer during your opponent's next turn is reduced by 20 (after applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-49",
+      "localId": "49",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/49"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Horsea",
+          "attacks": [
+            {
+              "name": "Smokescreen",
+              "effect": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-50",
+      "localId": "50",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/50"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kabuto",
+          "attacks": [
+            {
+              "name": "Scratch"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Kabuto Armor",
+              "effect": "Whenever an attack (even your own) does damage to Kabuto (after applying Weakness and Resistance), that attack only does half the damage to Kabuto (rounded down to nearest 10). (Any other effects of attacks still happen.) This power stops working while Kabuto is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-51",
+      "localId": "51",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/51"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Krabby",
+          "attacks": [
+            {
+              "name": "Call for Family",
+              "effect": "Search your deck for a Basic Pokémon named Krabby and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench is full.)"
+            },
+            {
+              "name": "Irongrip"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-52",
+      "localId": "52",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/52"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Omanyte",
+          "attacks": [
+            {
+              "name": "Water Gun",
+              "effect": "Does 10 damage plus 10 more damage for each Energy attached to Omanyte but not used to pay for this attack's Energy cost. You can't add more than 20 damage in this way."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Clairvoyance",
+              "effect": "Your opponent plays with his or her hand face up. This power stops working while Omanyte is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-53",
+      "localId": "53",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10x"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/53"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Psyduck",
+          "attacks": [
+            {
+              "name": "Headache",
+              "effect": "Your opponent can't play Trainer cards during his or her next turn."
+            },
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 10 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-54",
+      "localId": "54",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Water"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/54"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Shellder",
+          "attacks": [
+            {
+              "name": "Supersonic",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            },
+            {
+              "name": "Hide in Shell",
+              "effect": "Flip a coin. If heads, prevent all damage done to Shellder during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-55",
+      "localId": "55",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/55"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Slowpoke",
+          "attacks": [
+            {
+              "name": "Spacing Out",
+              "effect": "Flip a coin. If heads, remove a damage counter from Slowpoke. This attack can't be used if Slowpoke has no damage counters on it."
+            },
+            {
+              "name": "Scavenge",
+              "effect": "Discard 1 Energy card attached to Slowpoke in order to use this attack. Put a Trainer card from your discard pile into your hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-56",
+      "localId": "56",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/56"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tentacool",
+          "attacks": [
+            {
+              "name": "Acid"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Cowardice",
+              "effect": "At any time during your turn (before your attack), you may return Tentacool to your hand. (Discard all cards attached to Tentacool.) This power can't be used the turn you put Tentacool into play or if Tentacool is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-57",
+      "localId": "57",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/57"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zubat",
+          "attacks": [
+            {
+              "name": "Supersonic",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            },
+            {
+              "name": "Leech Life",
+              "effect": "Remove a number of damage counters from Zubat equal to the damage done to the Defending Pokémon (after applying Weakness and Resistance). If Zubat has fewer damage counters than that, remove all of them."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "base3-58",
+      "localId": "58",
+      "category": "Trainer",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/58"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mr. Fuji",
+          "effect": "Choose a Pokémon on your Bench. Shuffle it and any cards attached to it into your deck."
+        }
+      }
+    },
+    {
+      "id": "base3-59",
+      "localId": "59",
+      "category": "Trainer",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/59"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Energy Search",
+          "effect": "Search your deck for a basic Energy card and put it into your hand. Shuffle your deck afterward."
+        }
+      }
+    },
+    {
+      "id": "base3-60",
+      "localId": "60",
+      "category": "Trainer",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/60"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gambler",
+          "effect": "Shuffle your hand into your deck. Flip a coin. If heads, draw 8 cards. If tails, draw 1 card."
+        }
+      }
+    },
+    {
+      "id": "base3-61",
+      "localId": "61",
+      "category": "Trainer",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/61"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Recycle",
+          "effect": "Flip a coin. If heads, put a card in your discard pile on top of your deck."
+        }
+      }
+    },
+    {
+      "id": "base3-62",
+      "localId": "62",
+      "category": "Trainer",
+      "hp": 10,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/base/base3/62"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mysterious Fossil",
+          "effect": "Play Mysterious Fossil as if it were a Basic Pokémon. While in play, Mysterious Fossil counts as a Pokémon (instead of a Trainer card). Mysterious Fossil has no attacks, can't retreat, and can't be Asleep, Confused, Paralyzed, or Poisoned. If Mysterious Fossil is Knocked Out, it doesn't count as a Knocked Out Pokémon. (Discard it anyway.) At any time during your turn before your attack, you may discard Mysterious Fossil from play."
+        }
+      }
+    }
+  ]
+}

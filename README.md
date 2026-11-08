@@ -39,6 +39,22 @@ fails the build.
 
 `.mcp.json` points Claude Code at the dev build as `tcgreplay-dev`.
 
+### Card sets
+
+Card data is built ahead of time into `cardsets/`, one readable JSON file per
+English set with its hand corrections and import report, from TCGdex and the
+malie.io TCG Live export:
+
+```sh
+bin/tcgreplay sets import DLR   # import or re-import a set (id or decklist code); -all for every set
+bin/tcgreplay sets check        # check every built set; exits 1 on any open item
+```
+
+To have the assistant verify a set against the printed cards, ask it to import
+the set: its `card-set-import` skill works through the report and records
+corrections. See [cardsets/README.md](cardsets/README.md) for the format, the
+report kinds and how to record a correction or an acknowledgement.
+
 The hosted playmat runs the same binary with `-hosted` in a container
 (`make docker-build`, `make docker-run`; deployed from `.do/app.yaml`). It adds
 Google sign-in, per-account games, rate limits and, optionally, a DigitalOcean

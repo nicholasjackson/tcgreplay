@@ -1,0 +1,910 @@
+{
+  "format": 1,
+  "set": {
+    "id": "tk-xy-p",
+    "serie": "tk",
+    "releaseDate": "2016-04-27",
+    "abbreviation": "TK9P",
+    "text": {
+      "en": {
+        "name": "XY trainer Kit (Pikachu Libre)"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "tk-xy-p-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Glameow"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-2",
+      "localId": "2",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-3",
+      "localId": "3",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "90"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Electivire",
+          "evolveFrom": "Electabuzz",
+          "attacks": [
+            {
+              "name": "Knuckle Punch"
+            },
+            {
+              "name": "Electroslug"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-5",
+      "localId": "5",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-6",
+      "localId": "6",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "damage": "10×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Taillow",
+          "attacks": [
+            {
+              "name": "Double Peck",
+              "effect": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-8",
+      "localId": "8",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-9",
+      "localId": "9",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-10",
+      "localId": "10",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-11",
+      "localId": "11",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Electrike",
+          "attacks": [
+            {
+              "name": "Bite"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-12",
+      "localId": "12",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Blitzle"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-13",
+      "localId": "13",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {},
+        {
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Manectric",
+          "evolveFrom": "Electrike",
+          "attacks": [
+            {
+              "name": "Random Spark",
+              "effect": "This attack does 30 damage to 1 of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Bite"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-14",
+      "localId": "14",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "damage": "10+"
+        },
+        {
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu Libre",
+          "attacks": [
+            {
+              "name": "Quick Attack",
+              "effect": "Flip a coin. If heads, this attack does 30 more damage."
+            },
+            {
+              "name": "Flying Elekick"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-15",
+      "localId": "15",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Electabuzz"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-16",
+      "localId": "16",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fletchling",
+          "attacks": [
+            {
+              "name": "Acrobatics",
+              "effect": "Flip 2 coins. This attack does 10 more damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-17",
+      "localId": "17",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-18",
+      "localId": "18",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-19",
+      "localId": "19",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Purugly",
+          "evolveFrom": "Glameow",
+          "attacks": [
+            {
+              "name": "Slash"
+            },
+            {
+              "name": "Nyan Press",
+              "effect": "Flip a coin. If heads, this attack does 40 more damage. If tails, your opponent's Active Pokémon is now Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-20",
+      "localId": "20",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tierno",
+          "effect": "Draw 3 cards."
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-21",
+      "localId": "21",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Potion",
+          "effect": "Heal 30 damage from 1 of your Pokémon."
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-22",
+      "localId": "22",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {},
+        {
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Manectric",
+          "evolveFrom": "Electrike",
+          "attacks": [
+            {
+              "name": "Random Spark",
+              "effect": "This attack does 30 damage to 1 of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Bite"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-23",
+      "localId": "23",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Electabuzz"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-24",
+      "localId": "24",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Purugly",
+          "evolveFrom": "Glameow",
+          "attacks": [
+            {
+              "name": "Slash"
+            },
+            {
+              "name": "Nyan Press",
+              "effect": "Flip a coin. If heads, this attack does 40 more damage. If tails, your opponent's Active Pokémon is now Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-25",
+      "localId": "25",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "90"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Electivire",
+          "evolveFrom": "Electabuzz",
+          "attacks": [
+            {
+              "name": "Knuckle Punch"
+            },
+            {
+              "name": "Electroslug"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-26",
+      "localId": "26",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Blitzle"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-27",
+      "localId": "27",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Glameow"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-28",
+      "localId": "28",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Electrike",
+          "attacks": [
+            {
+              "name": "Bite"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-29",
+      "localId": "29",
+      "category": "Energy",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    },
+    {
+      "id": "tk-xy-p-30",
+      "localId": "30",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "damage": "10+"
+        },
+        {
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu Libre",
+          "attacks": [
+            {
+              "name": "Quick Attack",
+              "effect": "Flip a coin. If heads, this attack does 30 more damage."
+            },
+            {
+              "name": "Flying Elekick"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

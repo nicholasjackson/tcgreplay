@@ -1,0 +1,1240 @@
+{
+  "format": 1,
+  "set": {
+    "id": "cel25cc",
+    "serie": "swsh",
+    "releaseDate": "2021-10-08",
+    "abbreviation": "CEL:CC",
+    "tcgOnline": "CEL",
+    "text": {
+      "en": {
+        "name": "Celebrations Classic Collection"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "cel25cc-CC001",
+      "localId": "CC001",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water"
+          ],
+          "damage": "40+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": ""
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Blastoise",
+          "evolveFrom": "Wartortle",
+          "attacks": [
+            {
+              "name": "Hydro Pump",
+              "effect": "Does 40 damage plus 10 more damage for each Water Energy attached to Blastoise but not used to pay for this attack's Energy cost. Extra Water Energy after the 2nd doesn't count."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Rain Dance",
+              "effect": "As often as you like during your turn (before your attack), you may attach 1 Water Energy card to 1 of your Water Pokémon. (This doesn't use up your 1 Energy card attachment for the turn.) This power can't be used if Blastoise is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC002",
+      "localId": "CC002",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Fire"
+          ],
+          "damage": "100"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": ""
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charizard",
+          "evolveFrom": "Charmeleon",
+          "attacks": [
+            {
+              "name": "Fire Spin",
+              "effect": "Discard 2 Energy cards attached to Charizard in order to use this attack."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Energy Burn",
+              "effect": "As often as you like during your turn (before your attack), you may turn all Energy attached to Charizard into Fire Energy for the rest of the turn. This power can't be used if Charizard is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC003",
+      "localId": "CC003",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Grass",
+            "Grass"
+          ],
+          "damage": "60"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": ""
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Venusaur",
+          "evolveFrom": "Ivysaur",
+          "attacks": [
+            {
+              "name": "Solarbeam"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Energy Trans",
+              "effect": "As often as you like during your turn (before your attack), you may take 1 Grass Energy card attached to 1 of your Pokémon and attach it to a different one. This power can't be used if Venusaur is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC004",
+      "localId": "CC004",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Imposter Professor Oak",
+          "effect": "Your opponent shuffles his or her hand into his or her deck, then draws 7 cards."
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC005",
+      "localId": "CC005",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Pokemon Power"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": ""
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dark Gyarados",
+          "evolveFrom": "Magikarp",
+          "attacks": [
+            {
+              "name": "Ice Beam",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Final Beam",
+              "effect": "When Dark Gyarados is Knocked Out by an attack, flip a coin. If heads, this power does 20 damage for each Water Energy attached to Dark Gyarados to the Pokémon that Knocked Out Dark Gyarados. Apply Weakness and Resistance. This power doesn't work if Dark Gyarados is Asleep, Confused, or Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC006",
+      "localId": "CC006",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Here Comes Team Rocket!",
+          "effect": "Each player plays with his or her Prize cards face up for the rest of the game."
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC007",
+      "localId": "CC007",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Rocket's Zapdos",
+          "attacks": [
+            {
+              "name": "Plasma",
+              "effect": "If there are any Lightning Energy cards in your discard pile, attach 1 of them to Rocket's Zapdos."
+            },
+            {
+              "name": "Electroburn",
+              "effect": "Rocket's Zapdos does damage to itself equal to 10 times the number of Lightning Energy cards attached to it."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC008",
+      "localId": "CC008",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning"
+          ],
+          "damage": "30+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "_____'s Pikachu",
+          "attacks": [
+            {
+              "name": "Birthday Surprise",
+              "effect": "If it's not your birthday, this attack does 30 damage. If it is your birthday, flip a coin. If heads, this attack does 30 damage plus 50 more damage; if tails, this attack does 30 damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC009",
+      "localId": "CC009",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cleffa",
+          "attacks": [
+            {
+              "name": "Eeeeeeek",
+              "effect": "Shuffle your hand into your deck, then draw 7 cards."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC010",
+      "localId": "CC010",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Shining Magikarp",
+          "attacks": [
+            {
+              "name": "Gold Scale",
+              "effect": "Your opponent may draw 2 cards. Either way, you may draw 2 cards."
+            },
+            {
+              "name": "Dragon Bond",
+              "effect": "Search your deck for a card named Gyarados, Dark Gyarados, or Shining Gyarados. Show it to your opponent and put it into your hand. Shuffle your deck afterward."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC011",
+      "localId": "CC011",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "50+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-BODY"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": ""
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Team Magma's Groudon",
+          "attacks": [
+            {
+              "name": "Linear Attack",
+              "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Pulverize",
+              "effect": "If the Defending Pokémon already has at least 2 damage counters on it, this attack does 50 damage plus 20 more damage."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Power Saver",
+              "effect": "As long as the number of Pokémon in play (both yours and your opponent's) that has Team Magma in its name is 3 or less, Team Magma's Groudon can't attack."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC012",
+      "localId": "CC012",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Rocket's Admin.",
+          "effect": "Each player shuffles his or her hand into his or her deck. Then, each player counts his or her Prize cards left and draws up to that many cards. (You draw your cards first.)"
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC013",
+      "localId": "CC013",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-BODY"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mew ex",
+          "attacks": [
+            {
+              "name": "Power Move",
+              "effect": "Search your deck for an Energy card and attach it to Mew ex. Shuffle your deck afterward. Then, you may switch Mew ex with 1 of your Benched Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Versatile",
+              "effect": "Mew ex can use the attacks of all Pokémon in play as its own. (You still need the necessary Energy to use each attack.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC014",
+      "localId": "CC014",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": ""
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gardevoir ex",
+          "evolveFrom": "Kirlia",
+          "attacks": [
+            {
+              "name": "Flame Ball",
+              "effect": "You may move a Fire Energy card attached to Gardevoir ex to 1 of your Benched Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Imprison",
+              "effect": "Once during your turn (before your attack), if Gardevoir ex is your Active Pokémon, you may put an Imprison marker on 1 of your opponent's Pokémon. Any Pokémon that has any Imprison markers on it can't use any Poké-Powers or Poké-Bodies. This power can't be used if Gardevoir ex is affected by a Special Condition."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC015",
+      "localId": "CC015",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Umbreon ☆",
+          "attacks": [
+            {
+              "name": "Feint Attack",
+              "effect": "Choose 1 of your opponent's Pokémon. This attack does 30 damage to that Pokémon. This attack's damage isn't affected by Weakness, Resistance, Poké-Powers, Poké-Bodies, or any other effects on that Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Dark Ray",
+              "effect": "Once during your turn, when you put Umbreon ☆ from your hand onto your Bench, you may choose 1 card from your opponent's hand without looking and discard it."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC016",
+      "localId": "CC016",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "+20"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Claydol",
+          "evolveFrom": "Baltoy",
+          "attacks": [
+            {
+              "name": "Spinning Attack"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Cosmic Power",
+              "effect": "Once during your turn (before your attack), you may choose up to 2 cards from your hand and put them on the bottom of your deck in any order. If you do, draw cards until you have 6 cards in your hand. This power can't be used if Claydol is affected by a Special Condition."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC017",
+      "localId": "CC017",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "LEVEL-UP",
+      "suffix": "SP",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Luxray GL LV.X",
+          "attacks": [
+            {
+              "name": "Flash Impact",
+              "effect": "Does 30 damage to 1 of your Pokémon, and don't apply Weakness and Resistance to this damage."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Bright Look",
+              "effect": "Once during your turn (before your attack), when you put Luxray GL LV.X from your hand onto your Active Luxray GL, you may switch the Defending Pokémon with 1 of your opponent's Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC018",
+      "localId": "CC018",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "LEVEL-UP",
+      "suffix": "SP",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Colorless",
+          "value": "×2"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Garchomp C LV.X",
+          "attacks": [
+            {
+              "name": "Dragon Rush",
+              "effect": "Discard 2 Energy attached to Garchomp C. Choose 1 of your opponent's Pokémon. This attack does 80 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Garchomp C can't use Dragon Rush during your next turn."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Healing Breath",
+              "effect": "Once during your turn (before your attack), when you put Garchomp C LV.X from your hand onto your Active Garchomp C, you may remove all damage counters from each of your Pokémon SP."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC019",
+      "localId": "CC019",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "suffix": "Prime",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "60"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "90"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-BODY"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Lightning",
+          "value": "-20"
+        }
+      ],
+      "retreat": 4,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Donphan",
+          "evolveFrom": "Phanpy",
+          "attacks": [
+            {
+              "name": "Earthquake",
+              "effect": "Does 10 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Heavy Impact"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Exoskeleton",
+              "effect": "Any damage done to Donphan by attacks is reduced by 20 (after applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC020",
+      "localId": "CC020",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Reshiram",
+          "attacks": [
+            {
+              "name": "Outrage",
+              "effect": "Does 10 more damage for each damage counter on this Pokémon."
+            },
+            {
+              "name": "Blue Flare",
+              "effect": "Discard 2 Fire Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC021",
+      "localId": "CC021",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zekrom",
+          "attacks": [
+            {
+              "name": "Outrage",
+              "effect": "Does 10 more damage for each damage counter on this Pokémon."
+            },
+            {
+              "name": "Bolt Strike",
+              "effect": "This Pokémon does 40 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC022",
+      "localId": "CC022",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20×"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mewtwo EX",
+          "attacks": [
+            {
+              "name": "X Ball",
+              "effect": "Does 20 damage times the amount of Energy attached to this Pokémon and the Defending Pokémon."
+            },
+            {
+              "name": "Psydrive",
+              "effect": "Discard an Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC023",
+      "localId": "CC023",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Fairy"
+      ],
+      "stage": "Basic",
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60"
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Fairy",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "140"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Darkness",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Xerneas EX",
+          "attacks": [
+            {
+              "name": "Break Through",
+              "effect": "This attack does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "X Blast",
+              "effect": "This Pokémon can't use X Blast during your next turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC024",
+      "localId": "CC024",
+      "category": "Pokemon",
+      "hp": 220,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "MEGA",
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30×"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ancient Trait"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "M Rayquaza EX",
+          "attacks": [
+            {
+              "name": "Emerald Break",
+              "effect": "This attack does 30 damage times the number of your Benched Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Δ Evolution",
+              "effect": "You may play this card from your hand to evolve a Pokémon during your first turn or the turn you play that Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cel25cc-CC025",
+      "localId": "CC025",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20×"
+        },
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tapu Lele GX",
+          "attacks": [
+            {
+              "name": "Energy Drive",
+              "effect": "This attack does 20 damage times the amount of Energy attached to both Active Pokémon. This damage isn't affected by Weakness or Resistance."
+            },
+            {
+              "name": "Tapu Cure GX",
+              "effect": "Heal all damage from 2 of your Benched Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Wonder Tag",
+              "effect": "When you play this Pokémon from your hand onto your Bench during your turn, you may search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,245 @@
+{
+  "format": 1,
+  "set": {
+    "id": "xya",
+    "serie": "xy",
+    "releaseDate": "2014-02-05",
+    "text": {
+      "en": {
+        "name": "Yellow A Alternate"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "xya-107a",
+      "localId": "107a",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Professor Sycamore",
+          "effect": "Discard your hand and draw 7 cards."
+        }
+      }
+    },
+    {
+      "id": "xya-24a",
+      "localId": "24a",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "MEGA",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "110"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "M Manectric-EX",
+          "evolveFrom": "Manectric-ex",
+          "attacks": [
+            {
+              "name": "Turbo Bolt",
+              "effect": "Attach 2 basic Energy cards from your discard pile to 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "xya-28a",
+      "localId": "28a",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Lightning"
+      ],
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ],
+          "damage": "30"
+        },
+        {
+          "damage": "{L}{C}{C}"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Jolteon-EX",
+          "attacks": [
+            {
+              "name": "Swift",
+              "effect": "This attack’s damage isn’t affected by Weakness, Resistance, or any other effects on your opponent’s Active Pokémon."
+            },
+            {
+              "name": "Flash Ray",
+              "effect": "During your opponent’s next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "xya-54a",
+      "localId": "54a",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Fighting"
+      ],
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "60"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zygarde-EX",
+          "attacks": [
+            {
+              "name": "Land’s Pulse",
+              "effect": "If there is any Stadium card in play, this attack does 20 more damage."
+            },
+            {
+              "name": "Cell Storm",
+              "effect": "Heal 30 damage from this Pokémon."
+            },
+            {
+              "name": "Land's Wrath"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "xya-55a",
+      "localId": "55a",
+      "category": "Pokemon",
+      "hp": 220,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "MEGA",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "140"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "M Lucario-EX",
+          "evolveFrom": "Lucario-ex",
+          "attacks": [
+            {
+              "name": "Rising Fist",
+              "effect": "Discard an Energy attached to your opponent’s Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "xya-92a",
+      "localId": "92a",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Trainers’ Mail",
+          "effect": "Look at the top 4 cards of your deck. You may reveal a Trainer card you find there (except for Trainers’ Mail) and put it into your hand. Shuffle the other cards back into your deck."
+        }
+      }
+    }
+  ]
+}

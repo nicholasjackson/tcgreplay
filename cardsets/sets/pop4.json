@@ -1,0 +1,877 @@
+{
+  "format": 1,
+  "set": {
+    "id": "pop4",
+    "serie": "pop",
+    "releaseDate": "2006-08-01",
+    "abbreviation": "P4",
+    "text": {
+      "en": {
+        "name": "POP Series 4"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "pop4-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/1"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Chimecho δ",
+          "attacks": [
+            {
+              "name": "Wrap",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            },
+            {
+              "name": "Sonicboom",
+              "effect": "This attack's damage isn't affected by Weakness or Resistance."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/2"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Deoxys δ",
+          "attacks": [
+            {
+              "name": "Crystal Laser",
+              "effect": "During your next turn, Deoxys's attacks do 40 more damage to the Defending Pokémon (before applying Weakness and Resistance)."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Form Change",
+              "effect": "Once during your turn (before your attack), you may search your deck for another Deoxys and switch it with Deoxys. (Any cards attached to Deoxys, damage counters, Special Conditions, and effects on it are now on the new Pokémon.) If you do, put Deoxys on top of your deck. Shuffle your deck afterward. You can't use more than 1 Form Change Poké-Power each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-BODY"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/3"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Flygon",
+          "evolveFrom": "Vibrava",
+          "attacks": [
+            {
+              "name": "Bite"
+            },
+            {
+              "name": "Sand Pit",
+              "effect": "The Defending Pokémon can't retreat during your opponent's next turn."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Levitate",
+              "effect": "As long as Flygon has any Energy attached to it, the Retreat Cost for Flygon is 0."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-BODY"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/4"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mew",
+          "attacks": [
+            {
+              "name": "Psyshock",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Reactive Barrier",
+              "effect": "As long as Mew has any React Energy cards attached to it, prevent all effects, excluding damage, done to Mew by attacks from your opponent's Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50×"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Water",
+          "value": "-30"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/5"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sceptile",
+          "evolveFrom": "Grovyle",
+          "attacks": [
+            {
+              "name": "Tail Rap",
+              "effect": "Flip 2 coins. This attack does 50 damage times the number of heads."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Energy Trans",
+              "effect": "As often as you like during your turn (before your attack), move a Grass Energy card attached to 1 of your Pokémon to another of your Pokémon. This power can't be used if Sceptile is affected by a Special Condition."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/6"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Combusken",
+          "evolveFrom": "Torchic",
+          "attacks": [
+            {
+              "name": "Smokescreen",
+              "effect": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            },
+            {
+              "name": "Sky Uppercut",
+              "effect": "This attack's damage isn't affected by Resistance."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10+"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Water",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/7"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Grovyle",
+          "evolveFrom": "Treecko",
+          "attacks": [
+            {
+              "name": "Quick Attack",
+              "effect": "Flip a coin. If heads, this attack does 10 damage plus 10 more damage."
+            },
+            {
+              "name": "Blot",
+              "effect": "Remove 2 damage counters from Grovyle."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-8",
+      "localId": "8",
+      "category": "Energy",
+      "energyType": "Special",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/8"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Heal Energy",
+          "effect": "Heal Energy provides Colorless Energy. When you attach this card from your hand to 1 of your Pokémon, remove 1 damage counter and all Special Conditions from that Pokémon. If Heal Energy is attached to Pokémon-ex, Heal Energy has no effect other than providing Energy."
+        }
+      }
+    },
+    {
+      "id": "pop4-9",
+      "localId": "9",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/9"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pokémon Fan Club",
+          "effect": "You can play only one Supporter card each turn. When you play this card, put it next to your Active Pokémon. When your turn ends, discard this card. Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Shuffle your deck afterward."
+        }
+      }
+    },
+    {
+      "id": "pop4-10",
+      "localId": "10",
+      "category": "Energy",
+      "energyType": "Special",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/10"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Scramble Energy",
+          "effect": "Scramble Energy can be attached only to an Evolved Pokémon (excluding Pokémon-ex). Scramble Energy provides Colorless Energy. While in play, if you have more Prize cards left than your opponent, Scramble Energy provides every type of Energy but provides only 3 in any combination at a time. If the Pokémon Scramble Energy is attached to isn’t an Evolved Pokémon (or evolves into Pokémon-ex), discard Scramble Energy."
+        }
+      }
+    },
+    {
+      "id": "pop4-11",
+      "localId": "11",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/11"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mudkip",
+          "attacks": [
+            {
+              "name": "Super Hypno Wave",
+              "effect": "The Defending Pokémon is now Asleep."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-12",
+      "localId": "12",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/12"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pidgey",
+          "attacks": [
+            {
+              "name": "Quick Attack",
+              "effect": "Flip a coin. If heads, this attack does 20 damage plus 10 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-13",
+      "localId": "13",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/13"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu",
+          "attacks": [
+            {
+              "name": "Spark",
+              "effect": "Does 10 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-14",
+      "localId": "14",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-BODY"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/14"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Squirtle",
+          "attacks": [
+            {
+              "name": "Tackle"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Shell Retreat",
+              "effect": "As long as Squirtle has any Energy cards attached to it, damage done to Squirtle by an opponent's attack is reduced by 10 (after applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-15",
+      "localId": "15",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "x2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Water",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/15"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Treecko δ",
+          "attacks": [
+            {
+              "name": "Pound"
+            },
+            {
+              "name": "Shining Claws",
+              "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-16",
+      "localId": "16",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/16"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Wobbuffet",
+          "attacks": [
+            {
+              "name": "Nap",
+              "effect": "Remove 2 damage counters from Wobbuffet."
+            },
+            {
+              "name": "Expand",
+              "effect": "During your opponent's next turn, any damage done to Wobbuffet is reduced by 20 (after applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "pop4-17",
+      "localId": "17",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "suffix": "EX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/pop/pop4/17"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Deoxys ex",
+          "attacks": [
+            {
+              "name": "Fastwave",
+              "effect": "This attack's damage isn't affected by Resistance, Poké-Powers, Poké-Bodies, or any other effects on the Defending Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Form Change",
+              "effect": "Once during your turn (before your attack), you may search your deck for another Deoxys ex and switch it with Deoxys ex. (Any cards attached to Deoxys ex, damage counters, Special Conditions, and effects on it are now on the new Pokémon.) If you do, put Deoxys ex on top of your deck. Shuffle your deck afterward. You can't use more than 1 Form Change Poké-Power each turn."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

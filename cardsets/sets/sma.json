@@ -1,0 +1,5460 @@
+{
+  "format": 1,
+  "set": {
+    "id": "sma",
+    "serie": "sm",
+    "releaseDate": "2019-08-23",
+    "text": {
+      "en": {
+        "name": "Hidden Fates Shiny Vault"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "sma-SV1",
+      "localId": "SV1",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV1"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Scyther",
+          "attacks": [
+            {
+              "name": "Twin Play",
+              "effect": "Search your deck for up to 2 Scyther and put them onto your Bench. Then, shuffle your deck."
+            },
+            {
+              "name": "Agility",
+              "effect": "Flip a coin. If heads, prevent all effects of attacks, including damage, done to this Pokémon during your opponent's next turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV10",
+      "localId": "SV10",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV10"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Quagsire",
+          "evolveFrom": "Wooper",
+          "attacks": [
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 20 more damage times the amount of Water Energy attached to this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Wash Out",
+              "effect": "As often as you like during your turn (before your attack), you may move a Water Energy from 1 of your Benched Pokémon to your Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV11",
+      "localId": "SV11",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV11"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Froakie",
+          "attacks": [
+            {
+              "name": "Flop"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Frubbles",
+              "effect": "If this Pokémon has any Water Energy attached to it, it has no Retreat Cost."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV12",
+      "localId": "SV12",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV12"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Frogadier",
+          "evolveFrom": "Froakie",
+          "attacks": [
+            {
+              "name": "Water Drip"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Gale Shuriken",
+              "effect": "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may put 2 damage counters on 1 of your opponent's Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV13",
+      "localId": "SV13",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV13"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Voltorb",
+          "attacks": [
+            {
+              "name": "Thunder Shock",
+              "effect": "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Floating Electrons",
+              "effect": "If this Pokémon has any Energy attached to it, it has no Retreat Cost."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV14",
+      "localId": "SV14",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV14"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Xurkitree",
+          "attacks": [
+            {
+              "name": "Dazzle Blast",
+              "effect": "Your opponent's Active Pokémon is now Confused."
+            },
+            {
+              "name": "Cablegram",
+              "effect": "If you have exactly 3 Prize cards remaining, your opponent's Active Pokémon is now Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV15",
+      "localId": "SV15",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV15"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Seviper",
+          "attacks": [
+            {
+              "name": "Venomous Fang",
+              "effect": "Your opponent's Active Pokémon is now Poisoned."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "More Poison",
+              "effect": "Put 1 more damage counter on your opponent's Poisoned Pokémon between turns."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV16",
+      "localId": "SV16",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV16"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Shuppet",
+          "attacks": [
+            {
+              "name": "Headbutt"
+            },
+            {
+              "name": "Will-O-Wisp"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV17",
+      "localId": "SV17",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV17"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Inkay",
+          "attacks": [
+            {
+              "name": "Hypnosis",
+              "effect": "Your opponent's Active Pokémon is now Asleep."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV18",
+      "localId": "SV18",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV18"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Malamar",
+          "evolveFrom": "Inkay",
+          "attacks": [
+            {
+              "name": "Psychic Sphere"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Psychic Recharge",
+              "effect": "Once during your turn (before your attack), you may attach a Psychic Energy card from your discard pile to 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV19",
+      "localId": "SV19",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV19"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Poipole",
+          "attacks": [
+            {
+              "name": "Spit Poison",
+              "effect": "Your opponent's Active Pokémon is now Poisoned."
+            },
+            {
+              "name": "Knockout Reviver",
+              "effect": "During your opponent's next turn, if this Pokémon is Knocked Out, your opponent can't take any Prize cards for it."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV2",
+      "localId": "SV2",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV2"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Rowlet",
+          "attacks": [
+            {
+              "name": "Tackle"
+            },
+            {
+              "name": "Leafage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV20",
+      "localId": "SV20",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV20"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sudowoodo",
+          "attacks": [
+            {
+              "name": "Rock Throw"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Roadblock",
+              "effect": "Your opponent can't have more than 4 Benched Pokémon. If they have 5 or more Benched Pokémon, they discard Benched Pokémon until they have 4 Pokémon on the Bench. If more than one effect changes the number of Benched Pokémon allowed, use the smaller number."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV21",
+      "localId": "SV21",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV21"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Riolu",
+          "attacks": [
+            {
+              "name": "Detect",
+              "effect": "Flip a coin. If heads, prevent all effects of attacks, including damage, done to this Pokémon during your opponent's next turn."
+            },
+            {
+              "name": "Jab"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV22",
+      "localId": "SV22",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV22"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lucario",
+          "evolveFrom": "Riolu",
+          "attacks": [
+            {
+              "name": "Missile Jab",
+              "effect": "This attack's damage isn't affected by Resistance."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Precognitive Aura",
+              "effect": "Once during your turn (before your attack), if you have Garchomp in play, you may search your deck for a card and put it into your hand. Then, shuffle your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV23",
+      "localId": "SV23",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV23"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Rockruff",
+          "attacks": [
+            {
+              "name": "Surprise Attack",
+              "effect": "Flip a coin. If tails, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV24",
+      "localId": "SV24",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV24"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Buzzwole",
+          "attacks": [
+            {
+              "name": "Sledgehammer",
+              "effect": "If your opponent has exactly 4 Prize cards remaining, this attack does 90 more damage."
+            },
+            {
+              "name": "Swing Around",
+              "effect": "Flip 2 coins. This attack does 20 more damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV25",
+      "localId": "SV25",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV25"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zorua",
+          "attacks": [
+            {
+              "name": "Stampede"
+            },
+            {
+              "name": "Ram"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV26",
+      "localId": "SV26",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "160"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 4,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV26"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Guzzlord",
+          "attacks": [
+            {
+              "name": "Lord's Valley",
+              "effect": "If you have exactly 2, 4, or 6 Prize cards remaining, discard the top 10 cards of your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV27",
+      "localId": "SV27",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Metal"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV27"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magnemite",
+          "attacks": [
+            {
+              "name": "Searching Magnet",
+              "effect": "Search your deck for up to 3 Metal Energy cards, reveal them, and put them into your hand. Then, shuffle your deck."
+            },
+            {
+              "name": "Tackle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV28",
+      "localId": "SV28",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Metal"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV28"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magneton",
+          "evolveFrom": "Magnemite",
+          "attacks": [
+            {
+              "name": "Ram"
+            },
+            {
+              "name": "Zap Cannon",
+              "effect": "This Pokémon can't use Zap Cannon during your next turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV29",
+      "localId": "SV29",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "130"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV29"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magnezone",
+          "evolveFrom": "Magneton",
+          "attacks": [
+            {
+              "name": "Zap Cannon",
+              "effect": "This Pokémon can't use Zap Cannon during your next turn."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Magnetic Circuit",
+              "effect": "As often as you like during your turn (before your attack), you may attach a Metal Energy card from your hand to 1 of your Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV3",
+      "localId": "SV3",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV3"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dartrix",
+          "evolveFrom": "Rowlet",
+          "attacks": [
+            {
+              "name": "Sharp Blade Quill",
+              "effect": "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Leaf Blade",
+              "effect": "Flip a coin. If heads, this attack does 20 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV30",
+      "localId": "SV30",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Metal"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV30"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Beldum",
+          "attacks": [
+            {
+              "name": "Core Beam",
+              "effect": "Discard a Metal Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV31",
+      "localId": "SV31",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV31"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Metang",
+          "evolveFrom": "Beldum",
+          "attacks": [
+            {
+              "name": "Ram"
+            },
+            {
+              "name": "Core Beam",
+              "effect": "Discard a Metal Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV32",
+      "localId": "SV32",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Colorless",
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "160"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 4,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV32"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Celesteela",
+          "attacks": [
+            {
+              "name": "Moon Raker",
+              "effect": "If the total of both players' remaining Prize cards is exactly 6, this attack can be used for Metal."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV33",
+      "localId": "SV33",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Metal"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV33"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kartana",
+          "attacks": [
+            {
+              "name": "Divine Paper",
+              "effect": "If your opponent has exactly 6 Prize cards remaining, this attack does 90 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV34",
+      "localId": "SV34",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fairy"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Darkness",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV34"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ralts",
+          "attacks": [
+            {
+              "name": "Draining Kiss",
+              "effect": "Heal 10 damage from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV35",
+      "localId": "SV35",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fairy"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Darkness",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV35"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kirlia",
+          "evolveFrom": "Ralts",
+          "attacks": [
+            {
+              "name": "Smack"
+            },
+            {
+              "name": "Magical Shot"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV36",
+      "localId": "SV36",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Fairy"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy"
+          ]
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Darkness",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV36"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Diancie",
+          "attacks": [
+            {
+              "name": "Sparkling Wish",
+              "effect": "Search your deck for a card that evolves from 1 of your Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck."
+            },
+            {
+              "name": "Diamond Storm",
+              "effect": "Heal 30 damage from each of your Fairy Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV37",
+      "localId": "SV37",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV37"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Altaria",
+          "evolveFrom": "Swablu",
+          "attacks": [
+            {
+              "name": "Pierce"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Fight Song",
+              "effect": "Your Dragon Pokémon's attacks do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV38",
+      "localId": "SV38",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV38"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gible",
+          "attacks": [
+            {
+              "name": "Ascension",
+              "effect": "Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV39",
+      "localId": "SV39",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV39"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gabite",
+          "evolveFrom": "Gible",
+          "attacks": [
+            {
+              "name": "Ascension",
+              "effect": "Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon to evolve it. Then, shuffle your deck."
+            },
+            {
+              "name": "Slash"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV4",
+      "localId": "SV4",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV4"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Wimpod",
+          "attacks": [
+            {
+              "name": "Gnaw"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Wimp Out",
+              "effect": "During your first turn, this Pokémon has no Retreat Cost."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV40",
+      "localId": "SV40",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV40"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Garchomp",
+          "evolveFrom": "Gabite",
+          "attacks": [
+            {
+              "name": "Quick Dive",
+              "effect": "This attack does 50 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Royal Blades",
+              "effect": "If you played Cynthia from your hand during this turn, this attack does 100 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV41",
+      "localId": "SV41",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV41"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Eevee",
+          "attacks": [
+            {
+              "name": "Quick Draw",
+              "effect": "Flip a coin. If heads, draw a card."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Energy Evolution",
+              "effect": "When you attach a basic Energy card from your hand to this Pokémon during your turn, you may search your deck for a card that evolves from this Pokémon that is the same type as that Energy card and put it onto this Pokémon to evolve it. Then, shuffle your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV42",
+      "localId": "SV42",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV42"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Swablu",
+          "attacks": [
+            {
+              "name": "Collect",
+              "effect": "Draw a card."
+            },
+            {
+              "name": "Peck"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV43",
+      "localId": "SV43",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV43"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Noibat",
+          "attacks": [
+            {
+              "name": "Agility",
+              "effect": "Flip a coin. If heads, prevent all effects of attacks, including damage, done to this Pokémon during your opponent's next turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV44",
+      "localId": "SV44",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV44"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Oranguru",
+          "attacks": [
+            {
+              "name": "Psychic",
+              "effect": "This attack does 20 more damage times the amount of Energy attached to your opponent's Active Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Instruct",
+              "effect": "Once during your turn (before your attack), you may draw cards until you have 3 cards in your hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV45",
+      "localId": "SV45",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV45"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Type: Null",
+          "attacks": [
+            {
+              "name": "Armor Press",
+              "effect": "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)."
+            },
+            {
+              "name": "Slashing Claw"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV46",
+      "localId": "SV46",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Grass"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Grass"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV46"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Leafeon-GX",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Solar Beam"
+            },
+            {
+              "name": "Grand Bloom-GX",
+              "effect": "For each of your Benched Basic Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Breath of the Leaves",
+              "effect": "If this Pokémon is your Active Pokémon, once during your turn (before your attack), you may heal 50 damage from 1 of your Pokémon that has any Energy attached to it."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV47",
+      "localId": "SV47",
+      "category": "Pokemon",
+      "hp": 240,
+      "types": [
+        "Grass"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "90"
+        },
+        {
+          "cost": [
+            "Grass"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV47"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Decidueye-GX",
+          "evolveFrom": "Dartrix",
+          "attacks": [
+            {
+              "name": "Razor Leaf"
+            },
+            {
+              "name": "Hollow Hunt-GX",
+              "effect": "Put 3 cards from your discard pile into your hand. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Feather Arrow",
+              "effect": "Once during your turn (before your attack), you may put 2 damage counters on 1 of your opponent's Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV48",
+      "localId": "SV48",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Grass"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "150"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV48"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Golisopod-GX",
+          "evolveFrom": "Wimpod",
+          "attacks": [
+            {
+              "name": "First Impression",
+              "effect": "If this Pokémon was on the Bench and became your Active Pokémon this turn, this attack does 90 more damage."
+            },
+            {
+              "name": "Armor Press",
+              "effect": "During your opponent's next turn, this Pokémon takes 20 less damage from attacks (after applying Weakness and Resistance)."
+            },
+            {
+              "name": "Crossing Cut-GX",
+              "effect": "Switch this Pokémon with 1 of your Benched Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV49",
+      "localId": "SV49",
+      "category": "Pokemon",
+      "hp": 250,
+      "types": [
+        "Fire"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "300"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV49"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charizard-GX",
+          "evolveFrom": "Charmeleon",
+          "attacks": [
+            {
+              "name": "Wing Attack"
+            },
+            {
+              "name": "Crimson Storm",
+              "effect": "Discard 3 Fire Energy from this Pokémon."
+            },
+            {
+              "name": "Raging Out-GX",
+              "effect": "Discard the top 10 cards of your opponent's deck. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV5",
+      "localId": "SV5",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "90"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV5"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pheromosa",
+          "attacks": [
+            {
+              "name": "High Jump Kick"
+            },
+            {
+              "name": "White Ray",
+              "effect": "If you have only 1 Prize card remaining, this attack does 90 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV50",
+      "localId": "SV50",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Fire"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "180"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV50"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ho-Oh-GX",
+          "attacks": [
+            {
+              "name": "Sacred Fire",
+              "effect": "This attack does 50 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Phoenix Burn",
+              "effect": "This Pokémon can't use Phoenix Burn during your next turn."
+            },
+            {
+              "name": "Eternal Flame-GX",
+              "effect": "Put 3 in any combination of Fire Pokémon-GX or Fire Pokémon-EX from your discard pile onto your Bench. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV51",
+      "localId": "SV51",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Fire"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "180"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV51"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Reshiram-GX",
+          "attacks": [
+            {
+              "name": "Flame Charge",
+              "effect": "Search your deck for up to 2 Fire Energy cards and attach them to this Pokémon. Then, shuffle your deck."
+            },
+            {
+              "name": "Scorching Column",
+              "effect": "Your opponent's Active Pokémon is now Burned."
+            },
+            {
+              "name": "Vermilion-GX",
+              "effect": "You may attach up to 5 Fire Energy cards from your hand to your Pokémon in any way you like. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV52",
+      "localId": "SV52",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Fire"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "160"
+        },
+        {
+          "cost": [
+            "Fire"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV52"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Turtonator-GX",
+          "attacks": [
+            {
+              "name": "Shell Trap",
+              "effect": "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 8 damage counters on the Attacking Pokémon."
+            },
+            {
+              "name": "Bright Flame",
+              "effect": "Discard 2 Fire Energy from this Pokémon."
+            },
+            {
+              "name": "Nitro Tank-GX",
+              "effect": "Attach 5 Fire Energy cards from your discard pile to your Pokémon in any way you like. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV53",
+      "localId": "SV53",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Water"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "160"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV53"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Alolan Ninetales-GX",
+          "evolveFrom": "Alolan Vulpix",
+          "attacks": [
+            {
+              "name": "Ice Blade",
+              "effect": "This attack does 50 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Blizzard Edge",
+              "effect": "Discard 2 Energy from this Pokémon."
+            },
+            {
+              "name": "Ice Path-GX",
+              "effect": "Move all damage counters from this Pokémon to your opponent's Active Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV54",
+      "localId": "SV54",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Water"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "130"
+        },
+        {
+          "cost": [
+            "Water"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV54"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Articuno-GX",
+          "attacks": [
+            {
+              "name": "Ice Wing"
+            },
+            {
+              "name": "Cold Crush-GX",
+              "effect": "Discard all Energy from both Active Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Legendary Ascent",
+              "effect": "When you play this Pokémon from your hand onto your Bench during your turn, you may switch it with your Active Pokémon. If you do, move any number of Water Energy from your other Pokémon to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV55",
+      "localId": "SV55",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Water"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "90"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV55"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Glaceon-GX",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Frost Bullet",
+              "effect": "This attack does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Polar Spear-GX",
+              "effect": "This attack does 50 damage for each damage counter on your opponent's Active Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Freezing Gaze",
+              "effect": "As long as this Pokémon is your Active Pokémon, your opponent's Pokémon-GX and Pokémon-EX in play, in their hand, and in their discard pile have no Abilities, except for Freezing Gaze."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV56",
+      "localId": "SV56",
+      "category": "Pokemon",
+      "hp": 230,
+      "types": [
+        "Water"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV56"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Greninja-GX",
+          "evolveFrom": "Frogadier",
+          "attacks": [
+            {
+              "name": "Haze Slash",
+              "effect": "You may shuffle this Pokémon and all cards attached to it into your deck."
+            },
+            {
+              "name": "Shadowy Hunter-GX",
+              "effect": "This attack does 130 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Shuriken Flurry",
+              "effect": "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may put 3 damage counters on 1 of your opponent's Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV57",
+      "localId": "SV57",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Lightning"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV57"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Electrode-GX",
+          "evolveFrom": "Voltorb",
+          "attacks": [
+            {
+              "name": "Electro Ball"
+            },
+            {
+              "name": "Crush and Burn-GX",
+              "effect": "Discard any amount of Energy from your Pokémon. This attack does 50 more damage for each card you discarded in this way. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Extra Energy Bomb",
+              "effect": "Once during your turn (before your attack), you may attach 5 Energy cards from your discard pile to your Pokémon, except Pokémon-GX or Pokémon-EX, in any way you like. If you do, this Pokémon is Knocked Out."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV58",
+      "localId": "SV58",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Lightning"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "100"
+        },
+        {
+          "cost": [
+            "Lightning"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV58"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Xurkitree-GX",
+          "attacks": [
+            {
+              "name": "Rumbling Wires",
+              "effect": "Discard the top card of your opponent's deck."
+            },
+            {
+              "name": "Lighting-GX",
+              "effect": "Your opponent reveals their hand. Add a card you find there to their Prize cards face down. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Flashing Head",
+              "effect": "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon that have any Special Energy attached to them."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV59",
+      "localId": "SV59",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Psychic"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "60"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "200"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV59"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mewtwo-GX",
+          "attacks": [
+            {
+              "name": "Full Burst",
+              "effect": "This attack does 30 damage times the amount of Energy attached to this Pokémon."
+            },
+            {
+              "name": "Super Absorption",
+              "effect": "Heal 30 damage from this Pokémon."
+            },
+            {
+              "name": "Psystrike-GX",
+              "effect": "This attack's damage isn't affected by any effects on your opponent's Active Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV6",
+      "localId": "SV6",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV6"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charmander",
+          "attacks": [
+            {
+              "name": "Fire Fang",
+              "effect": "Your opponent's Active Pokémon is now Burned."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV60",
+      "localId": "SV60",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Psychic"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV60"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Espeon-GX",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Psybeam",
+              "effect": "Your opponent's Active Pokémon is now Confused."
+            },
+            {
+              "name": "Psychic",
+              "effect": "This attack does 30 more damage times the amount of Energy attached to your opponent's Active Pokémon."
+            },
+            {
+              "name": "Divide-GX",
+              "effect": "Put 10 damage counters on your opponent's Pokémon in any way you like. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV61",
+      "localId": "SV61",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Psychic"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV61"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Banette-GX",
+          "evolveFrom": "Shuppet",
+          "attacks": [
+            {
+              "name": "Shadow Chant",
+              "effect": "This attack does 10 more damage for each Supporter card in your discard pile. You can't add more than 100 damage in this way."
+            },
+            {
+              "name": "Tomb Hunt-GX",
+              "effect": "Put 3 cards from your discard pile into your hand. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Shady Move",
+              "effect": "Once during your turn (before your attack), if this Pokémon is your Active Pokémon, you may move 1 damage counter from 1 Pokémon to another Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV62",
+      "localId": "SV62",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Psychic"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "120"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV62"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Nihilego-GX",
+          "attacks": [
+            {
+              "name": "Lock Up",
+              "effect": "The Defending Pokémon can't retreat during your opponent's next turn."
+            },
+            {
+              "name": "Symbiont-GX",
+              "effect": "Add the top 2 cards of your opponent's deck to their Prize cards. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Empty Light",
+              "effect": "When you play this Pokémon from your hand onto your Bench during your turn, you may leave both Active Pokémon Confused and Poisoned."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV63",
+      "localId": "SV63",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Psychic"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV63"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Naganadel-GX",
+          "evolveFrom": "Poipole",
+          "attacks": [
+            {
+              "name": "Beast Raid",
+              "effect": "This attack does 20 damage for each of your Ultra Beasts in play."
+            },
+            {
+              "name": "Jet Needle",
+              "effect": "This attack's damage isn't affected by Weakness or Resistance."
+            },
+            {
+              "name": "Stinger-GX",
+              "effect": "Both players shuffle their Prize cards into their decks. Then, each player puts the top 3 cards of their deck face down as their Prize cards. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV64",
+      "localId": "SV64",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Fighting"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "130"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV64"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lucario-GX",
+          "evolveFrom": "Riolu",
+          "attacks": [
+            {
+              "name": "Aura Strike",
+              "effect": "If this Pokémon evolved from Riolu during this turn, this attack does 90 more damage."
+            },
+            {
+              "name": "Cyclone Kick"
+            },
+            {
+              "name": "Cantankerous Beatdown-GX",
+              "effect": "This attack does 30 damage for each damage counter on this Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV65",
+      "localId": "SV65",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Fighting"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "130"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "150"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV65"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zygarde-GX",
+          "attacks": [
+            {
+              "name": "Cell Connector",
+              "effect": "Attach 2 Fighting Energy cards from your discard pile to this Pokémon."
+            },
+            {
+              "name": "Land's Wrath"
+            },
+            {
+              "name": "Verdict-GX",
+              "effect": "Prevent all damage done to this Pokémon by attacks from Pokémon-GX and Pokémon-EX during your opponent's next turn. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV66",
+      "localId": "SV66",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Fighting"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV66"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lycanroc-GX",
+          "evolveFrom": "Rockruff",
+          "attacks": [
+            {
+              "name": "Claw Slash"
+            },
+            {
+              "name": "Dangerous Rogue-GX",
+              "effect": "This attack does 50 damage for each of your opponent's Benched Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Bloodthirsty Eyes",
+              "effect": "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may switch 1 of your opponent's Benched Pokémon with their Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV67",
+      "localId": "SV67",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Fighting"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "120"
+        },
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV67"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lycanroc-GX",
+          "evolveFrom": "Rockruff",
+          "attacks": [
+            {
+              "name": "Accelerock"
+            },
+            {
+              "name": "Splintered Shards-GX",
+              "effect": "This attack does 30 damage for each Energy card in your opponent's discard pile. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Twilight Eyes",
+              "effect": "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may discard an Energy attached to your opponent's Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV68",
+      "localId": "SV68",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Fighting"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "160"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV68"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Buzzwole-GX",
+          "attacks": [
+            {
+              "name": "Jet Punch",
+              "effect": "This attack does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Knuckle Impact",
+              "effect": "This Pokémon can't attack during your next turn."
+            },
+            {
+              "name": "Absorption-GX",
+              "effect": "This attack does 40 damage for each of your remaining Prize cards. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV69",
+      "localId": "SV69",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Darkness"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "90"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV69"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Umbreon-GX",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Strafe",
+              "effect": "You may switch this Pokémon with 1 of your Benched Pokémon."
+            },
+            {
+              "name": "Shadow Bullet",
+              "effect": "This attack does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Dark Call-GX",
+              "effect": "Discard 2 Energy from your opponent's Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV7",
+      "localId": "SV7",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV7"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charmeleon",
+          "evolveFrom": "Charmander",
+          "attacks": [
+            {
+              "name": "Flamethrower",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Burning Fighter",
+              "effect": "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may discard the top 5 cards of your deck. If any of those cards are Fire Energy cards, attach them to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV70",
+      "localId": "SV70",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Darkness"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "130"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV70"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Darkrai-GX",
+          "attacks": [
+            {
+              "name": "Dark Cleave",
+              "effect": "This attack's damage isn't affected by Resistance."
+            },
+            {
+              "name": "Dead End-GX",
+              "effect": "If your opponent's Active Pokémon is affected by a Special Condition, that Pokémon is Knocked Out. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Restoration",
+              "effect": "Once during your turn (before your attack), if this Pokémon is in your discard pile, you may put it onto your Bench. Then, attach a Darkness Energy card from your discard pile to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV71",
+      "localId": "SV71",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Darkness"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Darkness",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "180"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Darkness",
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 4,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV71"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Guzzlord-GX",
+          "attacks": [
+            {
+              "name": "Eat Sloppily",
+              "effect": "Discard the top 5 cards of your deck. If any of those cards are Energy cards, attach them to this Pokémon."
+            },
+            {
+              "name": "Tyrannical Hole"
+            },
+            {
+              "name": "Glutton-GX",
+              "effect": "If your opponent's Pokémon is Knocked Out by damage from this attack, take 2 more Prize cards. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV72",
+      "localId": "SV72",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Metal"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "80"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV72"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Scizor-GX",
+          "evolveFrom": "Scyther",
+          "attacks": [
+            {
+              "name": "Steel Wing",
+              "effect": "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)."
+            },
+            {
+              "name": "Cross-Cut-GX",
+              "effect": "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 100 more damage. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Danger Perception",
+              "effect": "If this Pokémon's remaining HP is 100 or less, its attacks do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV73",
+      "localId": "SV73",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Metal"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        },
+        {
+          "cost": [
+            "Metal"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV73"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kartana-GX",
+          "attacks": [
+            {
+              "name": "Gale Blade",
+              "effect": "You may shuffle this Pokémon and all cards attached to it into your deck."
+            },
+            {
+              "name": "Blade-GX",
+              "effect": "Take a Prize card. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Slice Off",
+              "effect": "When you play this Pokémon from your hand onto your Bench during your turn, you may discard a Special Energy from 1 of your opponent's Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV74",
+      "localId": "SV74",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Metal"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "120"
+        },
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV74"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Stakataka-GX",
+          "attacks": [
+            {
+              "name": "Gigaton Stomp"
+            },
+            {
+              "name": "Assembly-GX",
+              "effect": "This attack does 50 more damage for each Prize card you have taken. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Ultra Wall",
+              "effect": "Your Ultra Beasts take 10 less damage from your opponent's attacks (after applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV75",
+      "localId": "SV75",
+      "category": "Pokemon",
+      "hp": 230,
+      "types": [
+        "Fairy"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fairy"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Darkness",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV75"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gardevoir-GX",
+          "evolveFrom": "Kirlia",
+          "attacks": [
+            {
+              "name": "Infinite Force",
+              "effect": "This attack does 30 damage times the amount of Energy attached to both Active Pokémon."
+            },
+            {
+              "name": "Twilight-GX",
+              "effect": "Shuffle 10 cards from your discard pile into your deck. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Secret Spring",
+              "effect": "Once during your turn (before your attack), you may attach a Fairy Energy card from your hand to 1 of your Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV76",
+      "localId": "SV76",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Fairy"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy"
+          ]
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Darkness",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV76"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sylveon-GX",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Magical Ribbon",
+              "effect": "Search your deck for up to 3 cards and put them into your hand. Then, shuffle your deck."
+            },
+            {
+              "name": "Fairy Wind"
+            },
+            {
+              "name": "Plea-GX",
+              "effect": "Put 2 of your opponent's Benched Pokémon and all cards attached to them into your opponent's hand. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV77",
+      "localId": "SV77",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Water",
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV77"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Altaria-GX",
+          "evolveFrom": "Swablu",
+          "attacks": [
+            {
+              "name": "Bright Tone",
+              "effect": "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon-GX and Pokémon-EX."
+            },
+            {
+              "name": "Sonic Edge",
+              "effect": "This attack's damage isn't affected by any effects on your opponent's Active Pokémon."
+            },
+            {
+              "name": "Euphoria-GX",
+              "effect": "Your opponent's Active Pokémon is now Asleep. Heal all damage from all of your Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV78",
+      "localId": "SV78",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "120"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Darkness",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV78"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Noivern-GX",
+          "evolveFrom": "Noibat",
+          "attacks": [
+            {
+              "name": "Distort",
+              "effect": "Your opponent can't play any Item cards from their hand during their next turn."
+            },
+            {
+              "name": "Sonic Volume",
+              "effect": "Your opponent can't play any Special Energy cards from their hand during their next turn."
+            },
+            {
+              "name": "Boomburst-GX",
+              "effect": "This attack does 50 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV79",
+      "localId": "SV79",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Colorless"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "120"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV79"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Silvally-GX",
+          "evolveFrom": "Type: Null",
+          "attacks": [
+            {
+              "name": "Turbo Drive",
+              "effect": "Attach a basic Energy card from your discard pile to 1 of your Benched Pokémon."
+            },
+            {
+              "name": "Rebel-GX",
+              "effect": "This attack does 50 damage for each of your opponent's Benched Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Gyro Unit",
+              "effect": "Your Basic Pokémon in play have no Retreat Cost."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV8",
+      "localId": "SV8",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {},
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV8"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Alolan Vulpix",
+          "attacks": [
+            {
+              "name": "Beacon",
+              "effect": "Search your deck for up to 2 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck."
+            },
+            {
+              "name": "Icy Snow"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV80",
+      "localId": "SV80",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Colorless"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "80"
+        },
+        {
+          "cost": [
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV80"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Drampa-GX",
+          "attacks": [
+            {
+              "name": "Righteous Edge",
+              "effect": "Discard a Special Energy from your opponent's Active Pokémon."
+            },
+            {
+              "name": "Berserk",
+              "effect": "If your Benched Pokémon have any damage counters on them, this attack does 70 more damage."
+            },
+            {
+              "name": "Big Wheel-GX",
+              "effect": "Shuffle your hand into your deck. Then, draw 10 cards. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV81",
+      "localId": "SV81",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV81"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Aether Foundation Employee",
+          "effect": "Put 3 Pokémon that have \"Alolan\" in their names from your discard pile into your hand. You may play only 1 Supporter card during your turn (before your attack)."
+        }
+      }
+    },
+    {
+      "id": "sma-SV82",
+      "localId": "SV82",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV82"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cynthia",
+          "effect": "Shuffle your hand into your deck. Then, draw 6 cards. You may play only 1 Supporter card during your turn (before your attack)."
+        }
+      }
+    },
+    {
+      "id": "sma-SV83",
+      "localId": "SV83",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV83"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fisherman",
+          "effect": "Put 4 basic Energy cards from your discard pile into your hand. You may play only 1 Supporter card during your turn (before your attack)."
+        }
+      }
+    },
+    {
+      "id": "sma-SV84",
+      "localId": "SV84",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV84"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Guzma",
+          "effect": "Switch 1 of your opponent's Benched Pokémon with their Active Pokémon. If you do, switch your Active Pokémon with 1 of your Benched Pokémon. You may play only 1 Supporter card during your turn (before your attack)."
+        }
+      }
+    },
+    {
+      "id": "sma-SV85",
+      "localId": "SV85",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV85"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hiker",
+          "effect": "Look at the top 5 cards of either player's deck and choose 1 of them. That player shuffles the other cards back into their deck. Then, put the card you chose on top of that deck. You may play only 1 Supporter card during your turn (before your attack)."
+        }
+      }
+    },
+    {
+      "id": "sma-SV86",
+      "localId": "SV86",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV86"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lady",
+          "effect": "Search your deck for up to 4 basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. You may play only 1 Supporter card during your turn (before your attack)."
+        }
+      }
+    },
+    {
+      "id": "sma-SV87",
+      "localId": "SV87",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV87"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Aether Paradise Conservation Area",
+          "effect": "Basic Grass and Basic Lightning Pokémon (both yours and your opponent's) take 30 less damage from the opponent's attacks (after applying Weakness and Resistance). This card stays in play when you play it. Discard this card if another Stadium card comes into play. If another card with the same name is in play, you can't play this card."
+        }
+      }
+    },
+    {
+      "id": "sma-SV88",
+      "localId": "SV88",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV88"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Brooklet Hill",
+          "effect": "Once during each player's turn, that player may search their deck for a Basic Water Pokémon or Basic Fighting Pokémon and, put it onto their Bench, and shuffle their deck. This card stays in play when you play it. Discard this card if another Stadium card comes into play. If another card with the same name is in play, you can't play this card."
+        }
+      }
+    },
+    {
+      "id": "sma-SV89",
+      "localId": "SV89",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV89"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Mt. Coronet",
+          "effect": "Once during each player's turn, that player may put 2 Metal Energy cards from their discard pile into their hand. This card stays in play when you play it. Discard this card if another Stadium card comes into play. If another card with the same name is in play, you can't play this card."
+        }
+      }
+    },
+    {
+      "id": "sma-SV9",
+      "localId": "SV9",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV9"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Wooper",
+          "attacks": [
+            {
+              "name": "Ram"
+            },
+            {
+              "name": "Rain Splash"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV90",
+      "localId": "SV90",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV90"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Shrine of Punishment",
+          "effect": "Between turns, put 1 damage counter on each Pokémon-GX and Pokémon-EX (both yours and your opponent's). This card stays in play when you play it. Discard this card if another Stadium card comes into play. If another card with the same name is in play, you can't play this card."
+        }
+      }
+    },
+    {
+      "id": "sma-SV91",
+      "localId": "SV91",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Grass"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "120"
+        },
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "150"
+        }
+      ],
+      "retreat": 3,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV91"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tapu Bulu-GX",
+          "attacks": [
+            {
+              "name": "Horn Attack"
+            },
+            {
+              "name": "Nature's Judgment",
+              "effect": "You may discard all Energy from this Pokémon. If you do, this attack does 60 more damage."
+            },
+            {
+              "name": "Tapu Wilderness-GX",
+              "effect": "Heal all damage from this Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV92",
+      "localId": "SV92",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Water"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Water"
+          ]
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV92"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tapu Fini-GX",
+          "attacks": [
+            {
+              "name": "Aqua Ring",
+              "effect": "You may switch this Pokémon with 1 of your Benched Pokémon."
+            },
+            {
+              "name": "Hydro Shot",
+              "effect": "Discard 2 Water Energy from this Pokémon. This attack does 120 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Tapu Storm-GX",
+              "effect": "Shuffle your opponent's Active Pokémon and all cards attached to it into their deck. If your opponent has no Benched Pokémon, this attack does nothing. (You can't use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV93",
+      "localId": "SV93",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Lightning"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "130"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 2,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV93"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tapu Koko-GX",
+          "attacks": [
+            {
+              "name": "Sky-High Claws"
+            },
+            {
+              "name": "Tapu Thunder-GX",
+              "effect": "This attack does 50 damage times the amount of Energy attached to all of your opponent's Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Aero Trail",
+              "effect": "When you play this Pokémon from your hand onto your Bench during your turn, you may move any number of Lightning Energy from your other Pokémon to this Pokémon. If you do, switch this Pokémon with your Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sma-SV94",
+      "localId": "SV94",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Psychic"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 1,
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sm/sma/SV94"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tapu Lele-GX",
+          "attacks": [
+            {
+              "name": "Energy Drive",
+              "effect": "This attack does 20 damage times the amount of Energy attached to both Active Pokémon. This damage isn't affected by Weakness or Resistance."
+            },
+            {
+              "name": "Tapu Cure-GX",
+              "effect": "Heal all damage from 2 of your Benched Pokémon. (You can't use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Wonder Tag",
+              "effect": "When you play this Pokémon from your hand onto your Bench during your turn, you may search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

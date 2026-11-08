@@ -1,0 +1,290 @@
+{
+  "corrections": [
+    {
+      "card": "30th-c-001",
+      "path": "/text/en/evolveFrom",
+      "value": "Charmeleon",
+      "reason": "No source has an image of this Classic Collection reprint; the original print (base4-4 and lc-3) evolves from Charmeleon"
+    },
+    {
+      "card": "30th-c-002",
+      "path": "/text/en/evolveFrom",
+      "value": "Skitty",
+      "reason": "No source has an image of this Classic Collection reprint; the original print (ex1-5) evolves from Skitty"
+    },
+    {
+      "card": "30th-c-003",
+      "path": "/text/en/evolveFrom",
+      "value": "Metang",
+      "reason": "No source has an image of this Classic Collection reprint; the original print (the Metagross line) evolves from Metang"
+    },
+    {
+      "card": "30th-c-006",
+      "path": "/text/en/evolveFrom",
+      "value": "Dark Pupitar",
+      "reason": "No source has an image of this Classic Collection reprint; the original print (ex7-19) evolves from Dark Pupitar"
+    },
+    {
+      "card": "30th-c-018",
+      "path": "/text/en/evolveFrom",
+      "value": "Haunter",
+      "reason": "No source has an image of this Classic Collection reprint; the original print (hgss4-94) evolves from Haunter"
+    },
+    {
+      "card": "30th-c-002",
+      "path": "/abilities",
+      "value": [
+        {
+          "type": "Poke-POWER"
+        }
+      ],
+      "reason": "No source has an image of this Classic Collection reprint; the original Delcatty (ex1-5, same attack) has the Poké-Power Energy Draw, which TCGdex leaves out here"
+    },
+    {
+      "card": "30th-c-002",
+      "path": "/text/en/abilities",
+      "value": [
+        {
+          "name": "Energy Draw",
+          "effect": "Once during your turn (before your attack), you may discard 1 Energy card from your hand. Then draw up to 3 cards from your deck. This power can't be used if Delcatty is affected by a Special Condition."
+        }
+      ],
+      "reason": "Text of the original Delcatty's Poké-Power (ex1-5)"
+    },
+    {
+      "card": "30th-c-018",
+      "path": "/abilities",
+      "value": [
+        {
+          "type": "Poke-BODY"
+        }
+      ],
+      "reason": "No source has an image of this Classic Collection reprint; the original Gengar (hgss4-94, same attacks) has the Poké-Body Catastrophe, which TCGdex leaves out here"
+    },
+    {
+      "card": "30th-c-018",
+      "path": "/text/en/abilities",
+      "value": [
+        {
+          "name": "Catastrophe",
+          "effect": "As long as Gengar is your Active Pokémon, if any of your opponent's Pokémon would be Knocked Out, put that Pokémon in the Lost Zone instead of discarding. (Discard all cards attached to that Pokémon.)"
+        }
+      ],
+      "reason": "Text of the original Gengar's Poké-Body (hgss4-94)"
+    },
+    {
+      "card": "30th-c-019",
+      "path": "/attacks",
+      "value": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        },
+        {
+          "cost": [
+            "Psychic"
+          ]
+        }
+      ],
+      "reason": "Darkrai & Cresselia LEGEND is played as its two halves together; TCGdex lists the card's attacks on the other half (30th-c-020) and on both halves of the original (hgss4-99/100), but not here"
+    },
+    {
+      "card": "30th-c-019",
+      "path": "/text/en/attacks",
+      "value": [
+        {
+          "name": "Lost Crisis",
+          "effect": "Choose 2 Energy attached to Darkrai & Cresselia LEGEND and put them into the Lost Zone. If any of your opponent's Pokémon would be Knocked Out by damage from this attack, put that Pokémon and all cards attached to it in the Lost Zone instead of discarding it."
+        },
+        {
+          "name": "Moon's Invite",
+          "effect": "Move as many damage counters on your opponent's Pokémon as you like to any of your opponent's other Pokémon in any way you like."
+        }
+      ],
+      "reason": "Attack text of the LEGEND, from the other half 30th-c-020 (original hgss4-99/100)"
+    },
+    {
+      "card": "30th-c-019",
+      "path": "/weaknesses",
+      "value": [
+        {
+          "type": "Fighting",
+          "value": "x2"
+        },
+        {
+          "type": "Psychic",
+          "value": "x2"
+        }
+      ],
+      "reason": "Weakness of the LEGEND, from the other half 30th-c-020 (original hgss4-99/100)"
+    },
+    {
+      "card": "30th-c-019",
+      "path": "/retreat",
+      "value": 2,
+      "reason": "Retreat of the LEGEND, from the other half 30th-c-020 (original hgss4-99/100)"
+    }
+  ],
+  "acknowledged": [
+    {
+      "card": "30th-c-009",
+      "kind": "no-attacks",
+      "reason": "Greninja BREAK has no attacks of its own, only the Ability Giant Water Shuriken (original xy9-41 on TCGdex: no attacks); a BREAK card keeps the attacks of the Pokémon it evolves from"
+    },
+    {
+      "card": "30th-c-001",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-002",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-003",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-004",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-005",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-006",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-007",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-008",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-009",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-010",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-011",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-012",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-013",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-014",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-015",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-016",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-017",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-018",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-019",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-020",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-021",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-022",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-023",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-024",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-025",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-026",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-027",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-028",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-029",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "30th-c-030",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    }
+  ]
+}
