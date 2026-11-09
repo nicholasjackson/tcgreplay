@@ -1,5 +1,5 @@
 ---
-tags: [cards, images, tcgdex, webui, cardsets]
+tags: [cards, images, tcgdex, webui, cardsets, malie, webp]
 ---
 
 # Card image sources: TCGdex gaps and backups
@@ -41,6 +41,32 @@ and every one of these sites hosts it under fan-site tolerance.
 A cheap first fallback needing no new source is to borrow the image of another
 TCGdex print with the same name and attacks; it shows that print's artwork.
 
+## Hosted image copies cover every source, resized to WebP
+
+In hosted mode (`internal/cards/images.go`, `ImageCache`) every card image is
+copied to the bucket on first use and served from its CDN afterwards; the first
+viewer gets the source address while the copy is made. An image never viewed is
+never copied.
+
+- **TCGdex** images are copied byte for byte (TCGdex already serves `low.webp`
+  and `high.webp`) to `images/<lang>/<serie>/<set>/<number>/`.
+- **malie.io** images (single full-size JPEGs, about 273 KB each) are fetched
+  once, resized to `low.webp` (245 px wide) and `high.webp` (600 px), WebP
+  quality 75, and stored under `images/malie/<path below tcgl/cards, without
+  the extension>/` (a `FileSource`, `cards.MalieImages`). A 600 px card comes
+  to about 60 KB, the size of TCGdex's own `high.webp`. Every copy is WebP, so
+  TCGdex's transparent corners survive and the board needs no second format.
+- `/api/card` lists a malie image's copy (a base address, with its content
+  version) before the original file, so the board falls back to the file when
+  the copy fails.
+- The encoder is `github.com/gen2brain/webp`: libwebp transpiled to Go, no cgo,
+  so the static `CGO_ENABLED=0` build still works. It adds about 4 MB to the
+  stripped binary.
+- **Gotcha:** an admin clear scoped to one set (`cards.Scope.Image`) matches
+  TCGdex paths only, so it leaves malie copies in place; only clearing
+  everything removes them.
+- Desktop has no bucket, so it always loads images from the source.
+
 ## Asking malie.io for permission (status: asked, no reply yet)
 
 The maintainer asked the malie.io maintainers on their Discord on 2026-11-08.
@@ -61,3 +87,5 @@ malie by default, and every print lists its malie image after TCGdex's. If the
 answer is no, import with `-no-malie` from then on and drop malie from the
 image lists; if it asks for credit or a change channel, act on that. **Update
 this section when a reply arrives**, with its date and what it allows.
+
+

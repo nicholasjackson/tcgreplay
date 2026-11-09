@@ -812,14 +812,16 @@ func firstImage(t *testing.T, card map[string]any) map[string]any {
 
 // TestCardImageList: /api/card sends the card's whole image list in its
 // order. A base-path entry goes through the image source (copy, version,
-// fallback); a complete image file goes as is, marked image_file, with no
-// version or fallback and without asking the image source. A card with no
-// art sends an empty list.
+// fallback). A complete image file goes through it too: when it has a
+// resized copy, the copy goes first as a base-path entry with its version
+// and no fallback, then the file itself, marked image_file; without a
+// copy, the file alone. A card with no art sends an empty list.
 func TestCardImageList(t *testing.T) {
 	const (
-		src   = "https://assets.tcgdex.net/en/sv/sv1/1"
-		cdn   = "https://cdn.example/images/en/sv/sv1/1"
-		malie = "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/tst/tst_en_001_std.jpg"
+		src      = "https://assets.tcgdex.net/en/sv/sv1/1"
+		cdn      = "https://cdn.example/images/en/sv/sv1/1"
+		malie    = "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/tst/tst_en_001_std.jpg"
+		malieCDN = "https://cdn.example/images/malie/jpg/en/tst/tst_en_001_std"
 	)
 	db := cardstest.New()
 	db["tst-1"].Images = []cards.ImageRef{{URL: src}, {URL: malie, File: true}}
@@ -828,37 +830,59 @@ func TestCardImageList(t *testing.T) {
 	db["tst-3"].Image = malie
 	m := game.NewManager(t.TempDir(), db)
 	s := New(m, state.P1)
-	stub := &stubImages{answer: func(s string) (string, string) { return cdn, s }}
+	copies := map[string]string{src: cdn, malie: malieCDN}
+	stub := &stubImages{answer: func(s string) (string, string) { return copies[s], s }}
 	s.Images = versionedStub{stub, "abc123"}
 	ts := httptest.NewServer(s.Handler())
 	t.Cleanup(ts.Close)
 
 	imgs := cardImages(t, cardJSON(t, ts, "tst-1"))
-	if len(imgs) != 2 {
-		t.Fatalf("images %v, want 2 entries", imgs)
+	if len(imgs) != 3 {
+		t.Fatalf("images %v, want 3 entries", imgs)
 	}
 	if imgs[0]["image"] != cdn || imgs[0]["image_fallback"] != src || imgs[0]["image_version"] != "abc123" {
 		t.Errorf("base-path entry %v", imgs[0])
 	}
+	if imgs[1]["image"] != malieCDN || imgs[1]["image_version"] != "abc123" {
+		t.Errorf("file copy entry %v", imgs[1])
+	}
 	if _, ok := imgs[0]["image_file"]; ok {
 		t.Errorf("base-path entry marked as a file: %v", imgs[0])
 	}
-	if imgs[1]["image"] != malie || imgs[1]["image_file"] != true {
-		t.Errorf("file entry %v", imgs[1])
-	}
-	for _, k := range []string{"image_fallback", "image_version"} {
+	for _, k := range []string{"image_file", "image_fallback"} {
 		if _, ok := imgs[1][k]; ok {
-			t.Errorf("file entry has %s: %v", k, imgs[1])
+			t.Errorf("file copy entry has %s: %v", k, imgs[1])
 		}
 	}
-	if !slices.Equal(stub.asked, []string{src}) {
-		t.Errorf("image source asked %v, want only the base path", stub.asked)
+	if imgs[2]["image"] != malie || imgs[2]["image_file"] != true {
+		t.Errorf("file entry %v", imgs[2])
+	}
+	for _, k := range []string{"image_fallback", "image_version"} {
+		if _, ok := imgs[2][k]; ok {
+			t.Errorf("file entry has %s: %v", k, imgs[2])
+		}
+	}
+	if !slices.Equal(stub.asked, []string{src, malie}) {
+		t.Errorf("image source asked %v, want both entries", stub.asked)
 	}
 
-	// Reordered: the file comes first.
+	// Reordered: the file's copy and the file come first.
 	imgs = cardImages(t, cardJSON(t, ts, "tst-3"))
-	if len(imgs) != 2 || imgs[0]["image"] != malie || imgs[1]["image"] != cdn {
+	if len(imgs) != 3 || imgs[0]["image"] != malieCDN || imgs[1]["image"] != malie || imgs[2]["image"] != cdn {
 		t.Errorf("reordered list %v", imgs)
+	}
+
+	// A file with no copy yet goes alone.
+	delete(copies, malie)
+	stub.answer = func(s string) (string, string) {
+		if c, ok := copies[s]; ok {
+			return c, s
+		}
+		return s, ""
+	}
+	imgs = cardImages(t, cardJSON(t, ts, "tst-3"))
+	if len(imgs) != 2 || imgs[0]["image"] != malie || imgs[0]["image_file"] != true || imgs[1]["image"] != cdn {
+		t.Errorf("list without a file copy %v", imgs)
 	}
 
 	// No art and nothing to borrow: an empty list.

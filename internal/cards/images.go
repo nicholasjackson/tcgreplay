@@ -76,7 +76,10 @@ type ImageCache struct {
 	// Source is the prefix of the addresses that may be copied, with no
 	// trailing slash.
 	Source string
-	// HTTP fetches images from Source.
+	// FileSources are the other sources copied: ones serving each image as
+	// a single full-size file, which a copy resizes to ImageFiles.
+	FileSources []FileSource
+	// HTTP fetches images from Source and FileSources.
 	HTTP *http.Client
 	// Now is the clock; tests inject one.
 	Now func() time.Time
@@ -102,6 +105,7 @@ type ImageCache struct {
 	pending map[string]bool              // queued or being copied
 	failed  map[string]time.Time         // when the source last failed to serve one
 	copying map[string]bool              // being copied by a worker now
+	origin  map[string]string            // a file source image's relative path -> its source address
 	// clearing holds the scopes a Clear is working on: their images are
 	// answered from the source and never copied until it ends.
 	clearing []Scope
@@ -115,24 +119,47 @@ type ImageCache struct {
 	copied int // images copied
 }
 
+// FileSource is a card image source that serves each image as one
+// full-size file (malie.io's TCG Live card JPEGs). A copy of one is the
+// file resized to the widths of ImageFiles and stored as WebP, like a
+// TCGdex copy, under ImagePrefix + Key + "/" + the file's path below
+// Prefix without its extension.
+type FileSource struct {
+	// Prefix is the start of the addresses that may be copied, with no
+	// trailing slash.
+	Prefix string
+	// Key names the source's copies under ImagePrefix. It must not be the
+	// first segment of a TCGdex image path (a language code such as "en").
+	Key string
+}
+
+// MalieImages is malie.io's TCG Live card images.
+var MalieImages = FileSource{Prefix: "https://cdn.malie.io/file/malie-io/tcgl/cards", Key: "malie"}
+
+// fileImageExts are the extensions of a file source's image files.
+var fileImageExts = []string{".jpg", ".jpeg", ".png", ".webp"}
+
 // NewImageCache returns an image cache keeping copies in the bucket c
-// writes to, served from public, copying from TCGdex's asset host.
+// writes to, served from public, copying from TCGdex's asset host and
+// from malie.io's card images.
 func NewImageCache(c *spaces.Client, public string) *ImageCache {
 	ic := &ImageCache{
-		Spaces:  c,
-		Public:  strings.TrimRight(public, "/"),
-		Source:  "https://assets.tcgdex.net",
-		HTTP:    &http.Client{Timeout: 30 * time.Second},
-		Now:     time.Now,
-		timeout: SharedTimeout,
-		logf:    log.Printf,
-		queue:   make(chan string, imageQueueSize),
-		ready:   make(chan struct{}),
-		known:   map[string]string{},
-		partial: map[string]map[string]string{},
-		pending: map[string]bool{},
-		copying: map[string]bool{},
-		failed:  map[string]time.Time{},
+		Spaces:      c,
+		Public:      strings.TrimRight(public, "/"),
+		Source:      "https://assets.tcgdex.net",
+		FileSources: []FileSource{MalieImages},
+		HTTP:        &http.Client{Timeout: 30 * time.Second},
+		Now:         time.Now,
+		timeout:     SharedTimeout,
+		logf:        log.Printf,
+		queue:       make(chan string, imageQueueSize),
+		ready:       make(chan struct{}),
+		known:       map[string]string{},
+		partial:     map[string]map[string]string{},
+		pending:     map[string]bool{},
+		copying:     map[string]bool{},
+		origin:      map[string]string{},
+		failed:      map[string]time.Time{},
 	}
 	ic.idle = sync.NewCond(&ic.mu)
 	ic.brk = breaker{
@@ -145,19 +172,42 @@ func NewImageCache(c *spaces.Client, public string) *ImageCache {
 	return ic
 }
 
-// imageRel is the path of src below Source, when src is a clean address
-// under it: no query, no fragment, and no empty, "." or ".." segment.
-func (ic *ImageCache) imageRel(src string) (string, bool) {
-	rest, ok := strings.CutPrefix(src, ic.Source+"/")
-	if !ok || strings.ContainsAny(rest, "?#") {
-		return "", false
+// imageRel is the relative path of the copy of src, when src is a clean
+// address (no query, no fragment, and no empty, "." or ".." segment): its
+// path below Source, or for an image file under one of FileSources, the
+// source's Key and the file's path below its Prefix, without the
+// extension. file reports a file source image.
+func (ic *ImageCache) imageRel(src string) (rel string, file, ok bool) {
+	if rest, ok := strings.CutPrefix(src, ic.Source+"/"); ok {
+		return rest, false, cleanRel(rest)
 	}
-	for _, seg := range strings.Split(rest, "/") {
+	for _, fs := range ic.FileSources {
+		rest, ok := strings.CutPrefix(src, fs.Prefix+"/")
+		if !ok || fs.Key == "" {
+			continue
+		}
+		ext := strings.ToLower(rest[strings.LastIndex(rest, ".")+1:])
+		if !slices.Contains(fileImageExts, "."+ext) {
+			return "", false, false
+		}
+		rest = rest[:len(rest)-len(ext)-1]
+		return fs.Key + "/" + rest, true, cleanRel(rest)
+	}
+	return "", false, false
+}
+
+// cleanRel reports whether rel has no query, fragment, or empty, "." or
+// ".." segment.
+func cleanRel(rel string) bool {
+	if rel == "" || strings.ContainsAny(rel, "?#") {
+		return false
+	}
+	for _, seg := range strings.Split(rel, "/") {
 		if seg == "" || seg == "." || seg == ".." {
-			return "", false
+			return false
 		}
 	}
-	return rest, true
+	return true
 }
 
 // imageVersion is a copy's content version: the first 12 hex characters
@@ -186,12 +236,16 @@ func (ic *ImageCache) Image(src string) (image, fallback, version string) {
 	if src == "" {
 		return "", "", ""
 	}
-	rel, ok := ic.imageRel(src)
+	rel, file, ok := ic.imageRel(src)
 	if !ok {
 		return src, "", ""
 	}
 	ic.mu.Lock()
 	defer ic.mu.Unlock()
+	if file {
+		// A copy is made from the address it was asked for.
+		ic.origin[rel] = src
+	}
 	if inScopes(ic.clearing, rel) {
 		ic.source++ // being cleared: the source, and no copy until it ends
 		return src, "", ""
@@ -423,18 +477,15 @@ func (ic *ImageCache) copyOne(ctx context.Context, rel string) {
 			missing = append(missing, f)
 		}
 	}
-	bodies := make([][]byte, len(missing))
-	for i, f := range missing {
-		b, err := ic.fetch(ctx, ic.Source+"/"+rel+"/"+f)
-		if err != nil {
-			if ctx.Err() == nil {
-				ic.mu.Lock()
-				ic.failed[rel] = ic.Now()
-				ic.mu.Unlock()
-			}
-			return
+	bodies, err := ic.sourceFiles(ctx, rel, missing)
+	if err != nil {
+		if ctx.Err() == nil {
+			ic.logf("card images: cannot copy %s: %v", rel, err)
+			ic.mu.Lock()
+			ic.failed[rel] = ic.Now()
+			ic.mu.Unlock()
 		}
-		bodies[i] = b
+		return
 	}
 	for i, f := range missing {
 		if !ic.put(ctx, ImagePrefix+rel+"/"+f, bodies[i]) {
@@ -463,6 +514,39 @@ func (ic *ImageCache) copyOne(ctx context.Context, rel string) {
 	}
 	delete(ic.failed, rel)
 	ic.mu.Unlock()
+}
+
+// sourceFiles returns the bytes of each of files of the image at rel: from
+// Source, file by file, or for a file source image, its one source file
+// fetched once and resized to each.
+func (ic *ImageCache) sourceFiles(ctx context.Context, rel string, files []string) ([][]byte, error) {
+	bodies := make([][]byte, len(files))
+	if len(files) == 0 {
+		return bodies, nil
+	}
+	ic.mu.Lock()
+	src, file := ic.origin[rel]
+	ic.mu.Unlock()
+	if !file {
+		for i, f := range files {
+			b, err := ic.fetch(ctx, ic.Source+"/"+rel+"/"+f)
+			if err != nil {
+				return nil, err
+			}
+			bodies[i] = b
+		}
+		return bodies, nil
+	}
+	b, err := ic.fetch(ctx, src)
+	if err != nil {
+		return nil, err
+	}
+	for i, f := range files {
+		if bodies[i], err = resizeImage(b, f); err != nil {
+			return nil, fmt.Errorf("%s: %w", src, err)
+		}
+	}
+	return bodies, nil
 }
 
 // put writes one public image object, unless the shared store is being

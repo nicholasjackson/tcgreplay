@@ -47,11 +47,12 @@ type Server struct {
 }
 
 // ImageSource decides where the board loads a card image from. It is
-// called once for each TCGdex base-path entry of a card's image list
-// (complete image files, such as malie.io jpgs, never reach it). Image is
-// given the card's TCGdex image base address and returns the base address
-// to load (to which the board appends /low.webp or /high.webp), when that
-// differs from src the address to fall back to, and the content version of
+// called once for each entry of a card's image list: a TCGdex image base
+// address, or a complete image file such as a malie.io jpg. It returns the
+// base address to load (to which the board appends /low.webp or
+// /high.webp) when the image has a copy, else src itself; when that
+// differs from src, the address to fall back to (ignored for an image
+// file, whose file itself is the fallback); and the content version of
 // the image at that address ("" when there is none), which changes
 // whenever its bytes do. Implementations
 // must never block or touch the network: the card endpoint answers on the
@@ -228,6 +229,13 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if ref.File {
+			// A file source image (malie.io) the cache copies resized,
+			// like a TCGdex image: its copy first, the file itself after.
+			if s.Images != nil {
+				if img, _, ver := s.Images.Image(ref.URL); img != ref.URL {
+					images = append(images, CardImage{Image: img, Version: ver})
+				}
+			}
 			images = append(images, CardImage{Image: ref.URL, File: true})
 			continue
 		}
