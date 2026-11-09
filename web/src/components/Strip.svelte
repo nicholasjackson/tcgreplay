@@ -146,6 +146,8 @@
   @media (pointer: coarse) { .joined.sm { --jw: max(44px, calc(var(--cw) * 0.62)); } }
   .joined .half { position: absolute; left: 50%; top: 75%; width: 0; height: 0; }
   .joined .half.top { top: 25%; }
+  /* The pair is one card, so it carries one basis mark: the lower half's. */
+  .joined .half.top :global(.basis) { display: none; }
   .joined :global(.card) {
     --w: calc(var(--jw) * 0.698);
     position: absolute;
