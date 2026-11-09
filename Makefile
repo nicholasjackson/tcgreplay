@@ -9,13 +9,17 @@ BIN := bin/tcgreplay
 DEV_DATA ?= .dev
 DEV_UI ?= 127.0.0.1:7778
 
+# GOTAGS: nodynamic keeps the WebP encoder from linking a system libwebp
+# dynamically, so the binary stays self-contained (see Dockerfile).
+GOTAGS := nodynamic
+
 build: web
-	go build -o $(BIN) ./cmd/tcgreplay
+	go build -tags $(GOTAGS) -o $(BIN) ./cmd/tcgreplay
 
 # install puts the binary where the Claude desktop app runs it from. Then
 # restart the app: its next launch replaces the daemon from the old build.
 install: web
-	go install ./cmd/tcgreplay
+	go install -tags $(GOTAGS) ./cmd/tcgreplay
 
 web: web/node_modules
 	cd web && npm run build

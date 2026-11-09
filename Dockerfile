@@ -46,12 +46,19 @@ COPY . .
 COPY --from=web /src/internal/webui/dist/app internal/webui/dist/app
 COPY --from=site /src/internal/site/dist/app internal/site/dist/app
 ARG VERSION=dev
-RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/tcgreplay ./cmd/tcgreplay
+# nodynamic keeps the WebP encoder (github.com/gen2brain/webp) from loading
+# a system libwebp through purego, which would make the binary dynamically
+# linked even with CGO_ENABLED=0: distroless/static has no dynamic loader,
+# so such a binary fails to start with "no such file or directory".
+RUN CGO_ENABLED=0 go build -tags nodynamic -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/tcgreplay ./cmd/tcgreplay
 
 # Run as the distroless nonroot user. CA certificates are included for
 # loading the published card sets and copying card images over HTTPS; the
 # local copy of the card sets goes under /home/nonroot.
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/tcgreplay /usr/local/bin/tcgreplay
+# Fail the build, not the deploy, if the binary cannot start here (for
+# example because it came out dynamically linked).
+RUN ["/usr/local/bin/tcgreplay", "-version"]
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/tcgreplay", "-hosted"]
