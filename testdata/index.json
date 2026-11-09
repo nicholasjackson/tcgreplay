@@ -547,9 +547,9 @@
     {
       "id": "synthetic_2026-11-08_ledjo23_legendary-summit-pair",
       "file": "logs/synthetic_2026-11-08_ledjo23_legendary-summit-pair.txt",
-      "bytes": 2390,
+      "bytes": 2401,
       "lines": 66,
-      "sha256": "309e653a151b0281a6527ec380c2e3ff326b865b55de85c22a757d439de47b1a",
+      "sha256": "d886d0989ed1eb6f21a6bf3be2389393de09d96f3788c5b789a34996150e7743",
       "date": "2026-11-08",
       "synthetic": true,
       "player": "NicJackson",
@@ -588,7 +588,51 @@
         "bench_out"
       ],
       "parser_quirks": [],
-      "note": "SYNTHETIC, NOT A REAL TCG LIVE LOG. Made from 2026-10-11_ledjo23_alakazam-donk by adding a Legendary Summit pair (two consecutive Stadium-spot lines with card codes me6_96 and me6_97) and its replacement by Gravity Mountain (two 'discarded' sublines). The pair-line shapes are assumed: no real log with a Legendary Stadium pair has been seen. Replace it with, or check it against, the first real one."
+      "note": "SYNTHETIC, NOT A REAL TCG LIVE LOG. Made from 2026-10-11_ledjo23_alakazam-donk by adding a Legendary Summit pair and its replacement by Gravity Mountain (two 'discarded' sublines). The pair lines are in the real TCG Live shape, seen in 2026-11-09_gamespeer_mega-rayquaza-talonflame: the second half attached to the first with no place, then the first played to the Stadium spot. The replacement lines are still assumed: no real log of a pair being replaced has been seen."
+    },
+    {
+      "id": "2026-11-09_gamespeer_mega-rayquaza-talonflame",
+      "file": "logs/2026-11-09_gamespeer_mega-rayquaza-talonflame.txt",
+      "bytes": 7839,
+      "lines": 161,
+      "sha256": "1a0e8aae46acd2a5aad6ec224c9625671e9d509701a626cee6ed6571fc3d51b1",
+      "date": "2026-11-09",
+      "player": "NicJackson",
+      "player_deck": "decks/mega-lucario-ex-v12.json",
+      "opponent": "GameSpeer",
+      "opponent_archetype": "Mega Rayquaza ex / Talonflame ex / Ethan's Ho-Oh ex, with a Legendary Pyroduct pair",
+      "family": "energy accelerator",
+      "expected": {
+        "coin_toss_winner": "NicJackson",
+        "went_first": "GameSpeer",
+        "turns": {
+          "GameSpeer": 4,
+          "NicJackson": 4
+        },
+        "total_turns": 4,
+        "prizes_taken": {
+          "GameSpeer": 5,
+          "NicJackson": 3
+        },
+        "winner": "GameSpeer",
+        "end_reason": "self_conceded"
+      },
+      "observed": {
+        "Legendary Pyroduct": 2
+      },
+      "ledger_result": "loss",
+      "borrowed_attacks": [],
+      "features": [
+        "stadium_pair",
+        "card_codes",
+        "damage_breakdown",
+        "hidden_opponent_draws",
+        "concession"
+      ],
+      "parser_quirks": [
+        "Ruler's Roar's 'shuffle the other cards and put them on the bottom of your deck' is logged as '- NicJackson shuffled their cards.' under GameSpeer's Ability: the wrong player. It changes nothing on the board and is replayed as a no-op."
+      ],
+      "note": "The first real TCG Live log with a Legendary Stadium pair (Delta Reign). TCG Live writes the pair as two lines: the second half attached to the first with no place ('attached (me6_95) Legendary Pyroduct to (me6_94) Legendary Pyroduct.'), then the first played to the Stadium spot."
     }
   ]
 }

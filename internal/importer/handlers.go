@@ -173,6 +173,16 @@ func buildHandlers(a, b string) []handler {
 			}
 			return r.move(seat, iid, l, role, "")
 		}),
+		// TCG Live writes a Stadium pair as the second half attached to the
+		// first in hand, with no place, then the first played to the
+		// Stadium spot (see playStadium). Lines naming a place match the
+		// handler above first.
+		h(`{P} attached (.+) to (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
+			if m[2] != m[3] {
+				return fmt.Errorf("%s attached to %s with no place: only the two halves of a Stadium pair are attached in hand", m[2], m[3])
+			}
+			return r.attachPairHalf(r.seat(m[1]), m[2], n)
+		}),
 		h(`{P} evolved (.+) to (.+) (in the Active Spot|on the Bench)\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
 			l, err := r.stackNamed(seat, m[2], zoneHint(m[4]))
@@ -510,6 +520,10 @@ func buildHandlers(a, b string) []handler {
 			return r.shuffle(r.seat(m[1]))
 		}),
 		h(`{P} shuffled their hand\.`, noop),
+		// "Shuffle the other cards and put them on the bottom of your deck"
+		// (Mega Rayquaza ex's Ruler's Roar): the looked-at cards' order is
+		// hidden, so nothing changes. TCG Live can name the wrong player.
+		h(`{P} shuffled their cards\.`, noop),
 		h(`{P} shuffled (a|\d+) cards? into their deck\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
 			if parent != nil && shuffleFromDiscardRe.MatchString(parent.Text) {
@@ -927,67 +941,71 @@ func firstOf(xs []state.IID) state.IID {
 	return xs[0]
 }
 
-// pairLineRe splits a line naming both halves of a Stadium pair, "Legendary
-// Summit and Legendary Summit" (an assumed shape: no real log yet).
-var pairLineRe = regexp.MustCompile(`^(.+) and (.+)$`)
+// pairHalf is a half of a Stadium pair waiting for its partner's play.
+type pairHalf struct {
+	iid  state.IID
+	line int
+}
 
-// playStadium replays "<player> played <name> to the Stadium spot." A
-// Stadium pair is recognised from the log's own lines, never from card
-// data (knowledge architecture/importer-determinism.md): a second play of
-// the same name by the same player right after the first, onto that lone
-// card, joins it as its pair; one line naming the same Stadium twice
-// plays both halves together. Two plays of the same print (the log's card
-// codes say so) are not a pair: the second replaces the first, as before,
-// with a warning. The pair-line shapes are assumed from the single-Stadium
-// line; no real TCG Live log with a pair has been seen yet.
-func (r *replay) playStadium(seat state.Seat, name string, n *Node) error {
-	if pm := pairLineRe.FindStringSubmatch(name); pm != nil && pm[1] == pm[2] {
-		return r.playStadiumPair(seat, pm[1])
-	}
-	lone := firstOf(r.st.Stadium)
-	join := len(r.st.Stadium) == 1 && r.st.Cards[lone].Owner == seat && r.bound[lone] == name && r.sameAsLastHeadline(n)
+// attachPairHalf replays "<player> attached <name> to <name>." with no
+// place: TCG Live's first line of a Stadium pair, the second half joined
+// to the first in hand. It takes the half from the hand, with the line's
+// first card code, and holds it for the next line's Stadium play.
+func (r *replay) attachPairHalf(seat state.Seat, name string, n *Node) error {
 	iid, err := r.take(seat, []state.Zone{state.Hand}, name)
 	if err != nil {
 		return err
 	}
-	if join {
-		if c := r.codes[lone]; c != "" && c == r.codes[iid] {
-			r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("line %d: %s played twice from the same print (%s); a pair needs two different prints, so the second replaces the first", n.No, name, c))
-		} else {
-			return r.move(seat, iid, state.Loc{Zone: state.Stadium}, state.AsPair, "")
-		}
+	if cs := r.lineCodes[n.No]; len(cs) == 2 && strings.HasPrefix(cs[0].rest, name) && r.codes != nil && r.codes[iid] == "" {
+		r.codes[iid] = cs[0].code
 	}
-	if err := r.replaceStadium(seat); err != nil {
-		return err
+	if r.pairHalf == nil {
+		r.pairHalf = map[state.Seat]pairHalf{}
 	}
-	return r.move(seat, iid, state.Loc{Zone: state.Stadium}, "", "")
+	r.pairHalf[seat] = pairHalf{iid: iid, line: n.No}
+	return nil
 }
 
-// playStadiumPair plays two of seat's hand cards named name together as a
-// Stadium pair, replacing what is in the spot.
-func (r *replay) playStadiumPair(seat state.Seat, name string) error {
-	a, err := r.take(seat, []state.Zone{state.Hand}, name)
+// playStadium replays "<player> played <name> to the Stadium spot." A
+// Stadium pair is recognised from the log's own lines, never from card
+// data (knowledge architecture/importer-determinism.md): TCG Live writes
+// it as the second half attached to the first in hand (attachPairHalf),
+// then the first played to the Stadium spot, so a play right after such
+// a line by the same player of the same name plays both halves as one
+// Stadium (seen in testdata/logs/2026-11-09_gamespeer_mega-rayquaza-
+// talonflame.txt). Halves of the same print (the log's card codes say
+// so) still go down together, with a warning.
+func (r *replay) playStadium(seat state.Seat, name string, n *Node) error {
+	half, ok := r.pairHalf[seat]
+	delete(r.pairHalf, seat)
+	if !ok || r.bound[half.iid] != name || !r.headlineBefore(n, half.line) {
+		iid, err := r.take(seat, []state.Zone{state.Hand}, name)
+		if err != nil {
+			return err
+		}
+		if err := r.replaceStadium(seat); err != nil {
+			return err
+		}
+		return r.move(seat, iid, state.Loc{Zone: state.Stadium}, "", "")
+	}
+	iid, err := r.pick(seat, []state.Zone{state.Hand}, name, []state.IID{half.iid})
 	if err != nil {
 		return err
 	}
-	b, err := r.pick(seat, []state.Zone{state.Hand}, name, []state.IID{a})
-	if err != nil {
+	if err := r.bind(iid, name); err != nil {
 		return err
 	}
-	if err := r.bind(b, name); err != nil {
-		return err
-	}
-	if c := r.codes[a]; c != "" && c == r.codes[b] {
-		r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("line %d: %s and %s are the same print (%s); a pair needs two different prints", r.flat[r.pos].No, name, name, c))
+	if c := r.codes[iid]; c != "" && c == r.codes[half.iid] {
+		r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("line %d: the two halves of %s are the same print (%s); a pair needs two different prints", n.No, name, c))
 	}
 	if err := r.replaceStadium(seat); err != nil {
 		return err
 	}
-	from, err := r.st.Find(a)
+	from, err := r.st.Find(iid)
 	if err != nil {
 		return err
 	}
-	return r.emit(seat, state.EvMove, state.MovePayload{IID: a, Pair: b, From: &from, To: state.Loc{Zone: state.Stadium}})
+	return r.emit(seat, state.EvMove, state.MovePayload{IID: iid, Pair: half.iid, From: &from, To: state.Loc{Zone: state.Stadium}})
 }
 
 // replaceStadium sends what is in the Stadium spot to its owner's discard,
@@ -1038,12 +1056,11 @@ func (r *replay) consumeReplaced(seat state.Seat, names []string) bool {
 	return true
 }
 
-// sameAsLastHeadline reports whether the headline before n has n's text:
-// the same player played the same Stadium just before.
-func (r *replay) sameAsLastHeadline(n *Node) bool {
+// headlineBefore reports whether the headline before n is on line.
+func (r *replay) headlineBefore(n *Node, line int) bool {
 	for i := r.pos - 1; i >= 0; i-- {
 		if r.flat[i].Depth == 0 {
-			return r.flat[i].Text == n.Text
+			return r.flat[i].No == line
 		}
 	}
 	return false

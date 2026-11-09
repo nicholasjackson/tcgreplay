@@ -580,7 +580,7 @@ func TestImportedLoneHalfWarns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	text := strings.Replace(string(b), "LeDjo23 played (me6_97) Legendary Summit to the Stadium spot.\n", "", 1)
+	text := strings.Replace(string(b), "LeDjo23 attached (me6_97) Legendary Summit to (me6_96) Legendary Summit.\n", "", 1)
 	text = strings.Replace(text, "NicJackson played Gravity Mountain to the Stadium spot.\n- LeDjo23 discarded (me6_96) Legendary Summit.\n- LeDjo23 discarded (me6_97) Legendary Summit.\n", "", 1)
 	db := cardstest.New()
 	const rule = "You cannot play this card by itself. You must combine 2 different Legendary Summit from your hand to play as 1 Stadium card."

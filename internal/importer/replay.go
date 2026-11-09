@@ -115,7 +115,12 @@ type replay struct {
 	pendingRetreat map[state.Seat]bool
 	lastKO         *koInfo
 	lastStadium    []state.IID // replaced (or attack-discarded) Stadium cards whose "discarded" sublines are done
-	lastDevolved   state.IID
+	// pairHalf is the half of a Stadium pair a player has just attached to
+	// another card of the same name in hand ("attached X to X."), with the
+	// line it was on: the next line, playing the other half to the Stadium
+	// spot, plays both as one Stadium.
+	pairHalf     map[state.Seat]pairHalf
+	lastDevolved state.IID
 }
 
 type koInfo struct {

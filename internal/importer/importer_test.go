@@ -697,13 +697,16 @@ func TestRetreatToSameName(t *testing.T) {
 }
 
 // pairLog is the synthetic Legendary Summit pair log (not a real TCG Live
-// log: no real log with a pair has been seen, so its line shapes are
-// assumed). LeDjo23 plays two different prints in turn, then NicJackson's
-// Gravity Mountain replaces the pair.
+// log). Its pair lines are in the real shape (pairRealLog): LeDjo23
+// attaches one print to the other, then plays the pair; NicJackson's
+// Gravity Mountain then replaces it, in lines still assumed.
 const pairLog = "logs/synthetic_2026-11-08_ledjo23_legendary-summit-pair.txt"
 
+// pairRealLog is the first real TCG Live log with a Stadium pair.
+const pairRealLog = "logs/2026-11-09_gamespeer_mega-rayquaza-talonflame.txt"
+
 const (
-	pairLines   = "LeDjo23 played (me6_96) Legendary Summit to the Stadium spot.\nLeDjo23 played (me6_97) Legendary Summit to the Stadium spot.\n"
+	pairLines   = "LeDjo23 attached (me6_97) Legendary Summit to (me6_96) Legendary Summit.\nLeDjo23 played (me6_96) Legendary Summit to the Stadium spot.\n"
 	pairDiscard = "- LeDjo23 discarded (me6_96) Legendary Summit.\n- LeDjo23 discarded (me6_97) Legendary Summit.\n"
 )
 
@@ -776,11 +779,11 @@ func countIn(st *state.State, seat state.Seat, name string) int {
 	return n
 }
 
-// TestStadiumPairFromLog: two consecutive Stadium-spot lines from the
-// same player for two prints of one Stadium put both in the spot as one
-// pair (the second joins as pair), and a Stadium played over the pair
-// sends both halves to their owner's discard in one move, its two
-// "discarded" sublines already done. Every seed agrees.
+// TestStadiumPairFromLog: one print attached to the other with no place,
+// then played to the Stadium spot, puts both in the spot as one pair in
+// one move, and a Stadium played over the pair sends both halves to their
+// owner's discard in one move, its two "discarded" sublines already done.
+// Every seed agrees.
 func TestStadiumPairFromLog(t *testing.T) {
 	for seed := uint64(1); seed <= 5; seed++ {
 		entries, _ := loadCorpus(t)
@@ -806,8 +809,8 @@ func TestStadiumPairFromLog(t *testing.T) {
 			}
 		}
 		mv := stadiumMoves(t, evs)
-		if len(mv) != 4 || mv[1].As != state.AsPair || mv[2].Pair == "" || mv[2].To.Zone != state.Discard || mv[3].To.Zone != state.Stadium {
-			t.Fatalf("seed %d: Stadium moves %+v, want a play, a join as pair, one pair move to the discard and Gravity Mountain", seed, mv)
+		if len(mv) != 3 || mv[0].Pair == "" || mv[0].To.Zone != state.Stadium || mv[1].Pair == "" || mv[1].To.Zone != state.Discard || mv[2].To.Zone != state.Stadium {
+			t.Fatalf("seed %d: Stadium moves %+v, want one pair play, one pair move to the discard and Gravity Mountain", seed, mv)
 		}
 		st, err := state.Fold(evs)
 		if err != nil {
@@ -822,19 +825,48 @@ func TestStadiumPairFromLog(t *testing.T) {
 	}
 }
 
-// TestStadiumPairOneLine: one line naming the same Stadium twice plays
-// both halves together in one move.
-func TestStadiumPairOneLine(t *testing.T) {
-	res, evs := importPairLog(t, [2]string{pairLines, "LeDjo23 played Legendary Summit and Legendary Summit to the Stadium spot.\n"})
-	if len(res.Report.Warnings) > 0 {
-		t.Errorf("warnings: %v", res.Report.Warnings)
-	}
-	if pairOnBoard(t, evs) == nil {
-		t.Fatal("the Stadium spot never held the pair")
-	}
-	mv := stadiumMoves(t, evs)
-	if len(mv) != 3 || mv[0].Pair == "" || mv[0].To.Zone != state.Stadium || mv[1].Pair == "" {
-		t.Errorf("Stadium moves %+v, want one pair play, one pair discard and Gravity Mountain", mv)
+// TestStadiumPairRealLog: in the real TCG Live log, GameSpeer's two
+// Legendary Pyroduct prints (me6_94 and me6_95) go down as one Stadium in
+// one move, each half keeping its own print. Every seed agrees.
+func TestStadiumPairRealLog(t *testing.T) {
+	for seed := uint64(1); seed <= 5; seed++ {
+		entries, _ := loadCorpus(t)
+		b, err := os.ReadFile(filepath.Join(corpus, pairRealLog))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// The print's def is its log code, so the halves' prints show.
+		res, err := Import(string(b), Options{MyDeck: entries, Seed: seed, DefOfCode: func(_, code string) string { return code }})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Report.Problems) > 0 || len(res.Report.Warnings) > 0 {
+			t.Fatalf("seed %d: problems %v, warnings %v", seed, res.Report.Problems, res.Report.Warnings)
+		}
+		evs := res.Events()
+		mv := stadiumMoves(t, evs)
+		if len(mv) != 1 || mv[0].Pair == "" || mv[0].To.Zone != state.Stadium {
+			t.Fatalf("seed %d: Stadium moves %+v, want one pair play", seed, mv)
+		}
+		st, err := state.Fold(evs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(st.Stadium) != 2 {
+			t.Fatalf("seed %d: Stadium spot %v, want the pair", seed, st.Stadium)
+		}
+		var defs []string
+		for _, iid := range st.Stadium {
+			c := st.Cards[iid]
+			if c.Owner != OppSeat || c.Name != "Legendary Pyroduct" {
+				t.Errorf("seed %d: %s in the spot is %s's %q", seed, iid, c.Owner, c.Name)
+			}
+			defs = append(defs, c.Def)
+		}
+		slices.Sort(defs)
+		if !slices.Equal(defs, []string{"me6_94", "me6_95"}) {
+			t.Errorf("seed %d: halves are prints %v, want me6_94 and me6_95", seed, defs)
+		}
 	}
 }
 
@@ -852,25 +884,17 @@ func TestStadiumPairDiscardedTwoCards(t *testing.T) {
 	}
 }
 
-// TestStadiumSamePrintNotAPair: two plays of the same print (the log's
-// card codes say so) are not a pair: the second replaces the first, as
-// before, with a warning.
-func TestStadiumSamePrintNotAPair(t *testing.T) {
+// TestStadiumSamePrintWarns: a pair whose two halves the log's card
+// codes give as the same print still goes down as logged, with a warning.
+func TestStadiumSamePrintWarns(t *testing.T) {
 	res, evs := importPairLog(t,
-		[2]string{"(me6_97) Legendary Summit to the Stadium spot.", "(me6_96) Legendary Summit to the Stadium spot."},
-		[2]string{"- LeDjo23 discarded (me6_97) Legendary Summit.\n", ""})
+		[2]string{"attached (me6_97) Legendary Summit to", "attached (me6_96) Legendary Summit to"},
+		[2]string{"- LeDjo23 discarded (me6_97) Legendary Summit.\n", "- LeDjo23 discarded (me6_96) Legendary Summit.\n"})
 	if !slices.ContainsFunc(res.Report.Warnings, func(w string) bool { return strings.Contains(w, "same print (me6_96)") }) {
 		t.Errorf("no same-print warning: %v", res.Report.Warnings)
 	}
-	if pairOnBoard(t, evs) != nil {
-		t.Error("two copies of one print were played as a pair")
-	}
-	st, err := state.Fold(evs)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if n := countIn(st, OppSeat, "Legendary Summit"); n != 2 {
-		t.Errorf("%d Legendary Summit in LeDjo23's discard, want 2", n)
+	if pairOnBoard(t, evs) == nil {
+		t.Error("the logged pair was not played")
 	}
 }
 

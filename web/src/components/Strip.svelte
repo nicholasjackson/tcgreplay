@@ -29,7 +29,8 @@
   const theirs = $derived(!!b.stadium && ownerOf(b.stadium.iid) !== app.human);
   // The two halves of a pair-played Stadium form one picture, left half the
   // lower collector number, so they show in print order whichever was
-  // played first.
+  // played first: turned a quarter anticlockwise, the left half ends up
+  // at the bottom.
   const halves = $derived.by(() => {
     if (!b.stadium?.pair) return [];
     const both = [b.stadium, b.stadium.pair];
@@ -48,10 +49,15 @@
 <div class="strip" class:phone={app.layout === 'phone'}>
   <div class="stadium" class:theirs class:pair={!!b.stadium?.pair} {@attach zone('stadium')} role="region" aria-label="Stadium">
     {#if b.stadium?.pair}
-      <!-- A Stadium played as a pair: both halves, each zoomable. -->
-      <div class="halves">
-        {#each halves as half (half.iid)}
-          <Card card={half} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
+      <!-- A Stadium played as a pair stands as one card, as TCG Live shows
+           it: its two halves joined edge to edge into one picture, turned a
+           quarter so it fills a single Stadium's place. Each half is still
+           its own card to tap, drag or zoom. -->
+      <div class="joined" class:sm={app.layout === 'phone'} aria-label="{b.stadium.name} (pair)" role="group">
+        {#each halves as half, i (half.iid)}
+          <div class="half" class:top={i === 1}>
+            <Card card={half} rotate={-90} lift={false} from="stadium" />
+          </div>
         {/each}
       </div>
     {:else if b.stadium}
@@ -131,13 +137,21 @@
     transition: background 0.15s;
   }
   .stadium:has(.card) { border-color: transparent; }
-  /* A pair fans its second half over the first, in a spot widened to the
-     left so neither half reaches the Active Spot. */
-  .stadium.pair { width: calc(var(--cw) * 1.95); }
-  .halves { display: flex; align-items: center; }
-  .halves > :global(.card + .card) { margin-left: calc(var(--cw) * -0.55); transform: rotate(5deg); }
-  .halves > :global(.card) { position: relative; }
-  .halves > :global(.card.lift:hover) { z-index: 2; }
+  /* A pair is one card the size of a single Stadium (--jw wide): each half,
+     turned a quarter, is as tall as half the card, so its width is half the
+     card's height (63/88 of a card is 0.698 of its width). The halves are
+     centred a quarter and three quarters of the way down. */
+  .joined { --jw: calc(var(--cw) * 1.25); position: relative; width: var(--jw); aspect-ratio: 63 / 88; }
+  .joined.sm { --jw: calc(var(--cw) * 0.62); }
+  @media (pointer: coarse) { .joined.sm { --jw: max(44px, calc(var(--cw) * 0.62)); } }
+  .joined .half { position: absolute; left: 50%; top: 75%; width: 0; height: 0; }
+  .joined .half.top { top: 25%; }
+  .joined :global(.card) {
+    --w: calc(var(--jw) * 0.698);
+    position: absolute;
+    left: calc(var(--w) / -2);
+    top: calc(var(--w) * 88 / 63 / -2);
+  }
   .controls {
     position: absolute;
     top: 50%;
@@ -213,8 +227,6 @@
   .phone .stadium { position: absolute; left: 8px; top: calc(100% + 6px); bottom: auto; right: auto; transform: none; width: auto; min-width: 48px; min-height: 0; padding: 2px; }
   .phone .stadium.theirs { left: auto; right: 8px; top: auto; bottom: calc(100% + 6px); }
   .phone .stadium.pair { width: auto; }
-  .phone .halves { gap: 2px; }
-  .phone .halves > :global(.card + .card) { margin-left: 0; transform: none; }
   .phone .controls { position: static; transform: none; flex-direction: row; flex-wrap: nowrap; align-items: center; max-width: none; gap: 5px; }
   .phone .effects { position: absolute; top: 100%; left: 8px; right: 8px; z-index: 3; }
   .phone .play { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; }

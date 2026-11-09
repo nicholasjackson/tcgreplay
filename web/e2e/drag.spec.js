@@ -323,20 +323,32 @@ test('dragging the two halves of a pair-played Stadium onto the Stadium plays th
   await expect.poll(async () => (await standingWarnings(page, testInfo)).join('\n')).not.toContain('is played as a pair');
 });
 
-test('each half of a Stadium pair opens in the zoom', async ({ page }) => {
+test('a Stadium pair stands as one card, and either half zooms to the whole pair', async ({ page }, testInfo) => {
   const [a, b] = twinPeak;
   for (const iid of twinPeak) await act(page, 'move', { iid, to: 'hand' });
   await act(page, 'play_trainer', { iid: a, pair_iid: b });
   const stadium = page.getByRole('region', { name: 'Stadium' });
+  const joined = stadium.getByRole('group', { name: 'Twin Peak (pair)' });
+  await expect(joined).toBeVisible();
+  // The halves lie turned, edge to edge, inside one card's footprint.
+  const box = await joined.boundingBox();
   for (const iid of twinPeak) {
-    const half = titled(stadium, `Twin Peak (${iid})`);
-    await expect(half).toBeVisible();
-    // Click where the half shows: the first half's left edge (the second
-    // half lies over the rest of it), the second half's middle.
-    const box = await half.boundingBox();
-    const x = iid === a ? box.x + 8 : box.x + box.width / 2;
-    await page.mouse.click(x, box.y + box.height / 2);
-    await expect(page.locator('.zoom .meta').first(), `zoom of ${iid}`).toContainText(iid);
+    const half = await titled(stadium, `Twin Peak (${iid})`).boundingBox();
+    expect(half.width, `${iid} lies turned`).toBeGreaterThan(half.height);
+    expect(half.x).toBeGreaterThanOrEqual(box.x - 2);
+    expect(half.x + half.width).toBeLessThanOrEqual(box.x + box.width + 2);
+  }
+  for (const iid of twinPeak) {
+    const half = await titled(stadium, `Twin Peak (${iid})`).boundingBox();
+    const at = { x: half.x + half.width / 2, y: half.y + half.height / 2 };
+    if (isTouch(testInfo)) await page.touchscreen.tap(at.x, at.y);
+    else await page.mouse.click(at.x, at.y);
+    // The zoom shows the whole pair (the test cards have no art, so its
+    // joined picture is empty) and names both halves.
+    const zoom = page.locator('.zoom.pair');
+    await expect(zoom, `zoom from ${iid}`).toBeVisible();
+    await expect(zoom.locator('.joined')).toHaveCount(1);
+    await expect(zoom.locator('.meta').first()).toContainText(`${a} · tst-10 + ${b} · tst-11`);
     await page.keyboard.press('Escape');
     await page.locator('.backdrop').first().click({ position: { x: 5, y: 5 } }).catch(() => {});
     await expect(page.locator('.zoom')).toHaveCount(0);
@@ -360,7 +372,11 @@ test('the halves of a Stadium pair show in print order whichever was played firs
   const [a, b] = twinPeak;
   for (const iid of twinPeak) await act(page, 'move', { iid, to: 'hand' });
   await act(page, 'play_trainer', { iid: b, pair_iid: a });
-  const halves = page.getByRole('region', { name: 'Stadium' }).locator('.card');
-  await expect(halves).toHaveCount(2);
-  await expect.poll(() => halves.evaluateAll((els) => els.map((e) => e.getAttribute('title')))).toEqual([`Twin Peak (${a})`, `Twin Peak (${b})`]);
+  const stadium = page.getByRole('region', { name: 'Stadium' });
+  await expect(stadium.locator('.card')).toHaveCount(2);
+  // Turned a quarter anticlockwise, the joined picture's left half (TST 10)
+  // is at the bottom and its right half (TST 11) on top.
+  const lower = await titled(stadium, `Twin Peak (${a})`).boundingBox();
+  const upper = await titled(stadium, `Twin Peak (${b})`).boundingBox();
+  expect(upper.y).toBeLessThan(lower.y);
 });
