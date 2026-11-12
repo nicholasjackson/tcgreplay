@@ -87,7 +87,7 @@ Source: the official authentication page [S8] unless stated otherwise.
 - **RFC 9207.** Optional; if advertised, return `iss` in **every** authorisation response.
 - **Not supported:** client credentials, service accounts, API keys and custom headers. The portal supports no auth, OAuth and mixed. [S5] The package manifest lists `api_key` as an auth type [S25] but the submission portal says API keys are not supported [S5].
 - **Per-tool `securitySchemes`.** Declare `noauth` and/or `oauth2` on **every tool**. In mixed mode, `initialize` and `tools/list` run without auth. [S3] To show the account-linking UI, a tool returns an error result carrying `_meta["mcp/www_authenticate"]`.
-- **Multiple accounts.** Provide a read-only, argument-free profile tool marked `_meta["openai/profile"]: true` with an `outputSchema`. Its `id` must be stable and immutable: for Google, the `sub` claim, not the email address.
+- **Multiple accounts.** Provide a read-only, argument-free profile tool (not named `get_profile` here: that is the deck-profile tool) marked `_meta["openai/profile"]: true` with an `outputSchema`. Its `id` must be stable and immutable: for Google, the `sub` claim, not the email address.
 - **Enterprise domain restrictions.** Need `openid` and `email` scopes and a UserInfo endpoint returning `email_verified: true`.
 
 With no auth every tool runs anonymously; with OAuth, linking starts at the first tool call; with mixed auth, anonymous use works at once and linking unlocks more. [S3][S8] For review, authenticated plugins need a demo account that works without MFA. [S6]
@@ -205,7 +205,7 @@ With no auth every tool runs anonymously; with OAuth, linking starts at the firs
 - [ ] Authorization server metadata with an exact `issuer` match, `S256`, and CIMD (preferred) or DCR. [S8]
 - [ ] Tokens bound to `resource`/`aud`; signature, `exp` and scopes checked on every call. [S8]
 - [ ] `securitySchemes` on every tool; consider `noauth` for `guide` and `card_text`. [S8]
-- [ ] `get_profile` argument-free, read-only, `_meta["openai/profile"]: true`, with an `outputSchema` and a stable `id` (Google `sub`). [S8]
+- [ ] A profile tool: argument-free, read-only, `_meta["openai/profile"]: true`, with an `outputSchema` and a stable `id` (Google `sub`). [S8] OpenAI's example names it `get_profile`, but that name is already TCG Replay's deck-profile tool (used by the guides), so the profile tool needs another name (the chatgpt-submission-prep plan uses `get_account`).
 
 **Tool metadata**
 - [ ] Explicit `readOnlyHint`, `destructiveHint` and `openWorldHint` on every tool. Read-only: `get_state`, `get_log`, `card_text`, `guide`, `ping`, `list_branches` and similar. `wait_for_turn` writes presence state, so check whether it counts as read-only. [S6][S9]

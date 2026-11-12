@@ -55,15 +55,17 @@ services:
     health_check:
       http_path: /healthz
     envs:
-      # The address board links use and the board's allowed origin.
-      # ${APP_URL} is the app's primary domain as an https URL.
+      # The playmat's one public address: sign-in, the assistant connection,
+      # board links and the board's allowed origin all use it. Keep it the
+      # same as the primary domain under domains below.
       - key: TCGREPLAY_PUBLIC_URL
-        value: ${APP_URL}
+        value: https://tcgreplay.app
         scope: RUN_TIME
       # The Google OAuth web client users sign in with. Set both values in
       # the App Platform control panel (Settings > playmat > Environment
       # Variables), encrypted; hosted mode will not start without them.
-      # Its authorised redirect URI is ${APP_URL}/auth/google/callback.
+      # Its authorised redirect URIs include TCGREPLAY_PUBLIC_URL followed by
+      # /auth/google/callback.
       - key: TCGREPLAY_GOOGLE_CLIENT_ID
         scope: RUN_TIME
         type: SECRET
@@ -138,6 +140,12 @@ ingress:
       match:
         path:
           prefix: /
+# The primary domain is the playmat's one public address
+# (TCGREPLAY_PUBLIC_URL): sign-in, the assistant connection and board links
+# all use it. tcgreplay.demo.gs, the old address, stays as an alias only so
+# it can forward players to the new one; sign-in does not work there.
 domains:
-  - domain: tcgreplay.demo.gs
+  - domain: tcgreplay.app
     type: PRIMARY
+  - domain: tcgreplay.demo.gs
+    type: ALIAS
