@@ -6,8 +6,9 @@
 //
 // The pages are found by crawling same-origin links from /. Every page the
 // site links to must exist: a link to a missing page fails the suite.
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import { site } from '../src/lib/facts.ts';
 
 const companies = ['Nintendo', 'The Pokémon Company', 'Creatures', 'Game Freak'];
 
@@ -252,5 +253,30 @@ test('the home page copy button copies the playmat address exactly', async ({ co
   await expect(button).toBeVisible();
   await button.click();
   await expect(button).toHaveText('Copied');
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('https://tcgreplay.demo.gs/mcp');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(site.mcpURL);
+});
+
+// The playmat moved from tcgreplay.demo.gs to its own domain. The old
+// address may appear only inside the connecting page's marked move note
+// (an element with data-moved-note), and the playmat has no www name.
+test('no page or the README names the old address outside the move note, or a www address', () => {
+  const dist = new URL('../../internal/site/dist/app/', import.meta.url);
+  const files = readdirSync(dist, { recursive: true })
+    .filter((f) => String(f).endsWith('.html'))
+    .map((f) => ({ name: `internal/site/dist/app/${f}`, url: new URL(String(f), dist) }));
+  expect(files.length).toBeGreaterThan(5);
+  files.push({ name: 'README.md', url: new URL('../../README.md', import.meta.url) });
+  const note = /<aside[^>]*data-moved-note[^>]*>[\s\S]*?<\/aside>/g;
+  const stray = [];
+  const www = [];
+  let notes = 0;
+  for (const { name, url } of files) {
+    const text = readFileSync(url, 'utf8');
+    notes += (text.match(note) || []).length;
+    if (text.replace(note, '').includes('demo.gs')) stray.push(name);
+    if (text.includes('www.tcgreplay.app')) www.push(name);
+  }
+  expect(stray, 'files naming demo.gs outside the move note').toEqual([]);
+  expect(www, 'files naming www.tcgreplay.app').toEqual([]);
+  expect(notes, 'move notes across the site').toBe(1);
 });

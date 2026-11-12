@@ -357,6 +357,10 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
+	moved, err := parseMovedHosts(c.movedFrom, public)
+	if err != nil {
+		return err
+	}
 	images := hostedImages(c)
 	loader := newCatalog(c)
 	reg, srv, a, err := newHosted(c, loader, images, public, oauth2.Endpoint{})
@@ -379,9 +383,9 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s", version, ln.Addr(), public, c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
-	hs := &http.Server{Handler: hostedHandler(srv, reg, a, admin), ReadHeaderTimeout: 10 * time.Second}
+	hs := &http.Server{Handler: movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin)), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)

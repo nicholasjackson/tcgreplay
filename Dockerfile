@@ -2,7 +2,8 @@
 # both in a static binary and runs `tcgreplay -hosted` on a minimal
 # non-root image. MCP is served at /mcp, the board at /board and the
 # website on every other path, on port 8080 (or $PORT).
-# Settings: TCGREPLAY_PUBLIC_URL (the address users reach it at), PORT,
+# Settings: TCGREPLAY_PUBLIC_URL (the address users reach it at),
+# TCGREPLAY_MOVED_FROM (old host names it has moved from), PORT,
 # TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET (required:
 # users sign in with Google), TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS,
 # TCGREPLAY_CARDSETS_URL (where card sets are published; default the

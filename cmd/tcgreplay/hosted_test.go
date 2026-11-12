@@ -411,7 +411,7 @@ func TestRunHostedServesAndShutsDown(t *testing.T) {
 		t.Fatal("still serving after shutdown")
 	}
 	out := logs.String()
-	for _, want := range []string{"https://play.example.com", "Google sign-in", "stopped"} {
+	for _, want := range []string{"https://play.example.com", "no moved hosts", "Google sign-in", "stopped"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("log %q does not mention %q", out, want)
 		}
@@ -437,6 +437,78 @@ func TestRunHostedRejectsBadPublicURL(t *testing.T) {
 				t.Fatalf("runHosted with public URL %q did not stop", raw)
 			}
 			// Nothing was left listening on the port.
+			ln, err := net.Listen("tcp", "127.0.0.1:"+port)
+			if err != nil {
+				t.Fatalf("port %s in use after a rejected start: %v", port, err)
+			}
+			ln.Close()
+		})
+	}
+}
+
+// TestParseMovedHosts: -moved-from is a comma-separated list of bare host
+// names; blanks are skipped and case is ignored, and a scheme, path, port,
+// user, space or the public address's own host is refused.
+func TestParseMovedHosts(t *testing.T) {
+	public := &url.URL{Scheme: "https", Host: "tcgreplay.app"}
+	for _, tt := range []struct {
+		raw  string
+		want []string
+		err  string
+	}{
+		{raw: "", want: nil},
+		{raw: " , ", want: nil},
+		{raw: "tcgreplay.demo.gs", want: []string{"tcgreplay.demo.gs"}},
+		{raw: " Old.Example ,, older.example,", want: []string{"old.example", "older.example"}},
+		{raw: "https://tcgreplay.demo.gs", err: "host name only"},
+		{raw: "tcgreplay.demo.gs/mcp", err: "host name only"},
+		{raw: "tcgreplay.demo.gs:443", err: "host name only"},
+		{raw: "user@tcgreplay.demo.gs", err: "host name only"},
+		{raw: "old example", err: "host name only"},
+		{raw: "old.example, TCGREPLAY.app", err: "public address"},
+	} {
+		got, err := parseMovedHosts(tt.raw, public)
+		if tt.err != "" {
+			if err == nil || !strings.Contains(err.Error(), tt.err) {
+				t.Errorf("parseMovedHosts(%q) = %v, %v; want an error containing %q", tt.raw, got, err, tt.err)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("parseMovedHosts(%q): %v", tt.raw, err)
+			continue
+		}
+		if len(got) != len(tt.want) {
+			t.Errorf("parseMovedHosts(%q) = %v, want %v", tt.raw, got, tt.want)
+		}
+		for _, h := range tt.want {
+			if !got[h] {
+				t.Errorf("parseMovedHosts(%q) = %v, missing %q", tt.raw, got, h)
+			}
+		}
+	}
+}
+
+// TestRunHostedRejectsBadMovedFrom: a malformed moved host, or one equal
+// to the public host, stops start-up with an error naming it, before
+// anything listens.
+func TestRunHostedRejectsBadMovedFrom(t *testing.T) {
+	captureLog(t)
+	port := freePort(t)
+	for _, raw := range []string{"https://old.example", "old.example:8080", "play.example.com"} {
+		t.Run(raw, func(t *testing.T) {
+			c := hostedConfig(t, "127.0.0.1:"+port, "https://play.example.com")
+			c.movedFrom = raw
+			done := make(chan error, 1)
+			go func() { done <- runHosted(context.Background(), c) }()
+			select {
+			case err := <-done:
+				if err == nil || !strings.Contains(err.Error(), raw) {
+					t.Fatalf("runHosted with moved host %q: %v, want an error naming it", raw, err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatalf("runHosted with moved host %q did not stop", raw)
+			}
 			ln, err := net.Listen("tcp", "127.0.0.1:"+port)
 			if err != nil {
 				t.Fatalf("port %s in use after a rejected start: %v", port, err)

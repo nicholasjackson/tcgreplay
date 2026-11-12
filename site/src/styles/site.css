@@ -69,6 +69,10 @@ h1, h2, h3 { line-height: 1.25; }
 
 code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
 :not(pre) > code { background: var(--hover); padding: 0.1em 0.3em; border-radius: 4px; overflow-wrap: anywhere; }
+/* A short aside in a docs page, set off from the steps around it. */
+.note { border-left: 3px solid var(--accent); background: var(--hover); padding: 0.5rem 1rem; margin: 1rem 0; border-radius: 0 4px 4px 0; }
+.note > :first-child { margin-top: 0; }
+.note > :last-child { margin-bottom: 0; }
 pre {
   max-width: 100%;
   overflow-x: auto;

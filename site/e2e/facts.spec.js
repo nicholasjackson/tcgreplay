@@ -1,18 +1,21 @@
 // The facts the site reads from the playmat's own sources while it builds:
-// the hosted limits from the App Platform definition. A missing limit must
-// stop the build with a message naming it; every page's build reads the
-// facts through the shared layout. No browser page is needed.
+// the public address and the hosted limits from the App Platform
+// definition. A missing or wrong fact must stop the build with a message
+// naming it; every page's build reads the facts through the shared layout.
+// No browser page is needed.
 import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
-import { loadLimits, limits, humanDuration, parseGoDuration } from '../src/lib/facts.ts';
+import { loadLimits, loadPublicURL, limits, site, humanDuration, parseGoDuration } from '../src/lib/facts.ts';
 
 const appYaml = () => readFileSync(new URL('../../.do/app.yaml', import.meta.url), 'utf8');
 
-// fixture is an App Platform definition with the playmat's three limits;
-// drop leaves one out.
-function fixture({ drop } = {}) {
+// fixture is an App Platform definition with the playmat's public address,
+// its three limits and its domains; drop leaves one env out, publicURL
+// replaces the address and primary the PRIMARY domain (null leaves the
+// domains out).
+function fixture({ drop, publicURL = 'https://tcgreplay.app', primary = 'tcgreplay.app' } = {}) {
   const envs = [
-    ['TCGREPLAY_PUBLIC_URL', '${APP_URL}'],
+    ['TCGREPLAY_PUBLIC_URL', publicURL],
     ['TCGREPLAY_RATE_LIMIT', '"120"'],
     ['TCGREPLAY_MAX_USERS', '"5"'],
     ['TCGREPLAY_IDLE_TIMEOUT', '"2h"'],
@@ -20,7 +23,9 @@ function fixture({ drop } = {}) {
     .filter(([key]) => key !== drop)
     .map(([key, value]) => `      - key: ${key}\n        value: ${value}\n        scope: RUN_TIME\n`)
     .join('');
-  return `name: tcgreplay\nservices:\n  - name: playmat\n    http_port: 8080\n    envs:\n${envs}`;
+  const domains =
+    primary === null ? '' : `domains:\n  - domain: ${primary}\n    type: PRIMARY\n  - domain: tcgreplay.demo.gs\n    type: ALIAS\n`;
+  return `name: tcgreplay\nservices:\n  - name: playmat\n    http_port: 8080\n    envs:\n${envs}${domains}`;
 }
 
 const limitKeys = ['TCGREPLAY_RATE_LIMIT', 'TCGREPLAY_MAX_USERS', 'TCGREPLAY_IDLE_TIMEOUT'];
@@ -61,6 +66,62 @@ test('a definition with no playmat service fails', () => {
   expect(() => loadLimits(fixture().replace('name: playmat', 'name: other'))).toThrow('no service named "playmat"');
 });
 
+test('the real App Platform definition gives the public address and the addresses built from it', () => {
+  expect(loadPublicURL(appYaml())).toBe('https://tcgreplay.app');
+  expect(site.publicURL).toBe('https://tcgreplay.app');
+  expect(site.mcpURL).toBe('https://tcgreplay.app/mcp');
+  expect(site.boardURL).toBe('https://tcgreplay.app/board');
+});
+
+test('a definition with the public address and a matching PRIMARY domain loads it', () => {
+  expect(loadPublicURL(fixture())).toBe('https://tcgreplay.app');
+});
+
+test('a definition without TCGREPLAY_PUBLIC_URL fails with a message naming it', () => {
+  const yaml = fixture({ drop: 'TCGREPLAY_PUBLIC_URL' });
+  expect(yaml).not.toContain('TCGREPLAY_PUBLIC_URL');
+  expect(() => loadPublicURL(yaml)).toThrow(/does not set TCGREPLAY_PUBLIC_URL/);
+});
+
+test('TCGREPLAY_PUBLIC_URL removed from the real definition fails with a message naming it', () => {
+  const without = appYaml().replace(/\n\s*- key: TCGREPLAY_PUBLIC_URL\n(?: {8}\S.*\n)*/, '\n');
+  expect(without).not.toContain('- key: TCGREPLAY_PUBLIC_URL');
+  expect(() => loadPublicURL(without)).toThrow(/does not set TCGREPLAY_PUBLIC_URL/);
+});
+
+test('a public address left as the platform placeholder fails', () => {
+  expect(() => loadPublicURL(fixture({ publicURL: '${APP_URL}' }))).toThrow(/TCGREPLAY_PUBLIC_URL.*placeholder/);
+});
+
+for (const [what, publicURL] of [
+  ['a path', 'https://tcgreplay.app/playmat'],
+  ['a trailing slash', 'https://tcgreplay.app/'],
+  ['a query', 'https://tcgreplay.app?x=1'],
+  ['a fragment', 'https://tcgreplay.app#top'],
+]) {
+  test(`a public address with ${what} fails`, () => {
+    expect(() => loadPublicURL(fixture({ publicURL }))).toThrow(/TCGREPLAY_PUBLIC_URL.*scheme and host only/);
+  });
+}
+
+test('a plain http public address fails', () => {
+  expect(() => loadPublicURL(fixture({ publicURL: 'http://tcgreplay.app' }))).toThrow(/TCGREPLAY_PUBLIC_URL.*https/);
+});
+
+test('a public address that is not a URL fails', () => {
+  expect(() => loadPublicURL(fixture({ publicURL: 'tcgreplay.app' }))).toThrow(/TCGREPLAY_PUBLIC_URL.*not a URL/);
+});
+
+test('a PRIMARY domain that differs from the public address fails, naming both', () => {
+  const run = () => loadPublicURL(fixture({ primary: 'tcgreplay.demo.gs' }));
+  expect(run).toThrow(/https:\/\/tcgreplay\.app/);
+  expect(run).toThrow(/PRIMARY domain is "tcgreplay\.demo\.gs"/);
+});
+
+test('a definition with no PRIMARY domain fails', () => {
+  expect(() => loadPublicURL(fixture({ primary: null }))).toThrow(/no domain with type PRIMARY/);
+});
+
 test('parseGoDuration reads Go durations in milliseconds', () => {
   expect(parseGoDuration('45s')).toBe(45_000);
   expect(parseGoDuration('1m')).toBe(60_000);
@@ -90,7 +151,7 @@ test('humanDuration matches the playmat (internal/usergames humanDuration)', () 
   for (const [go, want] of cases) expect(humanDuration(parseGoDuration(go)), go).toBe(want);
 });
 
-test('the shared layout imports the facts, so every page build checks the limits', () => {
+test('the shared layout imports the facts, so every page build checks the public address and the limits', () => {
   const base = readFileSync(new URL('../src/layouts/Base.astro', import.meta.url), 'utf8');
   expect(base).toMatch(/^import .* from '\.\.\/lib\/facts';$/m);
 });

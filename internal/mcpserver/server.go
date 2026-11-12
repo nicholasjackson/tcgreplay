@@ -50,8 +50,9 @@ func (s *Server) MCP() *mcp.Server {
 	srv := mcp.NewServer(&mcp.Implementation{Name: "tcgreplay", Version: s.Version}, &mcp.ServerOptions{
 		Instructions: s.instructions(),
 		InitializedHandler: func(_ context.Context, req *mcp.InitializedRequest) {
-			// With a resolver the label is set on each call's own manager.
-			if s.Resolve != nil {
+			// With a resolver the label is set on each call's own manager;
+			// with no manager (the moved server, see Moved) there is none.
+			if s.Resolve != nil || s.M == nil {
 				return
 			}
 			if p := req.Session.InitializeParams(); p != nil && p.ClientInfo != nil {
