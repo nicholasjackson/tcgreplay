@@ -12,7 +12,7 @@ Each Google account has its own game on the hosted playmat. [The privacy page](/
 
 ## Opening the board
 
-When your assistant imports a game, starts a new one or sets the opponent's deck, its reply includes a **board link**, an address like `https://tcgreplay.demo.gs/board?board=…`. Open it to watch the game on a live board and make moves yourself.
+When your assistant imports a game, starts a new one or sets the opponent's deck, its reply includes a **board link**, an address like `https://tcgreplay.app/board?board=…`. Open it to watch the game on a live board and make moves yourself.
 
 - **In the same browser you signed in with**, the board opens straight away: you are already signed in.
 - **In another browser or device**, the board sends you to Google sign-in first. Sign in with the same Google account and the board opens.

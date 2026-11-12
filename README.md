@@ -13,11 +13,11 @@ shows it, live in your browser. It works with Claude and ChatGPT.
 
 ## Get started
 
-See **[tcgreplay.demo.gs](https://tcgreplay.demo.gs)** for what it does, and
-**[Get started](https://tcgreplay.demo.gs/docs/connect)** to connect it to
+See **[tcgreplay.app](https://tcgreplay.app)** for what it does, and
+**[Get started](https://tcgreplay.app/docs/connect)** to connect it to
 claude.ai, ChatGPT or Claude Code. To run it on your own computer with the
 Claude desktop app, see
-[running it on your desktop](https://tcgreplay.demo.gs/docs/desktop).
+[running it on your desktop](https://tcgreplay.app/docs/desktop).
 
 ## Development
 

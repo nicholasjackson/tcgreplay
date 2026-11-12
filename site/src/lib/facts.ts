@@ -9,18 +9,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 
-/** The App Platform definition, where the hosted limits are set. */
+/** The App Platform definition, where the public address and the hosted limits are set. */
 export const appSpecPath = join(process.cwd(), '..', '.do', 'app.yaml');
-
-const publicURL = 'https://tcgreplay.demo.gs';
-
-/** The playmat's public addresses and the source repository. */
-export const site = {
-  publicURL,
-  mcpURL: `${publicURL}/mcp`,
-  boardURL: `${publicURL}/board`,
-  repoURL: 'https://github.com/nicholasjackson/tcgreplay',
-} as const;
 
 /** The hosted playmat's limits, as the App Platform definition sets them. */
 export type Limits = {
@@ -50,24 +40,7 @@ class FactError extends Error {
  * definition (YAML text). It throws if any is missing or unparsable.
  */
 export function loadLimits(yamlText: string, source = '.do/app.yaml'): Limits {
-  let spec: any;
-  try {
-    spec = parse(yamlText);
-  } catch (err) {
-    throw new FactError(`${source} is not valid YAML: ${(err as Error).message}`);
-  }
-  const service = Array.isArray(spec?.services) ? spec.services.find((s: any) => s?.name === 'playmat') : undefined;
-  if (!service) {
-    throw new FactError(`${source} has no service named "playmat"`);
-  }
-  const envs: any[] = Array.isArray(service.envs) ? service.envs : [];
-  const value = (key: string): string => {
-    const env = envs.find((e) => e?.key === key);
-    if (env === undefined || env.value === undefined || env.value === null || String(env.value).trim() === '') {
-      throw new FactError(`${source} does not set ${key} on the playmat service; the website states it, so the build stops`);
-    }
-    return String(env.value).trim();
-  };
+  const { value } = readSpec(yamlText, source);
   const count = (key: string): number => {
     const v = value(key);
     const n = Number(v);
@@ -86,6 +59,75 @@ export function loadLimits(yamlText: string, source = '.do/app.yaml'): Limits {
     maxUsers: count(envKeys.maxUsers),
     idleTimeout: humanDuration(ms),
   };
+}
+
+/**
+ * readSpec parses an App Platform definition and finds the playmat
+ * service. Its value function returns an env value of that service, or
+ * throws naming the key when it is unset or empty.
+ */
+function readSpec(yamlText: string, source: string): { spec: any; value: (key: string) => string } {
+  let spec: any;
+  try {
+    spec = parse(yamlText);
+  } catch (err) {
+    throw new FactError(`${source} is not valid YAML: ${(err as Error).message}`);
+  }
+  const service = Array.isArray(spec?.services) ? spec.services.find((s: any) => s?.name === 'playmat') : undefined;
+  if (!service) {
+    throw new FactError(`${source} has no service named "playmat"`);
+  }
+  const envs: any[] = Array.isArray(service.envs) ? service.envs : [];
+  const value = (key: string): string => {
+    const env = envs.find((e) => e?.key === key);
+    if (env === undefined || env.value === undefined || env.value === null || String(env.value).trim() === '') {
+      throw new FactError(`${source} does not set ${key} on the playmat service; the website states it, so the build stops`);
+    }
+    return String(env.value).trim();
+  };
+  return { spec, value };
+}
+
+const publicURLKey = 'TCGREPLAY_PUBLIC_URL';
+
+/**
+ * loadPublicURL reads the playmat's one public address (TCGREPLAY_PUBLIC_URL)
+ * from an App Platform definition (YAML text), the same value the server
+ * uses. It must be a bare https address, scheme and host only with no
+ * trailing slash, whose host is the domain listed with type PRIMARY.
+ * Otherwise it throws, naming the problem.
+ */
+export function loadPublicURL(yamlText: string, source = '.do/app.yaml'): string {
+  const { spec, value } = readSpec(yamlText, source);
+  const raw = value(publicURLKey);
+  if (raw.includes('${')) {
+    throw new FactError(`${source} sets ${publicURLKey} to "${raw}", which is a platform placeholder; set the literal address, such as https://tcgreplay.app`);
+  }
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    throw new FactError(`${source} sets ${publicURLKey} to "${raw}", which is not a URL; it must be https:// and a host`);
+  }
+  if (u.protocol !== 'https:' || !u.hostname) {
+    throw new FactError(`${source} sets ${publicURLKey} to "${raw}"; it must be an https:// address with a host`);
+  }
+  if (u.username || u.password || u.search || u.hash || raw !== `${u.protocol}//${u.host}`) {
+    throw new FactError(
+      `${source} sets ${publicURLKey} to "${raw}"; it must be the scheme and host only, with no path, query, fragment or trailing slash`,
+    );
+  }
+  const domains: any[] = Array.isArray(spec?.domains) ? spec.domains : [];
+  const primary = domains.find((d) => d?.type === 'PRIMARY');
+  if (!primary || !primary.domain) {
+    throw new FactError(`${source} has no domain with type PRIMARY; ${publicURLKey} (${raw}) must name the primary domain`);
+  }
+  if (String(primary.domain).toLowerCase() !== u.host) {
+    throw new FactError(
+      `${source} sets ${publicURLKey} to "${raw}", but the PRIMARY domain is "${primary.domain}"; the two must name the same host`,
+    );
+  }
+  return raw;
 }
 
 const unitMs: Record<string, number> = { ns: 1e-6, us: 1e-3, 'µs': 1e-3, ms: 1, s: 1000, m: 60_000, h: 3_600_000 };
@@ -124,5 +166,20 @@ function readAppSpec(): string {
   }
 }
 
+const appSpec = readAppSpec();
+
 /** The hosted limits, read once when the site builds. */
-export const limits: Limits = loadLimits(readAppSpec());
+export const limits: Limits = loadLimits(appSpec);
+
+const publicURL = loadPublicURL(appSpec);
+
+/**
+ * The playmat's public addresses, derived from TCGREPLAY_PUBLIC_URL in the
+ * App Platform definition, and the source repository.
+ */
+export const site = {
+  publicURL,
+  mcpURL: `${publicURL}/mcp`,
+  boardURL: `${publicURL}/board`,
+  repoURL: 'https://github.com/nicholasjackson/tcgreplay',
+} as const;

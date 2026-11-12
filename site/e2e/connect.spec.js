@@ -1,8 +1,10 @@
 // The connecting pages: "Get started" opens step-by-step instructions for
 // claude.ai, ChatGPT and Claude Code, each ending with how to check it
 // works; the playmat's address copies exactly; the sign-in and desktop
-// pages are reachable and say what the plan promises.
+// pages are reachable and say what the plan promises. Addresses come from
+// the site facts (TCGREPLAY_PUBLIC_URL in .do/app.yaml), not literals.
 import { test, expect } from '@playwright/test';
+import { site } from '../src/lib/facts.ts';
 
 test('Get started on the home page opens the connecting instructions', async ({ page }) => {
   await page.goto('/');
@@ -42,14 +44,14 @@ test('each assistant has its own numbered steps ending with a check that the con
     const s = sections[name];
     expect(s, `${name} section`).toBeTruthy();
     expect(s.steps, `${name} numbered steps`).toBeGreaterThanOrEqual(2);
-    expect(s.text, `${name} uses the playmat address`).toContain('https://tcgreplay.demo.gs/mcp');
+    expect(s.text, `${name} uses the playmat address`).toContain(site.mcpURL);
     expect(s.checkAt, `${name} has a "Check it works" step`).toBeGreaterThanOrEqual(0);
     expect(s.prompt, `${name} gives a prompt to check with`).toBe(true);
     expect(s.text, `${name} says what to expect`).toMatch(/should list/);
   }
 });
 
-test("the playmat's address copies exactly https://tcgreplay.demo.gs/mcp", async ({ context, page, baseURL }) => {
+test("the playmat's address copies exactly the playmat's connection address", async ({ context, page, baseURL }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(baseURL).origin });
   await page.goto('/docs/connect');
   const button = page.getByRole('button', { name: "Copy The playmat's address" });
@@ -57,7 +59,7 @@ test("the playmat's address copies exactly https://tcgreplay.demo.gs/mcp", async
   await page.evaluate(() => navigator.clipboard.writeText(''));
   await button.click();
   await expect(button).toHaveText('Copied');
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('https://tcgreplay.demo.gs/mcp');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(site.mcpURL);
 });
 
 test('the Claude Code command copies exactly, without a trailing newline', async ({ context, page, baseURL }) => {
@@ -66,8 +68,18 @@ test('the Claude Code command copies exactly, without a trailing newline', async
   const block = page.locator('pre', { hasText: 'claude mcp add' });
   await block.locator('xpath=..').getByRole('button', { name: 'Copy' }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    'claude mcp add --transport http tcgreplay https://tcgreplay.demo.gs/mcp',
+    `claude mcp add --transport http tcgreplay ${site.mcpURL}`,
   );
+});
+
+test('the connecting page has one note for old connectors, naming the address to reconnect at', async ({ page }) => {
+  await page.goto('/docs/connect');
+  const note = page.locator('[data-moved-note]');
+  await expect(note).toHaveCount(1);
+  await expect(note).toBeVisible();
+  await expect(note).toContainText('tcgreplay.demo.gs');
+  await expect(note).toContainText(site.mcpURL);
+  await expect(note).toContainText(/remove it/);
 });
 
 test('the sign-in page is linked from the connecting page and explains Google and the board link', async ({ page }) => {
@@ -78,7 +90,7 @@ test('the sign-in page is linked from the connecting page and explains Google an
   await expect(page).toHaveURL(/\/docs\/sign-in$/);
   const prose = page.locator('.prose');
   await expect(prose).toContainText(/Google['’]s account chooser/);
-  await expect(prose).toContainText('https://tcgreplay.demo.gs/board?board=');
+  await expect(prose).toContainText(`${site.boardURL}?board=`);
   await expect(prose).toContainText('same browser');
 });
 

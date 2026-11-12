@@ -12,6 +12,9 @@
 # Pushes to other branches do not deploy. Edits to this file still need
 # the `doctl apps update` above.
 #
+# Domain, DNS and Google sign-in changes (the move to tcgreplay.app, and
+# later retiring tcgreplay.demo.gs) follow docs/domain-move.md, in order.
+#
 # Users sign in with Google (see TCGREPLAY_GOOGLE_CLIENT_ID below). Each
 # Google account has its own game, held in memory; games left idle are
 # dropped (TCGREPLAY_IDLE_TIMEOUT). Games and sign-ins are lost on every
@@ -60,6 +63,17 @@ services:
       # same as the primary domain under domains below.
       - key: TCGREPLAY_PUBLIC_URL
         value: https://tcgreplay.app
+        scope: RUN_TIME
+      # Old host names the playmat has moved from (comma-separated). Their
+      # /mcp tells assistants to reconnect at the public address, with no
+      # sign-in, and every other path redirects there; sign-in never works
+      # on them. Each must also be an ALIAS under domains below. Retire an
+      # old address by removing its alias under domains, its DNS record and
+      # redirect rule at Cloudflare (see docs/domain-move.md), and then this
+      # entry, and applying this file with `doctl apps update`: no release
+      # is needed.
+      - key: TCGREPLAY_MOVED_FROM
+        value: tcgreplay.demo.gs
         scope: RUN_TIME
       # The Google OAuth web client users sign in with. Set both values in
       # the App Platform control panel (Settings > playmat > Environment
@@ -143,7 +157,9 @@ ingress:
 # The primary domain is the playmat's one public address
 # (TCGREPLAY_PUBLIC_URL): sign-in, the assistant connection and board links
 # all use it. tcgreplay.demo.gs, the old address, stays as an alias only so
-# it can forward players to the new one; sign-in does not work there.
+# it can forward players to the new one and tell old assistant connections
+# where to reconnect (TCGREPLAY_MOVED_FROM above); sign-in does not work
+# there.
 domains:
   - domain: tcgreplay.app
     type: PRIMARY

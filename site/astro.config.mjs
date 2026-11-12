@@ -4,7 +4,10 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://tcgreplay.demo.gs',
+  // Must equal TCGREPLAY_PUBLIC_URL in .do/app.yaml. No page reads
+  // Astro.site; the pages print the address from src/lib/facts.ts, which
+  // reads it from that file and fails the build if it is wrong.
+  site: 'https://tcgreplay.app',
   outDir: '../internal/site/dist/app',
   trailingSlash: 'never',
   build: { format: 'directory' },

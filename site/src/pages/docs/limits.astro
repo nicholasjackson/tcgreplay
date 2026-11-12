@@ -5,7 +5,7 @@
 // (lib/facts.ts), so they change when it does.
 import Docs from '../../layouts/Docs.astro';
 import Prompt from '../../components/Prompt.astro';
-import { limits } from '../../lib/facts';
+import { limits, site } from '../../lib/facts';
 ---
 <Docs
   title="The hosted playmat's limits"
@@ -13,7 +13,7 @@ import { limits } from '../../lib/facts';
 >
   <h1>The hosted playmat's limits</h1>
   <p>
-    The hosted playmat at tcgreplay.demo.gs is free and small. It runs on a single server, so it keeps games only in
+    The hosted playmat at {site.publicURL.replace('https://', '')} is free and small. It runs on a single server, so it keeps games only in
     memory and serves a limited number of players at once. Here is what that means for you.
   </p>
 
