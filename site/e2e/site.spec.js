@@ -1,8 +1,10 @@
 // Checks every page of the built website, served by the Go site handler:
-// the shared layout (logo, navigation, fan notice, TCGdex credit), no
-// sideways scrolling on a 375px phone, no cookies, nothing fetched from
-// any other host (no web fonts, analytics or third-party resources), and
-// copy buttons that copy exactly their block's text.
+// the shared layout (logo, navigation, and the footer's fan notice and
+// card-data credit from the shared notice file, with its Privacy, Terms,
+// help and source links), no sideways scrolling on a 375px phone, no
+// cookies, nothing fetched from any other host (no web fonts, analytics or
+// third-party resources), and copy buttons that copy exactly their block's
+// text.
 //
 // The pages are found by crawling same-origin links from /. Every page the
 // site links to must exist: a link to a missing page fails the suite.
@@ -11,6 +13,10 @@ import { test, expect } from '@playwright/test';
 import { site } from '../src/lib/facts.ts';
 
 const companies = ['Nintendo', 'The Pokémon Company', 'Creatures', 'Game Freak'];
+
+// The shared wording, read straight from its file (not through the site's
+// loader), so a footer that drifts from it fails.
+const shared = JSON.parse(readFileSync(new URL('../../internal/notice/notice.json', import.meta.url), 'utf8'));
 
 const navLinks = [
   { name: 'Home', href: '/' },
@@ -64,11 +70,12 @@ test.beforeAll(async ({ browser }, testInfo) => {
   pages = await crawl(browser, testInfo.project.use.baseURL);
 });
 
-test('the crawl reaches the home page and every nav link', async () => {
+test('the crawl reaches the home page, every nav link and the terms', async () => {
   const paths = pages.map((p) => p.path);
   expect(paths[0]).toBe('/');
   expect(pages[0].status).toBe(200);
   for (const { href } of navLinks) expect(paths).toContain(href);
+  expect(paths).toContain('/terms');
   // Paths are unique.
   expect(new Set(paths).size).toBe(paths.length);
 });
@@ -101,7 +108,7 @@ test('the playmat addresses are not part of the website test server', async ({ r
   }
 });
 
-test('every page shows the logo, the site navigation, the fan notice and the TCGdex credit', async ({ page }) => {
+test('every page shows the logo, the site navigation, the shared fan notice and credit, and the footer links', async ({ page }) => {
   for (const { path } of pages) {
     await page.goto(path);
     await expect(page.locator('header img[src="/logo.png"]'), `${path}: logo`).toBeVisible();
@@ -114,12 +121,27 @@ test('every page shows the logo, the site navigation, the fan notice and the TCG
 
     const notice = page.locator('footer .fan-notice');
     await expect(notice, `${path}: fan notice`).toBeVisible();
+    await expect(notice, `${path}: notice is the shared wording`).toHaveText(shared.notice);
     await expect(notice).toContainText('unofficial fan project');
     for (const c of companies) await expect(notice, `${path}: notice names ${c}`).toContainText(c);
 
     const credit = page.locator('footer .credit');
-    await expect(credit, `${path}: TCGdex credit`).toBeVisible();
-    await expect(credit.getByRole('link', { name: 'TCGdex' })).toHaveAttribute('href', 'https://tcgdex.dev');
+    await expect(credit, `${path}: card-data credit`).toBeVisible();
+    await expect(credit, `${path}: credit is the shared wording`).toHaveText(
+      `${shared.credit.lead} ${shared.credit.sources.map((s) => s.name).join(' and ')}.`,
+    );
+    for (const { name, url } of shared.credit.sources) {
+      await expect(credit.getByRole('link', { name }), `${path}: credit links ${name}`).toHaveAttribute('href', url);
+    }
+
+    const links = page.locator('footer').getByRole('navigation', { name: 'Footer' });
+    await expect(links, `${path}: footer links`).toBeVisible();
+    await expect(links.getByRole('link', { name: 'Privacy', exact: true }), `${path}: footer Privacy`).toHaveAttribute('href', '/privacy');
+    await expect(links.getByRole('link', { name: 'Terms', exact: true }), `${path}: footer Terms`).toHaveAttribute('href', '/terms');
+    const help = links.getByRole('link', { name: /Get help/ });
+    await expect(help, `${path}: footer help`).toHaveAttribute('href', shared.help.url);
+    await expect(help).toHaveText('Get help');
+    await expect(links.getByRole('link', { name: 'Source on GitHub' }), `${path}: footer source`).toHaveAttribute('href', site.repoURL);
   }
 });
 

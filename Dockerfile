@@ -15,25 +15,31 @@
 # for published card sets and clear image copies at /admin) and
 # TCGREPLAY_SPACES_CDN_TOKEN (a DigitalOcean API token, so an image clear
 # also purges the bucket's CDN). The image carries no card data: card sets
-# are loaded from the published copy at start.
+# are loaded from the published copy at start. The shared fan-project
+# notice, card-data credit and help address (internal/notice/notice.json)
+# are copied into both UI build stages, so either build can read them.
 
-# Build the board UI into the Go package (see web/vite.config.js).
+# Build the board UI into the Go package (see web/vite.config.js), with
+# the shared notice copied beside it for the board to read.
 FROM node:22 AS web
 WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
+COPY internal/notice /src/internal/notice
 RUN npm run build
 
 # Build the website into its Go package (see site/astro.config.mjs). The
-# build reads the guides, the limits in .do/app.yaml and the example deck,
-# so they are copied beside it. Astro needs Node 22.23.4 or newer.
+# build reads the guides, the limits in .do/app.yaml, the shared notice and
+# the example deck, so they are copied beside it. Astro needs Node 22.23.4
+# or newer.
 FROM node:22.23.4 AS site
 WORKDIR /src/site
 COPY site/package.json site/package-lock.json ./
 RUN npm ci
 COPY site/ ./
 COPY internal/guides /src/internal/guides
+COPY internal/notice /src/internal/notice
 COPY .do/app.yaml /src/.do/app.yaml
 COPY testdata/decks /src/testdata/decks
 RUN npm run build

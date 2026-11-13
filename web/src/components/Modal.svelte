@@ -1,10 +1,13 @@
 <script>
-  // Modals: a pile (discard, Lost Zone), a deck search, the top N cards and
-  // the end-of-turn prompt when the clipboard is unavailable.
+  // Modals: a pile (discard, Lost Zone), a deck search, the top N cards,
+  // the end-of-turn prompt when the clipboard is unavailable, and About
+  // (the fan-project notice, card-data credit and help link, from the
+  // notice file the website shares).
   import { app, cardInfo, imageSrc, nextImageStage, openSheet } from '../lib/store.svelte.js';
   import { openDeckList, openSearch, pileCardActions } from '../lib/actions.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
+  import notice from '../../../internal/notice/notice.json';
 
   const m = $derived(app.modal);
   // On a touch screen a view closes like the action sheet, with a round ✕
@@ -240,6 +243,16 @@
     {:else if m.kind === 'prompt'}
       <header><h2>Paste this to {app.assistant}</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
       <textarea readonly rows="3" onfocus={(ev) => ev.target.select()}>{m.text}</textarea>
+    {:else if m.kind === 'about'}
+      <header><h2>About tcgreplay</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
+      <div class="about">
+        <p class="fan-notice">{notice.notice}</p>
+        <p class="credit">
+          {notice.credit.lead}{' '}
+          {#each notice.credit.sources as s, i (s.url)}{#if i > 0}{i === notice.credit.sources.length - 1 ? ' and ' : ', '}{/if}<a href={s.url} target="_blank" rel="noopener">{s.name}</a>{/each}.
+        </p>
+        <p><a href={notice.help.url} target="_blank" rel="noopener">Get help</a> ({notice.help.label})</p>
+      </div>
     {/if}
   </div>
   {#if imageSrc(previewInfo, 'high.webp', previewStage)}
@@ -315,6 +328,9 @@
     font: inherit;
   }
   textarea { width: 100%; margin-top: 10px; box-sizing: border-box; }
+  .about { max-width: 40rem; overflow-wrap: anywhere; }
+  .about p { margin: 10px 0 0; line-height: 1.45; }
+  .about a { color: var(--accent); }
   .note { color: var(--muted); font-size: 12px; margin: 6px 0; }
   .grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
   .entry { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }

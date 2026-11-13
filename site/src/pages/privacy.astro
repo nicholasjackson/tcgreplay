@@ -1,25 +1,47 @@
 ---
 // The privacy page, at /privacy: what the hosted playmat collects and keeps,
-// for how long, and what it never collects. Each statement follows the
-// playmat as built (internal/hostauth, internal/usergames, internal/game);
-// the idle time comes from the App Platform definition, not typed in.
+// for how long, what visitor counting and diagnostics record, which outside
+// services are involved, and what it never collects. Sources:
+// - the playmat as built (internal/hostauth, internal/usergames,
+//   internal/game, internal/cards, internal/telemetry);
+// - the idle time from the App Platform definition (lib/facts), not typed in;
+// - the help address from internal/notice/notice.json (lib/notice);
+// - diagnostics, what they never contain and their retention from the
+//   observability runbook, docs/observability.md. Its Retention section is
+//   provisional (7 days, to be confirmed by the maintainer); when it
+//   changes, change the data-retention figures here too. The browser suite
+//   checks the "logs" and "metrics" figures against it;
+// - visitor counting from Cloudflare Web Analytics' documentation, checked
+//   13 November 2026: developers.cloudflare.com/web-analytics/data-metrics/dimensions/
+//   (country, host, path, referrer, device type, browser, operating system),
+//   .../data-metrics/data-origin-and-collection/ (page load timings),
+//   .../faq/ (unsampled data kept 7 days, then about a tenth of it, available
+//   for six months) and blog.cloudflare.com/free-privacy-first-analytics-for-a-better-web/
+//   (no cookies or localStorage, no fingerprinting). The "visits" figure is
+//   checked by hand against these pages.
 import Base from '../layouts/Base.astro';
 import { limits, site } from '../lib/facts';
+import { notice } from '../lib/notice';
 
-const updated = '8 November 2026';
+const updated = '13 November 2026';
 ---
 <Base
   title="Privacy"
-  description="What the hosted tcgreplay playmat collects when you sign in and play, how long it keeps it, and what it never collects."
+  description="What the hosted tcgreplay playmat collects when you sign in and play, what visitor counting and diagnostics record, how long it keeps it, and what it never collects."
 >
   <article class="privacy">
     <h1>Privacy</h1>
-    <p class="updated">Last updated {updated}.</p>
+    <p class="updated" data-updated>Last updated {updated}.</p>
     <p>
       This page covers the hosted playmat at <a href={site.publicURL}>{site.publicURL.replace('https://', '')}</a>.
       If you run tcgreplay on your own computer, nothing leaves your machine except the download of the project's
-      published card data and the card images your browser loads. This website itself sets no cookies and loads
-      nothing from other sites.
+      published card data and the card images your browser loads.
+    </p>
+    <p>
+      The playmat sets no cookies on this website; its only cookies are the two sign-in cookies (below). Cloudflare,
+      which sits in front of the site, may set a short-lived bot-protection cookie, <code>__cf_bm</code>. It is not used
+      for visitor counting and is not tied to your account. The only thing this website may load from another site is
+      Cloudflare's visitor-counting script (see <a href="#visitor-counting">visitor counting</a>).
     </p>
 
     <section id="sign-in" aria-labelledby="h-sign-in">
@@ -38,7 +60,8 @@ const updated = '8 November 2026';
         which it uses once to confirm who you are and then throws away.
       </p>
       <p>
-        Your sign-ins are kept encrypted, in the playmat's memory only. Two cookies keep you signed in, both hidden
+        The playmat keeps your sign-ins in its memory. The copies it gives your browser (a cookie) and your assistant
+        are encrypted, so you stay signed in when the playmat is updated. Two cookies keep you signed in, both hidden
         from scripts:
       </p>
       <ul>
@@ -64,6 +87,62 @@ const updated = '8 November 2026';
       </p>
     </section>
 
+    <section id="visitor-counting" aria-labelledby="h-visitor-counting">
+      <h2 id="h-visitor-counting">Visitor counting</h2>
+      <p>
+        The website and the board count visits with <strong>Cloudflare Web Analytics</strong>. For each page view it
+        records:
+      </p>
+      <ul>
+        <li>the page;</li>
+        <li>the referrer (the site you came from);</li>
+        <li>your country;</li>
+        <li>your device: its type (phone, tablet or computer), browser and operating system;</li>
+        <li>how quickly the page loaded.</li>
+      </ul>
+      <p>
+        It sets no cookies and stores nothing in your browser. It is never linked to your Google account, and it is
+        never sent your email address, your games or your cards. Blocking it changes nothing about how the playmat
+        works.
+      </p>
+      <p>
+        Cloudflare keeps the counts for <span data-retention="visits">six months</span>: the full detail for the first
+        7 days, then a sample of about a tenth of it.
+      </p>
+    </section>
+
+    <section id="diagnostics" aria-labelledby="h-diagnostics">
+      <h2 id="h-diagnostics">Diagnostics</h2>
+      <p>To keep the playmat running, two kinds of diagnostics are kept:</p>
+      <ul>
+        <li>
+          <strong>DigitalOcean's request and performance metrics</strong>: how many requests the playmat answers, how
+          quickly, and with which status codes, and its CPU, memory and restarts. These are totals for the whole
+          playmat, not per person.
+        </li>
+        <li>
+          <strong>The playmat's own usage and error records</strong>: sign-ins, refused sign-ins and sign-outs, each
+          request your assistant makes (which tool, and which assistant), imports and new games, your first activity
+          each day, limits reached, games expiring, accounts removed, attempts to open another player's board, refused
+          visits to the admin page, the maintainers' admin checks and actions, and errors, with any of your own text
+          removed from the error message.
+        </li>
+      </ul>
+      <p>
+        Each record names you only by a <strong>player ID</strong>, a one-way code made from your email address with a
+        secret key. It cannot be turned back into your email address. If you ask for help, the maintainer can work out
+        your player ID from your email address to find your records.
+      </p>
+      <p>
+        These records never contain your email address or name, Google tokens or the playmat's own tokens and cookies,
+        battle logs, decklists or card data.
+      </p>
+      <p>
+        Both are kept in DigitalOcean's Insights service: usage and error records for
+        <span data-retention="logs">7 days</span>, and the metrics for <span data-retention="metrics">7 days</span>.
+      </p>
+    </section>
+
     <section id="how-long" aria-labelledby="h-how-long">
       <h2 id="h-how-long">How long it is kept</h2>
       <ul>
@@ -74,7 +153,9 @@ const updated = '8 November 2026';
         </li>
         <li>
           <strong>Your account details</strong> (ID, email, verified flag) are kept with your sign-ins and dropped
-          when your last one ends: when you sign out and disconnect your assistant, or when they run out (below).
+          when your last one ends. Signing out ends the board's sign-in. Your assistant's sign-in ends when its
+          connection runs out, up to 30 days after it was last used. Disconnecting tcgreplay in your assistant does not
+          tell the playmat, so that record runs out on its own within those 30 days.
         </li>
         <li>
           <strong>Board sign-in</strong> lasts up to 30 days. <strong>Your assistant's connection</strong> lasts up to
@@ -82,9 +163,9 @@ const updated = '8 November 2026';
           lasts up to 10 minutes.
         </li>
         <li>
-          <strong>Logs.</strong> The playmat writes your email address to its logs when you sign in or out, when a limit
-          stops a request, and when your game expires or is removed. Logs never contain IP addresses, battle logs or
-          decks. The hosting providers, DigitalOcean and Cloudflare, may keep their own request logs.
+          <strong>Logs.</strong> The playmat's own records hold no email address; see
+          <a href="#diagnostics">diagnostics</a> for what they hold and how long. The hosting providers, DigitalOcean and
+          Cloudflare, may keep their own request logs.
         </li>
       </ul>
     </section>
@@ -95,15 +176,20 @@ const updated = '8 November 2026';
         <li><strong>Google</strong>, for signing in.</li>
         <li>
           <strong>TCGdex</strong> and <strong>malie.io</strong>, the sources of the card data, which the project builds
-          and publishes ahead of time; the playmat reads only that published copy, so nothing about you is sent to
-          them.
+          and publishes ahead of time; the playmat reads only that published copy.
         </li>
         <li>
-          <strong>Card images</strong> are loaded by your browser, from the playmat's own image store, TCGdex or
-          malie.io.
+          <strong>Card images</strong>: the playmat fetches them from TCGdex and malie.io and keeps copies in its image
+          store on DigitalOcean Spaces. Your browser loads them from there, or from TCGdex or malie.io if a copy is
+          missing. The playmat sends nothing about you to TCGdex or malie.io; when your browser loads an image from
+          them, they see that request as they would any visit to their site.
         </li>
         <li>
-          <strong>DigitalOcean</strong> hosts the playmat, and <strong>Cloudflare</strong> delivers its traffic.
+          <strong>DigitalOcean</strong> hosts the playmat, stores the card data and images (DigitalOcean Spaces) and
+          keeps the diagnostics (Insights).
+        </li>
+        <li>
+          <strong>Cloudflare</strong> delivers the playmat's traffic and counts visits (Cloudflare Web Analytics).
         </li>
         <li>
           <strong>Your AI assistant</strong> (Claude, ChatGPT or another) sees what you share with it and what the
@@ -117,7 +203,7 @@ const updated = '8 November 2026';
       <ul>
         <li>Your password, name or photo.</li>
         <li>Your Google access tokens, after the moment of sign-in.</li>
-        <li>Analytics, tracking or advertising data of any kind.</li>
+        <li>Advertising or cross-site tracking data, or anything that identifies you in visitor counts.</li>
         <li>Anything to sell or share: the playmat sells or shares nothing.</li>
       </ul>
     </section>
@@ -125,14 +211,16 @@ const updated = '8 November 2026';
     <section id="removing" aria-labelledby="h-removing">
       <h2 id="h-removing">Removing your data</h2>
       <p>
-        Sign out from the board's menu, and disconnect tcgreplay in your assistant's connector settings. There is no
-        stored account to delete: once your sign-ins end, the playmat forgets you.
+        Sign out from the board's menu to end the board's sign-in. Disconnect tcgreplay in your assistant's connector
+        settings to stop it using the playmat; the playmat's record of that connection runs out within 30 days. There
+        is no stored account to delete: nothing is kept beyond your sign-ins, and the diagnostic records name you only
+        by your player ID and run out after the periods above.
       </p>
     </section>
 
     <section id="contact" aria-labelledby="h-contact">
       <h2 id="h-contact">Questions</h2>
-      <p>Open an issue on <a href={`${site.repoURL}/issues`}>the project's GitHub page</a>.</p>
+      <p>Open an issue on <a href={notice.help.url}>the project's {notice.help.label}</a>.</p>
     </section>
   </article>
 </Base>

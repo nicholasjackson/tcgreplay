@@ -149,6 +149,9 @@
           <label class="menu-check" title="Play the assistant's moves on the board as they arrive">
             <input type="checkbox" checked={app.autoplay} onchange={(ev) => setAutoplay(ev.target.checked)} /> Autoplay {app.assistant}'s moves
           </label>
+          <!-- At every layout and in the desktop app alike, outside the hosted-only account block. -->
+          <div class="sep"></div>
+          <button role="menuitem" onclick={() => menu(() => (app.modal = { kind: 'about' }))}>About tcgreplay</button>
           {#if app.account}
             <div class="sep"></div>
             <div class="account" title="Signed in with Google">{app.account}</div>
