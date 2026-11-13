@@ -63,8 +63,11 @@ func TestHostedUserCapSetting(t *testing.T) {
 	if code != http.StatusServiceUnavailable || !strings.Contains(body, "tcgreplay is busy") || !strings.Contains(body, "(1)") {
 		t.Errorf("second account's board sign-in at a cap of 1: %d %q, want 503 busy naming the cap", code, body)
 	}
-	if want := "refused sign-in for " + capSecond.Email; !strings.Contains(logs.String(), want) {
-		t.Errorf("log does not record %q:\n%s", want, logs)
+	if want := `"event":"sign_in_refused","player":"` + twoID + `"`; !strings.Contains(h.events.String(), want) {
+		t.Errorf("records lack %s:\n%s", want, h.events)
+	}
+	if strings.Contains(logs.String()+h.events.String(), capSecond.Email) {
+		t.Errorf("the refused account's email was logged or recorded")
 	}
 
 	h.g.SetAccount(hostauthtest.DefaultAccount)

@@ -20,6 +20,8 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/endpoints"
+
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
 // Config is what the sign-in service is built from.
@@ -52,6 +54,9 @@ type Config struct {
 	// compared without regard to case and only for an email Google marked
 	// verified. Empty means nobody is an admin.
 	Admins []string
+	// Recorder records sign-ins, sign-outs, rate-limit refusals and admin
+	// refusals by player ID, never by email; nil records nothing.
+	Recorder *telemetry.Recorder
 }
 
 // Places is the server's user cap, kept by whoever tracks what each

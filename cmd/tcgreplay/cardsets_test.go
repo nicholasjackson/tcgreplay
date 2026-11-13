@@ -276,6 +276,11 @@ func serveHosted(t *testing.T, public string, c config, g *hostauthtest.FakeGoog
 	if err != nil {
 		t.Fatal(err)
 	}
+	var events *syncBuffer
+	if c.events == nil {
+		events = &syncBuffer{}
+		c.events = events
+	}
 	reg, srv, a, err := newHosted(c, cat, nil, u, g.Endpoint())
 	if err != nil {
 		t.Fatal(err)
@@ -284,9 +289,9 @@ func serveHosted(t *testing.T, public string, c config, g *hostauthtest.FakeGoog
 	if err != nil {
 		t.Fatal(err)
 	}
-	ts := httptest.NewServer(movedGuard(moved, u, movedMCP(c, u), hostedHandler(srv, reg, a, hostedAdmin(cat, nil))))
+	ts := httptest.NewServer(movedGuard(moved, u, movedMCP(c, u), hostedHandler(srv, reg, a, hostedAdmin(cat, nil, reg.Recorder()))))
 	t.Cleanup(ts.Close)
-	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: cat}
+	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: cat, events: events}
 }
 
 // hostedOn starts hosted mode on the card sets published at base (an

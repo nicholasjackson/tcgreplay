@@ -19,6 +19,7 @@ import (
 
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
 
@@ -40,6 +41,10 @@ type Config struct {
 	MaxUsers int
 	// Now is the clock; nil means time.Now. Tests substitute their own.
 	Now func() time.Time
+	// Recorder records the registry's events (refusals at the user cap,
+	// expiries, removals, foreign board links) by player ID, never by
+	// email; nil records nothing.
+	Recorder *telemetry.Recorder
 }
 
 // purgeAfter is how long an entry that holds no place is kept without
@@ -90,6 +95,10 @@ func New(cfg Config) *Registry {
 
 var _ hostauth.Places = (*Registry)(nil)
 
+// Recorder returns the registry's recorder (nil when it has none), so
+// hosted wiring can hand the same one to the admin page.
+func (r *Registry) Recorder() *telemetry.Recorder { return r.cfg.Recorder }
+
 // Use returns acct's entry for an action (a tool call, a board move or a
 // board page load), creating it the first time, and records the activity.
 // A game idle for longer than the idle time is expired first, so the
@@ -110,6 +119,7 @@ func (r *Registry) Use(acct hostauth.Account) (*Entry, error) {
 	e = r.entryLocked(acct, now)
 	e.last = now
 	e.holds = true
+	r.cfg.Recorder.Active(acct.Email)
 	return e, nil
 }
 
@@ -120,7 +130,7 @@ func (r *Registry) Use(acct hostauth.Account) (*Entry, error) {
 func (r *Registry) Admit(acct hostauth.Account) error {
 	_, err := r.Use(acct)
 	if err != nil {
-		log.Printf("usergames: refused %s: %v", acct.Email, err)
+		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "places", Message: err.Error()})
 	}
 	return err
 }
@@ -131,7 +141,7 @@ func (r *Registry) Release(id string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if e := r.entries[id]; e != nil {
-		log.Printf("usergames: %s signed out; removed", e.acct.Email)
+		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.Email, Reason: "signed_out"})
 	}
 	r.removeLocked(id)
 }
@@ -190,7 +200,7 @@ func (r *Registry) expireIfIdle(e *Entry, now time.Time) bool {
 	e.holds = false
 	if _, err := e.M.Current(); err == nil {
 		e.M.Expire(r.notice())
-		log.Printf("usergames: game for %s expired after %s idle", e.acct.Email, humanDuration(r.cfg.Idle))
+		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.GameExpired, Email: e.acct.Email, Idle: humanDuration(r.cfg.Idle)})
 	}
 	return true
 }
@@ -264,7 +274,7 @@ func (r *Registry) sweepLocked(now time.Time) {
 		}
 		if !e.holds && now.Sub(e.last) > purgeAfter {
 			r.removeLocked(id)
-			log.Printf("usergames: removed idle account %s", e.acct.Email)
+			r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.Email, Reason: "idle"})
 			changed = true
 		}
 	}

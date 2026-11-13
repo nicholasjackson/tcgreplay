@@ -36,6 +36,12 @@
 # TCGREPLAY_MAX_USERS, TCGREPLAY_IDLE_TIMEOUT) are also shown on the website, which reads them
 # from this file when it is built: this file stays the one place they are
 # set, and the site build fails if one goes missing.
+#
+# Usage and error records are JSON lines on the playmat's standard output,
+# naming players only by a pseudonymous player ID (TCGREPLAY_PLAYER_ID_KEY
+# below); they are read in DigitalOcean Insights, with the graphs and the
+# alerts below. docs/observability.md is the runbook: what is recorded,
+# how to read daily usage and a player's errors, and the alert rules.
 name: tcgreplay
 region: lon
 services:
@@ -53,10 +59,32 @@ services:
     # Must stay 1: each account's game (and every sign-in) lives in this
     # instance's memory, so a second copy would not see them.
     instance_count: 1
+    # Launch size, kept until the memory measurement in
+    # docs/observability.md (Capacity) is done: with every place
+    # (TCGREPLAY_MAX_USERS) filled, memory must stay at or below 70%.
     instance_size_slug: apps-s-1vcpu-0.5gb
     # /healthz needs no sign-in; the board's root redirects to Google.
     health_check:
       http_path: /healthz
+    # Alert rules: an unexpected restart, and CPU or memory staying high.
+    # The thresholds are the maintainer's to change here. The app
+    # definition cannot say who an alert goes to: set the recipients once
+    # in the control panel (the app's Settings > Alerts, or an Insights
+    # email notification channel). Changes here need the `doctl apps
+    # update` above. See docs/observability.md.
+    alerts:
+      - rule: RESTART_COUNT
+        operator: GREATER_THAN
+        value: 0
+        window: FIVE_MINUTES
+      - rule: CPU_UTILIZATION
+        operator: GREATER_THAN
+        value: 80
+        window: TEN_MINUTES
+      - rule: MEM_UTILIZATION
+        operator: GREATER_THAN
+        value: 80
+        window: TEN_MINUTES
     envs:
       # The playmat's one public address: sign-in, the assistant connection,
       # board links and the board's allowed origin all use it. Keep it the
@@ -92,6 +120,15 @@ services:
       - key: TCGREPLAY_SIGNING_KEY
         scope: RUN_TIME
         type: SECRET
+      # Keys the pseudonymous player IDs that usage and error records name
+      # players by, in place of their email; at least 32 characters (e.g.
+      # openssl rand -base64 48). Hosted mode will not start without it.
+      # Changing it changes every player's ID, so records written before
+      # no longer match the same players. Set it in the control panel,
+      # encrypted, and keep a copy somewhere safe.
+      - key: TCGREPLAY_PLAYER_ID_KEY
+        scope: RUN_TIME
+        type: SECRET
       # Requests per minute per account, and places (accounts served at
       # once; a place is freed when an account's game goes idle or its last
       # sign-in ends); 0 turns either off. Changing them needs only a
@@ -99,6 +136,8 @@ services:
       - key: TCGREPLAY_RATE_LIMIT
         value: "300"
         scope: RUN_TIME
+      # TCGREPLAY_MAX_USERS is kept at its launch value until the memory
+      # measurement in docs/observability.md (Capacity) sets it.
       - key: TCGREPLAY_MAX_USERS
         value: "10"
         scope: RUN_TIME

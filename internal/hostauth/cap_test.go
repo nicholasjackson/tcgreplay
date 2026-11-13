@@ -218,28 +218,25 @@ func (b *board) logout(t *testing.T, id string) {
 // code. The provider is asked in both flows, neither sets a session
 // cookie, B holds no live sign-in, and each refusal is logged.
 func TestCapRefusesNewAccountBothFlows(t *testing.T) {
-	logs := captureHostLog(t)
 	b := newCapped(t, 1)
+	rec, events := recordTo(t, b.a)
 	b.boardOK(t, capA)
+	refused := `"event":"sign_in_refused","player":"` + rec.ID(capB.Email) + `","reason":"the server is busy`
 
 	b.g.SetAccount(capB)
-	logs.Reset()
 	resp, body, br := b.boardAs(t)
 	b.checkBusy(t, "board", resp, body, br, 1)
-	if want := "hostauth: refused sign-in for " + capB.Email; !strings.Contains(logs.String(), want) {
-		t.Errorf("board refusal: log %q does not record %q", logs.String(), want)
-	}
-	if !strings.Contains(logs.String(), "the server is busy") {
-		t.Errorf("board refusal: log %q does not say the server is busy", logs.String())
+	if n := strings.Count(events.String(), refused); n != 1 {
+		t.Errorf("board refusal: %d records of %s, want 1:\n%s", n, refused, events)
 	}
 
 	clientID, _ := b.registerClient(t, "none", hostauthtest.LoopbackCallback)
-	logs.Reset()
 	resp, body, br = b.connectorAs(t, clientID)
 	b.checkBusy(t, "connector", resp, body, br, 1)
-	if want := "hostauth: refused sign-in for " + capB.Email; !strings.Contains(logs.String(), want) {
-		t.Errorf("connector refusal: log %q does not record %q", logs.String(), want)
+	if n := strings.Count(events.String(), refused); n != 2 {
+		t.Errorf("connector refusal: %d records of %s, want 2:\n%s", n, refused, events)
 	}
+	noEmails(t, events)
 	if _, err := hostauthtest.FollowSignIn(b.browser(t), b.authorizeURL(clientID, hostauthtest.LoopbackCallback, nil)); err == nil {
 		t.Error("connector sign-in for B over the cap reached the client's callback")
 	}

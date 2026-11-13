@@ -29,6 +29,7 @@ button { font: inherit; padding: .3rem .8rem; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; }
 dt { color: #666; }
 dd { margin: 0; overflow-wrap: anywhere; }
+code { font-size: 1.1em; user-select: all; overflow-wrap: anywhere; }
 .msg { padding: .5rem .8rem; border-left: 4px solid #c01c28; background: #fbe9eb; }
 .failed { color: #c01c28; }
 @media (prefers-color-scheme: dark) { body { background: #1c1c1c; color: #e6e6e6; } a { color: #8ab4f8; } dt { color: #aaa; } .msg { background: #3a1d20; } .failed { color: #f28b82; } }
@@ -60,6 +61,10 @@ dd { margin: 0; overflow-wrap: anywhere; }
 {{with .Job}}{{if $.Running}}<p>Clearing images for {{.Label}} for {{.By}}, started {{$.Started}}…</p>{{else}}<p>Images for {{.Label}} by {{.By}} at {{$.Started}}, took {{$.Took}}{{if .Failed}}, <span class="failed">with failures</span>{{end}}.</p>
 <ul>{{range $.Tiers}}<li{{if .Failed}} class="failed"{{end}}>{{.Text}}</li>{{end}}</ul>{{end}}{{else}}<p>No clear since the playmat started.</p>{{end}}{{else}}<h2>Images</h2>
 <p>Images are not copied: the shared store is off.</p>{{end}}
+{{if .Lookup}}<h2>Find a player's ID</h2>
+<p>Records name players by ID, never by email. Enter the email a player signed in with to get the ID to search the records for.</p>
+<form method="post" action="/admin/player"><label>Email <input type="email" name="email" autocomplete="off" required></label> <button>Find ID</button></form>
+{{with .Found}}<p>The player ID for {{.Email}} is <code>{{.ID}}</code>.</p>{{end}}{{end}}
 <p><a href="/board">Back to the board</a></p>
 </main>
 </body>
@@ -84,15 +89,23 @@ type tierLine struct {
 	Failed bool
 }
 
+// Lookup is a player-ID lookup's result as the page shows it.
+type Lookup struct {
+	Email, ID string
+}
+
 type pageData struct {
 	Email, Message string
-	Catalog        *catalogLine
-	Check          *checkLine
-	Images         bool
-	Job            *Job
-	Running        bool
-	Started, Took  string
-	Tiers          []tierLine
+	// Lookup offers the player-ID lookup; Found is its result.
+	Lookup        bool
+	Found         *Lookup
+	Catalog       *catalogLine
+	Check         *checkLine
+	Images        bool
+	Job           *Job
+	Running       bool
+	Started, Took string
+	Tiers         []tierLine
 }
 
 // tierNames are how each tier is named on the page.
@@ -126,7 +139,13 @@ func tierText(r cards.TierReport) tierLine {
 // render writes the page with status, for the admin email, the current or
 // last job and msg (shown as an alert when not empty).
 func (s *Service) render(w http.ResponseWriter, status int, email, msg string) {
-	d := pageData{Email: email, Message: msg, Images: s.Images != nil}
+	s.renderLookup(w, status, email, msg, nil)
+}
+
+// renderLookup is render showing a player-ID lookup's result, if found is
+// not nil.
+func (s *Service) renderLookup(w http.ResponseWriter, status int, email, msg string, found *Lookup) {
+	d := pageData{Email: email, Message: msg, Images: s.Images != nil, Lookup: s.PlayerID != nil, Found: found}
 	if s.Catalog != nil {
 		st := s.Catalog.Status()
 		c := &catalogLine{Version: short(st.Version), Base: st.Base, Sets: st.Sets, Prints: st.Prints, Offline: st.Offline,

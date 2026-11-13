@@ -16,6 +16,7 @@ import (
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/catalog"
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
 // Catalog is the playmat's card catalogue (a *catalog.Loader): it names
@@ -62,7 +63,7 @@ const DefaultTimeout = 10 * time.Minute
 type Job struct {
 	Scope   cards.Scope
 	SetName string // the set's display name; empty for everything
-	By      string // the admin's email
+	By      string // the admin, by player ID
 	Started time.Time
 	Ended   time.Time
 	Reports []cards.TierReport
@@ -107,6 +108,12 @@ type Service struct {
 	Timeout time.Duration
 	// Logf logs each job's start and end; nil means log.Printf.
 	Logf func(format string, args ...any)
+	// PlayerID names an admin by player ID in the log lines and on the
+	// page, never by email; nil names them "admin".
+	PlayerID func(email string) string
+	// Recorder records each admin action (admin_action) by player ID; nil
+	// records nothing.
+	Recorder *telemetry.Recorder
 
 	mu    sync.Mutex
 	job   *Job

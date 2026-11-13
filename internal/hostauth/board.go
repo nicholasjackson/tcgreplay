@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
 // boardRoutes registers the board's sign-in routes.
@@ -129,7 +131,7 @@ func (a *Auth) serveLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	if id, s := a.sessionFor(r); s != nil {
 		a.st.endSession(id)
-		log.Printf("hostauth: signed out %s", s.account.Email)
+		a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.SignOut, Email: s.account.Email})
 	}
 	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Path: "/", MaxAge: -1, HttpOnly: true, Secure: a.secure(), SameSite: http.SameSiteLaxMode})
 	w.Header().Set("Cache-Control", "no-store")

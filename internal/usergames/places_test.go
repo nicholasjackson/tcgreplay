@@ -146,19 +146,24 @@ func TestBusyRefusalIsNotActivity(t *testing.T) {
 	}
 }
 
-// TestAdmitLogsRefusal: a refused sign-in is logged with the account.
-func TestAdmitLogsRefusal(t *testing.T) {
+// TestAdmitRecordsRefusal: a refused sign-in is recorded by the
+// account's player ID, and its email is never logged.
+func TestAdmitRecordsRefusal(t *testing.T) {
 	var logs bytes.Buffer
 	prev := log.Writer()
 	log.SetOutput(&logs)
 	t.Cleanup(func() { log.SetOutput(prev) })
 	r := placesRegistry(t, 1, 0, nil)
+	rec, events := withRecorder(t, r)
 	if err := r.Admit(alice); err != nil {
 		t.Fatal(err)
 	}
 	r.Admit(bob)
-	if want := "usergames: refused " + bob.Email; !strings.Contains(logs.String(), want) {
-		t.Errorf("log %q does not record %q", logs.String(), want)
+	if want := `"event":"limited","player":"` + rec.ID(bob.Email) + `"`; !strings.Contains(events.String(), want) {
+		t.Errorf("records %q lack %s", events, want)
+	}
+	if strings.Contains(logs.String()+events.String(), bob.Email) {
+		t.Errorf("bob's email was logged or recorded: %q %q", logs.String(), events)
 	}
 }
 
