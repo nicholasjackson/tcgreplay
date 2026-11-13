@@ -31,7 +31,7 @@ func TestHostedRoutes(t *testing.T) {
 
 	// Signed out, the website is served with no redirect and no cookie.
 	_, home := siteResponse(t, "/")
-	for _, path := range []string{"/", "/docs/connect", "/privacy"} {
+	for _, path := range []string{"/", "/docs/connect", "/privacy", "/terms"} {
 		wantCode, wantBody := siteResponse(t, path)
 		resp, body := getWith(t, h.ts.URL+path, nil, navigate)
 		if resp.StatusCode != wantCode || body != wantBody {

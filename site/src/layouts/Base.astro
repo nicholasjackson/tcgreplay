@@ -1,10 +1,14 @@
 ---
 // Base is every page's layout: the logo and navigation, the page, and the
-// footer with the unofficial fan project notice and the TCGdex credit.
-// Importing the facts here makes every page's build check them.
+// footer with the unofficial fan project notice, the card-data credit and
+// links to the privacy page, the terms, help and the source. The notice, credit and
+// help address come from internal/notice/notice.json, the one wording
+// meant to be shared with the board and the ChatGPT listing. Importing the
+// facts and the notice here makes every page's build check them.
 import '../styles/tokens.css';
 import '../styles/site.css';
 import { site } from '../lib/facts';
+import { notice } from '../lib/notice';
 
 interface Props {
   title?: string;
@@ -55,12 +59,21 @@ const here = Astro.url.pathname.replace(/\/$/, '') || '/';
     </main>
     <footer class="site-footer">
       <div class="bar">
-        <p class="fan-notice">
-          tcgreplay is an unofficial fan project. It is not affiliated with, endorsed, sponsored or approved by
-          Nintendo, The Pokémon Company, Creatures or Game Freak. Pokémon and its trademarks are theirs.
+        <p class="fan-notice">{notice.notice}</p>
+        <p class="credit">
+          {notice.credit.lead}{' '}
+          {notice.credit.sources.map((s, i) => (
+            <Fragment>{i > 0 && (i === notice.credit.sources.length - 1 ? ' and ' : ', ')}<a href={s.url}>{s.name}</a></Fragment>
+          ))}.
         </p>
-        <p class="credit">Card data and images from <a href="https://tcgdex.dev">TCGdex</a> and <a href="https://malie.io">malie.io</a>.</p>
-        <p><a href={site.repoURL}>Source on GitHub</a></p>
+        <nav class="footer-links" aria-label="Footer">
+          <ul>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/terms">Terms</a></li>
+            <li><a href={notice.help.url} aria-label={`Get help on ${notice.help.label}`}>Get help</a></li>
+            <li><a href={site.repoURL}>Source on GitHub</a></li>
+          </ul>
+        </nav>
       </div>
     </footer>
     <script>

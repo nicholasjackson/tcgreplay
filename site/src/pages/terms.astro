@@ -1,0 +1,123 @@
+---
+// The terms of service, at /terms: who runs the playmat, that it is free
+// and as is, that games can be lost, the hosted limits, acceptable use, the
+// minimum age, trademarks and card images, privacy, changes and help.
+// Modelled on what community tools publish, in plain words, with no
+// governing-law clause. Sources: the limits and the public address come
+// from the App Platform definition (.do/app.yaml, through lib/facts); the
+// fan-project notice, the card-data credit and the help address come from
+// internal/notice/notice.json (through lib/notice). None is typed in.
+import Base from '../layouts/Base.astro';
+import { limits, site } from '../lib/facts';
+import { notice } from '../lib/notice';
+
+const updated = '13 November 2026';
+const host = site.publicURL.replace('https://', '');
+---
+<Base
+  title="Terms of service"
+  description="The terms for using the hosted tcgreplay playmat and this website: free and as is, the hosted limits, acceptable use and where to get help."
+>
+  <article class="terms">
+    <h1>Terms of service</h1>
+    <p class="updated" data-updated>Last updated {updated}.</p>
+    <p>
+      These terms cover the hosted playmat at <a href={site.publicURL}>{host}</a> and this website. By using them you
+      agree to these terms. If you don't agree, please don't use them.
+    </p>
+
+    <section id="who" aria-labelledby="h-who">
+      <h2 id="h-who">Who runs tcgreplay</h2>
+      <p>
+        tcgreplay is run by the tcgreplay project, an open-source fan project. Its source is on
+        <a href={site.repoURL}>GitHub</a>.
+      </p>
+    </section>
+
+    <section id="as-is" aria-labelledby="h-as-is">
+      <h2 id="h-as-is">Free, and provided as is</h2>
+      <p>
+        The hosted playmat is free. It is provided as is, with no warranty of any kind. There is no guarantee that it
+        stays available, works without interruption or keeps working the same way. As far as the law allows, the
+        tcgreplay project is not liable for any loss that comes from using it.
+      </p>
+    </section>
+
+    <section id="games" aria-labelledby="h-games">
+      <h2 id="h-games">Your games</h2>
+      <p>
+        Games are held in the playmat's memory only, and can be lost at any time: after a while without activity, when
+        your last sign-in ends, and whenever the playmat is updated or restarted. To keep a game, ask your assistant for
+        its record and save it yourself (see <a href="/docs/limits#keep-the-record">keep the record</a>).
+      </p>
+    </section>
+
+    <section id="limits" aria-labelledby="h-limits">
+      <h2 id="h-limits">Hosted limits</h2>
+      <p>The hosted playmat is small, so these limits apply:</p>
+      <ul>
+        <li>each account may make up to <strong data-limit="rate">{limits.requestsPerMinute}</strong> requests a minute;</li>
+        <li>it serves up to <strong data-limit="users">{limits.maxUsers}</strong> signed-in players at once;</li>
+        <li>games idle for <strong data-limit="idle">{limits.idleTimeout}</strong> are dropped.</li>
+      </ul>
+      <p>The limits may change. See <a href="/docs/limits">the hosted playmat's limits</a> for what they mean for you.</p>
+    </section>
+
+    <section id="acceptable-use" aria-labelledby="h-acceptable-use">
+      <h2 id="h-acceptable-use">Acceptable use</h2>
+      <p>Please use the playmat for studying your own games. Don't:</p>
+      <ul>
+        <li>overload or attack the service, including trying to break into it or disrupt it;</li>
+        <li>use automated scraping of the site, the playmat or its card data;</li>
+        <li>get round the limits, for example by using several accounts to dodge them;</li>
+        <li>use it for anything unlawful.</li>
+      </ul>
+      <p>The tcgreplay project may block any account that breaks these terms.</p>
+    </section>
+
+    <section id="age" aria-labelledby="h-age">
+      <h2 id="h-age">Age</h2>
+      <p>You must be at least 13 years old to use the hosted playmat.</p>
+    </section>
+
+    <section id="trademarks" aria-labelledby="h-trademarks">
+      <h2 id="h-trademarks">Trademarks and card images</h2>
+      <p class="fan-notice">{notice.notice}</p>
+      <p class="credit">
+        {notice.credit.lead}{' '}
+        {notice.credit.sources.map((s, i) => (
+          <Fragment>{i > 0 && (i === notice.credit.sources.length - 1 ? ' and ' : ', ')}<a href={s.url}>{s.name}</a></Fragment>
+        ))}.
+      </p>
+      <p>Card data and images belong to their owners and are shown so players can study their own games.</p>
+    </section>
+
+    <section id="privacy" aria-labelledby="h-privacy">
+      <h2 id="h-privacy">Privacy</h2>
+      <p>What the playmat collects and keeps, and for how long, is on the <a href="/privacy">privacy page</a>.</p>
+    </section>
+
+    <section id="changes" aria-labelledby="h-changes">
+      <h2 id="h-changes">Changes</h2>
+      <p>
+        These terms and the service may change or end at any time. The date at the top shows when the terms last
+        changed. Using the playmat after a change means you accept the new terms.
+      </p>
+    </section>
+
+    <section id="help" aria-labelledby="h-help">
+      <h2 id="h-help">Help</h2>
+      <p>
+        For help, questions or to report a problem, open an issue on <a href={notice.help.url}>the project's
+        {notice.help.label}</a>. There is no support email.
+      </p>
+    </section>
+  </article>
+</Base>
+
+<style>
+  .terms { max-width: 46rem; }
+  .updated { color: var(--muted); }
+  section { margin-top: 1.5rem; }
+  li { margin: 0.3rem 0; }
+</style>
