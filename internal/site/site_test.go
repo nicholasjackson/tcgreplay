@@ -183,3 +183,34 @@ func TestMethods(t *testing.T) {
 		}
 	}
 }
+
+// The privacy page describes visitor counting only when it carries the
+// marker the privacy-terms work puts on its visitor-counting section.
+func TestDescribesVisitorCounting(t *testing.T) {
+	withMarker := fstest.MapFS{}
+	for k, v := range builtSite {
+		withMarker[k] = v
+	}
+	withMarker["dist/app/privacy/index.html"] = &fstest.MapFile{Data: []byte(
+		`<!doctype html><title>privacy</title><p>Cloudflare keeps the counts for <span data-retention="visits">6 months</span>.</p>`)}
+	for _, tc := range []struct {
+		name string
+		fs   fstest.MapFS
+		want bool
+	}{
+		{"privacy page with the marker", withMarker, true},
+		{"privacy page without the marker", builtSite, false},
+		{"placeholder only", fstest.MapFS{"dist/placeholder/index.html": {Data: []byte("placeholder page")}}, false},
+		{"marker on another page only", fstest.MapFS{
+			"dist/app/index.html":         {Data: []byte(`<span data-retention="visits">6 months</span>`)},
+			"dist/app/privacy/index.html": {Data: []byte(`<span data-retention="logs">7 days</span>`)},
+		}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			withFS(t, tc.fs)
+			if got := DescribesVisitorCounting(); got != tc.want {
+				t.Errorf("DescribesVisitorCounting() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

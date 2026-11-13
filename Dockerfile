@@ -12,10 +12,14 @@
 # TCGREPLAY_SPACES_BUCKET, TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET
 # (all four: copy card images to a DigitalOcean Spaces bucket and serve
 # them from its CDN), TCGREPLAY_ADMINS (the Google accounts that may check
-# for published card sets and clear image copies at /admin) and
+# for published card sets and clear image copies at /admin),
 # TCGREPLAY_SPACES_CDN_TOKEN (a DigitalOcean API token, so an image clear
-# also purges the bucket's CDN). The image carries no card data: card sets
-# are loaded from the published copy at start. The shared fan-project
+# also purges the bucket's CDN) and TCGREPLAY_WEB_ANALYTICS_TOKEN (the
+# Cloudflare Web Analytics site token: website and board pages are
+# counted, cookieless; set it only once the privacy page describing
+# visitor counting is live, and clear it to stop counting). The image
+# carries no card data: card sets are loaded from the published copy at
+# start. The shared fan-project
 # notice, card-data credit and help address (internal/notice/notice.json)
 # are copied into both UI build stages, so either build can read them.
 

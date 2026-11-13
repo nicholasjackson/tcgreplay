@@ -73,6 +73,21 @@ func Built() bool {
 	return err == nil
 }
 
+// visitsMarker marks the privacy page's visitor-counting section: the
+// privacy-terms work puts it on Cloudflare's retention figure there
+// (site/src/pages/privacy.astro), and its browser suite pins it.
+const visitsMarker = `data-retention="visits"`
+
+// DescribesVisitorCounting reports whether the embedded privacy page
+// carries the visitor-counting marker (data-retention="visits"). Hosted
+// mode counts visitors only when it does, so a build whose privacy page
+// does not describe counting can never count. The placeholder has no
+// privacy page, so it never does.
+func DescribesVisitorCounting() bool {
+	body, err := fs.ReadFile(fsys, "dist/app/privacy/index.html")
+	return err == nil && bytes.Contains(body, []byte(visitsMarker))
+}
+
 // Handler serves the embedded website: pages, build assets and the site's
 // 404 page. It never sets cookies and needs no sign-in.
 func Handler() http.Handler {

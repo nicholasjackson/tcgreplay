@@ -26,6 +26,7 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 	"github.com/nicholasjackson/tcgreplay/internal/usergames"
+	"github.com/nicholasjackson/tcgreplay/internal/webanalytics"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
 
@@ -209,7 +210,11 @@ func idleText(d time.Duration) string {
 //     them, behind the same session;
 //   - every other path is the public website (package site): no sign-in,
 //     no cookies.
-func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service) http.Handler {
+//
+// counted wraps the pages people read, the website and the board page,
+// and nothing else: with visitor analytics on it adds Cloudflare's beacon
+// to them (see hostedAnalytics); otherwise it is the identity.
+func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service, counted func(http.Handler) http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	a.Routes(mux)
 	mux.Handle("/mcp", a.RequireToken(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
@@ -222,14 +227,15 @@ func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, a
 	mux.Handle("/admin/", adminPage)
 	board := reg.Board()
 	// The rewrite sits inside RequireSession so a signed-out page load
-	// returns to /board?…, not to /.
-	mux.Handle("GET /board", a.RequireSession(atRoot(board)))
+	// returns to /board?…, not to /. counted sits outside it, so the
+	// sign-in redirect passes through untouched.
+	mux.Handle("GET /board", counted(a.RequireSession(atRoot(board))))
 	mux.Handle("GET /board/{$}", toBoard())
 	session := a.RequireSession(board)
 	mux.Handle("/assets/", session)
 	mux.Handle("/ws", session)
 	mux.Handle("/api/", session)
-	mux.Handle("/", site.Handler())
+	mux.Handle("/", counted(site.Handler()))
 	return mux
 }
 
@@ -376,6 +382,27 @@ func hostedImages(c config) *cards.ImageCache {
 	return images
 }
 
+// privacyDescribesCounting reports whether the embedded privacy page
+// describes visitor counting; tests swap it, because the Go tests embed
+// whatever website happens to be built.
+var privacyDescribesCounting = site.DescribesVisitorCounting
+
+// hostedAnalytics decides whether visitor counting is on and returns the
+// wrapper for counted pages (the identity when it is off). Counting needs
+// a well-formed TCGREPLAY_WEB_ANALYTICS_TOKEN and an embedded privacy page
+// that describes it, and adds the beacon only for the public host. It logs
+// whether counting is on, or off and why, never the token. A bad token is
+// a warning, not an error: counting is optional and must never stop play.
+func hostedAnalytics(c config, public *url.URL) func(http.Handler) http.Handler {
+	wrap, status := webanalytics.Setup(webanalytics.Settings{
+		Token:            c.webAnalyticsToken,
+		Host:             public.Hostname(),
+		PrivacyDescribes: privacyDescribesCounting(),
+	})
+	log.Print(status)
+	return wrap
+}
+
 // runHosted serves MCP and the playmat over one plain-HTTP listener until
 // ctx is done, for running in a container behind an HTTPS proxy.
 func runHosted(ctx context.Context, c config) error {
@@ -418,7 +445,7 @@ func runHosted(ctx context.Context, c config) error {
 	}
 	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, player IDs on", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
-	hs := &http.Server{Handler: movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin)), ReadHeaderTimeout: 10 * time.Second}
+	hs := &http.Server{Handler: movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin, hostedAnalytics(c, public))), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)

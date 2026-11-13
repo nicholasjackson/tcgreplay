@@ -62,6 +62,9 @@ type config struct {
 	// movedFrom is a comma-separated list of old host names the playmat
 	// has moved from (see movedGuard).
 	movedFrom string
+	// webAnalyticsToken is the Cloudflare Web Analytics site token, hosted
+	// mode only; empty means no visitor counting (see hostedAnalytics).
+	webAnalyticsToken string
 	// googleClientID is the Google OAuth client users sign in with (its
 	// secret is read from the environment only).
 	googleClientID string
@@ -169,6 +172,7 @@ func main() {
 	flag.StringVar(&c.listen, "listen", "", "with -hosted, the address to listen on (default :$PORT, else :8080)")
 	flag.StringVar(&c.publicURL, "public-url", os.Getenv("TCGREPLAY_PUBLIC_URL"), "with -hosted, the public address the playmat is reached at (default $TCGREPLAY_PUBLIC_URL)")
 	flag.StringVar(&c.movedFrom, "moved-from", os.Getenv("TCGREPLAY_MOVED_FROM"), "with -hosted, comma-separated old host names the playmat has moved from: their /mcp tells assistants the new address and every other path redirects to the public URL (default $TCGREPLAY_MOVED_FROM)")
+	flag.StringVar(&c.webAnalyticsToken, "web-analytics-token", os.Getenv("TCGREPLAY_WEB_ANALYTICS_TOKEN"), "with -hosted, the Cloudflare Web Analytics site token; pages are counted only with it, for the public address, once the privacy page describes counting (default $TCGREPLAY_WEB_ANALYTICS_TOKEN)")
 	flag.StringVar(&c.googleClientID, "google-client-id", os.Getenv("TCGREPLAY_GOOGLE_CLIENT_ID"), "with -hosted, the Google OAuth client users sign in with (default $TCGREPLAY_GOOGLE_CLIENT_ID; the secret is read from $TCGREPLAY_GOOGLE_CLIENT_SECRET)")
 	flag.IntVar(&c.rateLimit, "rate-limit", envInt("TCGREPLAY_RATE_LIMIT", 300), "with -hosted, requests a minute one account may make; 0 for no limit (default $TCGREPLAY_RATE_LIMIT, else 300)")
 	flag.IntVar(&c.maxUsers, "max-users", envInt("TCGREPLAY_MAX_USERS", 10), "with -hosted, signed-in Google accounts served at once (a place is freed when an account's game goes idle or its last sign-in ends); 0 for no cap (default $TCGREPLAY_MAX_USERS, else 10)")
