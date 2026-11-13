@@ -197,7 +197,7 @@ const pinecoImage = tcgdexAssets + "/en/sv/sv1/001"
 func boardCard(t *testing.T, src game.CardSource, images *cards.ImageCache) map[string]any {
 	t.Helper()
 	m := game.NewManager(t.TempDir(), src)
-	ui := hostedBoard(m, state.P1, nil, nil, images)
+	ui := hostedBoard(m, state.P1, nil, nil, nil, images)
 	ts := httptest.NewServer(ui.Handler())
 	defer ts.Close()
 	resp, err := http.Get(ts.URL + "/api/card?def=sv1-001")

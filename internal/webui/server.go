@@ -43,7 +43,12 @@ type Server struct {
 	// where the board loads each card image from. Nil (the desktop, the
 	// daemon, dev and the board test server) keeps the TCGdex address.
 	Images ImageSource
-	hub    *hub
+	// OnError, when set (hosted mode), is told of each board action that
+	// fails, with the live connection's request context, the action's verb
+	// and its error. An action the Limit refuses is not a failure. Nil (the
+	// desktop) tells nobody.
+	OnError func(ctx context.Context, action string, err error)
+	hub     *hub
 }
 
 // ImageSource decides where the board loads a card image from. It is

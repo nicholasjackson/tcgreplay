@@ -99,6 +99,9 @@ func (s *Server) dispatch(ctx context.Context, c *client, req request) response 
 	s.M.BoardActivity()
 	data, gr, err := s.do(ctx, c, req, &res)
 	if err != nil {
+		if s.OnError != nil {
+			s.OnError(ctx, req.Verb, err)
+		}
 		res.Error = err.Error()
 		return res
 	}

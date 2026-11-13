@@ -26,6 +26,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -79,6 +80,9 @@ type config struct {
 	timingErr error
 	// now, if set, is the per-account registry's clock (tests).
 	now func() time.Time
+	// events, if set, is where hosted mode writes its records (tests);
+	// nil means standard output.
+	events io.Writer
 	// imageBase, if set, is the card image source's prefix (tests).
 	imageBase string
 	// cdnAPI, if set, is the DigitalOcean API base the CDN purge client

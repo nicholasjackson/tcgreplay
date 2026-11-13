@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"html/template"
-	"log"
 	"net/http"
 
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
 // Board returns the hosted board's front door, to mount behind
@@ -31,7 +31,7 @@ func (r *Registry) Board() http.Handler {
 		}
 		if pageLoad(req) {
 			if h := req.URL.Query().Get("board"); h != "" && h != Handle(acct.ID) {
-				log.Printf("usergames: %s opened another account's board link", acct.Email)
+				r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.BoardRefused, Email: acct.Email})
 				notYoursPage(w, acct)
 				return
 			}

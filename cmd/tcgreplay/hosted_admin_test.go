@@ -53,7 +53,8 @@ func startHostedAdmin(t *testing.T, shared, token bool) *adminHosted {
 	t.Setenv("TCGREPLAY_GOOGLE_CLIENT_SECRET", g.ClientSecret)
 	t.Setenv("TCGREPLAY_ADMINS", "One@Example.com")
 	h := &adminHosted{sets: publishCardsets(t, adminSets()...)}
-	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", googleClientID: g.ClientID, cardsetsURL: h.sets.URL}
+	events := &syncBuffer{}
+	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", googleClientID: g.ClientID, cardsetsURL: h.sets.URL, events: events}
 	if shared {
 		h.srv = spacestest.New(t)
 		setSpacesEnv(t, h.srv.Config())
@@ -97,11 +98,11 @@ func startHostedAdmin(t *testing.T, shared, token bool) *adminHosted {
 		images.HTTP = newReroute(t, "", newImageHost(t).URL).client()
 		go images.Run(ctx)
 	}
-	h.admin = hostedAdmin(loader, images)
+	h.admin = hostedAdmin(loader, images, reg.Recorder())
 	go h.admin.Run(ctx)
 	ts := httptest.NewServer(hostedHandler(mcpSrv, reg, a, h.admin))
 	t.Cleanup(ts.Close)
-	h.hostedServer = &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: loader}
+	h.hostedServer = &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: loader, events: events}
 	return h
 }
 
@@ -211,7 +212,7 @@ func TestHostedAdminClearsEverything(t *testing.T) {
 	if got := h.cdn.Purges(); len(got) != 1 || !slices.Equal(got[0], []string{"images/*"}) {
 		t.Errorf("purges = %v, want [[images/*]]", got)
 	}
-	for _, want := range []string{"Images for everything by one@example.com", "image copies removed", "CDN purged (1 paths)"} {
+	for _, want := range []string{"Images for everything by " + oneID, "image copies removed", "CDN purged (1 paths)"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("page lacks %q:\n%s", want, page)
 		}
@@ -249,7 +250,7 @@ func TestHostedAdminClearsEverything(t *testing.T) {
 	}
 	h.imageKeysOnly(t)
 	out := logs.String()
-	for _, want := range []string{"cache admin: one@example.com started clearing images for everything", "cache admin: cleared images for everything for one@example.com", "card images: CDN purge on clear: on"} {
+	for _, want := range []string{"cache admin: " + oneID + " started clearing images for everything", "cache admin: cleared images for everything for " + oneID, "card images: CDN purge on clear: on"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("log lacks %q", want)
 		}
@@ -274,7 +275,7 @@ func TestHostedAdminClearsOneSetByCodeAndByID(t *testing.T) {
 			if got := h.cdn.Purges(); len(got) != 1 || !slices.Equal(got[0], []string{"images/en/me/me01/*"}) {
 				t.Errorf("purges = %v", got)
 			}
-			if !strings.Contains(page, "Images for Mega Evolution (me01) by one@example.com") {
+			if !strings.Contains(page, "Images for Mega Evolution (me01) by "+oneID) {
 				t.Errorf("page:\n%s", page)
 			}
 		})
@@ -394,12 +395,12 @@ func TestHostedAdminCheckPicksUpPublish(t *testing.T) {
 		t.Fatalf("check = %d %q", resp.StatusCode, body)
 	}
 	_, page := getWith(t, h.ts.URL+"/admin", cookie, nil)
-	for _, want := range []string{v2[:12], "4 (4 cards)", "Last check now by one@example.com", "picked up version " + v2[:12] + ": changed sv2, removed none"} {
+	for _, want := range []string{v2[:12], "4 (4 cards)", "Last check now by " + oneID, "picked up version " + v2[:12] + ": changed sv2, removed none"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("page lacks %q:\n%s", want, page)
 		}
 	}
-	if !strings.Contains(logs.String(), "cache admin: one@example.com checked published card sets: picked up version "+v2[:12]) {
+	if !strings.Contains(logs.String(), "cache admin: "+oneID+" checked published card sets: picked up version "+v2[:12]) {
 		t.Errorf("log does not record the check: %q", logs.String())
 	}
 
@@ -504,5 +505,66 @@ func TestDesktopServesNoAdminPage(t *testing.T) {
 		if strings.Contains(string(b), "Card cache") || strings.Contains(string(b), "Clear everything") {
 			t.Errorf("desktop %s served the admin page", path)
 		}
+	}
+}
+
+// lookup posts the player-ID lookup form for email as the browser holding
+// cookie, from origin ("" for none), and returns the response.
+func (h *adminHosted) lookup(t *testing.T, cookie *http.Cookie, origin, email string) (*http.Response, string) {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodPost, h.ts.URL+"/admin/player", strings.NewReader(url.Values{"email": {email}}.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if origin != "" {
+		req.Header.Set("Origin", origin)
+	}
+	if cookie != nil {
+		req.AddCookie(cookie)
+	}
+	noFollow := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	resp, err := noFollow.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	b, _ := io.ReadAll(resp.Body)
+	return resp, string(b)
+}
+
+// TestHostedAdminPlayerLookup: signed in as an admin, looking up a
+// player's email shows the same ID their records carry; a non-admin, a
+// signed-out caller and a post from another site are refused without an
+// ID; and the looked-up email appears in no record or log line.
+func TestHostedAdminPlayerLookup(t *testing.T) {
+	logs := captureSyncLog(t)
+	h := startHostedAdmin(t, false, false)
+	admin := h.cookie(t)
+	h.g.SetAccount(capSecond) // two@example.com, not an admin
+	other := h.cookie(t)
+	wantEvent(t, eventRecords(t, h.events.String()), "sign_in", twoID, nil)
+
+	resp, body := h.lookup(t, admin, testPublic, " Two@Example.com ")
+	if resp.StatusCode != http.StatusOK || !strings.Contains(body, "<code>"+twoID+"</code>") {
+		t.Errorf("admin lookup = %d, want the ID %s the records carry:\n%s", resp.StatusCode, twoID, body)
+	}
+	for name, try := range map[string]struct {
+		cookie *http.Cookie
+		origin string
+		want   int
+	}{
+		"non-admin":  {other, testPublic, http.StatusForbidden},
+		"signed out": {nil, testPublic, http.StatusUnauthorized},
+		"cross-site": {admin, "https://evil.example", http.StatusForbidden},
+	} {
+		resp, body := h.lookup(t, try.cookie, try.origin, "two@example.com")
+		if resp.StatusCode != try.want || strings.Contains(body, twoID) {
+			t.Errorf("%s lookup = %d, want %d without the ID:\n%s", name, resp.StatusCode, try.want, body)
+		}
+	}
+	wantEvent(t, eventRecords(t, h.events.String()), "admin_action", oneID, map[string]string{"action": "lookup"})
+	if strings.Contains(strings.ToLower(h.events.String()+logs.String()), "two@example.com") {
+		t.Errorf("the looked-up email was recorded or logged:\n%s\n%s", h.events, logs)
 	}
 }

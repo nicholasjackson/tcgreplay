@@ -204,7 +204,7 @@ func TestClearEverythingClearsImagesAndShowsEachTier(t *testing.T) {
 		t.Errorf("images cleared %v", got)
 	}
 	_, body := getPage(t, ts)
-	for _, want := range []string{"Last clear", "Images for everything by admin@example.com", "4 image copies removed", "CDN not purged (no TCGREPLAY_SPACES_CDN_TOKEN)"} {
+	for _, want := range []string{"Last clear", "Images for everything by admin", "4 image copies removed", "CDN not purged (no TCGREPLAY_SPACES_CDN_TOKEN)"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page lacks %q:\n%s", want, body)
 		}
@@ -213,7 +213,7 @@ func TestClearEverythingClearsImagesAndShowsEachTier(t *testing.T) {
 		t.Error("finished clear shown as failed or still refreshing")
 	}
 	log := logs.all()
-	if !strings.Contains(log, "cache admin: admin@example.com started clearing images for everything") || !strings.Contains(log, "cache admin: cleared images for everything for admin@example.com in ") {
+	if !strings.Contains(log, "cache admin: admin started clearing images for everything") || !strings.Contains(log, "cache admin: cleared images for everything for admin in ") {
 		t.Errorf("log = %q", log)
 	}
 }
@@ -230,7 +230,7 @@ func TestClearOneSetByCodeOrID(t *testing.T) {
 		if got := i.cleared(); !slices.Equal(got, []cards.Scope{{Set: "me01"}}) {
 			t.Errorf("set=%q cleared images %v, want me01", name, got)
 		}
-		if _, body := getPage(t, ts); !strings.Contains(body, "Images for Mega Evolution (me01) by admin@example.com") {
+		if _, body := getPage(t, ts); !strings.Contains(body, "Images for Mega Evolution (me01) by admin") {
 			t.Errorf("page does not name the set")
 		}
 		if !strings.Contains(logs.all(), "started clearing images for Mega Evolution (me01)") {
@@ -287,7 +287,7 @@ func TestOneClearAtATime(t *testing.T) {
 		t.Fatal(status)
 	}
 	_, body := getPage(t, ts)
-	if !strings.Contains(body, `<meta http-equiv="refresh" content="2">`) || !strings.Contains(body, "Clearing images for everything for admin@example.com") {
+	if !strings.Contains(body, `<meta http-equiv="refresh" content="2">`) || !strings.Contains(body, "Clearing images for everything for admin") {
 		t.Errorf("running page:\n%s", body)
 	}
 	status, _, body := post(t, ts, url.Values{"set": {"MEG"}})
@@ -376,10 +376,10 @@ func TestCheckNow(t *testing.T) {
 		t.Errorf("catalogue checked %d times, want 1", c.checks)
 	}
 	_, body := getPage(t, ts)
-	if !strings.Contains(body, "Last check now by admin@example.com") || !strings.Contains(body, "picked up version fedcba987654: changed me06, removed none") {
+	if !strings.Contains(body, "Last check now by admin") || !strings.Contains(body, "picked up version fedcba987654: changed me06, removed none") {
 		t.Errorf("page lacks the check outcome:\n%s", body)
 	}
-	if !strings.Contains(logs.all(), "cache admin: admin@example.com checked published card sets: picked up version fedcba987654") {
+	if !strings.Contains(logs.all(), "cache admin: admin checked published card sets: picked up version fedcba987654") {
 		t.Errorf("log = %q", logs.all())
 	}
 

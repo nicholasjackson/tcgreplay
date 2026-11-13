@@ -52,6 +52,29 @@ func TestHostedListen(t *testing.T) {
 	}
 }
 
+// testPlayerIDKey is the player-ID key every hosted test runs with, unless
+// it sets its own: hosted mode will not start without one.
+const testPlayerIDKey = "hosted-test-player-id-key-0123456789abcdef"
+
+// The test accounts' player IDs under testPlayerIDKey, worked out
+// independently of the playmat (Python's hmac and hashlib).
+const (
+	oneID = "p_6cef43a09af39824" // one@example.com, the fake Google's default
+	twoID = "p_d97ba80702c001d7" // two@example.com
+	aID   = "p_5dcd8e0b62c99125" // a@example.com
+	bID   = "p_a4c089ac177be2f8" // b@example.com
+)
+
+// TestMain gives every test, and the main-binary helper processes they
+// start, the player-ID key hosted mode needs.
+func TestMain(m *testing.M) {
+	// Only when unset: a helper process given an empty key must keep it.
+	if _, ok := os.LookupEnv("TCGREPLAY_PLAYER_ID_KEY"); !ok {
+		os.Setenv("TCGREPLAY_PLAYER_ID_KEY", testPlayerIDKey)
+	}
+	os.Exit(m.Run())
+}
+
 // captureLog redirects the standard logger for the rest of the test.
 func captureLog(t *testing.T) *bytes.Buffer {
 	t.Helper()
@@ -652,6 +675,9 @@ type hostedServer struct {
 	public string
 	// cat is the card catalogue its games pin their cards from.
 	cat *catalog.Loader
+	// events holds the records it wrote (nil when the config named its
+	// own writer).
+	events *syncBuffer
 }
 
 // connect signs a connector in as g's current account, the way claude.ai
@@ -1076,7 +1102,7 @@ func TestHostedAuthNeedsCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("TCGREPLAY_GOOGLE_CLIENT_SECRET", tt.secret)
-			a, err := hostedAuth(config{googleClientID: tt.id}, public, oauth2.Endpoint{}, nil)
+			a, err := hostedAuth(config{googleClientID: tt.id}, public, oauth2.Endpoint{}, nil, nil)
 			if tt.ok {
 				if err != nil || a == nil {
 					t.Fatalf("hostedAuth with credentials: %v, %v", a, err)
@@ -1257,8 +1283,8 @@ func TestHostedHealthz(t *testing.T) {
 }
 
 // TestAppSpecHealthCheckAndSecrets: the App Platform definition checks
-// health at /healthz and declares the Google credentials as secrets, with
-// no value in the file.
+// health at /healthz and declares the Google credentials and the
+// player-ID key as secrets, with no value in the file.
 func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 	lines := strings.Split(readTestdata(t, "../../.do/app.yaml"), "\n")
 	var health bool
@@ -1277,7 +1303,7 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 		t.Error("app.yaml has no health_check with http_path: /healthz")
 	}
 
-	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET"} {
+	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET", "TCGREPLAY_PLAYER_ID_KEY"} {
 		f := appEnvFields(lines, key)
 		if f == nil {
 			t.Errorf("app.yaml declares no %s", key)

@@ -24,6 +24,7 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/site"
 	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 	"github.com/nicholasjackson/tcgreplay/internal/usergames"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
@@ -112,10 +113,10 @@ func envDuration(key string, def time.Duration) (time.Duration, error) {
 // TCGREPLAY_SIGNING_KEY, for the same reason), the request limit and the
 // public URL, and the cache admins (TCGREPLAY_ADMINS, a comma-separated
 // list of Google account emails). places keeps the user cap (nil for
-// none). Hosted mode must not run open, so missing credentials are an
-// error. google is Google's endpoints; the zero value means the real
-// Google.
-func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostauth.Places) (*hostauth.Auth, error) {
+// none); rec records sign-ins and refusals. Hosted mode must not run open,
+// so missing credentials are an error. google is Google's endpoints; the
+// zero value means the real Google.
+func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostauth.Places, rec *telemetry.Recorder) (*hostauth.Auth, error) {
 	secret := os.Getenv("TCGREPLAY_GOOGLE_CLIENT_SECRET")
 	if c.googleClientID == "" || secret == "" {
 		return nil, errors.New("hosted mode needs Google sign-in: set TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET")
@@ -129,7 +130,25 @@ func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostau
 		Places:         places,
 		Google:         google,
 		Admins:         strings.Split(os.Getenv("TCGREPLAY_ADMINS"), ","),
+		Recorder:       rec,
 	})
+}
+
+// hostedRecorder builds hosted mode's recorder: one JSON record per line
+// on standard output (c.events in tests), naming players by an ID keyed
+// with TCGREPLAY_PLAYER_ID_KEY. The key is read only from the environment,
+// so it never shows in a process listing, and it is required: without the
+// same key on every start, a player's ID would change on every redeploy.
+func hostedRecorder(c config) (*telemetry.Recorder, error) {
+	ids, err := telemetry.NewIDs(os.Getenv("TCGREPLAY_PLAYER_ID_KEY"))
+	if err != nil {
+		return nil, fmt.Errorf("hosted mode needs a player-ID key: set TCGREPLAY_PLAYER_ID_KEY to a secret of at least %d characters (for example from openssl rand -base64 48)", telemetry.MinKey)
+	}
+	w := c.events
+	if w == nil {
+		w = os.Stdout
+	}
+	return telemetry.NewRecorder(w, ids, c.now), nil
 }
 
 // adminText describes the cache admins for the start-up log: how many,
@@ -142,9 +161,14 @@ func adminText(n int) string {
 }
 
 // hostedAdmin builds the admin page's service over the card catalogue
-// and, when the shared store is on, the image cache. The caller runs it.
-func hostedAdmin(cat cacheadmin.Catalog, images *cards.ImageCache) *cacheadmin.Service {
-	svc := &cacheadmin.Service{Catalog: cat}
+// and, when the shared store is on, the image cache. Admins are named by
+// rec's player IDs, and their actions recorded through it. The caller
+// runs it.
+func hostedAdmin(cat cacheadmin.Catalog, images *cards.ImageCache, rec *telemetry.Recorder) *cacheadmin.Service {
+	svc := &cacheadmin.Service{Catalog: cat, Recorder: rec}
+	if rec != nil {
+		svc.PlayerID = rec.ID
+	}
 	// A nil *ImageCache in the interface would not be nil.
 	if images != nil {
 		svc.Images = images
@@ -246,6 +270,10 @@ func toBoard() http.Handler {
 // hostedImages). google is as for hostedAuth.
 func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
 	human := state.Seat(c.seat).Other()
+	rec, err := hostedRecorder(c)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	var reg *usergames.Registry
 	var a *hostauth.Auth // set below, before any board is built
 	reg = usergames.New(usergames.Config{
@@ -255,31 +283,36 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 			return m
 		},
 		NewBoard: func(m *game.Manager) *webui.Server {
-			return hostedBoard(m, human, public, reg.BoardLimit(a.BoardLimit), images)
+			return hostedBoard(m, human, public, reg.BoardLimit(a.BoardLimit), reg.BoardError, images)
 		},
 		Public:   public,
 		Idle:     c.idleTimeout,
 		MaxUsers: c.maxUsers,
 		Now:      c.now,
+		Recorder: rec,
 	})
-	a, err := hostedAuth(c, public, google, reg)
+	a, err = hostedAuth(c, public, google, reg, rec)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	// BoardURL keeps the instructions' board-link line; each result's link
 	// comes from Resolve.
 	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/board", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet}).MCP()
-	srv.AddReceivingMiddleware(a.MCPMiddleware())
+	// One call, so the tool-call recorder runs inside the rate limit: a
+	// later AddReceivingMiddleware call would wrap outside it, and a
+	// refused request would be recorded as a tool call.
+	srv.AddReceivingMiddleware(a.MCPMiddleware(), reg.MCPMiddleware())
 	return reg, srv, a, nil
 }
 
 // hostedBoard builds one account's board server: on the public address,
-// with the account's request limit, and loading card images through
-// images when it is not nil.
-func hostedBoard(m *game.Manager, human state.Seat, public *url.URL, limit func(context.Context) error, images *cards.ImageCache) *webui.Server {
+// with the account's request limit, telling onError of each failed board
+// action, and loading card images through images when it is not nil.
+func hostedBoard(m *game.Manager, human state.Seat, public *url.URL, limit func(context.Context) error, onError func(context.Context, string, error), images *cards.ImageCache) *webui.Server {
 	ui := webui.New(m, human)
 	ui.Public = public
 	ui.Limit = limit
+	ui.OnError = onError
 	// A nil *ImageCache in the interface would not be nil.
 	if images != nil {
 		ui.Images = images
@@ -376,14 +409,14 @@ func runHosted(ctx context.Context, c config) error {
 	if images != nil {
 		go images.Run(ctx)
 	}
-	admin := hostedAdmin(loader, images)
+	admin := hostedAdmin(loader, images, reg.Recorder())
 	go admin.Run(ctx)
 
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, player IDs on", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
 	hs := &http.Server{Handler: movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin)), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})
