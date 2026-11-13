@@ -3,14 +3,16 @@
 // card-data credit from the shared notice file, with its Privacy, Terms,
 // help and source links), no sideways scrolling on a 375px phone, no
 // cookies, nothing fetched from any other host (no web fonts, analytics or
-// third-party resources), and copy buttons that copy exactly their block's
-// text.
+// third-party resources) in a run without the visitor-counting token, and
+// copy buttons that copy exactly their block's text. The pages with
+// counting on are checked by analytics.spec.js.
 //
 // The pages are found by crawling same-origin links from /. Every page the
 // site links to must exist: a link to a missing page fails the suite.
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { site } from '../src/lib/facts.ts';
+import { crawl } from './crawl.js';
 
 const companies = ['Nintendo', 'The Pokémon Company', 'Creatures', 'Game Freak'];
 
@@ -26,44 +28,6 @@ const navLinks = [
   { name: 'Limits', href: '/docs/limits' },
   { name: 'Privacy', href: '/privacy' },
 ];
-
-// pagePath is a same-origin URL's path, without query or fragment.
-function pagePath(href, origin) {
-  const u = new URL(href, origin);
-  if (u.origin !== origin) return undefined;
-  return u.pathname;
-}
-
-// crawl visits / and every same-origin link it reaches, breadth-first and
-// deduplicated, returning each page's path and HTTP status.
-async function crawl(browser, baseURL) {
-  const origin = new URL(baseURL).origin;
-  const context = await browser.newContext({ baseURL });
-  const page = await context.newPage();
-  const seen = new Set(['/']);
-  const queue = ['/'];
-  const pages = [];
-  try {
-    while (queue.length) {
-      const path = queue.shift();
-      const resp = await page.goto(path);
-      expect(resp, `a response for ${path}`).not.toBeNull();
-      expect([200, 404], `${path} answers a page`).toContain(resp.status());
-      pages.push({ path, status: resp.status() });
-      const hrefs = await page.locator('a[href]').evaluateAll((as) => as.map((a) => a.href));
-      for (const href of hrefs) {
-        const p = pagePath(href, origin);
-        if (p !== undefined && !seen.has(p)) {
-          seen.add(p);
-          queue.push(p);
-        }
-      }
-    }
-  } finally {
-    await context.close();
-  }
-  return pages;
-}
 
 let pages;
 test.beforeAll(async ({ browser }, testInfo) => {
@@ -182,7 +146,7 @@ test('no page scrolls sideways at 375px, and code blocks scroll or wrap in their
   }
 });
 
-test('a fresh visit to every page sets no cookie and asks no other host for anything', async ({ context, page, baseURL }) => {
+test('without the analytics token, a fresh visit to every page sets no cookie, carries no beacon and asks no other host for anything', async ({ context, page, baseURL }) => {
   const host = new URL(baseURL).host;
   const requests = [];
   context.on('request', (r) => requests.push({ url: r.url(), type: r.resourceType() }));
@@ -192,6 +156,7 @@ test('a fresh visit to every page sets no cookie and asks no other host for anyt
     await page.waitForLoadState('networkidle');
     expect(await context.cookies(), `${path}: cookies`).toEqual([]);
     expect(await page.evaluate(() => document.cookie), `${path}: document.cookie`).toBe('');
+    expect(await page.content(), `${path}: no visitor-counting beacon`).not.toContain('cloudflareinsights');
   }
   expect(requests.length).toBeGreaterThan(0);
   const elsewhere = requests.filter(({ url }) => {

@@ -35,7 +35,9 @@
 # playmat and drops every game. The limits below (TCGREPLAY_RATE_LIMIT,
 # TCGREPLAY_MAX_USERS, TCGREPLAY_IDLE_TIMEOUT) are also shown on the website, which reads them
 # from this file when it is built: this file stays the one place they are
-# set, and the site build fails if one goes missing.
+# set, and the site build fails if one goes missing. With
+# TCGREPLAY_WEB_ANALYTICS_TOKEN set, website pages and the board page are
+# counted by Cloudflare Web Analytics, with no cookies.
 #
 # Usage and error records are JSON lines on the playmat's standard output,
 # naming players only by a pseudonymous player ID (TCGREPLAY_PLAYER_ID_KEY
@@ -177,6 +179,16 @@ services:
       # it in the control panel; unset means nobody can use the admin page.
       # Needs only a restart.
       - key: TCGREPLAY_ADMINS
+        scope: RUN_TIME
+      # Visitor counting: the Cloudflare Web Analytics site token for
+      # tcgreplay.app (Cloudflare dashboard > Web Analytics > the site >
+      # Manage site, manual snippet; automatic injection off). Public by
+      # nature: it appears in every counted page. Set it in the control
+      # panel only once the privacy page describing visitor counting is
+      # live; the playmat also refuses to count until its own privacy page
+      # describes it. Pages are counted only for TCGREPLAY_PUBLIC_URL's
+      # host. Clear it to stop counting (needs only a restart).
+      - key: TCGREPLAY_WEB_ANALYTICS_TOKEN
         scope: RUN_TIME
       # A DigitalOcean API token with the cdn:read and cdn:delete scopes
       # (purging is cdn:delete, not cdn:update), used to

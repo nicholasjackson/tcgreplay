@@ -84,7 +84,8 @@ dev-ui: web/node_modules
 # TCGREPLAY_SPACES_BUCKET, TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET
 # (optional). To use the admin page at /admin, export TCGREPLAY_ADMINS
 # (Google account emails), and TCGREPLAY_SPACES_CDN_TOKEN for image clears
-# to purge the CDN (both optional).
+# to purge the CDN (both optional). TCGREPLAY_WEB_ANALYTICS_TOKEN is
+# deliberately not passed, so a local container run never counts visitors.
 IMAGE ?= tcgreplay
 PUBLIC_URL ?= http://localhost:8080
 
