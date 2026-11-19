@@ -34,3 +34,23 @@ domain-move; observability -> privacy-terms-disclaimer -> visitor-analytics; cha
 - Summary written (6 sections + decisions). epic order added 5 deps: observability<-domain-move; chatgpt<-visitor-analytics; launch-docs<-privacy, visitor-analytics, chatgpt. Next: Step 7 review.
 - Step 7 review presented to user; awaiting changes/confirmation.
 - Review confirmed by user with no changes (2026-11-12). Epic fully planned; next: implement this epic.
+- User chose to implement the whole public-launch epic (via spek-implement-epic) instead of one spec.
+
+## Implement-epic run (2026-11-12)
+- Orchestrating /spek-implement-epic for 20261111093348-e1b5c2b4-public-launch. Tree clean (app.yaml edits already committed). Linear chain: domain-move → observability → privacy → visitor-analytics → chatgpt → launch-docs.
+- Started child: domain-move.
+- QUESTION domain-move: 5 agent tasks done; human task c2f0b060 (console steps per docs/domain-move.md) blocks wrap-up. Options: skip now (rec) / wait.
+- domain-move DONE and merged (8342246). Started observability.
+- QUESTION observability: 6 agent tasks done; parked at human task 8a4c8b44 (secret TCGREPLAY_PLAYER_ID_KEY before merge/push, doctl apply, alert recipients, measure memory, Insights retention, JSON parsing). Needs figures (a)-(e).
+- User chose: wait for figures (observability). Child parked; send figures (a)-(e) to it when user provides them. Offered early merge for deploy if user asks.
+- User: ignore measurement collection; will measure while live. Relayed to observability child: defer human tasks, keep limits, provisional retention figure marked to-confirm, finish and hand back DONE.
+- observability DONE, merged (5647421). Started privacy-terms-disclaimer child.
+- privacy task3 goal-check: user chose accept (criterion 5 → launch-docs launch entry). I add About panel to launch-docs plan.
+- privacy DONE, merged (c32a9d7). Started visitor-analytics child.
+- visitor-analytics: tasks 1-4 done; switch-on human task deferred to maintainer (consistent with user's deferral of live steps).
+- visitor-analytics finished-step commit blocked by permissions; user allowed the workflow commit, relayed.
+- visitor-analytics: I ran finished goto (user-approved commit; child blocked by classifier), merged b582cd3, ticked deferred task 5 heading (criteria unticked) so status=done. Started chatgpt-submission-prep.
+- Resumed implement-epic run (2026-11-19): restarting child for chatgpt-submission-prep (in_progress at check_goal, task 'Tell ChatGPT who is signed in'); launch-docs blocked on it.
+- chatgpt-submission-prep DONE (task 7 human deferred/accepted), merged c5a184b. Created launch-docs worktree; starting child.
+- launch-docs DONE (task 4 directory switch-on deferred), merged. Epic implement complete (2026-11-19).
+- Ticked deferred launch-docs task 4 heading (criteria unticked) so status=done, as with visitor-analytics.

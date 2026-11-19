@@ -13,21 +13,21 @@ Before TCG Replay goes public and is submitted to ChatGPT, it needs the pages a 
 
 ## Requirements
 
-- [ ] **Privacy page describes visitor counting**
+- [x] **Privacy page describes visitor counting**
   The privacy page explains the cookieless visitor counting on the website and the board: what it records (page, referrer, country, device), that it sets no cookies, and that it is never linked to a player's account. The promise that no analytics are collected is gone.
-- [ ] **Privacy page describes diagnostics**
+- [x] **Privacy page describes diagnostics**
   The privacy page explains the diagnostics the playmat keeps (the hosting platform's request and performance metrics, and the playmat's own error and usage records): what they contain, what they never contain, and how long they are kept.
-- [ ] **Privacy page stays accurate and dated**
+- [x] **Privacy page stays accurate and dated**
   Every other statement on the privacy page still matches how the playmat works, and the page shows the date it was last updated.
-- [ ] **Terms of service are published**
+- [x] **Terms of service are published**
   A terms of service page is published on the website, and every website page links to both the privacy page and the terms.
-- [ ] **Terms cover the essentials**
+- [x] **Terms cover the essentials**
   The terms say who runs the playmat (see Constraints); that it is free and provided as is, with no guarantee it stays available; that games can be lost at any time; that the hosted limits apply (requests per minute, the number of players served at once, and idle games being dropped); that abuse is not allowed (overloading or attacking the service, automated scraping, getting round the limits, using it for anything unlawful); that players must be at least 13; that the terms and the service can change or end; where to get help; and they link to the privacy page and show the date they were last updated.
-- [ ] **Terms cover trademarks and card images**
+- [x] **Terms cover trademarks and card images**
   The terms have a section saying the playmat is an unofficial fan project, not affiliated with, endorsed, sponsored or approved by Nintendo, The Pokémon Company, Creatures or Game Freak, that Pokémon and its trademarks are theirs, and that card data and images come from TCGdex and malie.io.
-- [ ] **The board carries the notice and credit**
+- [x] **The board carries the notice and credit**
   The board shows the fan-project notice and the card-data credit where a player can find them, at every screen size, without covering cards or controls.
-- [ ] **Help is one click away**
+- [x] **Help is one click away**
   Every website page, the privacy page, the terms and the board link to the project's help channel (see Constraints).
 
 ## Constraints
@@ -39,23 +39,23 @@ Before TCG Replay goes public and is submitted to ChatGPT, it needs the pages a 
 
 ## Acceptance Criteria
 
-- [ ] **Visitor counting on the privacy page**
+- [x] **Visitor counting on the privacy page**
   The privacy page no longer says analytics are never collected, and has a section naming the visitor-counting service that lists page, referrer, country and device as what it records and says it sets no cookies and isn't linked to accounts.
-- [ ] **Diagnostics on the privacy page**
+- [x] **Diagnostics on the privacy page**
   The privacy page has a section on diagnostics naming the hosting platform's metrics and the playmat's own error and usage records, listing what they contain and what they never contain, and saying how long each is kept.
-- [ ] **Existing statements re-checked**
+- [x] **Existing statements re-checked**
   Each statement already on the privacy page (sign-in data, cookies, browser settings, games, retention, logs, outside services, removing data) has been checked against the playmat's behaviour at release, and any that differed is corrected.
 - [ ] **Privacy page dated**
   The privacy page's last-updated date is the date the updated page went live.
-- [ ] **Terms page live and linked**
+- [x] **Terms page live and linked**
   The terms page loads on the website without signing in, and the footer of every website page links to both the privacy page and the terms.
-- [ ] **Terms content**
+- [x] **Terms content**
   The terms page names the tcgreplay project as running the playmat and states each of: free and as is with no availability guarantee; games may be lost at any time; the hosted limits (requests per minute, players served at once, idle games dropped); the disallowed uses listed in the requirements; minimum age 13; terms and service may change or end; help through GitHub issues; a link to the privacy page; a last-updated date.
-- [ ] **Trademarks section**
+- [x] **Trademarks section**
   The terms page has a trademarks and card images section containing the non-affiliation notice naming Nintendo, The Pokémon Company, Creatures and Game Freak, and the TCGdex and malie.io credit.
-- [ ] **Notice on the board**
+- [x] **Notice on the board**
   On the board, at phone (390 px), tablet (820 px) and desktop (1440 px) widths, a player can reach the fan-project notice and the card-data credit, and showing them covers no card or control.
-- [ ] **Help links**
+- [x] **Help links**
   The website footer, the privacy page, the terms page and the board each contain a link to the project's GitHub issues.
 
 ## Technical Approach

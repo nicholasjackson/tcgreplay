@@ -110,7 +110,7 @@ The docs layout's sidebar and the docs index render it.
 - Design documents this plan was built on: none. The spec carries no design references.
 - **Upstream spec `20261111093353-8ff3589f-domain-move` (must land first).** Provides the website's address from the deployment definition (`site.mcpURL` = `https://tcgreplay.app/mcp`), the connecting page's single `data-moved-note` move note, and the whole-site scan of built pages. This plan converts the connecting page that plan edits, so its tasks must be merged before this plan's connecting-page task starts; the move note is carried across unchanged apart from gaining an anchor, and the scan gains one rule.
 - **Sibling spec `20261112090820-07d70cfb-chatgpt-submission-prep`.** Owns the plugin package, the listing name "TCG Replay" and the submission to OpenAI. No ordering dependency for drafting; the directory route can only be switched on after OpenAI approves the listing that spec submits. Its tool-label changes are player-visible and belong in the launch entry if they ship by launch.
-- **Sibling spec `20261112083238-29247b36-privacy-terms-disclaimer`.** Edits the shared page layout's links (privacy, terms, help). This plan stays out of the shared layout to avoid a conflict. Its terms and privacy pages are player-visible and belong in the launch entry if they ship by launch.
+- **Sibling spec `20261112083238-29247b36-privacy-terms-disclaimer`.** Edits the shared page layout's links (privacy, terms, help). This plan stays out of the shared layout to avoid a conflict. Its terms and privacy pages and the board's About panel (opened from the ☰ menu) are player-visible and belong in the launch entry; that spec's own What's new criterion was accepted as handed to this plan's launch entry.
 - **Website toolchain: Astro 7, Playwright, `yaml` (already in the site project).** Astro builds the new pages; `yaml` parses the What's new list; Playwright runs the browser suite and the loader tests. No new packages.
 - **Go site handler (internal `site` package), unchanged.** Already serves `docs/index.html` for `/docs` and `/docs/`.
 - **OpenAI's current "Add custom MCP server" flow and help articles (external).** The source for the ChatGPT custom steps, the plans named and ChatGPT's Refresh. Not stable; a person checks the steps against them and a real account at the launch release.
@@ -158,7 +158,7 @@ All automated tests are in the website's existing Playwright suite, which runs a
 
 **Validation point**: The website builds and its browser suite passes, including new checks that `/docs/` and `/docs` answer with the index, that the index lists every sidebar page, and that the sidebar links to the index.
 
-#### - [ ] Task: Docs index and shared docs page list
+#### - [x] Task: Docs index and shared docs page list
 **Id:** e8d473af-a98a-48b1-9c9e-dffb1df1de33
 **Repo:** tcgreplay
 **Depends on:** none
@@ -169,9 +169,9 @@ The docs sidebar's list of pages moves into one shared list, which the sidebar a
 *Technical detail:* [context.md#task-docs-index-and-shared-docs-page-list](./context.md#task-docs-index-and-shared-docs-page-list)
 
 **Acceptance criteria**:
-- [ ] Visiting `/docs/` or `/docs` on the website shows a page listing the docs, not the "Page not found" page.
-- [ ] The index lists every page the docs sidebar lists, each with its title linking to the page and a one-line description where the page has one.
-- [ ] Every docs page's sidebar links to the docs index, and still lists the same pages in the same order as before.
+- [x] Visiting `/docs/` or `/docs` on the website shows a page listing the docs, not the "Page not found" page.
+- [x] The index lists every page the docs sidebar lists, each with its title linking to the page and a one-line description where the page has one.
+- [x] Every docs page's sidebar links to the docs index, and still lists the same pages in the same order as before.
 
 ### Milestone 2: ChatGPT users can connect at launch, and every player can refresh their connection after an update
 
@@ -179,7 +179,7 @@ The docs sidebar's list of pages moves into one shared list, which the sidebar a
 
 **Validation point**: The website builds and its browser suite passes: the ChatGPT section names its plans and starts with the custom steps, the refresh section covers all three assistants, the troubleshooting lines and sidebar link to it, and no built page mentions the Plugin Directory.
 
-#### - [ ] Task: Connecting page with current ChatGPT steps and refresh steps
+#### - [x] Task: Connecting page with current ChatGPT steps and refresh steps
 **Id:** 54cc9ee6-8c80-45da-9594-2d9ff755ccea
 **Repo:** tcgreplay
 **Depends on:**
@@ -191,11 +191,11 @@ The connecting page becomes a hand-written page at the same address, keeping eve
 *Technical detail:* [context.md#task-connecting-page-with-current-chatgpt-steps-and-refresh-steps](./context.md#task-connecting-page-with-current-chatgpt-steps-and-refresh-steps)
 
 **Acceptance criteria**:
-- [ ] The connecting page keeps its address, title, address block, claude.ai and Claude Code steps, check-it-works prompts and its one note for players on the old address, and every address it shows is `https://tcgreplay.app` or derived from it.
-- [ ] The ChatGPT section gives numbered steps for adding the playmat as a custom MCP server and creating it as a plugin, then installing and connecting it, and names the ChatGPT plans that allow a custom connection.
-- [ ] The page has one refresh section with steps for claude.ai, ChatGPT and Claude Code, and each assistant's troubleshooting text links to it.
-- [ ] The docs sidebar and the docs index link to the refresh section.
-- [ ] Plugin Directory steps for ChatGPT exist in the page but are not shown, and no built page mentions the Plugin Directory while the listing flag is off; turning the flag on puts them first in the ChatGPT section, with the custom steps after.
+- [x] The connecting page keeps its address, title, address block, claude.ai and Claude Code steps, check-it-works prompts and its one note for players on the old address, and every address it shows is `https://tcgreplay.app` or derived from it.
+- [x] The ChatGPT section gives numbered steps for adding the playmat as a custom MCP server and creating it as a plugin, then installing and connecting it, and names the ChatGPT plans that allow a custom connection.
+- [x] The page has one refresh section with steps for claude.ai, ChatGPT and Claude Code, and each assistant's troubleshooting text links to it.
+- [x] The docs sidebar and the docs index link to the refresh section.
+- [x] Plugin Directory steps for ChatGPT exist in the page but are not shown, and no built page mentions the Plugin Directory while the listing flag is off; turning the flag on puts them first in the ChatGPT section, with the custom steps after.
 
 ### Milestone 3: Players can see what changed in each update
 
@@ -203,7 +203,7 @@ The connecting page becomes a hand-written page at the same address, keeping eve
 
 **Validation point**: The website builds and its browser suite passes, including the loader checks and a What's new page whose entries are dated, newest first, start with the launch and link "Refresh needed" to the refresh steps.
 
-#### - [ ] Task: What's new page and launch entry
+#### - [x] Task: What's new page and launch entry
 **Id:** 244d82ad-183d-4a8b-a9ff-2deee9b45c80
 **Repo:** tcgreplay
 **Depends on:**
@@ -216,11 +216,12 @@ A single dated list of player-visible changes is added to the website project, r
 *Technical detail:* [context.md#task-whats-new-page-and-launch-entry](./context.md#task-whats-new-page-and-launch-entry)
 
 **Acceptance criteria**:
-- [ ] The website has a "What's new" page, reachable from the docs sidebar and the docs index, listing dated entries newest first.
-- [ ] Every entry says whether a refresh is needed, and every entry that needs one links to the refresh steps on the connecting page.
-- [ ] The first entry covers the public launch, links to the connecting page's note for players on the old address, does not name the old address and does not say TCG Replay is in the Plugin Directory.
-- [ ] An entry missing its date, title, refresh answer or changes, or with an invalid date, stops the site build with a message naming the entry and what is wrong.
-- [ ] The knowledge base has a convention saying every player-visible change ships with a What's new entry, and when to mark it as needing a refresh.
+- [x] The website has a "What's new" page, reachable from the docs sidebar and the docs index, listing dated entries newest first.
+- [x] Every entry says whether a refresh is needed, and every entry that needs one links to the refresh steps on the connecting page.
+- [x] The first entry covers the public launch, links to the connecting page's note for players on the old address, does not name the old address and does not say TCG Replay is in the Plugin Directory.
+- [x] The first entry lists the privacy-terms-disclaimer spec's player-visible changes: the terms page, the updated privacy page and the board's About panel.
+- [x] An entry missing its date, title, refresh answer or changes, or with an invalid date, stops the site build with a message naming the entry and what is wrong.
+- [x] The knowledge base has a convention saying every player-visible change ships with a What's new entry, and when to mark it as needing a refresh.
 
 ### Milestone 4: ChatGPT users find TCG Replay in the Plugin Directory
 
@@ -228,7 +229,7 @@ A single dated list of player-visible changes is added to the website project, r
 
 **Validation point**: After the switch, the website builds and its browser suite passes in the listed state: the ChatGPT section's first steps use the Plugin Directory and the custom steps follow.
 
-#### - [ ] Task: Switch on the Plugin Directory route
+#### - [x] Task: Switch on the Plugin Directory route
 **Id:** c3c0c268-bdf7-4650-bcf8-c80327d7380c
 **Repo:** tcgreplay
 **Depends on:**
@@ -260,3 +261,84 @@ After OpenAI approves the listing, the maintainer checks the drafted directory s
 - **An automated check that each release adds a What's new entry.** The rule is a written convention, checked by the maintainer (a success metric in the test plan), because no test can tell whether a change was visible to players.
 - **A "What's new" feed (RSS or similar) or in-assistant announcements of updates.** Not asked for; the page and its links are the whole surface.
 - **Entries for releases before launch.** The list starts with the public launch, as the spec asks.
+
+## Changelog
+
+### 2026-11-19 — Task: Docs index and shared docs page list
+
+**What was done**: The docs sidebar's list of pages moved from the docs layout into a shared helper, `docsPages()`, which also carries each page's one-line description. A new docs index page at `/docs` (and `/docs/`) renders that same list with descriptions, and the sidebar now starts with an "All docs" link to it.
+
+**Deviations**: None.
+
+**Files changed**:
+- `site/src/lib/docs-pages.ts`
+- `site/src/layouts/Docs.astro`
+- `site/src/pages/docs/index.astro`
+- `site/e2e/docs-index.spec.js`
+
+**Discoveries**: `site/e2e/docs-index.spec.js` holds a hand-maintained list of the sidebar's pages in order; later tasks that add docs pages (Refreshing the connection, What's new) must add them to that list too.
+
+### 2026-11-19 — Task: Connecting page with current ChatGPT steps and refresh steps
+
+**What was done**: The connecting page moved from Markdown to a hand-written Astro page at the same address, keeping its address block, claude.ai, Claude Code and desktop sections, check prompts and the move note (now with `id="moved"`), with every new address printed from `site.mcpURL`. The ChatGPT section now names the plans (Business, Enterprise or Edu) and gives OpenAI's current custom-server flow through "Create as a plugin" and Install; the Plugin Directory steps sit behind `chatgptDirectory.listed` (off) in a new `site/src/lib/listing.ts`. A new "Refresh after an update" section (`#refresh`) covers claude.ai, ChatGPT and Claude Code, each assistant's troubleshooting line links to it, and the sidebar and docs index gained "Refreshing the connection".
+
+**Deviations**: The refresh section's sentence linking to What's new (`/docs/whats-new`) was left out of this task, because that page does not exist until the next task and the site crawl fails on a link to a missing page; the What's new task adds it. The plan list also lives in `listing.ts` as `chatgptPlans`, which the page and test both read (the context offered this as an option). The ChatGPT troubleshooting line now says to open tcgreplay in Plugins and connect it again, matching the new flow.
+
+**Files changed**:
+- `site/src/pages/docs/connect.astro` (new)
+- `site/src/content/docs/connect.md` (deleted)
+- `site/src/lib/listing.ts` (new)
+- `site/src/lib/docs-pages.ts`
+- `site/src/content.config.ts`
+- `site/e2e/connect.spec.js`
+- `site/e2e/site.spec.js`
+- `site/e2e/docs-index.spec.js`
+
+**Discoveries**: The listed state was exercised once by flipping the flag locally (connect and docs-index suites pass), then restored. Astro text in `.astro` pages keeps straight apostrophes, while the Markdown docs got smart quotes; tests matching apostrophes should accept both.
+
+### 2026-11-19 — Task: What's new page and launch entry
+
+**What was done**: Added the What's new list `site/src/data/whats-new.yaml` and a loader, `site/src/lib/whats-new.ts`, built like the facts loader. It sorts entries newest first and stops the build with a `WhatsNewError` naming the entry and field when a date, title, refresh flag or change list is missing or malformed. `changeHTML` escapes each change line and turns only `/` and `https://` links into links. The new `/docs/whats-new` page shows each entry's date in words, its title, a "Refresh needed" line (linking `/docs/connect#refresh`) or "No refresh needed", and its changes. It is in the docs sidebar and index at order 85, and the refresh section links to it. The launch entry, dated 2026-11-19, covers:
+- the new address, linking the `#moved` note;
+- the ChatGPT steps;
+- What's new, the refresh steps and the docs index;
+- clearer tool names and the new account tool (chatgpt-submission-prep);
+- the terms and privacy pages with footer links, and the board's About panel (privacy-terms-disclaimer).
+
+**Deviations**: The refresh section's What's new link, held back from the previous task, was added here. Launch-entry tests read the oldest entry (`whatsNew.at(-1)`), not `whatsNew[0]`, so they stay valid once later entries are added above it. Hand-written pages were reflowed so no inline tag starts a new source line, because Astro dropped the space before it (see Discoveries). The launch date is the day this task ran; the maintainer corrects it in the wording review if launch day differs.
+
+**Files changed**:
+- `site/src/data/whats-new.yaml` (new)
+- `site/src/lib/whats-new.ts` (new)
+- `site/src/pages/docs/whats-new.astro` (new)
+- `site/src/lib/docs-pages.ts`
+- `site/src/pages/docs/connect.astro`
+- `site/e2e/whats-new.spec.js` (new)
+- `site/e2e/docs-index.spec.js`
+
+**Discoveries**:
+- In `.astro` pages, a line break between text and an inline element (`<a>`, `<strong>`, `<code>`) is dropped rather than collapsed to a space, so "needed,\n<a>" builds as "needed,<a>". Fixed on the new pages. `site/src/pages/docs/example.astro` still has one instance, outside this plan's scope. Written to knowledge as `gotchas/astro-inline-whitespace.md`.
+- The `yaml` package's default schema keeps unquoted dates as strings.
+- Knowledge entries in the always-applied `conventions` category cannot carry tags; the CLI reports them as unreachable.
+
+### 2026-11-19 — Task: Switch on the Plugin Directory route
+
+**What was done**: No code changes. This is a person's task (`Execution: human`): it waits on OpenAI approving the Plugin Directory listing (submitted by chatgpt-submission-prep) and on the maintainer choosing when to switch. The directory steps and the refresh-section note are already written into `site/src/pages/docs/connect.astro`, behind `chatgptDirectory.listed`. When the time comes, the maintainer:
+1. checks those steps against the live directory and adjusts their wording;
+2. sets `listed: true` in `site/src/lib/listing.ts`;
+3. adds a What's new entry announcing the listing (`refresh: false`);
+4. runs `make site-test`, which switches to asserting the listed state, and merges.
+
+The steps are in the implementation test plan.
+
+**Deviations**: Skipped, deferred to the maintainer: "deferred to the maintainer: live setup after deploy (waits on OpenAI approving the Plugin Directory listing)". The goal check ran three times; each time the reviewer judged all three criteria not met, because the flag is off and must stay off until approval. The skip was recorded through `implement goal decide`. The three acceptance criteria are left unticked:
+- the ChatGPT section starts with the directory steps;
+- the refresh section has the directory note;
+- a What's new entry announces the listing.
+
+The listed state's rendering was exercised once during the connecting-page task by flipping the flag locally, and the connect and docs-index suites passed.
+
+**Files changed**:
+- None
+
+**Discoveries**: None.

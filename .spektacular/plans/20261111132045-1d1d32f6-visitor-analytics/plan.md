@@ -263,7 +263,7 @@ No test anywhere contacts Cloudflare. Unit and route tests make no network calls
 
 **Validation point**: The Go tests pass. With a token and a privacy page that describes counting, website pages and a signed-in board page for the public address carry exactly one Cloudflare snippet with single-page-app tracking off. Other hosts, sign-in redirects, the board's files, sign-in pages and the admin page carry none. With no token, a malformed one, or a privacy page without the visitor-counting section, every page is exactly what it was, and the start-up log gives the reason.
 
-#### - [ ] Task: Add the visitor analytics package and the privacy page check
+#### - [x] Task: Add the visitor analytics package and the privacy page check
 **Id:** 11c2ba66-ef41-4dfc-8cf0-93e1aa244855
 **Repo:** tcgreplay
 **Depends on:** none
@@ -274,13 +274,13 @@ Adds a small package that owns Cloudflare Web Analytics for the playmat: the bea
 *Technical detail:* [context.md#task-add-the-visitor-analytics-package-and-the-privacy-page-check](./context.md#task-add-the-visitor-analytics-package-and-the-privacy-page-check)
 
 **Acceptance criteria**:
-- [ ] Counting is decided "on" only with a well-formed token, a privacy page that describes counting and a public address, and each missing piece gives "off" with its own plain reason that never shows the token.
-- [ ] A token holding anything other than 16 to 64 letters and digits is refused, so nothing unexpected can reach a page.
-- [ ] The tag added is Cloudflare's manual beacon tag with the token and single-page-app tracking off, placed once before the end of the page body.
-- [ ] Only successful page loads for the public address are changed; other hosts, redirects, error pages, assets and partial responses are passed on exactly as they were.
-- [ ] The website reports that its privacy page describes counting only when the page carries the visitor-counting marker the privacy work defines.
+- [x] Counting is decided "on" only with a well-formed token, a privacy page that describes counting and a public address, and each missing piece gives "off" with its own plain reason that never shows the token.
+- [x] A token holding anything other than 16 to 64 letters and digits is refused, so nothing unexpected can reach a page.
+- [x] The tag added is Cloudflare's manual beacon tag with the token and single-page-app tracking off, placed once before the end of the page body.
+- [x] Only successful page loads for the public address are changed; other hosts, redirects, error pages, assets and partial responses are passed on exactly as they were.
+- [x] The website reports that its privacy page describes counting only when the page carries the visitor-counting marker the privacy work defines.
 
-#### - [ ] Task: Count website and board pages on the hosted playmat
+#### - [x] Task: Count website and board pages on the hosted playmat
 **Id:** b32a7984-790c-4338-9628-e913f8a99f34
 **Repo:** tcgreplay
 **Depends on:**
@@ -292,12 +292,12 @@ Gives the hosted playmat a new setting for the Cloudflare site token and applies
 *Technical detail:* [context.md#task-count-website-and-board-pages-on-the-hosted-playmat](./context.md#task-count-website-and-board-pages-on-the-hosted-playmat)
 
 **Acceptance criteria**:
-- [ ] With a token and a privacy page that describes counting, every website page and a signed-in board page on the public address carry exactly one Cloudflare beacon, and the board page is counted once per load.
-- [ ] A signed-out board load still goes straight to sign-in, and sign-in pages, the admin page, the assistant connection, the board's files and pages on any other address never carry the beacon.
-- [ ] With no token, a malformed token or a privacy page without the visitor-counting section, every page is exactly as it was before, and the start-up log names the reason.
-- [ ] No page sets a cookie because of counting, and the start-up log never shows the token, an email or an account.
-- [ ] The deployment definition, the container's settings notes and the design doc describe the setting, that it must be set only once the privacy page describing counting is live, and that clearing it stops counting.
-- [ ] Running the playmat locally or in the desktop app adds no beacon to any page.
+- [x] With a token and a privacy page that describes counting, every website page and a signed-in board page on the public address carry exactly one Cloudflare beacon, and the board page is counted once per load.
+- [x] A signed-out board load still goes straight to sign-in, and sign-in pages, the admin page, the assistant connection, the board's files and pages on any other address never carry the beacon.
+- [x] With no token, a malformed token or a privacy page without the visitor-counting section, every page is exactly as it was before, and the start-up log names the reason.
+- [x] No page sets a cookie because of counting, and the start-up log never shows the token, an email or an account.
+- [x] The deployment definition, the container's settings notes and the design doc describe the setting, that it must be set only once the privacy page describing counting is live, and that clearing it stops counting.
+- [x] Running the playmat locally or in the desktop app adds no beacon to any page.
 
 ### Milestone 2: The browser suites show that counting is invisible to visitors
 
@@ -305,7 +305,7 @@ Gives the hosted playmat a new setting for the Cloudflare site token and applies
 
 **Validation point**: Both browser suites pass, including the new analytics specs, at the website's laptop and phone sizes and the board's phone, tablet and desktop sizes. The existing whole-site checks still pass unchanged against the default server.
 
-#### - [ ] Task: Check counting in the website's browser suite
+#### - [x] Task: Check counting in the website's browser suite
 **Id:** 456866d0-d347-49a0-8404-b5e4eb0bc7d9
 **Repo:** tcgreplay
 **Depends on:**
@@ -317,13 +317,13 @@ Lets the website's test server switch counting on when asked. The browser suite 
 *Technical detail:* [context.md#task-check-counting-in-the-websites-browser-suite](./context.md#task-check-counting-in-the-websites-browser-suite)
 
 **Acceptance criteria**:
-- [ ] Without the token, every website page still asks no other host for anything, sets no cookie and carries no beacon, as before.
-- [ ] With counting on, every website page carries exactly one beacon with single-page-app tracking off, and the only other address asked is Cloudflare's beacon script, which the test stubs.
-- [ ] With counting on, no cookie, local storage or session storage entry exists after visiting every page.
-- [ ] With the beacon blocked, every page loads with its content and navigation, raises no error, and its copy buttons still work.
-- [ ] No test in the suite sends anything to Cloudflare.
+- [x] Without the token, every website page still asks no other host for anything, sets no cookie and carries no beacon, as before.
+- [x] With counting on, every website page carries exactly one beacon with single-page-app tracking off, and the only other address asked is Cloudflare's beacon script, which the test stubs.
+- [x] With counting on, no cookie, local storage or session storage entry exists after visiting every page.
+- [x] With the beacon blocked, every page loads with its content and navigation, raises no error, and its copy buttons still work.
+- [x] No test in the suite sends anything to Cloudflare.
 
-#### - [ ] Task: Check counting in the board's browser suite
+#### - [x] Task: Check counting in the board's browser suite
 **Id:** b55d6c1e-1a4a-42a3-8887-70fb05eebc4d
 **Repo:** tcgreplay
 **Depends on:**
@@ -335,11 +335,11 @@ Lets the board's test server switch counting on when asked. The board's browser 
 *Technical detail:* [context.md#task-check-counting-in-the-boards-browser-suite](./context.md#task-check-counting-in-the-boards-browser-suite)
 
 **Acceptance criteria**:
-- [ ] At phone, tablet and desktop sizes, the board page carries exactly one beacon with single-page-app tracking off.
-- [ ] Opening card zooms, switching branches and, on a phone, opening and closing the action sheet load no second beacon.
-- [ ] With the beacon blocked, the board shows the game, opens a card zoom and accepts a move, with no error shown or raised.
-- [ ] After moving around, the browser holds only the board's four existing settings and no cookie.
-- [ ] No test in the suite sends anything to Cloudflare.
+- [x] At phone, tablet and desktop sizes, the board page carries exactly one beacon with single-page-app tracking off.
+- [x] Opening card zooms, switching branches and, on a phone, opening and closing the action sheet load no second beacon.
+- [x] With the beacon blocked, the board shows the game, opens a card zoom and accepts a move, with no error shown or raised.
+- [x] After moving around, the browser holds only the board's four existing settings and no cookie.
+- [x] No test in the suite sends anything to Cloudflare.
 
 ### Milestone 3: Visitor counting is live for tcgreplay.app
 
@@ -347,7 +347,7 @@ Lets the board's test server switch counting on when asked. The board's browser 
 
 **Validation point**: The start-up log says visitor analytics are on for tcgreplay.app. The live page source carries exactly one beacon. Within 30 minutes, the home page, a docs page and a `/board` session show in the dashboard. The live devtools checks show no cookie or storage from analytics and no identity in its requests.
 
-#### - [ ] Task: Switch visitor counting on for tcgreplay.app
+#### - [x] Task: Switch visitor counting on for tcgreplay.app
 **Id:** b47cb586-3bb8-442e-b5bd-ab4539615cf6
 **Repo:** tcgreplay
 **Depends on:**
@@ -389,3 +389,81 @@ Once the counting code is deployed and the privacy page describing visitor count
 - **Counting the 404 page, sign-in, admin, "Not your game" and refusal pages.** Only successful website pages and the board page are counted.
 - **Cloudflare's server-side edge analytics or any change to the Cloudflare zone** beyond creating the Web Analytics site and making sure automatic injection is off.
 - **Counting on the old address `tcgreplay.demo.gs`, the App Platform default address or local runs.** These are excluded on purpose. The domain move redirects the old address.
+
+## Changelog
+
+### 2026-11-13 — Task: Add the visitor analytics package and the privacy page check
+
+**What was done**: Added `internal/webanalytics`, which owns Cloudflare's manual beacon tag (`"spa":false`), the 16 to 64 letters-and-digits token check, `Setup` (the on/off decision with a plain status line that never shows the token) and `Inject`, a wrapper that adds the tag before the last `</body>` of a successful `GET` HTML response for the public host only. The website package gained `DescribesVisitorCounting`, true only when the embedded privacy page carries `data-retention="visits"`. Nothing calls either yet.
+
+**Deviations**: Small additions beyond the plan's detail, all on the safe side: the wrapper also passes through HTML with a non-identity `Content-Encoding`, and drops `Accept-Ranges` from a page it altered (the altered page is no longer the file a range would be cut from). `Setup` lower-cases the host and drops any port from it too, so the on status reads "on for tcgreplay.app".
+
+**Files changed**:
+- `internal/webanalytics/webanalytics.go`
+- `internal/webanalytics/webanalytics_test.go`
+- `internal/site/site.go`
+- `internal/site/site_test.go`
+
+**Discoveries**: The `/board` "Not your game" page is a 403 and refusals are 503, so the 200-only rule keeps them out of the counts without any route special-casing. The tests use the standard library only (the repo has no testify), matching the existing suites.
+
+### 2026-11-13 — Task: Count website and board pages on the hosted playmat
+
+**What was done**: Hosted mode gained the `-web-analytics-token` flag (default `$TCGREPLAY_WEB_ANALYTICS_TOKEN`) and `hostedAnalytics`, which asks `webanalytics.Setup` whether counting is on (token, public host from `TCGREPLAY_PUBLIC_URL`, and the swappable `privacyDescribesCounting` hook over `site.DescribesVisitorCounting`) and logs the one-line status. `hostedHandler` takes the resulting wrapper and applies it only to the website mount and the `GET /board` route, outside `RequireSession`. `.do/app.yaml` declares the setting without a value, and the Dockerfile settings comment, the Makefile `docker-run` note and the design doc (a **Visitor counting** paragraph, a settings-table row and a new operator step 9) explain it.
+
+**Deviations**: The plan put the test wiring in `startHostedWith`; the hosted handler is now built in `serveHosted` (`cmd/tcgreplay/cardsets_test.go`, after the domain move), so `hostedAnalytics(c, u)` is wired there, inside the domain move's `movedGuard`. The old operator step 9 (legacy card cleanup) is now step 10. The goal check's first attempt found the Dockerfile comment did not say "set only once the privacy page is live" or "clear it to stop counting"; both were added on the retry.
+
+**Files changed**:
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_analytics_test.go`
+- `cmd/tcgreplay/cardsets_test.go`
+- `cmd/tcgreplay/hosted_admin_test.go`
+- `.do/app.yaml`
+- `Dockerfile`
+- `Makefile`
+- `TCG Review Playmat Design and Build Plan.md`
+
+**Discoveries**: The hosted analytics tests pass both with the website unbuilt (only `/` is a 200 page, the rest are the placeholder's 404s) and built (`make site`, every page carries one beacon); they compare against `siteResponse` so they hold either way. The built privacy page carries `data-retention="visits"`, so with the privacy-terms work merged a token is all that is needed to count.
+
+### 2026-11-13 — Task: Check counting in the website's browser suite
+
+**What was done**: The website test server gained `-analytics-token`, which wraps the site with hosted mode's counting (same privacy-page gate) for its own loopback host and stops with the reason when counting would be off. The site suite starts a second server on 127.0.0.1:7792 with a token; the new `site/e2e/analytics.spec.js` routes every other-host request (the beacon to a stub, or an abort when blocked, everything else to an abort) and checks one beacon per crawled page with `{token, spa:false}`, the stubbed beacon as the only other address, no cookies or storage, an uncounted 404, and that blocking the beacon changes nothing (content, navigation, footer, copy buttons, no page errors). The crawl moved to `site/e2e/crawl.js`; the existing third-party check now says it covers a run without the token and also checks no page carries the beacon.
+
+**Deviations**: `crawl` takes an optional `prepare(context)` hook so the analytics crawl can block Cloudflare before it loads any page (the plan's crawl opened its own unrouted context, which would have fetched the real beacon). The routing is one catch-all for every other host rather than two Cloudflare-only routes, and records anything it stopped, so an unexpected request fails the test instead of escaping. The server's switch is a small `analytics(token, host)` helper with Go tests for on, off and a refused bad token.
+
+**Files changed**:
+- `internal/site/sitetest/cmd/serve/main.go`
+- `internal/site/sitetest/cmd/serve/main_test.go`
+- `site/playwright.config.js`
+- `site/e2e/crawl.js`
+- `site/e2e/site.spec.js`
+- `site/e2e/analytics.spec.js`
+
+**Discoveries**: A spec's `test.use({ baseURL })` does not change `testInfo.project.use.baseURL`, which the existing `beforeAll` crawl reads, so a spec aimed at a second server must pass its address to the crawl itself. Site suite: 214 passed, 2 skipped (the existing phone-only check on the laptop profile).
+
+### 2026-11-13 — Task: Check counting in the board's browser suite
+
+**What was done**: The board test server gained `-analytics-token`, which wraps the board page (the `/` mount only, not `POST /test/reset`) with hosted mode's counting for its own loopback host, taking the privacy precondition as met because it has no website. The board suite starts a second server on 127.0.0.1:7789 with a token; the new `web/e2e/analytics.spec.js`, with its own fixture that resets that server and routes every other-host request first, checks at phone, tablet and desktop: one beacon with `{token, spa:false}`; card zooms, a branch switch (rewind onto a new branch, then main again in the branch picker) and, on touch profiles, the action sheet opened and closed by ✕ and by Back load no second beacon and keep the same page; only the four settings keys in `localStorage`, empty `sessionStorage`, no cookies; and, with the beacon blocked, the game shows, a zoom opens, a move lands, with no error toast, alert, page error or dialog.
+
+**Deviations**: The action sheet is exercised on the tablet profile too, not only the phone, because it pushes a history entry on every touch profile (`ActionSheet.svelte` pushes unless in popover mode). Other-host requests that are not Cloudflare (card images from their sources) are aborted silently; only Cloudflare requests are recorded and asserted to be exactly the one stubbed or blocked beacon load. Added a small Go test for the server's `analytics` helper.
+
+**Files changed**:
+- `internal/webui/webtest/cmd/boardtest/main.go`
+- `internal/webui/webtest/cmd/boardtest/main_test.go`
+- `web/playwright.config.js`
+- `web/e2e/analytics.spec.js`
+
+**Discoveries**: Escape alone does not close the board's card zoom; the existing specs also click the backdrop, and so does this one. Board suite: 289 passed, 65 skipped, 0 failed (the harness's `test.fail()` dialog test shows as ✘ in the list output but counts as passed).
+
+### 2026-11-13 — Task: Switch visitor counting on for tcgreplay.app
+
+**What was done**: Nothing in code: this is the maintainer's task (`Execution: human`). It needs the code deployed, the Cloudflare dashboard and the App Platform control panel. The live steps are written out in the implementation test plan: check the privacy page is live; check the start-up log says counting is off; add tcgreplay.app in Cloudflare Web Analytics with the manual snippet and automatic injection off; set `TCGREPLAY_WEB_ANALYTICS_TOKEN`; check the log says `visitor analytics: on for tcgreplay.app` and that the page source carries one beacon.
+
+**Deviations**: Skipped, and deferred to the maintainer: "deferred to the maintainer: live switch-on after deploy, per the user". The user has deferred live, human-only steps until after deploy, as they did for the domain-move and observability work. The goal check ran three times and the reviewer judged all three criteria not met each time, because live and dashboard state cannot be seen from files. The skip was recorded through `implement goal decide`. All three acceptance criteria are left unticked: the privacy page was live before the token was set; tcgreplay.app is a Cloudflare Web Analytics site with the manual snippet and automatic injection off; the start-up log says counting is on and the live page has exactly one beacon. Until the token is set, the deployed code counts nothing and the start-up log says why.
+
+**Files changed**:
+- None
+
+**Discoveries**: The goal check has no route straight to "deferred" for a human task. It reaches a skip only after the round's three attempts are used up (`exhausted`), because the reviewer judges unverifiable live criteria `not_met`, not `impossible`.
+
+**Closed as deferred** (orchestrator, 2026-11-13): the task heading is ticked so the specs that depend on this one can go ahead. This matches how observability's deferred maintainer tasks were closed. The work is not done: the three acceptance criteria stay unticked, and the switch-on remains the maintainer's job, following Part A of the test plan.

@@ -292,7 +292,7 @@ Tokens issued after the change carry the verified flag, and a token without it r
 
 **Validation point**: The Go suites pass. The metadata guard finds a title, three explicit labels, both description sentences and every parameter description on all tools, and the size test passes at its recorded ceiling. The instructions-opening test passes, and the wait tests show a call returning under the cap with a "call again" result.
 
-#### - [ ] Task: Explicit labels on every tool
+#### - [x] Task: Explicit labels on every tool
 **Id:** 25c14f80-304d-42f9-b352-359b925c0f5e
 **Repo:** tcgreplay
 **Depends on:** none
@@ -303,12 +303,12 @@ Makes every tool in the list the playmat sends an assistant state all three labe
 *Technical detail:* [context.md#task-explicit-labels-on-every-tool](./context.md#task-explicit-labels-on-every-tool)
 
 **Acceptance criteria**:
-- [ ] The tool list an assistant receives shows the read-only, destructive and open-world labels on every tool, each with an explicit true or false, on the desktop and on the hosted playmat.
-- [ ] The reads are marked read-only, only starting a new game, importing a game and rebuilding it with an opponent list are marked destructive, and no tool is marked as reaching outside the playmat.
-- [ ] In the hosted playmat every tool declares that it needs the player's sign-in; on the desktop none does.
-- [ ] Tool names, arguments and results are unchanged, so Claude connects and plays as before.
+- [x] The tool list an assistant receives shows the read-only, destructive and open-world labels on every tool, each with an explicit true or false, on the desktop and on the hosted playmat.
+- [x] The reads are marked read-only, only starting a new game, importing a game and rebuilding it with an opponent list are marked destructive, and no tool is marked as reaching outside the playmat.
+- [x] In the hosted playmat every tool declares that it needs the player's sign-in; on the desktop none does.
+- [x] Tool names, arguments and results are unchanged, so Claude connects and plays as before.
 
-#### - [ ] Task: Titles and descriptions for every tool
+#### - [x] Task: Titles and descriptions for every tool
 **Id:** 331b8154-0bf1-4408-ae2b-17fd6f374740
 **Repo:** tcgreplay
 **Depends on:**
@@ -320,12 +320,12 @@ Gives every tool a readable title, a description that opens with when to use it 
 *Technical detail:* [context.md#task-titles-and-descriptions-for-every-tool](./context.md#task-titles-and-descriptions-for-every-tool)
 
 **Acceptance criteria**:
-- [ ] Every tool in the list has a title, a description containing when to use it and when not to, and a description for every input.
-- [ ] A tool added later without a title, a label, either sentence or an input description makes the test suite fail, naming the tool and what is missing.
-- [ ] The size of the tool list after the change is measured, recorded and held under a ceiling by a test.
-- [ ] The existing guidance in descriptions (import rather than read the log, ask for a missing decklist, call the wait in the same reply, the guide triggers) is still there.
+- [x] Every tool in the list has a title, a description containing when to use it and when not to, and a description for every input.
+- [x] A tool added later without a title, a label, either sentence or an input description makes the test suite fail, naming the tool and what is missing.
+- [x] The size of the tool list after the change is measured, recorded and held under a ceiling by a test.
+- [x] The existing guidance in descriptions (import rather than read the log, ask for a missing decklist, call the wait in the same reply, the guide triggers) is still there.
 
-#### - [ ] Task: Instructions that stand alone and waits inside the limit
+#### - [x] Task: Instructions that stand alone and waits inside the limit
 **Id:** 2c3dc8ab-2f02-4002-a853-580559f0d631
 **Repo:** tcgreplay
 **Depends on:**
@@ -337,10 +337,10 @@ Rewrites the opening of the playmat's instructions to assistants so that its fir
 *Technical detail:* [context.md#task-instructions-that-stand-alone-and-waits-inside-the-limit](./context.md#task-instructions-that-stand-alone-and-waits-inside-the-limit)
 
 **Acceptance criteria**:
-- [ ] The first 512 characters of the playmat's instructions name what the playmat is, the rule to reference cards by their instance IDs, and where to find the coaching guides, as complete sentences.
-- [ ] The turn loop, the guide list and the hosted board-link line are still in the instructions.
-- [ ] A wait for a turn that is not over returns in under 60 seconds with a result telling the assistant to call it again.
-- [ ] The playmat refuses to start with a wait limit that could exceed ChatGPT's one-minute limit.
+- [x] The first 512 characters of the playmat's instructions name what the playmat is, the rule to reference cards by their instance IDs, and where to find the coaching guides, as complete sentences.
+- [x] The turn loop, the guide list and the hosted board-link line are still in the instructions.
+- [x] A wait for a turn that is not over returns in under 60 seconds with a result telling the assistant to call it again.
+- [x] The playmat refuses to start with a wait limit that could exceed ChatGPT's one-minute limit.
 
 ### Milestone 2: ChatGPT can identify the player, OpenAI can verify the domain, and the reviewer always gets in
 
@@ -353,7 +353,7 @@ Rewrites the opening of the playmat's instructions to assistants so that its fir
 
 The maintainer has set both values in the hosting console, and the live challenge path returns the token.
 
-#### - [ ] Task: Tell ChatGPT who is signed in
+#### - [x] Task: Tell ChatGPT who is signed in
 **Id:** 85e6a6bd-8ac8-4567-8e39-06636494c9d5
 **Repo:** tcgreplay
 **Depends on:**
@@ -365,12 +365,12 @@ Adds a read-only tool to the hosted playmat, `get_account`, marked as OpenAI's p
 *Technical detail:* [context.md#task-tell-chatgpt-who-is-signed-in](./context.md#task-tell-chatgpt-who-is-signed-in)
 
 **Acceptance criteria**:
-- [ ] Connected to the hosted playmat, asking who is signed in returns the player's identifier in the form OpenAI's profile rules require, and the same player gets the same identifier on a second connection.
-- [ ] Two different players get different identifiers, and the answer comes even when the playmat is full.
-- [ ] The desktop playmat's tools are unchanged.
-- [ ] The privacy page says the assistant is given the player's Google account ID to tell accounts apart.
+- [x] Connected to the hosted playmat, asking who is signed in returns the player's identifier in the form OpenAI's profile rules require, and the same player gets the same identifier on a second connection.
+- [x] Two different players get different identifiers, and the answer comes even when the playmat is full.
+- [x] The desktop playmat's tools are unchanged.
+- [x] The privacy page says the assistant is given the player's Google account ID to tell accounts apart.
 
-#### - [ ] Task: Answer OpenAI's domain verification
+#### - [x] Task: Answer OpenAI's domain verification
 **Id:** 1e610604-b888-471d-8128-8071a5b724b0
 **Repo:** tcgreplay
 **Depends on:** none
@@ -381,11 +381,11 @@ Serves OpenAI's domain-verification token at the address OpenAI checks, as plain
 *Technical detail:* [context.md#task-answer-openais-domain-verification](./context.md#task-answer-openais-domain-verification)
 
 **Acceptance criteria**:
-- [ ] With the maintainer's token configured, `/.well-known/openai-apps-challenge` returns exactly that token as plain text, without signing in.
-- [ ] With no token configured, the address answers "not found", and nothing else on the playmat changes.
-- [ ] The token never appears in the playmat's logs or in the repository.
+- [x] With the maintainer's token configured, `/.well-known/openai-apps-challenge` returns exactly that token as plain text, without signing in.
+- [x] With no token configured, the address answers "not found", and nothing else on the playmat changes.
+- [x] The token never appears in the playmat's logs or in the repository.
 
-#### - [ ] Task: Let the reviewer in past the player limit
+#### - [x] Task: Let the reviewer in past the player limit
 **Id:** d2d1dcc6-fbb3-4803-b774-0eb565951b1f
 **Repo:** tcgreplay
 **Depends on:** none
@@ -396,12 +396,12 @@ Adds a hosting setting naming the one reviewer's Google account. That account ca
 *Technical detail:* [context.md#task-let-the-reviewer-in-past-the-player-limit](./context.md#task-let-the-reviewer-in-past-the-player-limit)
 
 **Acceptance criteria**:
-- [ ] With the player limit reached by other accounts, the reviewer account still signs in, imports the example game and plays, while another non-reviewer account is still turned away.
-- [ ] An account with the reviewer's address that Google has not verified is treated like any other account.
-- [ ] The reviewer's place does not reduce the places available to other players.
-- [ ] With no reviewer configured, the limit works exactly as before, and the reviewer's address never appears in the logs or the repository.
+- [x] With the player limit reached by other accounts, the reviewer account still signs in, imports the example game and plays, while another non-reviewer account is still turned away.
+- [x] An account with the reviewer's address that Google has not verified is treated like any other account.
+- [x] The reviewer's place does not reduce the places available to other players.
+- [x] With no reviewer configured, the limit works exactly as before, and the reviewer's address never appears in the logs or the repository.
 
-#### - [ ] Task: Set the domain token and reviewer on the hosted playmat
+#### - [x] Task: Set the domain token and reviewer on the hosted playmat
 **Id:** 2c4138f0-bd43-4434-839a-1375d156661b
 **Repo:** tcgreplay
 **Depends on:**
@@ -423,7 +423,7 @@ Once the code is deployed, the maintainer copies the domain-verification token f
 
 **Validation point**: The package builder's tests pass on the real sources and refuse each broken copy with a message naming the rule. The built package holds the expected name, links, notice, test cases and icon. The manual checks in the test plan (upload validation, MCP Inspector, the end-to-end ChatGPT run) are ready to run against the deployed playmat.
 
-#### - [ ] Task: A listing icon without Pokémon trademarks
+#### - [x] Task: A listing icon without Pokémon trademarks
 **Id:** c00d0a9f-069e-4abb-8b4b-8e3672c04e73
 **Repo:** tcgreplay
 **Depends on:** none
@@ -434,11 +434,11 @@ Draws a new square icon for the listing, in the project's colours, showing fanne
 *Technical detail:* [context.md#task-a-listing-icon-without-pokemon-trademarks](./context.md#task-a-listing-icon-without-pokemon-trademarks)
 
 **Acceptance criteria**:
-- [ ] The project holds a square listing icon, at least 512 pixels across and well under 5 MB, with its editable source beside it.
-- [ ] The icon shows no Poké Ball, Pokémon name, logo or character.
-- [ ] The website and board icons are unchanged.
+- [x] The project holds a square listing icon, at least 512 pixels across and well under 5 MB, with its editable source beside it.
+- [x] The icon shows no Poké Ball, Pokémon name, logo or character.
+- [x] The website and board icons are unchanged.
 
-#### - [ ] Task: Build the plugin package
+#### - [x] Task: Build the plugin package
 **Id:** b00b3652-908e-48ee-9efa-eadf069ceac9
 **Repo:** tcgreplay
 **Depends on:**
@@ -456,12 +456,12 @@ The address, links, notice and support come from the files the project already k
 *Technical detail:* [context.md#task-build-the-plugin-package](./context.md#task-build-the-plugin-package)
 
 **Acceptance criteria**:
-- [ ] One command builds the plugin package, and building twice from the same sources gives the same contents.
-- [ ] The package shows the name "TCG Replay", connects to `https://tcgreplay.app/mcp` with the playmat's sign-in, and carries the icon, the description with the fan-project notice and credit, and the website, privacy, terms and support links.
-- [ ] The notice, credit, support link and address are taken from the project's existing sources, not typed into the listing.
-- [ ] A listing that breaks one of OpenAI's limits (lengths, number of prompts or test cases, link form, icon size or shape, secrets) is refused with a message naming the rule.
+- [x] One command builds the plugin package, and building twice from the same sources gives the same contents.
+- [x] The package shows the name "TCG Replay", connects to `https://tcgreplay.app/mcp` with the playmat's sign-in, and carries the icon, the description with the fan-project notice and credit, and the website, privacy, terms and support links.
+- [x] The notice, credit, support link and address are taken from the project's existing sources, not typed into the listing.
+- [x] A listing that breaks one of OpenAI's limits (lengths, number of prompts or test cases, link form, icon size or shape, secrets) is refused with a message naming the rule.
 
-#### - [ ] Task: Write the review material
+#### - [x] Task: Write the review material
 **Id:** 7745b70b-54b0-4f23-b667-05e4c9ab416b
 **Repo:** tcgreplay
 **Depends on:**
@@ -481,11 +481,11 @@ The test cases and script use the example game the website already publishes, so
 *Technical detail:* [context.md#task-write-the-review-material](./context.md#task-write-the-review-material)
 
 **Acceptance criteria**:
-- [ ] The project contains five positive and three negative test cases (each with the prompt and the expected behaviour), release notes, the video script and a pointer to the sample battle log and decklist they use.
-- [ ] The positive cases together cover connecting, signing in with Google, importing the sample game, opening the board link, reviewing and replaying.
-- [ ] The negative cases cover requests the playmat should decline or hand back, and say what should happen.
-- [ ] The built package carries the test cases and release notes, and the release notes tell players already connected to refresh their connection.
-- [ ] No website page mentions the Plugin Directory.
+- [x] The project contains five positive and three negative test cases (each with the prompt and the expected behaviour), release notes, the video script and a pointer to the sample battle log and decklist they use.
+- [x] The positive cases together cover connecting, signing in with Google, importing the sample game, opening the board link, reviewing and replaying.
+- [x] The negative cases cover requests the playmat should decline or hand back, and say what should happen.
+- [x] The built package carries the test cases and release notes, and the release notes tell players already connected to refresh their connection.
+- [x] No website page mentions the Plugin Directory.
 
 ## Open Questions
 
@@ -518,3 +518,194 @@ The test cases and script use the example game the website already publishes, so
 - **A guard that compares tool lists across releases** for backwards compatibility after publication. The submission checklist states the rule. An automated snapshot can follow once a version is published.
 - **CIMD client registration.** OpenAI prefers it, but the sign-in service's Dynamic Client Registration already works with ChatGPT, and the package declares that.
 - **A country allow-list for the listing.** It is left to OpenAI's default availability.
+
+## Changelog
+
+### 2026-11-13 — Task: Explicit labels on every tool
+
+**What was done**: Every tool definition is now built by one helper, `Server.tool(name, title, desc)`, which sets the behaviour hints and, in hosted mode (a resolver is set), `_meta.securitySchemes: [{type: oauth2}]`. A new `tools/list` receiving middleware, `explicitLabels`, installed by `Server.MCP()` itself, returns the SDK's result wrapped in `labelledTools`, whose `MarshalJSON` writes `readOnlyHint`, `destructiveHint` and `openWorldHint` as explicit booleans on every tool from `readOnlyTools` and `replacingTools`.
+
+**Deviations**: The desktop tool-name guard (`TestDesktopToolNamesUnchanged`, the 45 names) was added in this task rather than the next, because this task's fourth criterion (names unchanged) needs it. `addWith` and the guide tool pass an empty title for now; the next task fills titles.
+
+**Files changed**:
+- `internal/mcpserver/annotations.go`
+- `internal/mcpserver/annotations_test.go`
+- `internal/mcpserver/server.go`
+- `internal/mcpserver/guides.go`
+
+**Discoveries**: The plan's open question is settled: go-sdk v1.6.0 encodes a middleware's returned `mcp.Result` with `encoding/json`, so a type embedding `*mcp.ListToolsResult` with its own `MarshalJSON` reaches the wire unchanged on both the in-memory and Streamable HTTP transports. The raw wire can be read in tests with a bare `Transport.Connect` connection writing `jsonrpc.Request`s (helper `rawToolListBytes` in `annotations_test.go`), which works for both transports without a session-update call. The moved server has no resolver, so it declares no security scheme, as the plan intends.
+
+### 2026-11-13 — Task: Titles and descriptions for every tool
+
+**What was done**: `add`, `addQuiet` and `addWith` take a title, and all 45 tools have one ("Read the board", "Import a TCG Live game", "Read a coaching guide", …). Every description now opens with "Use this when", has a "Do not use" sentence pointing at the right alternative (get_state/get_log, move/the specific verbs, rewind/undo/checkout, switch/retreat, search_deck/look_top, get_profile/sample_hidden, get_record), and keeps the existing guidance word for word where tests check it. All 21 undescribed input fields gained `jsonschema` descriptions. A raw-wire metadata guard (`toolGaps`, `TestToolMetadataComplete`, `TestToolGapsNamesWhatIsMissing`, `TestToolAddedWithoutMetadataFails`) and a size ceiling (`TestToolListSize`, `toolListCeiling = 41000`) were added.
+
+**Deviations**:
+- Measured size after the pass (2026-11-13): hosted 37,217 bytes, desktop 35,057 bytes, 45 tools (baseline 26,149 desktop). Below the plan's ~40,000-byte stop point, so no question was raised; the ceiling is hosted + 10%, rounded up.
+- On the goal check's first attempt, criterion 2 was judged not met: the label encoder filled labels from the name sets for every tool, so a tool registered without annotations still showed labels and the guard could not catch it. The encoder now writes the labels the tool declared (`Server.tool` → `annotations(name)`, still driven by `readOnlyTools`/`replacingTools`), and leaves a tool that declared none without them. `TestToolAddedWithoutMetadataFails` registers a bare tool on the real server and checks the guard names it and each missing piece. The fix's test was written in the main context rather than by a sub-agent.
+- Drafting was done by one implementer sub-agent rather than two drafting agents plus an integrator; the integration was a single pass either way.
+- Small additions beyond rewording: new_game says to read the play-game guide first; end_turn ends "In play mode, call wait_for_turn next."
+
+**Files changed**:
+- `internal/mcpserver/server.go`
+- `internal/mcpserver/guides.go`
+- `internal/mcpserver/annotations.go`
+- `internal/mcpserver/annotations_test.go`
+- `internal/mcpserver/metadata_test.go`
+
+**Discoveries**: The `-race` TempDir cleanup flake also hits `TestInstructionsTeachTheLoop/inmemory`, not only `TestGuideInstructions` (knowledge entry updated). A guard that reads the wire after a normalising encoder can only catch what the encoder does not invent: derive the encoded values from the declaration, not from a side table, so an undeclared tool still shows its gap.
+
+### 2026-11-13 — Task: Instructions that stand alone and waits inside the limit
+
+**What was done**: The instructions now open with `openingInstructions`, a 482-byte paragraph of whole sentences: what TCG Replay is (a virtual Pokémon TCG playmat, not a rules engine), the rule to refer to cards by instance ID (iid) and never by name, and that coaching workflows have guides read with the `guide` tool. The old first line and iid bullet were merged into it; every other rule, the guide list and the hosted board line follow unchanged. `TestInstructionsOpening` checks the first 512 bytes on the desktop and hosted servers over both transports. The still-waiting test now asserts `keep_waiting` and a `next` that says to call `wait_for_turn` again, and `TestWaitCapInsideToolCallLimit` pins the 15 s default, the 50 s maximum (both under 60 s) and the refusal of a 61 s cap.
+
+**Deviations**: The 15 s default became a named constant, `defaultWaitCap`, in `cmd/tcgreplay/main.go` so the test can read it; no behaviour change. After the goal check, a duplicated "Locations" bullet that the edit had left was removed (the reviewer noted it; it affected no criterion) and the suites re-run green.
+
+**Files changed**:
+- `internal/mcpserver/server.go`
+- `internal/mcpserver/guides_test.go`
+- `internal/mcpserver/wait_test.go`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/timing_test.go`
+
+**Discoveries**: None beyond the plan: the wait was already bounded by the cap timer in `internal/game/presence.go`, which is not reset between wake-ups.
+
+### 2026-11-19 — Task: Tell ChatGPT who is signed in
+
+**What was done**: A new hosted-only tool, `get_account` ("Who is signed in"), is OpenAI's profile tool: read-only, no input (`additionalProperties:false`), `_meta` `openai/profile: true` plus the oauth2 security scheme, and an output schema allowing only a required non-blank string `id`. It answers with the Google account ID (`sub`) from a new `Server.Account` hook, which the hosted wiring sets to `usergames.Registry.AccountID` (reads the request's token per call, touches no entry). It is registered with `mcp.AddTool` beside `guide`, outside the per-game binding, so it takes no place and answers at a full cap. The privacy page's "Your AI assistant" item now says the playmat tells the assistant the Google account ID (never the email) so it can tell accounts apart.
+
+**Deviations**:
+- The "desktop does not list get_account" check is the existing `TestDesktopToolNamesUnchanged` exact-45-names guard rather than a separate test in `server_test.go`; `server_test.go` was not changed.
+- The mcpserver label and metadata tests now build their hosted-configured server with a fixed `Account` hook, so `get_account` is covered by the raw-wire label, title and description guards and is a real tool for the read-only set check.
+- The run was interrupted at the goal check and resumed in a new session; the suites were re-run green before the check, which accepted all four criteria on the first attempt.
+
+**Files changed**:
+- `internal/mcpserver/account.go`
+- `internal/mcpserver/server.go`
+- `internal/mcpserver/annotations.go`
+- `internal/mcpserver/annotations_test.go`
+- `internal/usergames/mcp.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_account_test.go`
+- `site/src/pages/privacy.astro`
+- `site/e2e/privacy.spec.js`
+
+**Discoveries**: None beyond the plan: `mcp.AddTool` with an explicitly set `InputSchema`/`OutputSchema` keeps them as given, and returning a typed `Out` value fills `structuredContent` and a JSON text copy itself.
+
+### 2026-11-19 — Task: Answer OpenAI's domain verification
+
+**What was done**: The hosted playmat serves `GET /.well-known/openai-apps-challenge`, open to anyone with no sign-in: with `TCGREPLAY_OPENAI_CHALLENGE` set it answers 200, `text/plain; charset=utf-8`, `Cache-Control: no-store` and exactly the (trimmed) token with no newline; unset, a plain `http.NotFound`, not the website's 404 page. The setting is read from the environment only into `config.openAIChallenge`, the start-up log says "OpenAI domain token set" or "no OpenAI domain token (TCGREPLAY_OPENAI_CHALLENGE)" (`challengeText`), and `.do/app.yaml` declares the key as a SECRET with no value.
+
+**Deviations**:
+- `hostedHandler` takes the token as a new last parameter, so its two test callers (`cmd/tcgreplay/cardsets_test.go`, `cmd/tcgreplay/hosted_admin_test.go`) changed by one argument each.
+- The start-up log check is a subprocess test of `main` (`TestMainServesOpenAIChallengeFromEnv`, also proving the env read and trim) rather than a `captureLog` test, since the value is read in `main`.
+- The Makefile `docker-run` pass-through of the new setting is left to the reviewer task, whose context section lists it for both settings.
+
+**Files changed**:
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_routes_test.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `cmd/tcgreplay/cardsets_test.go`
+- `cmd/tcgreplay/hosted_admin_test.go`
+- `.do/app.yaml`
+
+**Discoveries**: None.
+
+### 2026-11-19 — Task: Let the reviewer in past the player limit
+
+**What was done**: A new environment-only setting, `TCGREPLAY_REVIEWER` (`config.reviewer` → `usergames.Config.Reviewer`, trimmed and lower-cased in `New`), names the reviewer's Google email. `Registry.Use` (the one place decision behind sign-in's `Admit` and every action) skips the busy refusal for an account that `isReviewer` matches (email equal without regard to case, and Google-verified), marks its entry `reviewer`, and `full()` no longer counts reviewer entries, so everyone else's limit is unchanged. Access and refresh tokens now seal `Verified`, `verify` puts it in `TokenInfo.Extra["verified"]`, and `AccountFromToken` returns it as `EmailVerified` (absent means false), so the reviewer is recognised on tool calls too. The start-up log says "reviewer account set" or "no reviewer account (TCGREPLAY_REVIEWER)"; `.do/app.yaml` declares the key as a SECRET with no value; `make docker-run` passes `TCGREPLAY_REVIEWER` and `TCGREPLAY_OPENAI_CHALLENGE`.
+
+**Deviations**:
+- Implemented in one context rather than the two parallel agents plus integrator the context suggested; the change was small enough for one pass.
+- The token tests live in a new `internal/hostauth/verified_test.go` (issue/open on the same and a restarted store, a hand-sealed token without `v`, `AccountFromToken`) rather than `oauth_test.go`/`seal_test.go`.
+- Added `TestHostedReviewerToolCallsPastCap`, beyond the plan: after the reviewer's place idles out and another account takes the one place, the reviewer's tool call is still served. It is the test that fails if the verified flag is dropped from tokens (checked by breaking it), since the sign-in path alone never exercises the token flag.
+- The start-up log check extends the previous task's subprocess test (`TestMainServesOpenAIChallengeFromEnv`) with `TCGREPLAY_REVIEWER`.
+- The goal reviewer noted that the staged diff spans files of earlier tasks: nothing is committed between tasks in this run, so the working tree holds every task's changes; this task touched only the files listed below.
+
+**Files changed**:
+- `internal/hostauth/store.go`
+- `internal/hostauth/oauth.go`
+- `internal/hostauth/verified_test.go`
+- `internal/usergames/usergames.go`
+- `internal/usergames/places_test.go`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_cap_test.go`
+- `cmd/tcgreplay/hosted_routes_test.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `.do/app.yaml`
+- `Makefile`
+
+**Discoveries**: A cap bypass keyed on a token claim needs a test where the account has lost its place before the tool call: an account admitted at sign-in already holds its place, so its tool calls never reach the cap check and a missing claim goes unseen.
+
+### 2026-11-19 — Task: Set the domain token and reviewer on the hosted playmat
+
+**What was done**: Nothing in this run. This is a person's task, and the user deferred it to the maintainer, to do after deploy. After the code is deployed, the maintainer copies the domain-verification token from OpenAI's plugin dashboard (MCP connection step) and the reviewer's Google email into DigitalOcean App Platform (Settings > playmat > Environment Variables) as `TCGREPLAY_OPENAI_CHALLENGE` and `TCGREPLAY_REVIEWER`, both encrypted; applies `.do/app.yaml` by hand with `doctl apps update <app-id> --spec .do/app.yaml` and lets the playmat redeploy; checks the start-up log in Insights says "OpenAI domain token set" and "reviewer account set" and shows neither value; then opens `https://tcgreplay.app/.well-known/openai-apps-challenge` in a private window and confirms it returns exactly the token and that OpenAI's dashboard accepts the domain.
+
+**Deviations**:
+- Accepted shortfall: the user deferred this task to the maintainer, to do after deploy. The goal check (3 attempts) judged both criteria not met: the console settings holding the token and the reviewer's email, and the live challenge path returning the token with OpenAI accepting the domain. Neither can be checked from the repository. None is ticked. The steps go into the implementation test plan as manual items.
+
+**Files changed**:
+- None.
+
+**Discoveries**: None.
+
+### 2026-11-19 — Task: A listing icon without Pokémon trademarks
+
+**What was done**: A new listing icon, `plugin/assets/icon.svg` (512×512, navy rounded square with the site's cyan border, three fanned plain white-outlined cards, a cyan replay arrow around a play triangle on the front card, and a timeline strip beneath), rendered once with `rsvg-convert` to `plugin/assets/icon.png` (512×512 RGBA, about 30 KB). It carries no ball, name, logo, character or text. The website and board icons are unchanged.
+
+**Deviations**:
+- Added `internal/plugin/icon_test.go` (`TestListingIcon`: square PNG, at least 512 px, at most 1 MiB, SVG source beside it, no trademark words in the source). It starts the `internal/plugin` package as a test-only package, which the next task fills with the builder.
+- The SVG's comment avoids trademark words altogether (it says it carries no trademarked mark) so the test can reject any mention outright.
+- Checked visually at 512 px and 48 px; the maintainer's approval of the look is a manual item in the test plan.
+
+**Files changed**:
+- `plugin/assets/icon.svg`
+- `plugin/assets/icon.png`
+- `internal/plugin/icon_test.go`
+
+**Discoveries**: None.
+
+### 2026-11-19 — Task: Build the plugin package
+
+**What was done**: `make plugin` runs the new `cmd/tcgreplay-plugin`, which reads `.do/app.yaml`, `internal/notice/notice.json`, `plugin/listing.json`, `plugin/release-notes.md` and `plugin/assets/icon.png` and calls `plugin.Build`, writing `bin/tcgreplay-plugin.zip` with `plugin.json`, `mcp.json` and `assets/icon.png` in a fixed order with a fixed modification time (byte-identical rebuilds). The address comes from `appspec.PublicURL` (bare https origin from `TCGREPLAY_PUBLIC_URL`); the long description is the listing's description, then the notice, then the credit rendered as one sentence; website, privacy and terms links come from the address and support from the notice's help link; `mcp.json` names one `tcgreplay` streamable-http server at `<address>/mcp` with `oauth`/`dcr`. `Build` refuses, naming the rule: package name format, version, 30-character display name and subtitle, 4,000-character long description, more than 3 or over-long starter prompts, other than 5 positive or 3 negative cases or missing fields, non-https or over-long links, a non-PNG, non-square or out-of-range icon or one over 5 MiB, a missing notice file, empty release notes, forbidden keys (`clientSecret`, `test_credentials`, `apps`, `hooks`, …), unknown fields, and any literal address (outside `review.demo_recording_url`), the notice text, the support link or a placeholder other than `{public}` in the listing source.
+
+**Deviations**:
+- `internal/appspec.EnvFields` returns values as written (quotes included), as the moved test helper did, because an existing app spec test checks a quoted value; only `PublicURL` unquotes. It takes the file text, so the hosted tests call it with their joined lines.
+- `plugin/release-notes.md` was created here as a one-line placeholder, since the build needs it; the review-material task replaces it along with the placeholder test cases.
+- `brandColor` is `#14306b`, the icon's navy, rather than the site's felt green or gold accent, so the listing's colour matches its icon. `capabilities` is `["Interactive"]`, unverified against OpenAI's accepted values (the upload check will report it).
+- Added `cmd/tcgreplay-plugin/main_test.go` (builds from the repo into a temp path; a copy without the notice file is refused naming it).
+- Implemented in one context rather than the suggested parallel agents.
+
+**Files changed**:
+- `internal/appspec/appspec.go`
+- `internal/appspec/appspec_test.go`
+- `internal/plugin/plugin.go`
+- `internal/plugin/plugin_test.go`
+- `cmd/tcgreplay-plugin/main.go`
+- `cmd/tcgreplay-plugin/main_test.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `plugin/listing.json`
+- `plugin/release-notes.md`
+- `Makefile`
+
+**Discoveries**: None beyond the plan.
+
+### 2026-11-19 — Task: Write the review material
+
+**What was done**: `plugin/listing.json` now holds the real test cases: five positive cases (connect, Google sign-in and import the example game from `{public}/docs/example`; open the board link and read a position; review a turn with coaching notes via the review-game guide; rewind and replay a turn with `wait_for_turn` in the same reply; keep the record and restore the identical game) and three negative cases (a battle log without its decklist, which is handed back asking for the list; an unrelated request; a web lookup of tournament results and prices). `plugin/release-notes.md` describes 1.0.0, the titled, described and labelled tools, Google sign-in, the measured tool list size (37,959 bytes across 46 hosted tools, 19 November 2026) and the refresh step for players already connected. `plugin/demo-script.md` is the video shot list walking the positive cases in order plus negative case 1, naming the example page and the no-two-step-verification rule; `plugin/SUBMITTING.md` is the maintainer's checklist, including backwards compatibility and new-version rules after publication.
+
+**Deviations**:
+- `site/src/data/whats-new.yaml` does not exist, so no What's new entry was added; the launch-docs plan's launch entry covers these changes.
+- The tests are in a new `internal/plugin/review_test.go` rather than `plugin_test.go`: it checks, from the built package, the five and three cases, the example page and Google sign-in in the first case, the tools triggered (including `import_log`, `get_state`, `rewind`, `wait_for_turn`, `get_record`, `annotate`), the journey steps, no leftover placeholders, the release notes' refresh and size lines, and that the demo script names the App Platform address's `/docs/example` and the checklist covers the settings, MCP Inspector and backwards compatibility.
+- The measured size includes `get_account` (46 hosted tools), up from 37,217 bytes measured after the description pass; still under the 41,000-byte ceiling.
+- Negative cases carry their expected outcome in `description`, since OpenAI's negative case has only `description` and `prompt`.
+
+**Files changed**:
+- `plugin/listing.json`
+- `plugin/release-notes.md`
+- `plugin/demo-script.md`
+- `plugin/SUBMITTING.md`
+- `internal/plugin/review_test.go`
+
+**Discoveries**: None.

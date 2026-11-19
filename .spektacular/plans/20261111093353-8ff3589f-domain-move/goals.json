@@ -1,0 +1,775 @@
+{
+  "plan": "20261111093353-8ff3589f-domain-move",
+  "items": [
+    {
+      "item": "336cf3bc-b8e0-49c8-b5cc-8eb72c4e28bb",
+      "title": "Website reads the public address from the deployment definition",
+      "checks": [
+        {
+          "at": "2026-11-12T13:25:28Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "336cf3bc-b8e0-49c8-b5cc-8eb72c4e28bb",
+            "title": "Website reads the public address from the deployment definition",
+            "criteria": [
+              "The deployment definition names `https://tcgreplay.app` as the public address and tcgreplay.app as the primary domain, with `tcgreplay.demo.gs` only as an alias, and its comments say the two must match.",
+              "Every address the website prints from its facts (home page copy block, the connecting page's address block, the privacy page) is `https://tcgreplay.app` or derived from it.",
+              "A deployment definition with the public address missing, left as a platform placeholder, carrying a path or trailing slash, or differing from the primary domain stops the site build with a message naming the problem."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "/home/nicj/code/github.com/nicholasjackson/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/facts.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/astro.config.mjs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Astro.site"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/facts.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/privacy.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/index.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/connect.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261111093353-8ff3589f-domain-move/tcgreplay/.do/app.yaml:61-62 sets TCGREPLAY_PUBLIC_URL to https://tcgreplay.app; lines 58-60 comment 'Keep it the same as the primary domain under domains below'; lines 143-151 list tcgreplay.app as PRIMARY and tcgreplay.demo.gs as ALIAS, with comment at 143-146 saying the primary domain is the one public address and must match. File is unchanged in the diff (not in tcgreplay.status), so this is the existing state, which already matches."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The three named outputs are derived from facts: index.astro:50 uses CopyBlock text={site.mcpURL}; docs/[...slug].astro:6,17 renders CopyBlock text={site.mcpURL} for connect.md (showAddress: true, connect.md:5), which is the connecting page's address block; privacy.astro:19 prints site.publicURL (with the scheme stripped for the text). site comes from facts.ts:295-300 (publicURL from loadPublicURL, mcpURL/boardURL built from it), and astro.config.mjs:13 sets site to https://tcgreplay.app. Caveat: connect.md:15,30,47 and sign-in.md:15 still hard-code https://tcgreplay.demo.gs in prose, and docs/limits.astro:16 hard-codes tcgreplay.demo.gs. These are not among the facts-derived addresses the criterion names, and those files are not in the diff or the scope list, so the criterion as written is met, but the prose still prints the old address."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/lib/facts.ts:240-275 (loadPublicURL): throws 'does not set TCGREPLAY_PUBLIC_URL' when unset (via readSpec value(), which names the key); throws 'which is a platform placeholder' when the value contains '${' (line 243-244); throws 'not a URL' / 'must be an https:// address' for invalid or non-https values; throws 'must be the scheme and host only, with no path, query, fragment or trailing slash' when raw !== protocol//host (line 260-264, catches paths and trailing slashes); throws 'has no domain with type PRIMARY' and 'the PRIMARY domain is ... must name the same host' when the host differs from the PRIMARY domain (lines 265-274). Line 289 calls loadPublicURL at module load and the Base.astro layout imports facts (Base.astro:7), so every page build runs the check. Verification output shows the placeholder build failing with the named message. Note for the reviewer: site/e2e/connect.spec.js:45,52-60 (in scope, unchanged in the diff) still asserts https://tcgreplay.demo.gs/mcp, including the copy-block test, which now receives https://tcgreplay.app/mcp and would fail. connect.spec.js was not run in the verification, so this was not observed as a failure, only read from the code."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "92eaa296-5177-4b63-b8a6-5dee0d1a81be",
+      "title": "Site pages and README name the new address",
+      "checks": [
+        {
+          "at": "2026-11-12T13:28:57Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "92eaa296-5177-4b63-b8a6-5dee0d1a81be",
+            "title": "Site pages and README name the new address",
+            "criteria": [
+              "The connecting instructions for claude.ai, ChatGPT and Claude Code, the sign-in page's example board link, the limits page and the README all name tcgreplay.app.",
+              "The connecting page has exactly one note about the old address, and it tells the player to reconnect at `https://tcgreplay.app/mcp`.",
+              "The built website and the README mention `demo.gs` only inside that note and never mention `www.tcgreplay.app`, and the browser suite fails if either rule is broken.",
+              "The copy buttons for the playmat's address and the Claude Code command copy the tcgreplay.app versions exactly."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/connect.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".note"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/sign-in.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/limits.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../lib/facts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/docs/connect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/docs/desktop"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/connect.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../src/lib/facts.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "s.text"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "www.tcgreplay.app"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "claude.ai, ChatGPT and Claude Code steps name https://tcgreplay.app/mcp at site/src/content/docs/connect.md:19, :34 and :51 (diff hunks @@ -27 and -44). The sign-in example board link is https://tcgreplay.app/board?board=… at site/src/content/docs/sign-in.md:15. The limits page renders {site.publicURL.replace('https://','')} at site/src/pages/docs/limits.astro:16, and site.publicURL is tcgreplay.app via site/src/lib/facts.ts (loadPublicURL reads TCGREPLAY_PUBLIC_URL, which .do/app.yaml sets to https://tcgreplay.app). README.md:16-20 names tcgreplay.app in all four links."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/content/docs/connect.md:12-14 holds the only aside with data-moved-note (class=\"note\"); grep for demo.gs in connect.md shows only line 13, and no other .note aside exists on that page. The note reads 'If your connector still uses https://tcgreplay.demo.gs/mcp, remove it and add https://tcgreplay.app/mcp instead, then sign in again.' It tells the player to reconnect at https://tcgreplay.app/mcp, in the 'remove it and add ... instead' wording rather than the literal words 'reconnect at'. The built page internal/site/dist/app/docs/connect/index.html:6 carries the same single note."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Grep of internal/site/dist/app for demo.gs or www.tcgreplay returns one hit only: docs/connect/index.html:6, inside the data-moved-note aside. README.md contains no demo.gs and no www. address (lines 16-20 use tcgreplay.app). Rule enforcement is in site/e2e/site.spec.js:252-272: it scans every dist .html and README.md, strips the aside matching \u003caside[^\u003e]*data-moved-note...\u003c/aside\u003e before checking for demo.gs, fails on any www.tcgreplay.app, and expects exactly one note. The implementer's negative check (appending www.tcgreplay.app and tcgreplay.demo.gs to README.md made this test fail) is reported in the verify summary, not re-run by me."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The playmat's address copy button is site/src/pages/index.astro:50 \u003cCopyBlock text={site.mcpURL} .../\u003e, and site.mcpURL = publicURL + '/mcp' = https://tcgreplay.app/mcp (site/src/lib/facts.ts, site object near line 180). The copy script site/src/scripts/copy.ts:28 copies the pre's textContent minus the final newline, so the copied text is exact. The Claude Code command is the fenced block at connect.md:51, which copy.ts turns into a copy box (copy.ts:12-28), and the text is 'claude mcp add --transport http tcgreplay https://tcgreplay.app/mcp'. site/e2e/connect.spec.js:68-84 asserts the exact clipboard value against site.mcpURL and that command string. No hardcoded demo.gs remains in the copy paths."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "9f103488-9914-4a9d-8c31-ec9f1b48e3a1",
+      "title": "Moved answer for MCP connections",
+      "checks": [
+        {
+          "at": "2026-11-12T13:31:35Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "9f103488-9914-4a9d-8c31-ec9f1b48e3a1",
+            "title": "Moved answer for MCP connections",
+            "criteria": [
+              "A server with the moved answer lists exactly the same tools and guides as the normal server.",
+              "Calling any of its tools returns an error result whose text says the playmat has moved and names the new connection address, and no game is created or changed.",
+              "Asking it for a guide, or reading its instructions on connecting, gives the same moved message."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/moved.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/limit.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/moved_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/mcp"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/moved.go:30-52 wraps the server with a receiving middleware that passes tools/list and prompts/list through to next unchanged, so the tool and guide listings are the real server's. internal/mcpserver/moved_test.go:82-95 (TestMovedServer) connects a real server and a Moved-wrapped server and asserts reflect.DeepEqual on the tool names and prompt names. Verify output reports TestMovedServer/inmemory and /http pass. Caveat: internal/mcpserver/server.go:55 was changed (nil-manager guard in InitializedHandler) and that file is not in the goal's listed files; this does not change the verdict. Also, Moved is referenced only by moved_test.go (grep over *.go finds no production call site in cmd/tcgreplay), so the answer is not yet wired into a running server."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "moved.go:41-42 handles tools/call by returning \u0026mcp.CallToolResult{IsError: true, Content: [TextContent{text}]} without calling next, so no tool handler runs and no game is created or changed. The text comes from MovedText (moved.go:13-14): 'The tcgreplay playmat has moved to a new address. This connection no longer works: remove it, then add the playmat again at \u003cmcpURL\u003e and sign in.', which names the new address via the mcpURL argument. moved_test.go:97-111 calls every listed tool and asserts IsError and the exact moved text; TestMovedTextNamesTheNewAddress (moved_test.go:54-65) checks the wording with the https://tcgreplay.app/mcp address."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Guides are the guide tool plus one prompt per guide (internal/mcpserver/guides.go:24-47). moved.go:43-47 answers prompts/get with the moved text as a user message; moved.go:35-38 sets InitializeResult.Instructions to the moved text on initialize, which is the 'reading its instructions on connecting' path. The guide tool call is covered by the tools/call branch (moved.go:41-42). moved_test.go:78-79 asserts the instructions equal the moved message, and moved_test.go:113-124 asserts every prompt returns it."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "bdcae4a4-1b3a-4a9e-8ed6-9b6d06825e56",
+      "title": "Moved-host setting and guard in the hosted playmat",
+      "checks": [
+        {
+          "at": "2026-11-12T13:35:26Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "bdcae4a4-1b3a-4a9e-8ed6-9b6d06825e56",
+            "title": "Moved-host setting and guard in the hosted playmat",
+            "criteria": [
+              "An assistant connecting at `/mcp` on a moved host gets a working connection with no sign-in prompt, and any tool it calls answers with the moved message naming `https://tcgreplay.app/mcp`, even if it still sends an old token.",
+              "Pages, the board, sign-in and the sign-in metadata on a moved host all redirect permanently to the same path and query on the public address, so nothing signs in at the old host.",
+              "Requests for the public address behave exactly as before, including board links that start with the public address.",
+              "The playmat refuses to start with a moved host that is malformed or equal to its public host, and its start-up log lists the moved hosts.",
+              "The deployment definition lists `tcgreplay.demo.gs` as moved and explains that removing the alias and DNS retires it without a release."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/moved.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_moved_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:388 serves movedGuard(moved, public, movedMCP(c, public), ...), so a moved host's /mcp never reaches a.RequireToken (hosted.go:191). cmd/tcgreplay/moved.go:60-68 builds movedMCP as the real MCP server with mcpserver.Moved in front (moved.go:62). internal/mcpserver/moved.go:30-52 answers initialize with the moved instructions, every tools/call with an IsError result carrying MovedText naming https://tcgreplay.app/mcp, and prompts/get with the same text. cmd/tcgreplay/hosted_moved_test.go:60-109 (TestMovedHostMCP) checks connect with no token and with a stale token 'junk', tool calls get_state/new_game/guide return the moved text, and a raw initialize with a stale token gets 200 with no WWW-Authenticate. Note: internal/mcpserver/server.go, internal/mcpserver/moved.go and moved_test.go are outside the goal's listed files; they are needed for this criterion, so this is a scope observation, not a verdict change."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/moved.go:78-102 movedGuard: for a moved host every path other than /mcp is redirected to public + EscapedPath + '?' + RawQuery, 301 for GET/HEAD and 308 otherwise, with no cookies set. Because the guard wraps the whole hostedHandler (hosted.go:388), sign-in (/auth/login, /authorize, /auth/google/callback via a.Routes at hosted.go:190), the .well-known metadata, /board and the site are all covered. cmd/tcgreplay/hosted_moved_test.go:139-172 (TestMovedHostRedirects) asserts each of these paths, with a query, on two host spellings, and checks Location equals testPublic+path."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/moved.go:84-86: a request whose host is not in the moved set goes straight to next, so the public host is unchanged; with no moved hosts movedGuard returns next itself (moved.go:79-81). parseMovedHosts rejects the public host (moved.go:35-37), so the guard cannot redirect the public address to itself. The board and sign-in addresses are still built from public (hosted.go:356, and site links in site/src/lib/facts.ts use the public URL). cmd/tcgreplay/hosted_moved_test.go:178-193 (TestUnlistedHostsUnchanged) checks /mcp refusal and page serving on the public host and on two unlisted hosts. The internal/mcpserver/server.go change only alters the InitializedHandler when the server has no manager (server.go:237), which the public server never has."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:360-363: runHosted calls parseMovedHosts(c.movedFrom, public) before newHosted and before net.Listen (hosted.go:382), so a bad value stops start-up with an error. cmd/tcgreplay/moved.go:25-40 rejects a scheme, path, port, user or space (chars '/:@ \\t') and the public host ('is the public address's host'). cmd/tcgreplay/hosted.go:386 logs movedText(moved) (moved.go:44-54), which lists the sorted moved hosts as 'moved from a, b'. Tests: cmd/tcgreplay/hosted_test.go:449-520 (TestParseMovedHosts) and TestRunHostedRejectsBadMovedFrom (rejects https://old.example, old.example:8080 and play.example.com, then checks the port is free); cmd/tcgreplay/hosted_moved_test.go:206-231 (TestRunHostedMovedFrom) checks the start-up log line 'moved from old.example, older.example'."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": ".do/app.yaml (diff hunk @@ -61,6 +61,17 @@) adds env TCGREPLAY_MOVED_FROM with value tcgreplay.demo.gs under the playmat service. The comment above it (lines 9-16 of the diff) says the old address must also be an ALIAS under domains, and that it is retired by removing its alias under domains, its DNS record and redirect rule at Cloudflare, then this entry, and applying the file with doctl apps update, with no release needed. The domains block (diff hunk @@ -143,7 +154,9 @@) still lists tcgreplay.demo.gs as an ALIAS. Defect to note, not a verdict change: the comment points to docs/domain-move.md, which does not exist anywhere in the code root (Glob for docs/**/*domain* found nothing)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "28b63d48-377f-404b-bbbe-291b32af0e24",
+      "title": "Domain runbook and design notes",
+      "checks": [
+        {
+          "at": "2026-11-12T13:38:53Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "28b63d48-377f-404b-bbbe-291b32af0e24",
+            "title": "Domain runbook and design notes",
+            "criteria": [
+              "The runbook lists the Google, Cloudflare and App Platform steps in an order that never breaks sign-in mid-move, and every step names a command or page and what it should show.",
+              "The runbook says whether each DNS record is proxied and how to confirm the certificate for tcgreplay.app was issued.",
+              "The runbook's retirement section removes the old address with configuration changes only, and says how to check tcgreplay.app still works afterwards.",
+              "The design notes name tcgreplay.app as the address, describe the moved-host answer, and no longer give the old address except when explaining the move."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/domain-move.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The order never breaks sign-in: step 1 (docs/domain-move.md:30-43) adds the tcgreplay.app Google callback and keeps the demo.gs one, and step 8 (lines 174-181) removes the old callback only after step 7. But the order is internally inconsistent: step 3 (lines 56-81) adds the proxied apex CNAME and its checks (line 72 'curl -sI https://tcgreplay.app/ returns 200 and an x-do-app-origin header', lines 74-77 the certificate) before step 5 (lines 92-107) attaches tcgreplay.app to the app as PRIMARY. Those checks cannot show their stated results until step 5 is done, and the cert/Pending guidance at lines 65-68 assumes the domain is already attached. So step 3 does not name a result that is reachable at its position in the order. Fix: attach the domain in App Platform before the DNS step, or move the step 3 checks to after step 5."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "docs/domain-move.md:61-63 says the tcgreplay.app apex record is a CNAME and 'It is **proxied** (orange cloud)', with SSL/TLS Full (strict) and no www record; line 85-86 says the tcgreplay.demo.gs record 'stays **proxied**'. Certificate confirmation is at lines 74-77 (openssl/curl subject and expiry check, plus Cloudflare \u003e SSL/TLS \u003e Edge Certificates showing an active certificate covering tcgreplay.app) and lines 65-68 (App Platform Domains 'Active' state)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "docs/domain-move.md:183-196 removes the old address by configuration only: delete the demo.gs redirect rule and the tcgreplay DNS record at Cloudflare, remove the ALIAS and TCGREPLAY_MOVED_FROM from .do/app.yaml, and apply with doctl apps update. Checks at lines 198-208 are curl checks that tcgreplay.app still returns 200, POST /mcp returns 401, the oauth-protected-resource metadata names https://tcgreplay.app/mcp, /board redirects to sign-in, and an assistant connection still works. Caveat (not the verdict basis): line 186 says 'No build or release is needed', but .github/workflows/deploy.yml lines 16-19 deploy on any push to main outside cardsets/, so merging the app.yaml edit triggers a create-deployment build. The runbook does not warn about this."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "TCG Review Playmat Design and Build Plan.md:305 (paragraph 'Hosted mode.') names https://tcgreplay.app as the public address and describes the moved-host answer (movedGuard, /mcp served with no sign-in by mcpserver.Moved saying the playmat has moved and to add it again at the public URL's /mcp, other paths 301/308 to the public URL). The old address appears there only as the TCGREPLAY_MOVED_FROM alias explanation. Line 307 (paragraph 'Website.') names https://tcgreplay.app and mentions demo.gs only in the browser-suite rule about the connecting page's move note. A grep for demo.gs and tcgreplay.app in the design doc returns only lines 305 and 307."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-12T13:41:32Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "28b63d48-377f-404b-bbbe-291b32af0e24",
+            "title": "Domain runbook and design notes",
+            "criteria": [
+              "The runbook lists the Google, Cloudflare and App Platform steps in an order that never breaks sign-in mid-move, and every step names a command or page and what it should show.",
+              "The runbook says whether each DNS record is proxied and how to confirm the certificate for tcgreplay.app was issued.",
+              "The runbook's retirement section removes the old address with configuration changes only, and says how to check tcgreplay.app still works afterwards.",
+              "The design notes name tcgreplay.app as the address, describe the moved-host answer, and no longer give the old address except when explaining the move."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/domain-move.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "docs/domain-move.md steps 1-9 run in an order that keeps sign-in working: step 1 adds https://tcgreplay.app/auth/google/callback to the Google client while keeping the demo.gs callback (lines 34-43); step 3 attaches the domain without changing TCGREPLAY_PUBLIC_URL (lines 62-64); step 4 points DNS and checks the certificate before the app switches (lines 72-96); step 6 applies .do/app.yaml, which makes tcgreplay.app primary, and states that steps 1 and 4 have already made sign-in ready (lines 120-124); the old Google callback is removed only in step 9, after the end-to-end check in step 8 (lines 193-200). Each step has a Do command or page and a Check stating the expected result (e.g. step 6 Check: doctl apps spec get, runtime log start line, oauth-protected-resource JSON, lines 126-135)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Proxied status is stated per record: the apex CNAME tcgreplay.app is 'It is **proxied** (orange cloud)' (docs/domain-move.md:75), with a risk note to switch to DNS only if App Platform stays Pending (lines 79-82); the tcgreplay.demo.gs record 'stays **proxied**' (lines 100-101); there is no www record (lines 76-77). Certificate confirmation is in step 4's Check: App Platform Settings \u003e Domains shows tcgreplay.app 'Active' (line 86), a curl subject/expiry check (line 89-90), and Cloudflare \u003e SSL/TLS \u003e Edge Certificates showing an active certificate (lines 91-92)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The 'Retiring the old address' section (docs/domain-move.md:202-219) removes the old address by configuration only: delete the demo.gs redirect rule and tcgreplay DNS record in Cloudflare (lines 207-208), remove the tcgreplay.demo.gs ALIAS and TCGREPLAY_MOVED_FROM from .do/app.yaml and apply with doctl apps update (lines 209-213), and it says 'no code changes'. The post-check (lines 221-231) verifies tcgreplay.app: curl -sI returns 200, /mcp returns 401 and the protected-resource metadata names https://tcgreplay.app/mcp, /board redirects to sign-in, an assistant connected at tcgreplay.app/mcp still works, and demo.gs no longer reaches the playmat. Note for the caller: lines 217-219 say a commit of the app.yaml edit to main also triggers a redeploy of the same code, which slightly qualifies the 'no new release' wording but is still a configuration change."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The design doc (TCG Review Playmat Design and Build Plan.md, paragraphs at lines 305 and 307) names tcgreplay.app as the public address (TCGREPLAY_PUBLIC_URL set to https://tcgreplay.app; 'the public website, the user guide at https://tcgreplay.app'). The moved-host answer is described in the **Hosted mode.** paragraph (line 305): the movedGuard, the no-sign-in /mcp served by mcpserver.Moved whose initialize instructions, tool calls and prompts say the playmat has moved and to add it again at the public URL's /mcp, and the 301/308 redirect for other paths. Remaining mentions of tcgreplay.demo.gs / demo.gs are only in explanation of the move: 'tcgreplay.demo.gs (the old address) as an ALIAS listed in TCGREPLAY_MOVED_FROM' and the demo.gs redirect rule in the Deployment sentence (line 305), and the browser-suite rule that demo.gs may appear only in the connecting page's move note (line 307). A grep of the whole design doc for demo.gs and tcgreplay.app returned only lines 305 and 307."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "c2f0b060-ea41-4d5f-9a99-3ab40202b7f7",
+      "title": "Carry out the console steps and put the move live",
+      "checks": [
+        {
+          "at": "2026-11-12T14:50:26Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c2f0b060-ea41-4d5f-9a99-3ab40202b7f7",
+            "title": "Carry out the console steps and put the move live",
+            "criteria": [
+              "Every runbook step has been carried out or confirmed, and its check showed the expected result.",
+              "The live playmat runs with tcgreplay.app as its public address and the old address listed as moved.",
+              "The old address's assistant connection reaches the playmat rather than being redirected, while its pages still forward to tcgreplay.app."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/domain-move.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/mcp"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "docs/domain-move.md (untracked, in the code root) defines nine ordered steps with checks. The live probes do not show them all done. Step 7 is not done: curl -sI https://tcgreplay.demo.gs/mcp returns 301 to https://tcgreplay.app/mcp, so the Cloudflare redirect rule still catches /mcp, and the runbook's step-7 check expects the moved initialize answer. Step 6 is not done: .do/app.yaml in the diff adds TCGREPLAY_MOVED_FROM and makes tcgreplay.app PRIMARY, but the branch is not merged and the verify summary says the spec has not been applied (the moved guard is not live). Step 9 and the retirement checks cannot have run. No evidence in the files or probes shows that each step was carried out or confirmed with its expected result."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "Partial evidence only: curl https://tcgreplay.app/.well-known/oauth-protected-resource/mcp returns resource https://tcgreplay.app/mcp, so the live playmat advertises tcgreplay.app as its address. But the old address is not listed as moved: curl -sI https://tcgreplay.demo.gs/mcp returns a 301 redirect to https://tcgreplay.app/mcp rather than the playmat's moved answer, and .do/app.yaml (diff lines 27-29, TCGREPLAY_MOVED_FROM) is not yet applied to the live app. The moved-host code (cmd/tcgreplay/moved.go, internal/mcpserver/moved.go) is untracked and unmerged, so the live deployment cannot run it."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The probe curl -sI https://tcgreplay.demo.gs/mcp returns 301 to https://tcgreplay.app/mcp, which is the redirect the criterion forbids. The required fix is the Cloudflare redirect rule on the demo.gs zone, which must exclude /mcp (docs/domain-move.md step 7: http.request.uri.path ne \"/mcp\"). The rule has not been changed in the probes, and the playmat's moved answer (mcp moved guard) is not yet deployed. The criterion can still be met by those console steps, so it is not impossible."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-12T14:51:53Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "c2f0b060-ea41-4d5f-9a99-3ab40202b7f7",
+            "title": "Carry out the console steps and put the move live",
+            "criteria": [
+              "Every runbook step has been carried out or confirmed, and its check showed the expected result.",
+              "The live playmat runs with tcgreplay.app as its public address and the old address listed as moved.",
+              "The old address's assistant connection reaches the playmat rather than being redirected, while its pages still forward to tcgreplay.app."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/domain-move.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/mcp"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The runbook at docs/domain-move.md (worktree /home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261111093353-8ff3589f-domain-move/tcgreplay/docs/domain-move.md) has steps 1-9 plus a retirement section. Only the verify summary's live probes are evidence of console state, and they fail the step 7 checks: the runbook says curl -sI https://tcgreplay.demo.gs/mcp must not be redirected (step 7 rule excludes http.request.uri.path eq /mcp, lines 139-148, and the moved-answer check at lines 158-168), but the probe returned 301 to https://tcgreplay.app/mcp. Step 6 needs the merged spec applied with doctl apps update, and the code is not merged (.status lists the changes as uncommitted; the verify note says the branch is not merged), so the moved-answer and TCGREPLAY_MOVED_FROM checks (step 6 lines 126-135, step 7 line 158) cannot pass. Step 8 end-to-end checks and step 9 have no recorded results. The maintainer's remark 'The domain is already live' is not a check result for any step."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "tcgreplay.app serves the playmat (curl -sI https://tcgreplay.app/ returns 200 with x-do-app-origin, per the verify summary), but the old address is not listed as moved: https://tcgreplay.demo.gs/mcp returns 301 to https://tcgreplay.app/mcp instead of the moved answer. The moved behaviour exists only in uncommitted code (cmd/tcgreplay/moved.go, cmd/tcgreplay/hosted.go movedGuard wiring, .do/app.yaml TCGREPLAY_MOVED_FROM at lines 64-75 of the diff) and is not deployed. The criterion can be met after merge and the step 6 apply, so this is not impossible."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The verify summary's probe curl -sI https://tcgreplay.demo.gs/mcp returns 301 to https://tcgreplay.app/mcp, so the old assistant connection is redirected, not answered by the playmat. The required moved answer (docs/domain-move.md lines 158-168, the initialize result with instructions naming https://tcgreplay.app/mcp) is absent. The pages half holds: curl -sI 'https://tcgreplay.demo.gs/board?x=1' returns 301 to https://tcgreplay.app/board?x=1, which matches the step 7 rule, but the criterion needs both halves and the connection half fails."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-12T14:52:49Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "c2f0b060-ea41-4d5f-9a99-3ab40202b7f7",
+            "title": "Carry out the console steps and put the move live",
+            "criteria": [
+              "Every runbook step has been carried out or confirmed, and its check showed the expected result.",
+              "The live playmat runs with tcgreplay.app as its public address and the old address listed as moved.",
+              "The old address's assistant connection reaches the playmat rather than being redirected, while its pages still forward to tcgreplay.app."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/domain-move.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.demo.gs/mcp"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "docs/domain-move.md (worktree, untracked) has nine ordered steps, each with a Check. The verify summary shows only some checks run and passing: tcgreplay.app returns 200 with x-do-app-origin (step 4), the oauth-protected-resource metadata names tcgreplay.app (step 6 check), and http://tcgreplay.app redirects to https (step 4). Step 7's check fails: curl -sI https://tcgreplay.demo.gs/mcp returns 301 to https://tcgreplay.app/mcp, where the runbook expects the initialize result with the moved instructions. Steps 1, 2, 3, 5, 6 (doctl apps update) and 8 have no evidence in the files or the summary, and the staged diff is uncommitted and unmerged (.do/app.yaml still lacks a deployed TCGREPLAY_MOVED_FROM; tcgreplay.status lists the code as modified, not on main), so step 6 cannot have run."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "Public address is live: the verify summary shows tcgreplay.app serving 200 and its metadata naming https://tcgreplay.app/mcp. But the old address is not listed as moved: the live probe curl -sI https://tcgreplay.demo.gs/mcp returns a 301 redirect to https://tcgreplay.app/mcp, not the moved answer. The config that lists it, TCGREPLAY_MOVED_FROM=tcgreplay.demo.gs in .do/app.yaml (diff lines 19-29), is in the uncommitted diff and not yet applied or deployed (the verify summary says the merge and production deploy have not happened)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The pages do forward: the verify summary shows curl -sI \"https://tcgreplay.demo.gs/board?x=1\" returns 301 to https://tcgreplay.app/board?x=1. But the assistant connection is redirected, not reached: curl -sI https://tcgreplay.demo.gs/mcp returns 301 to https://tcgreplay.app/mcp. The runbook (docs/domain-move.md step 7) requires the Cloudflare redirect rule to exclude path /mcp (expression http.request.uri.path ne \"/mcp\") and the playmat to answer the old host's /mcp with the moved instructions; neither is shown live. The redirect rule is a console step with no evidence it was made. This is achievable (a console change plus the merged deploy), so it is not impossible."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-12T14:52:58Z",
+          "round": 1,
+          "decision": "accept",
+          "reason": "User (via the epic coordinator): \"The domain is already live.\" The epic is not to wait. Live probes confirm tcgreplay.app serves as the public address; the post-merge runbook items (doctl apps update for TCGREPLAY_MOVED_FROM, narrowing the Cloudflare rule to leave /mcp, removing the old Google callback, live checks) are for the maintainer after merge per docs/domain-move.md and are captured in the test plan."
+        }
+      ],
+      "attempts": 3,
+      "state": "accepted_shortfall"
+    }
+  ]
+}

@@ -172,7 +172,7 @@ export function loadPublicURL(yamlText: string, source = '.do/app.yaml'): string
 
 **Validation point**: The website builds, and its browser suite passes. That includes the new whole-site scan, which finds `demo.gs` only in the move note and `www.tcgreplay.app` nowhere, and copy buttons that give `https://tcgreplay.app/mcp`.
 
-#### - [ ] Task: Website reads the public address from the deployment definition
+#### - [x] Task: Website reads the public address from the deployment definition
 **Id:** 336cf3bc-b8e0-49c8-b5cc-8eb72c4e28bb
 **Repo:** tcgreplay
 **Depends on:** none
@@ -183,11 +183,11 @@ The App Platform definition is updated to record the playmat's one public addres
 *Technical detail:* [context.md#task-website-reads-the-public-address-from-the-deployment-definition](./context.md#task-website-reads-the-public-address-from-the-deployment-definition)
 
 **Acceptance criteria**:
-- [ ] The deployment definition names `https://tcgreplay.app` as the public address and tcgreplay.app as the primary domain, with `tcgreplay.demo.gs` only as an alias, and its comments say the two must match.
-- [ ] Every address the website prints from its facts (home page copy block, the connecting page's address block, the privacy page) is `https://tcgreplay.app` or derived from it.
-- [ ] A deployment definition with the public address missing, left as a platform placeholder, carrying a path or trailing slash, or differing from the primary domain stops the site build with a message naming the problem.
+- [x] The deployment definition names `https://tcgreplay.app` as the public address and tcgreplay.app as the primary domain, with `tcgreplay.demo.gs` only as an alias, and its comments say the two must match.
+- [x] Every address the website prints from its facts (home page copy block, the connecting page's address block, the privacy page) is `https://tcgreplay.app` or derived from it.
+- [x] A deployment definition with the public address missing, left as a platform placeholder, carrying a path or trailing slash, or differing from the primary domain stops the site build with a message naming the problem.
 
-#### - [ ] Task: Site pages and README name the new address
+#### - [x] Task: Site pages and README name the new address
 **Id:** 92eaa296-5177-4b63-b8a6-5dee0d1a81be
 **Repo:** tcgreplay
 **Depends on:**
@@ -199,10 +199,10 @@ The docs pages, the limits page and the README that spell out the old address ar
 *Technical detail:* [context.md#task-site-pages-and-readme-name-the-new-address](./context.md#task-site-pages-and-readme-name-the-new-address)
 
 **Acceptance criteria**:
-- [ ] The connecting instructions for claude.ai, ChatGPT and Claude Code, the sign-in page's example board link, the limits page and the README all name tcgreplay.app.
-- [ ] The connecting page has exactly one note about the old address, and it tells the player to reconnect at `https://tcgreplay.app/mcp`.
-- [ ] The built website and the README mention `demo.gs` only inside that note and never mention `www.tcgreplay.app`, and the browser suite fails if either rule is broken.
-- [ ] The copy buttons for the playmat's address and the Claude Code command copy the tcgreplay.app versions exactly.
+- [x] The connecting instructions for claude.ai, ChatGPT and Claude Code, the sign-in page's example board link, the limits page and the README all name tcgreplay.app.
+- [x] The connecting page has exactly one note about the old address, and it tells the player to reconnect at `https://tcgreplay.app/mcp`.
+- [x] The built website and the README mention `demo.gs` only inside that note and never mention `www.tcgreplay.app`, and the browser suite fails if either rule is broken.
+- [x] The copy buttons for the playmat's address and the Claude Code command copy the tcgreplay.app versions exactly.
 
 ### Milestone 2: An assistant still connected to the old address is told where the playmat moved
 
@@ -210,7 +210,7 @@ The docs pages, the limits page and the README that spell out the old address ar
 
 **Validation point**: The Go tests pass. On a moved host, `/mcp` opens without sign-in, and every tool call returns the moved message. Pages on a moved host get permanent redirects with path and query kept. Requests for the public address behave exactly as before.
 
-#### - [ ] Task: Moved answer for MCP connections
+#### - [x] Task: Moved answer for MCP connections
 **Id:** 9f103488-9914-4a9d-8c31-ec9f1b48e3a1
 **Repo:** tcgreplay
 **Depends on:** none
@@ -221,11 +221,11 @@ The MCP server package gains a "moved" answer that can be put in front of any in
 *Technical detail:* [context.md#task-moved-answer-for-mcp-connections](./context.md#task-moved-answer-for-mcp-connections)
 
 **Acceptance criteria**:
-- [ ] A server with the moved answer lists exactly the same tools and guides as the normal server.
-- [ ] Calling any of its tools returns an error result whose text says the playmat has moved and names the new connection address, and no game is created or changed.
-- [ ] Asking it for a guide, or reading its instructions on connecting, gives the same moved message.
+- [x] A server with the moved answer lists exactly the same tools and guides as the normal server.
+- [x] Calling any of its tools returns an error result whose text says the playmat has moved and names the new connection address, and no game is created or changed.
+- [x] Asking it for a guide, or reading its instructions on connecting, gives the same moved message.
 
-#### - [ ] Task: Moved-host setting and guard in the hosted playmat
+#### - [x] Task: Moved-host setting and guard in the hosted playmat
 **Id:** bdcae4a4-1b3a-4a9e-8ed6-9b6d06825e56
 **Repo:** tcgreplay
 **Depends on:**
@@ -238,11 +238,11 @@ The hosted playmat gains a setting that lists old host names. For a request on o
 *Technical detail:* [context.md#task-moved-host-setting-and-guard-in-the-hosted-playmat](./context.md#task-moved-host-setting-and-guard-in-the-hosted-playmat)
 
 **Acceptance criteria**:
-- [ ] An assistant connecting at `/mcp` on a moved host gets a working connection with no sign-in prompt, and any tool it calls answers with the moved message naming `https://tcgreplay.app/mcp`, even if it still sends an old token.
-- [ ] Pages, the board, sign-in and the sign-in metadata on a moved host all redirect permanently to the same path and query on the public address, so nothing signs in at the old host.
-- [ ] Requests for the public address behave exactly as before, including board links that start with the public address.
-- [ ] The playmat refuses to start with a moved host that is malformed or equal to its public host, and its start-up log lists the moved hosts.
-- [ ] The deployment definition lists `tcgreplay.demo.gs` as moved and explains that removing the alias and DNS retires it without a release.
+- [x] An assistant connecting at `/mcp` on a moved host gets a working connection with no sign-in prompt, and any tool it calls answers with the moved message naming `https://tcgreplay.app/mcp`, even if it still sends an old token.
+- [x] Pages, the board, sign-in and the sign-in metadata on a moved host all redirect permanently to the same path and query on the public address, so nothing signs in at the old host.
+- [x] Requests for the public address behave exactly as before, including board links that start with the public address.
+- [x] The playmat refuses to start with a moved host that is malformed or equal to its public host, and its start-up log lists the moved hosts.
+- [x] The deployment definition lists `tcgreplay.demo.gs` as moved and explains that removing the alias and DNS retires it without a release.
 
 ### Milestone 3: The move is live, with a checked runbook the maintainer can follow and later reverse
 
@@ -250,7 +250,7 @@ The hosted playmat gains a setting that lists old host names. For a request on o
 
 **Validation point**: The runbook's checks all show their expected results against the live deployment. A request to `https://tcgreplay.demo.gs/mcp` gets an MCP response rather than a redirect, and old pages return `301` to tcgreplay.app.
 
-#### - [ ] Task: Domain runbook and design notes
+#### - [x] Task: Domain runbook and design notes
 **Id:** 28b63d48-377f-404b-bbbe-291b32af0e24
 **Repo:** tcgreplay
 **Depends on:**
@@ -263,12 +263,12 @@ A maintainer runbook is written with the ordered console steps for the move, eac
 *Technical detail:* [context.md#task-domain-runbook-and-design-notes](./context.md#task-domain-runbook-and-design-notes)
 
 **Acceptance criteria**:
-- [ ] The runbook lists the Google, Cloudflare and App Platform steps in an order that never breaks sign-in mid-move, and every step names a command or page and what it should show.
-- [ ] The runbook says whether each DNS record is proxied and how to confirm the certificate for tcgreplay.app was issued.
-- [ ] The runbook's retirement section removes the old address with configuration changes only, and says how to check tcgreplay.app still works afterwards.
-- [ ] The design notes name tcgreplay.app as the address, describe the moved-host answer, and no longer give the old address except when explaining the move.
+- [x] The runbook lists the Google, Cloudflare and App Platform steps in an order that never breaks sign-in mid-move, and every step names a command or page and what it should show.
+- [x] The runbook says whether each DNS record is proxied and how to confirm the certificate for tcgreplay.app was issued.
+- [x] The runbook's retirement section removes the old address with configuration changes only, and says how to check tcgreplay.app still works afterwards.
+- [x] The design notes name tcgreplay.app as the address, describe the moved-host answer, and no longer give the old address except when explaining the move.
 
-#### - [ ] Task: Carry out the console steps and put the move live
+#### - [x] Task: Carry out the console steps and put the move live
 **Id:** c2f0b060-ea41-4d5f-9a99-3ab40202b7f7
 **Repo:** tcgreplay
 **Depends on:**
@@ -301,3 +301,97 @@ Two questions can only be answered once the moved answer runs on the live platfo
 - **Moving hosting or DNS providers.** The playmat stays on its App Platform app and both zones stay at Cloudflare (spec Constraints).
 - **Removing the old address.** This plan leaves `tcgreplay.demo.gs` forwarding. Retiring it is a later configuration change by the maintainer, following the runbook's retirement section, with no follow-up spec.
 - **Automated tests of Cloudflare, App Platform, Google or the assistants' rendering.** These are external, and are checked by the runbook and the manual checks in the test plan.
+
+## Changelog
+
+
+### 2026-11-12 — Task: Website reads the public address from the deployment definition
+
+**What was done**: `site/src/lib/facts.ts` no longer hard-codes the playmat's address: a new exported `loadPublicURL` reads `TCGREPLAY_PUBLIC_URL` from the playmat service in `.do/app.yaml` and requires a bare `https://` scheme-and-host value equal to the `PRIMARY` domain, failing the build with a `site facts:` message naming the problem otherwise; `site.*` (publicURL, mcpURL, boardURL) is derived from it. `astro.config.mjs` now says `https://tcgreplay.app` with a comment tying it to `TCGREPLAY_PUBLIC_URL`. The facts tests cover the real definition and fixtures for missing, placeholder, path, trailing slash, query, fragment, non-URL, http, mismatched and absent PRIMARY values.
+
+**Deviations**: `.do/app.yaml` needed no change: the maintainer's edit (public URL `https://tcgreplay.app`, tcgreplay.app PRIMARY, tcgreplay.demo.gs ALIAS, with the comments) was already committed on main before the worktree was made, so the task only confirmed it. The env lookup shared by `loadLimits` was factored into a private `readSpec` helper so both loaders use it. The home-page copy test in `site/e2e/site.spec.js` was switched to `site.mcpURL` now to keep that suite green; `site/e2e/connect.spec.js` still asserts the old address and fails until the next task rewrites it with the docs.
+
+**Files changed**:
+- `site/src/lib/facts.ts`
+- `site/astro.config.mjs`
+- `site/e2e/facts.spec.js`
+- `site/e2e/site.spec.js`
+
+**Discoveries**: A fresh worktree has no `site/node_modules`; run `npm ci` in the worktree's `site/` before building. Uppercase hosts in `TCGREPLAY_PUBLIC_URL` are rejected (the WHATWG URL lower-cases the host, so the raw value no longer equals scheme+host), which is consistent with the PRIMARY-domain match.
+
+### 2026-11-12 — Task: Site pages and README name the new address
+
+**What was done**: The connecting page's claude.ai, ChatGPT and Claude Code steps, the sign-in page's example board link and the README now name tcgreplay.app, and the limits page prints the address from `site.publicURL`. The connecting page gained one `<aside class="note" data-moved-note>` telling players with an old `tcgreplay.demo.gs` connector to remove it and add `https://tcgreplay.app/mcp`, with a small `.note` style. The browser suite now compares addresses against the `site.*` facts, checks the single move note, and has a whole-site scan of the built HTML and the README that fails on `demo.gs` outside the note, on any `www.tcgreplay.app`, or on more or fewer than one note.
+
+**Deviations**: The scan also asserts that exactly one move note exists across the site, a small addition beyond the plan's text. The note is written as inline HTML (`<p>`, `<code>`) inside the Markdown, since Markdown inside a raw HTML block is not rendered.
+
+**Files changed**:
+- `site/src/content/docs/connect.md`
+- `site/src/content/docs/sign-in.md`
+- `site/src/pages/docs/limits.astro`
+- `site/src/styles/site.css`
+- `README.md`
+- `site/e2e/connect.spec.js`
+- `site/e2e/site.spec.js`
+
+**Discoveries**: None beyond the plan.
+
+### 2026-11-12 — Task: Moved answer for MCP connections
+
+**What was done**: New `internal/mcpserver/moved.go` adds `MovedText(mcpURL)` and the `Moved(mcpURL)` receiving middleware: on a server wrapped with it, `initialize` carries the moved message as its instructions, every `tools/call` returns it as an error result without running the tool, and every `prompts/get` returns it as the prompt; listings and other methods pass through, so the tool and guide lists mirror the real server's. `moved_test.go` checks, over both the in-memory and Streamable HTTP transports, that a wrapped server with no game manager lists exactly the real tools and prompts and answers every tool, prompt and the instructions with the moved text.
+
+**Deviations**: `internal/mcpserver/server.go`'s `InitializedHandler` now also returns early when `M` is nil. Without it, a server built with no manager and no resolver (the moved instance) panicked on `notifications/initialized`, because that handler labels the manager with the client's name. The plan assumed the instance needed no manager; this one-line guard makes that true.
+
+**Files changed**:
+- `internal/mcpserver/moved.go`
+- `internal/mcpserver/moved_test.go`
+- `internal/mcpserver/server.go`
+
+**Discoveries**: go-sdk runs `ServerOptions.InitializedHandler` synchronously inside the `notifications/initialized` method handler, so receiving middleware sees that notification and anything the handler touches must be valid even on a server that never runs a tool.
+
+### 2026-11-12 — Task: Moved-host setting and guard in the hosted playmat
+
+**What was done**: Hosted mode gained `-moved-from` / `TCGREPLAY_MOVED_FROM`, a comma-separated list of old host names, parsed at start-up (`parseMovedHosts`: blanks skipped, case ignored, a scheme, path, port, user, space or the public host refused, so start-up stops) and named in the start-up log line ("moved from …" or "no moved hosts"). New `cmd/tcgreplay/moved.go` adds `movedGuard`, wrapped around `hostedHandler` in `runHosted`: for a moved host (matched ignoring case and port), `/mcp` goes to `movedMCP`, an unauthenticated Streamable HTTP endpoint serving a second instance of the playmat's MCP server with `mcpserver.Moved` in front, and every other path redirects permanently (301 GET/HEAD, 308 otherwise) to the same path and query on the public URL. Other hosts reach the router unchanged. `.do/app.yaml` sets `TCGREPLAY_MOVED_FROM: tcgreplay.demo.gs` with comments on retiring it by configuration, and the Dockerfile's settings comment names it.
+
+**Deviations**: The moved MCP handler is built in `runHosted` (by `movedMCP(c, public)`) rather than returned from `newHosted`, so `newHosted`'s callers are unchanged. The test helper `serveHosted` (in `cmd/tcgreplay/cardsets_test.go`, not `hosted_test.go`) now routes through `movedGuard` too, so every hosted test exercises the real wiring. A new `TestRunHostedMovedFrom` covers the guard wired through `runHosted` itself. The domains comment in `.do/app.yaml` now mentions the moved-host setting. `.do/app.yaml` points at `docs/domain-move.md`, which the next task writes.
+
+**Files changed**:
+- `cmd/tcgreplay/moved.go`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `cmd/tcgreplay/hosted_moved_test.go`
+- `cmd/tcgreplay/cardsets_test.go`
+- `.do/app.yaml`
+- `Dockerfile`
+
+**Discoveries**: None beyond the plan; `internal/webui/server.go`'s `localOnly` was only a model for host normalisation and was not changed.
+
+### 2026-11-12 — Task: Domain runbook and design notes
+
+**What was done**: New `docs/domain-move.md` is the maintainer's runbook for the address, nine ordered steps each with a **Do** and a **Check** (a command or page and its expected result): Google OAuth client, consent screen, attach tcgreplay.app in App Platform, Cloudflare DNS and certificate for tcgreplay.app (proxied, Full (strict), no `www`), the proxied demo.gs record, `doctl apps update` with the app spec, the narrowed Cloudflare redirect rule (excluding `/mcp`) with the moved-answer `initialize` curl, end-to-end checks in the assistants, and removing the old Google callback. A retirement section removes the old address by configuration only, with checks that tcgreplay.app still works. The `.do/app.yaml` header points at the runbook. The design doc's hosted-mode and website paragraphs now name tcgreplay.app, describe the moved-host guard and answer, carry the amended Host statement (the request host is never used to build an address, only compared against configured hosts), and update the consent-screen operator step and the site's address fact and old-address scan.
+
+**Deviations**: The step order differs from the plan's list. The first goal check found that DNS checks placed before the app spec could not show their results, because the domain was not yet attached. The runbook now attaches tcgreplay.app in App Platform (Settings > Domains) first, without changing the public address, then sets up DNS and the certificate, then applies the app spec. This means sign-in moves only once the new address already serves. The runbook therefore has nine steps, not seven: the human task's "steps 1 to 6" now means the whole runbook, steps 1 to 9. The retirement section notes that committing the `.do/app.yaml` edit to `main` also runs the deploy workflow, which redeploys the same code.
+
+**Files changed**:
+- `docs/domain-move.md`
+- `.do/app.yaml`
+- `TCG Review Playmat Design and Build Plan.md`
+
+**Discoveries**: Every push to `main` outside `cardsets/` redeploys, including an `.do/app.yaml`-only edit, so "configuration only" changes still cause a restart when committed. `doctl apps update` is what actually applies them.
+
+### 2026-11-12 — Task: Carry out the console steps and put the move live
+
+**What was done**: This is a human task, so no code changed. The user confirmed through the epic coordinator: "The domain is already live." Live probes on 2026-11-12 agree for the new address. `https://tcgreplay.app/` returns 200 from App Platform behind Cloudflare. Its protected-resource metadata names `https://tcgreplay.app/mcp` with issuer `https://tcgreplay.app`. `http://tcgreplay.app/docs/connect/` redirects to https. `https://tcgreplay.demo.gs/board?x=1` redirects with a 301 to the same path and query on tcgreplay.app.
+
+**Deviations**: The goal check ran three times and judged all three criteria not met, so none are ticked. The user accepted the shortfall (`accepted_shortfall`, recorded via `implement goal decide`) rather than have the epic wait. The criteria cannot hold until this branch is merged and deployed, because `https://tcgreplay.demo.gs/mcp` is still redirected (301 to `https://tcgreplay.app/mcp`) and the moved answer is not deployed yet. These runbook items are left for the maintainer after merge, following `docs/domain-move.md`, and are captured as manual steps in the test plan:
+- step 6: apply the app spec with `doctl apps update <app-id> --spec .do/app.yaml`, which sets `TCGREPLAY_MOVED_FROM=tcgreplay.demo.gs` and the domains;
+- step 7: narrow the demo.gs Cloudflare redirect rule so it leaves `/mcp` alone, and run its `initialize` check;
+- step 2: set the consent-screen URLs to tcgreplay.app;
+- step 8: the end-to-end checks in claude.ai, ChatGPT and Claude Code, including an old connector;
+- step 9: remove the old Google callback.
+
+**Files changed**:
+- none
+
+**Discoveries**: None.

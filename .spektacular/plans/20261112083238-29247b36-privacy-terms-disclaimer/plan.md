@@ -267,7 +267,7 @@ The tests extend the project's three existing suites in their own style. No new 
 
 **Validation point**: The website builds and its browser suite passes. The crawl reaches `/terms`, every page's footer carries the notice, the credit and the three links, and the terms content tests pass. The hosted route test serves `/terms` signed out with no cookie.
 
-#### - [ ] Task: Share one notice wording and show it in the website footer
+#### - [x] Task: Share one notice wording and show it in the website footer
 **Id:** 1cd169b9-8886-4729-8233-d2e423427168
 **Repo:** tcgreplay
 **Depends on:** none
@@ -278,12 +278,12 @@ Writes the fan-project notice, the card-data credit and the help address once, i
 *Technical detail:* [context.md#task-share-one-notice-wording-and-show-it-in-the-website-footer](./context.md#task-share-one-notice-wording-and-show-it-in-the-website-footer)
 
 **Acceptance criteria**:
-- [ ] The notice (naming Nintendo, The Pokémon Company, Creatures and Game Freak), the TCGdex and malie.io credit and the GitHub issues address exist in exactly one file, and the footer of every website page shows them word for word.
-- [ ] A missing or broken shared file, a notice that drops one of the four companies, or a non-https address stops the website build with a message naming the problem.
-- [ ] Every website page's footer links to the privacy page and to the project's GitHub issues.
-- [ ] The container image still builds, with the guides still copied into the website build.
+- [x] The notice (naming Nintendo, The Pokémon Company, Creatures and Game Freak), the TCGdex and malie.io credit and the GitHub issues address exist in exactly one file, and the footer of every website page shows them word for word.
+- [x] A missing or broken shared file, a notice that drops one of the four companies, or a non-https address stops the website build with a message naming the problem.
+- [x] Every website page's footer links to the privacy page and to the project's GitHub issues.
+- [x] The container image still builds, with the guides still copied into the website build.
 
-#### - [ ] Task: Publish the terms of service page
+#### - [x] Task: Publish the terms of service page
 **Id:** 958e954d-c12a-4b23-86c4-0870f30eebb4
 **Repo:** tcgreplay
 **Depends on:**
@@ -295,12 +295,12 @@ Adds a terms of service page at `/terms`, modelled on what community tools publi
 *Technical detail:* [context.md#task-publish-the-terms-of-service-page](./context.md#task-publish-the-terms-of-service-page)
 
 **Acceptance criteria**:
-- [ ] The terms page opens at `/terms` without signing in, sets no cookie, and is linked from the footer of every website page.
-- [ ] It names the tcgreplay project as running the playmat and states that the playmat is free and provided as is, with no guarantee it stays available, and that games may be lost at any time.
-- [ ] It states the hosted limits (requests a minute, players served at once, idle games dropped after the idle time), with the same figures as the playmat's configuration.
-- [ ] It states the disallowed uses (overloading or attacking the service, automated scraping, getting round the limits, anything unlawful), the minimum age of 13, and that the terms and the service may change or end.
-- [ ] Its trademarks and card images section carries the shared non-affiliation notice naming Nintendo, The Pokémon Company, Creatures and Game Freak, and the TCGdex and malie.io credit.
-- [ ] It links to the privacy page and to the project's GitHub issues for help, and shows a last-updated date.
+- [x] The terms page opens at `/terms` without signing in, sets no cookie, and is linked from the footer of every website page.
+- [x] It names the tcgreplay project as running the playmat and states that the playmat is free and provided as is, with no guarantee it stays available, and that games may be lost at any time.
+- [x] It states the hosted limits (requests a minute, players served at once, idle games dropped after the idle time), with the same figures as the playmat's configuration.
+- [x] It states the disallowed uses (overloading or attacking the service, automated scraping, getting round the limits, anything unlawful), the minimum age of 13, and that the terms and the service may change or end.
+- [x] Its trademarks and card images section carries the shared non-affiliation notice naming Nintendo, The Pokémon Company, Creatures and Game Freak, and the TCGdex and malie.io credit.
+- [x] It links to the privacy page and to the project's GitHub issues for help, and shows a last-updated date.
 
 ### Milestone 2: The privacy page tells the truth about visitor counting and diagnostics
 
@@ -314,7 +314,7 @@ The page shows the date it went live. Visitor counting can be switched on after 
 
 **Validation point**: The privacy suite passes with the new sections and the corrections. The logs and metrics retention figures on the page appear in the observability runbook's Retention section. The page shows its new last-updated date.
 
-#### - [ ] Task: Bring the privacy page up to date
+#### - [x] Task: Bring the privacy page up to date
 **Id:** 8d984cd4-8af8-4541-9215-e91038a05c89
 **Repo:** tcgreplay
 **Depends on:** none
@@ -325,14 +325,14 @@ Adds a visitor-counting section (Cloudflare Web Analytics) and a diagnostics sec
 *Technical detail:* [context.md#task-bring-the-privacy-page-up-to-date](./context.md#task-bring-the-privacy-page-up-to-date)
 
 **Acceptance criteria**:
-- [ ] The privacy page has a visitor-counting section naming Cloudflare Web Analytics, listing page, referrer, country and device, saying it sets no cookies and is never linked to an account, and saying how long Cloudflare keeps the counts.
-- [ ] It has a diagnostics section naming DigitalOcean's request and performance metrics and the playmat's own usage and error records, listing what they contain and what they never contain, and saying how long each is kept, matching the observability runbook.
-- [ ] It no longer says analytics are never collected, that the website loads nothing from other sites, or that logs hold email addresses.
-- [ ] Its cookie statement is true on the live site: the playmat sets no cookies of its own beyond the two sign-in cookies, Cloudflare (in front of the site) may set a short-lived bot-protection cookie (`__cf_bm`) that is not used for visitor counting and is not tied to an account, and the only thing loaded from another site is the visitor-counting script.
+- [x] The privacy page has a visitor-counting section naming Cloudflare Web Analytics, listing page, referrer, country and device, saying it sets no cookies and is never linked to an account, and saying how long Cloudflare keeps the counts.
+- [x] It has a diagnostics section naming DigitalOcean's request and performance metrics and the playmat's own usage and error records, listing what they contain and what they never contain, and saying how long each is kept, matching the observability runbook.
+- [x] It no longer says analytics are never collected, that the website loads nothing from other sites, or that logs hold email addresses.
+- [x] Its cookie statement is true on the live site: the playmat sets no cookies of its own beyond the two sign-in cookies, Cloudflare (in front of the site) may set a short-lived bot-protection cookie (`__cf_bm`) that is not used for visitor counting and is not tied to an account, and the only thing loaded from another site is the visitor-counting script.
 - [ ] If a What's new list (`site/src/data/whats-new.yaml`) exists when this lands, the launch entry gains this work's player-visible changes (the terms page and the board's About panel) rather than a new entry; otherwise the launch-docs launch entry covers them.
-- [ ] Its statements on sign-ins, disconnecting an assistant, card images and outside services match how the playmat works.
-- [ ] Its other statements (cookies, browser settings, games, retention of games and sign-ins, removing data) are unchanged where the code bears them out.
-- [ ] It shows a new last-updated date and still links to the project's GitHub issues for questions.
+- [x] Its statements on sign-ins, disconnecting an assistant, card images and outside services match how the playmat works.
+- [x] Its other statements (cookies, browser settings, games, retention of games and sign-ins, removing data) are unchanged where the code bears them out.
+- [x] It shows a new last-updated date and still links to the project's GitHub issues for questions.
 
 ### Milestone 3: The board shows the fan-project notice, the card-data credit and a help link
 
@@ -340,7 +340,7 @@ Adds a visitor-counting section (Cloudflare Web Analytics) and a diagnostics sec
 
 **Validation point**: The board's browser suite passes at phone (390 px), tablet (820 px) and desktop (1440 px) widths. The panel is reached from ☰, shows the shared wording and links, closes with ✕ and Escape, adds no browser storage, and leaves the phone board's fit unchanged.
 
-#### - [ ] Task: Add an About panel to the board
+#### - [x] Task: Add an About panel to the board
 **Id:** 80cee16e-9860-43f5-b7b7-14cf144c5944
 **Repo:** tcgreplay
 **Depends on:**
@@ -352,10 +352,10 @@ Adds "About tcgreplay" to the board's ☰ menu, at every screen size and in both
 *Technical detail:* [context.md#task-add-an-about-panel-to-the-board](./context.md#task-add-an-about-panel-to-the-board)
 
 **Acceptance criteria**:
-- [ ] At phone (390 px), tablet (820 px) and desktop (1440 px) widths, a player can open "About tcgreplay" from the board's ☰ menu.
-- [ ] The panel shows the same notice and credit wording as the website, with links to TCGdex, malie.io and the project's GitHub issues.
-- [ ] Before it is opened nothing covers or moves any card or control, and it closes with its close button and with Escape, leaving the board as it was.
-- [ ] Opening it stores nothing new in the browser.
+- [x] At phone (390 px), tablet (820 px) and desktop (1440 px) widths, a player can open "About tcgreplay" from the board's ☰ menu.
+- [x] The panel shows the same notice and credit wording as the website, with links to TCGdex, malie.io and the project's GitHub issues.
+- [x] Before it is opened nothing covers or moves any card or control, and it closes with its close button and with Escape, leaving the board as it was.
+- [x] Opening it stores nothing new in the browser.
 
 ## Open Questions
 
@@ -378,3 +378,91 @@ Adds "About tcgreplay" to the board's ☰ menu, at every screen size and in both
 - **A Terms entry in the website's header navigation.** The footer of every page links to it, as the spec asks.
 - **Moving addresses to tcgreplay.app in existing pages and docs.** Examples: the limits page, the sign-in doc's example board link, and the design notes' consent-screen step. All belong to the domain move plan (`20261111093353-8ff3589f-domain-move`).
 - **Fixing the stale comment in `.do/app.yaml`** that says sign-ins are lost on every restart. It is a comment, not a published statement, and that file's edits belong to other plans in this epic.
+
+## Changelog
+
+
+### 2026-11-13 — Task: Share one notice wording and show it in the website footer
+
+**What was done**: The fan-project notice, the TCGdex and malie.io credit and the GitHub issues address now live once, in `internal/notice/notice.json`. A new build-time loader (`site/src/lib/notice.ts`, modelled on the facts loader) reads it and stops the build with a `site notice:` message if the file is missing, not JSON, has an empty field, drops one of the four companies, or has a non-https address. The shared layout's footer renders the notice and credit from it and gains a footer navigation with Privacy, Get help (the issues page) and Source on GitHub. Both Dockerfile UI stages copy `internal/notice` in.
+
+**Deviations**:
+- The goal check's first attempt judged criterion 1 not met because `site/e2e/notice.spec.js` pinned the notice text literally, a second copy of the wording. The tests now compare the loader's output with the shared file parsed independently, and check only its rules (the four company names, the two source names, https addresses, a github.com `/issues` help page). Fixture URLs for the non-https cases use `example.org`.
+- The help link's visible text is "Get help", with the accessible name "Get help on GitHub issues" built from `help.label`.
+- The Dockerfile is not in the goal's scope list, but the plan's context assigns both Dockerfile edits to this task, and criterion 4 needs it.
+
+**Files changed**:
+- `internal/notice/notice.json` (new)
+- `site/src/lib/notice.ts` (new)
+- `site/src/layouts/Base.astro`
+- `site/src/styles/site.css`
+- `Dockerfile`
+- `site/e2e/notice.spec.js` (new)
+- `site/e2e/site.spec.js`
+
+**Discoveries**:
+- The worktree has no `node_modules`; `npm ci` in `site/` and `web/` is needed before building or testing.
+- `docker` on this machine is podman; `docker build .` works and took a few minutes.
+- The privacy page still builds its issues link from `site.repoURL + '/issues'`; the privacy task can switch it to `notice.help.url`.
+
+### 2026-11-13 — Task: Publish the terms of service page
+
+**What was done**: Added the terms of service at `/terms` (`site/src/pages/terms.astro`), modelled on community tools' terms, in plain words with no governing-law clause. It has one heading-labelled section each for who runs tcgreplay (the tcgreplay project), free and as is, your games, hosted limits (from the facts loader, with `data-limit` markers), acceptable use, age (13), trademarks and card images (the shared notice and credit), privacy, changes and help (GitHub issues, no support email), and a `data-updated` last-updated line. The footer gains a Terms link, and the hosted route test fetches `/terms` signed out.
+
+**Deviations**:
+- The last-updated date is set to the implementation day, 13 November 2026. The manual go-live check in the test plan confirms or adjusts it.
+- `internal/site/site_test.go` was left unchanged (optional in the plan; it uses fixtures and needs no terms row).
+- The trademarks section repeats the footer's four-line credit markup rather than sharing a component. The wording still comes only from the shared file.
+
+**Files changed**:
+- `site/src/pages/terms.astro` (new)
+- `site/src/layouts/Base.astro`
+- `site/e2e/terms.spec.js` (new)
+- `site/e2e/site.spec.js`
+- `cmd/tcgreplay/hosted_routes_test.go`
+
+**Discoveries**:
+- `TestHostedRoutes` compares the hosted response with the embedded site handler's own answer, so it passes whether or not the site was built first. Only a built site (`make site`) makes it actually exercise the terms page.
+- `site/src/data/whats-new.yaml` does not exist on this branch, so no What's new entry was added (as the plan's epic-planning note directs).
+
+### 2026-11-13 — Task: Bring the privacy page up to date
+
+**What was done**: Rewrote the privacy page against the code, the observability runbook and Cloudflare's documentation. It gains a "Visitor counting" section (Cloudflare Web Analytics: page, referrer, country, device type, browser and operating system, page-load time; no cookies or browser storage; never linked to an account; kept six months) and a "Diagnostics" section (DigitalOcean's metrics and the playmat's own usage and error records by player ID, their contents and never-list, each kept 7 days), with `data-retention` markers. It corrects the statements on sign-ins (kept in memory, encrypted copies survive updates), disconnecting an assistant (its record runs out within 30 days), card images (fetched by the playmat into DigitalOcean Spaces) and logs (no email address). It also replaces the "no analytics" promise, names `__cf_bm` in the cookie sentence, takes the help link from the shared notice file and sets the last-updated date to 13 November 2026. `site/e2e/privacy.spec.js` covers each change, including a check that the `logs` and `metrics` figures appear in the runbook's Retention section.
+
+**Deviations**:
+- **Accepted shortfall (goal check exhausted, user chose `accept`):** criterion 5 is left unticked. `site/src/data/whats-new.yaml` does not exist, so this task changes no What's new list. The launch-docs spec's launch entry covers this work's player-visible changes, the terms page and the board's About panel (the coordinator is adding the About panel to the launch-docs plan).
+- **Provisional retention:** the logs and metrics figures (7 days) are the runbook's provisional values, marked "to be confirmed by the maintainer". The user deferred confirming them, as the orchestrator directed. The test plan keeps a manual check to confirm them and update the runbook and the privacy page together.
+- **The never-list follows the runbook exactly**, as the context says the runbook wins: email address or name, Google tokens or the playmat's own tokens and cookies, battle logs, decklists or card data. The plan's "card names" and "IP address" were dropped. The runbook does not list them, and redacted error messages can still name cards that are not in the player's own text. No Go code logs an IP address today, but the runbook does not promise it.
+- **Wording on the visitor-counting script:** the intro says the only thing the website "may" load from another site is Cloudflare's counting script. The script is not live until the visitor-analytics spec lands. The visitor-counting section describes the counting before it is switched on, as the plan intends.
+- **Cloudflare records more than the spec lists.** Cloudflare's documentation lists page-load timings and browser and operating system beyond page, referrer, country and device, so the page lists them (plan open question).
+- **Card-image fallback:** a fallback image load from TCGdex or malie.io reaches them as any browser request does, and the page now says so.
+- The usage list names every event in the runbook's catalogue (refused sign-ins, account removals, attempts to open another player's board, refused admin visits, admin actions).
+
+**Files changed**:
+- `site/src/pages/privacy.astro`
+- `site/e2e/privacy.spec.js`
+
+**Discoveries**:
+- Cloudflare Web Analytics, docs read 13 November 2026:
+  - It keeps unsampled data for 7 days, then about 10%, viewable for six months (FAQ).
+  - Its dimensions are country, host, path, referrer, device type, browser, operating system and navigation type, and it collects page-load timings.
+  - Its blog says it uses no cookies or localStorage. Its docs pages themselves say nothing about cookies.
+- The goal reviewer reads "matching the runbook" strictly. A privacy statement beyond the runbook's lists (even a true one) is judged a mismatch.
+
+### 2026-11-13 — Task: Add an About panel to the board
+
+**What was done**: The board's ☰ menu gains "About tcgreplay" after the Autoplay toggle, outside every phone-only and hosted-only block, so it shows at every layout and in the desktop app. It opens a new `about` view in the board's modal system with the shared fan-project notice, the TCGdex and malie.io credit links and a "Get help" link to the GitHub issues. All of it is imported from `internal/notice/notice.json`. The view closes like the others (✕ on touch, Close with a mouse, Escape, backdrop) and keeps nothing in the browser. Vite's dev server is allowed to serve `../internal/notice`.
+
+**Deviations**:
+- `web/e2e/phone.spec.js` was left unchanged: its menu tests check particular items, not an exact list.
+- To compare card and control boxes before and after, the About test moves the pointer to the corner and waits for running CSS transitions. Otherwise a hand card lifted under the pointer, or the hand still fanning out after load, reads as "moved".
+
+**Files changed**:
+- `web/vite.config.js`
+- `web/src/App.svelte`
+- `web/src/components/Modal.svelte`
+- `web/e2e/about.spec.js` (new)
+
+**Discoveries**:
+- Board layout boxes taken with `getBoundingClientRect` are unstable right after load, because the hand fans out with a transition, and under the pointer, because cards lift on hover. A test comparing positions must settle both first: move the mouse away and await `document.getAnimations()` with a finite end time.
+- In the board suite, the list reporter marks the harness's `test.fail()` cases with ✘ even though they count as passed.

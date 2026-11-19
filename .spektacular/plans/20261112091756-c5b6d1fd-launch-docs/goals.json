@@ -1,0 +1,572 @@
+{
+  "plan": "20261112091756-c5b6d1fd-launch-docs",
+  "items": [
+    {
+      "item": "e8d473af-a98a-48b1-9c9e-dffb1df1de33",
+      "title": "Docs index and shared docs page list",
+      "checks": [
+        {
+          "at": "2026-11-19T09:33:25Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "e8d473af-a98a-48b1-9c9e-dffb1df1de33",
+            "title": "Docs index and shared docs page list",
+            "criteria": [
+              "Visiting `/docs/` or `/docs` on the website shows a page listing the docs, not the \"Page not found\" page.",
+              "The index lists every page the docs sidebar lists, each with its title linking to the page and a one-line description where the page has one.",
+              "Every docs page's sidebar links to the docs index, and still lists the same pages in the same order as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "/home/nicj/code/github.com/nicholasjackson/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/docs-pages.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/layouts/Docs.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/workflows/index.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/example.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/limits.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/index.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/astro.config.mjs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/app/docs/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/site.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/docs-index.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "404.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/connect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/limits.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/docs/index.astro:1-24 is a static page that renders the docs list through the Docs layout. Astro emits it as internal/site/dist/app/docs/index.html, which contains data-docs-index and the list links (grep of the built file). internal/site/site.go resolve() maps /docs and /docs/ to docs/index.html (lines 127-141, name+\"/index.html\"), and notFound() is only used when that lookup fails, so both addresses return 200 with the index. The static route does not collide with pages/docs/[...slug].astro, since no docs/index.md exists in site/src/content/docs. I did not run the server; the passing make site-test run (including site/e2e/docs-index.spec.js, which requests /docs and /docs/ and checks they are not the 404 body) is the evidence for the live response."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/pages/docs/index.astro:16-23 renders every entry from docsPages() as \u003ca href={p.href}\u003e{p.title}\u003c/a\u003e plus \u003cp\u003e{p.description}\u003c/p\u003e when present. site/src/lib/docs-pages.ts:33-40 merges the docs collection (connect, sign-in, desktop, import, rewind, developers, all with description frontmatter in site/src/content/docs/*.md) with the three extra pages (workflows, example, limits), which each have a description at docs-pages.ts:15, 21, 27. The built dist/app/docs/index.html lists the same nine hrefs as the sidebar, in the same order (/docs/connect, sign-in, desktop, import, workflows, rewind, example, limits, developers). The one-line descriptions are emitted for each page because every entry has one."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/layouts/Docs.astro:21 adds '\u003cli\u003e\u003ca href=\"/docs\" ...\u003eAll docs\u003c/a\u003e\u003c/li\u003e' as the first sidebar item, with aria-current when the path is /docs. Lines 22-24 still map over items from docsPages(). The pages and order are unchanged from HEAD: the diff removed the inline extra list (workflows order 50, example 70, limits 80) and the getCollection mapping, and docs-pages.ts:11-40 keeps the same three entries with the same orders, and the same sort (order, then title localeCompare). Every Docs-layout page (including docs/workflows/index.astro, example.astro, limits.astro and [...slug].astro) uses this layout, so each gets the link. The built dist pages list the same sidebar order, with All docs first."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "54cc9ee6-8c80-45da-9594-2d9ff755ccea",
+      "title": "Connecting page with current ChatGPT steps and refresh steps",
+      "checks": [
+        {
+          "at": "2026-11-19T09:37:50Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "54cc9ee6-8c80-45da-9594-2d9ff755ccea",
+            "title": "Connecting page with current ChatGPT steps and refresh steps",
+            "criteria": [
+              "The connecting page keeps its address, title, address block, claude.ai and Claude Code steps, check-it-works prompts and its one note for players on the old address, and every address it shows is `https://tcgreplay.app` or derived from it.",
+              "The ChatGPT section gives numbered steps for adding the playmat as a custom MCP server and creating it as a plugin, then installing and connecting it, and names the ChatGPT plans that allow a custom connection.",
+              "The page has one refresh section with steps for claude.ai, ChatGPT and Claude Code, and each assistant's troubleshooting text links to it.",
+              "The docs sidebar and the docs index link to the refresh section.",
+              "Plugin Directory steps for ChatGPT exist in the page but are not shown, and no built page mentions the Plugin Directory while the listing flag is off; turning the flag on puts them first in the ChatGPT section, with the custom steps after."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/facts.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/connect.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/listing.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/connect.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "connect.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/components/Prompt.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/scripts/copy.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/docs-pages.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Docs.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content.config.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/connect.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".prose"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "listing.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "claude.ai"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../src/lib/listing.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "chatgptDirectory.name"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "chatgptDirectory.listed"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/dist/app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs-pages.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/connect"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/docs/connect.astro:1-2 keeps the 'Get started' title and route, line 23 is the address CopyBlock (class address, label \"The playmat's address\"), lines 39-56 are the claude.ai steps and check prompt, lines 130-155 the Claude Code steps and check, and lines 35-37 the single note (data-moved-note, id=moved). Every address is site.mcpURL, derived from TCGREPLAY_PUBLIC_URL in site/src/lib/facts.ts:180-182; the old tcgreplay.demo.gs appears only inside that note (line 36). The built internal/site/dist/app/docs/connect/index.html contains 'Business, Enterprise or Edu' and 'Create as a plugin', so the page builds."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "connect.astro:58-95: a paragraph names the plans via chatgptPlans ('Business, Enterprise or Edu', site/src/lib/listing.ts:14) and the numbered list covers: Plugins \u003e + \u003e Add custom MCP server, name and Server URL (site.mcpURL), leave OAuth, I understand and want to continue \u003e Create as a plugin, then Install and first-use Google sign-in (lines 91-92). Caveat: there is no separate explicit 'connect' step; connecting is covered only by the Install step's Google sign-in, so a reviewer may judge it implicit."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "connect.astro:129-155 has one \u003ch2 id=\"refresh\"\u003eRefresh after an update\u003c/h2\u003e with h3 subsections claude.ai (134), ChatGPT (141) and Claude Code (150), each with numbered steps. Each troubleshooting text links to it: connect.astro:54 (claude.ai), :100-101 (ChatGPT), :119 (Claude Code), all as href=\"#refresh\". Confirmed in internal/site/dist/app/docs/connect/index.html."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Sidebar: site/src/lib/docs-pages.ts:18-23 adds {href:'/docs/connect#refresh', title:'Refreshing the connection', order 15}; site/src/layouts/Docs.astro:278-305 renders items from docsPages(). Docs index: site/src/pages/docs/index.astro:14-23 renders the same docsPages() list, so the refresh link appears there too. internal/site/dist/app/docs/index.html matches 'connect#refresh' in the built output."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "The Plugin Directory steps are wrapped in {chatgptDirectory.listed \u0026\u0026 (...)} at connect.astro:63-75 (directory list placed before the custom ol at line 76), and the refresh note at lines 147-149 is also flag-gated. With listed=false (site/src/lib/listing.ts:9), a case-insensitive search of internal/site/dist/app finds no 'plugin directory' anywhere. The verification summary reports the flag-on run passed the connect and docs-index suites with the directory steps first. Caveat: the plans paragraph (connect.astro:59-62) sits before the directory steps, so 'first' means first among the steps, not the section's first sentence."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "244d82ad-183d-4a8b-a9ff-2deee9b45c80",
+      "title": "What's new page and launch entry",
+      "checks": [
+        {
+          "at": "2026-11-19T09:42:29Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "244d82ad-183d-4a8b-a9ff-2deee9b45c80",
+            "title": "What's new page and launch entry",
+            "criteria": [
+              "The website has a \"What's new\" page, reachable from the docs sidebar and the docs index, listing dated entries newest first.",
+              "Every entry says whether a refresh is needed, and every entry that needs one links to the refresh steps on the connecting page.",
+              "The first entry covers the public launch, links to the connecting page's note for players on the old address, does not name the old address and does not say TCG Replay is in the Plugin Directory.",
+              "The first entry lists the privacy-terms-disclaimer spec's player-visible changes: the terms page, the updated privacy page and the board's About panel.",
+              "An entry missing its date, title, refresh answer or changes, or with an invalid date, stops the site build with a message naming the entry and what is wrong.",
+              "The knowledge base has a convention saying every player-visible change ships with a What's new entry, and when to mark it as needing a refresh."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/data/whats-new.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/whats-new.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/facts.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "import.meta.url"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/astro-site-build.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/whats-new.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/docs-pages.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/whats-new.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/facts.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/public/i"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/whats-new"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "whatsNew.length"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "conventions/whats-new-entries.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/listing.ts"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The page is site/src/pages/docs/whats-new.astro, rendered from whatsNew (lib/whats-new.ts), which sorts entries by date descending (whats-new.ts:85). The sidebar (layouts/Docs.astro, now `const items = await docsPages()`) and the docs index (pages/docs/index.astro:8-22) both render lib/docs-pages.ts, which lists `/docs/whats-new` with title \"What's new\" at order 85 (docs-pages.ts:42-47)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "whats-new.astro:23-27 renders 'Refresh needed.' with a link to /docs/connect#refresh when e.refresh is true, and 'No refresh needed.' otherwise. Every yaml entry has a boolean refresh, enforced by whats-new.ts:71-75. connect.astro:120 defines \u003ch2 id=\"refresh\"\u003e, so the link target exists. The launch entry (whats-new.yaml:20) is refresh: true and links to it (whats-new.yaml:24)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The first entry (whats-new.yaml:18-22) is 'TCG Replay is public' and covers the public launch. Its link /docs/connect#moved (yaml:22) points to connect.astro:34, where \u003caside id=\"moved\" data-moved-note\u003e exists. Searching whats-new.yaml for 'demo.gs' and 'Plugin Directory' finds none in the entry text (yaml:18-27). Its only mention of the old address is in the header comment, which is not part of the entry."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "whats-new.yaml:26 lists the new terms of service (/terms) and the updated privacy page (/privacy). whats-new.yaml:27 lists the board's ☰ menu About tcgreplay panel. I did not cross-check these against the privacy-terms-disclaimer spec text, because store files are not to be read with my tools. The match is by the entry's own wording."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "whats-new.ts:53-82 throws WhatsNewError, prefixed 'what's new:', and names the entry by number and title. It covers a missing date (line 66, 'has no date'), an invalid date (line 67-69, 'not a real day written YYYY-MM-DD'), a missing title (line 70), a missing or non-boolean refresh (line 71-75) and missing or empty changes (lines 76-81). loadWhatsNew runs at module load (whats-new.ts:103), so the build stops. The build log at .spektacular/tmp/20261112091756-c5b6d1fd-launch-docs/goal-check/malformed-build.log:21-33 shows the build failing with 'entry 1 (\"TCG Replay is public\") has refresh \"yes\"; it must be true or false'."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The knowledge entry conventions/whats-new-entries.md (repo tier, store tcgreplay) exists, per the copy of its read output at .spektacular/tmp/20261112091756-c5b6d1fd-launch-docs/goal-check/knowledge-conventions-whats-new-entries.json:2. Its content says every player-visible change ships with an entry in site/src/data/whats-new.yaml in the same change. It says to set refresh: true when a tool, its description, title or parameters, a guide or the server instructions change, and refresh: false otherwise."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c3c0c268-bdf7-4650-bcf8-c80327d7380c",
+      "title": "Switch on the Plugin Directory route",
+      "checks": [
+        {
+          "at": "2026-11-19T09:44:00Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c3c0c268-bdf7-4650-bcf8-c80327d7380c",
+            "title": "Switch on the Plugin Directory route",
+            "criteria": [
+              "The ChatGPT section starts with finding \"TCG Replay\" in the Plugin Directory and connecting it, and the custom connection steps follow as the alternative.",
+              "The refresh section tells players who installed from the directory that their plugin updates on its own.",
+              "A What's new entry announces the directory listing."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/connect.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/listing.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/data/whats-new.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "site/src/pages/docs/connect.astro:61-73 wraps the Plugin Directory steps (\"Find TCG Replay in ChatGPT's Plugin Directory\") in `{chatgptDirectory.listed \u0026\u0026 (...)}`, and site/src/lib/listing.ts:9 sets `listed: false`. The rendered ChatGPT section therefore starts with the custom MCP steps (connect.astro:74) and has no directory steps. The structure would satisfy the criterion once `listed` is true, but the flag is still off, so the files do not show it holds."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "connect.astro:139-141 is the only directory-update sentence (\"If you added TCG Replay from the Plugin Directory, it updates on its own\"), and it is also gated on `chatgptDirectory.listed`, which is false (listing.ts:9). Under the current flag the refresh section (connect.astro:120-147) has no such text."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "site/src/data/whats-new.yaml:18-27 has only the entry \"TCG Replay is public\" (2026-11-19). Its changes lines mention new ChatGPT plugin steps (line 23) but do not announce a Plugin Directory listing. The header comment (yaml:14-16) forbids saying TCG Replay is in ChatGPT's directory while listing.ts says it is not listed, so the entry can only announce the listing after the flag is switched. Nothing in the diff or the untracked files changes this for the goal."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-19T09:44:46Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "c3c0c268-bdf7-4650-bcf8-c80327d7380c",
+            "title": "Switch on the Plugin Directory route",
+            "criteria": [
+              "The ChatGPT section starts with finding \"TCG Replay\" in the Plugin Directory and connecting it, and the custom connection steps follow as the alternative.",
+              "The refresh section tells players who installed from the directory that their plugin updates on its own.",
+              "A What's new entry announces the directory listing."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/connect.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/listing.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/data/whats-new.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The directory steps are gated on chatgptDirectory.listed, and site/src/lib/listing.ts:9 sets listed: false. So the rendered ChatGPT section starts with the custom steps (site/src/pages/docs/connect.astro:74-90), not with finding TCG Replay in the Plugin Directory. The gated markup exists at connect.astro:61-73: Find {name} in the Plugin Directory, then 'Or add it yourself as a custom connection' before the custom ol. Once listed is switched to true that markup matches the criterion, but the files as they stand do not show it."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The only directory-update text is at site/src/pages/docs/connect.astro:139-141: 'If you added TCG Replay from the Plugin Directory, it updates on its own; you don't need to refresh it.' It sits inside {chatgptDirectory.listed \u0026\u0026 (...)} and listing.ts:9 has listed: false, so it is not rendered. The #refresh section (connect.astro:120-147) does not tell directory installers their plugin updates on its own otherwise."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "site/src/data/whats-new.yaml has no entry announcing the directory listing. The only entry (date 2026-11-19, 'TCG Replay is public', lines 18-27) lists the new address, the ChatGPT custom-connection steps (line 23), the refresh steps, the terms and privacy pages, and the About panel, but never mentions the Plugin Directory. The header at whats-new.yaml:14-16 forbids saying TCG Replay is in ChatGPT's directory while listing.ts says it is not listed, so the entry can only be added once the flag is switched. Nothing in the diff adds it."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-19T09:45:35Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "c3c0c268-bdf7-4650-bcf8-c80327d7380c",
+            "title": "Switch on the Plugin Directory route",
+            "criteria": [
+              "The ChatGPT section starts with finding \"TCG Replay\" in the Plugin Directory and connecting it, and the custom connection steps follow as the alternative.",
+              "The refresh section tells players who installed from the directory that their plugin updates on its own.",
+              "A What's new entry announces the directory listing."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/connect.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/listing.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/data/whats-new.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The directory steps are written at site/src/pages/docs/connect.astro:61-73 (\"Find {chatgptDirectory.name} in ChatGPT's Plugin Directory\", then the custom steps as the alternative), but they sit inside {chatgptDirectory.listed \u0026\u0026 (...)}. site/src/lib/listing.ts:9 sets listed: false, so the rendered ChatGPT section (connect.astro:74 onward) starts with the custom MCP steps and never mentions the Plugin Directory. The criterion holds only after listed is switched to true, which the diff does not do and the plan defers to OpenAI approval."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The text exists at site/src/pages/docs/connect.astro:139-141: \"If you added {chatgptDirectory.name} from the Plugin Directory, it updates on its own; you don't need to refresh it.\" It is wrapped in {chatgptDirectory.listed \u0026\u0026 (...)} and listing.ts:9 has listed: false, so the refresh section as rendered today omits it. It appears only once the flag is flipped."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "site/src/data/whats-new.yaml has one new entry (2026-11-19, \"TCG Replay is public\", lines 18-28). Its ChatGPT line (line 23) only says \"New ChatGPT connection steps for adding the playmat as a plugin, and the ChatGPT plans that allow it\"; no line announces the Plugin Directory listing. The header comment at whats-new.yaml:14-16 forbids saying TCG Replay is in ChatGPT's directory while listing.ts says it is not listed, and site/e2e/site.spec.js:173-178 fails any page mentioning the Plugin Directory while listed is false. So the entry can only gain this announcement after the flag is flipped to true; the current files do not meet it and it is blocked on that switch, not impossible in itself."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-19T09:45:41Z",
+          "round": 1,
+          "decision": "skip",
+          "reason": "deferred to the maintainer: live setup after deploy (waits on OpenAI approving the Plugin Directory listing)"
+        }
+      ],
+      "attempts": 3,
+      "state": "skipped"
+    }
+  ]
+}

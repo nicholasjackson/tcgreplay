@@ -1,0 +1,765 @@
+{
+  "plan": "20261111132045-1d1d32f6-visitor-analytics",
+  "items": [
+    {
+      "item": "11c2ba66-ef41-4dfc-8cf0-93e1aa244855",
+      "title": "Add the visitor analytics package and the privacy page check",
+      "checks": [
+        {
+          "at": "2026-11-13T08:29:52Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "11c2ba66-ef41-4dfc-8cf0-93e1aa244855",
+            "title": "Add the visitor analytics package and the privacy page check",
+            "criteria": [
+              "Counting is decided \"on\" only with a well-formed token, a privacy page that describes counting and a public address, and each missing piece gives \"off\" with its own plain reason that never shows the token.",
+              "A token holding anything other than 16 to 64 letters and digits is refused, so nothing unexpected can reach a page.",
+              "The tag added is Cloudflare's manual beacon tag with the token and single-page-app tracking off, placed once before the end of the page body.",
+              "Only successful page loads for the public address are changed; other hosts, redirects, error pages, assets and partial responses are passed on exactly as they were.",
+              "The website reports that its privacy page describes counting only when the page carries the visitor-counting marker the privacy work defines."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webanalytics/webanalytics.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "text/html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webanalytics/webanalytics_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "text/css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "application/json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/site.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "privacy/index.html"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/astro.config.mjs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/site_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/webanalytics/webanalytics.go:55-71 (Setup) returns the identity wrapper, and the status 'off', for each missing piece in order: blank token (line 59-60, 'off (no TCGREPLAY_WEB_ANALYTICS_TOKEN)'), malformed token (61-62), no host (63-64, 'off (no public host)'), and privacy page silent (65-66, 'off (the privacy page does not describe visitor counting yet)'). It goes on only when all four hold (line 68-70). Statuses carry no token: the warning at line 62 names only the variable and the rule. internal/webanalytics/webanalytics_test.go:25-61 TestSetupDecides checks each reason and that the status does not contain the token; TestSetupRefusesMalformedTokens (63-90) checks the warning never shows the bad token."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/webanalytics/webanalytics.go:27 tokenPattern `^[A-Za-z0-9]{16,64}$` (RE2 $ matches only at end of text, and the class is ASCII only, so 'é' and a trailing newline are refused); validToken at line 31; Setup refuses a token failing it at lines 61-62 and never builds a snippet from it. Tests at webanalytics_test.go:63-90 cover quote, angle bracket, apostrophe, space, 15 and 65 characters, non-ASCII letter, and '-_'. Note for the reviewer: Setup trims surrounding whitespace (line 56) before validating, so a token padded with spaces or a newline is accepted once trimmed. The token that reaches the page is always pure letters and digits, so nothing unexpected reaches a page, but a strict reading of 'holding anything other than' would object to the trimming."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/webanalytics/webanalytics.go:37 Snippet returns `\u003cscript defer src=\"https://static.cloudflareinsights.com/beacon.min.js\" data-cf-beacon='{\"token\":\"\u003ctok\u003e\",\"spa\":false}'\u003e\u003c/script\u003e`, which is the manual tag with spa false. Lines 162-175 and 186-197: insertSnippet places it once before the last `\u003c/body\u003e` (case-insensitive), or at the end if there is none. Test TestSnippetIsCloudflaresManualTag (webanalytics_test.go:19-23) and TestInjectAddsOneSnippetBeforeTheLastBodyTag (111-134) check the exact text and position."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "webanalytics.go:89-97: anything other than a GET for the configured host (compared ignoring case and port, line 90) goes straight to next. Within a GET, the injector only captures when WriteHeader is 200 and isPlainHTML (lines 117-130: text/html content type and no non-identity Content-Encoding); every other status, type, or a Flush before the end (144-157) streams unchanged. Only captured pages get their Content-Length rewritten and Accept-Ranges removed (163-175). Tests in webanalytics_test.go:136-264 cover HEAD, POST, other hosts, redirect, 404, 503, 206 range, css, json, gzip html, flushed pages, and headers unchanged in TestInjectPassesEverythingElseThrough."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "internal/site/site.go:76-89: visitsMarker `data-retention=\"visits\"` and DescribesVisitorCounting(), which reads dist/app/privacy/index.html from the embedded fsys and returns true only if the marker is present (false on read error, so the placeholder gives false). The marker source is site/src/pages/privacy.astro:109 (`\u003cspan data-retention=\"visits\"\u003esix months\u003c/span\u003e`). The website's hosted reporting is the gate in webanalytics.Setup (webanalytics.go:65-66, PrivacyDescribes). Tests in internal/site/site_test.go:189-216 cover the page with the marker (true), without it (false), placeholder only (false), and the marker on another page only (false)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b32a7984-790c-4338-9628-e913f8a99f34",
+      "title": "Count website and board pages on the hosted playmat",
+      "checks": [
+        {
+          "at": "2026-11-13T08:35:14Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b32a7984-790c-4338-9628-e913f8a99f34",
+            "title": "Count website and board pages on the hosted playmat",
+            "criteria": [
+              "With a token and a privacy page that describes counting, every website page and a signed-in board page on the public address carry exactly one Cloudflare beacon, and the board page is counted once per load.",
+              "A signed-out board load still goes straight to sign-in, and sign-in pages, the admin page, the assistant connection, the board's files and pages on any other address never carry the beacon.",
+              "With no token, a malformed token or a privacy page without the visitor-counting section, every page is exactly as it was before, and the start-up log names the reason.",
+              "No page sets a cookie because of counting, and the start-up log never shows the token, an email or an account.",
+              "The deployment definition, the container's settings notes and the design doc describe the setting, that it must be set only once the privacy page describing counting is live, and that clearing it stops counting.",
+              "Running the playmat locally or in the desktop app adds no beacon to any page."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/ws"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/astro-site-build.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/cardsets_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_admin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_analytics_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/connect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/.well-known/oauth-protected-resource/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/healthz"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:145 wraps GET /board with counted(a.RequireSession(atRoot(board))) and hosted.go:152 wraps the website mount with counted(site.Handler()). internal/webanalytics/webanalytics.go:87-98 (Inject) adds one snippet before \u003c/body\u003e for a 200 GET HTML response whose Host matches the public host. cmd/tcgreplay/hosted_analytics_test.go:56-95 checks exactly one beacon on each site page for the public host and none for another host; lines 112-125 sign in and load /board twice, expecting exactly one beacon each load. The privacy page carries the marker (site/src/pages/privacy.astro:109 data-retention=\"visits\"), which is the condition site.DescribesVisitorCounting checks (internal/site/site.go:246-250)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "A signed-out GET /board is a 302 to /auth/login, so Inject passes it through untouched (webanalytics.go:124 only captures status 200). hosted.go:146-152 leaves /board/{$}, /assets/, /ws and /api/ unwrapped, and /mcp, /auth and /admin are not wrapped in hostedHandler. hosted_analytics_test.go:103-110 checks the signed-out redirect carries no beacon; lines 136-155 check /assets, /api, /ws, /mcp, the well-known paths, /auth/login, /healthz, /admin (signed out and signed in), and the test expects no beacon on any of them. Sign-in pages are reached through /auth, which is not wrapped."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/webanalytics/webanalytics.go:59-66 returns identity with the status \"visitor analytics: off (no TCGREPLAY_WEB_ANALYTICS_TOKEN)\" for no token, a warning for a malformed token (regex at line 27), and \"visitor analytics: off (the privacy page does not describe visitor counting yet)\" when the marker is absent. cmd/tcgreplay/hosted.go:171-179 logs that status at start-up. hosted_analytics_test.go:169-204 runs all three cases, checks the byte-for-byte page match and the log text."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The wrapper only adds the script element and a Content-Length header (webanalytics.go:163-175). No Set-Cookie is written there, and hosted_analytics_test.go:83-85 and 122-124 assert no Set-Cookie on site and board responses. The start-up status string (webanalytics.go:53-70) contains no token, and hostedAnalytics (hosted.go:171-179) logs only that status, with no email or account. hosted_analytics_test.go:160-162 and 199-201 assert the token is not in the log."
+            },
+            {
+              "criterion": 5,
+              "verdict": "not_met",
+              "evidence": "The Dockerfile's settings comment (Dockerfile:14-20) says TCGREPLAY_WEB_ANALYTICS_TOKEN makes pages counted \"once the privacy page describes it\", but it never says the token must be set only once the privacy page is live, and never says that clearing it stops counting. Both are missing from the Dockerfile. The app.yaml (.do/app.yaml:20-29 comment and :183-194) and the design doc (the setting row at TCG Review Playmat Design and Build Plan.md:85, step 9 at the \"9. Optional, for visitor counting\" entry, and the **Visitor counting** paragraph stating \"Clearing the setting stops counting (restart only)\") do cover all three points. The Dockerfile needs a sentence that the token is set only once the privacy page describing counting is live and that clearing it stops counting."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Makefile:87-88 says TCGREPLAY_WEB_ANALYTICS_TOKEN is deliberately not passed to docker-run. The docker-run recipe (Makefile:95-102) lists no -e for it, so a shell export does not reach the container. Counting exists only inside hostedHandler and hostedAnalytics, and the local public URL host does not match. The desktop board (webui) is never wrapped, and cmd/tcgreplay/hosted_analytics_test.go:206-221 (TestDesktopBoardNeverCounts) checks that. I did not run the tests; the verdicts rest on reading the code and tests."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T08:37:11Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "b32a7984-790c-4338-9628-e913f8a99f34",
+            "title": "Count website and board pages on the hosted playmat",
+            "criteria": [
+              "With a token and a privacy page that describes counting, every website page and a signed-in board page on the public address carry exactly one Cloudflare beacon, and the board page is counted once per load.",
+              "A signed-out board load still goes straight to sign-in, and sign-in pages, the admin page, the assistant connection, the board's files and pages on any other address never carry the beacon.",
+              "With no token, a malformed token or a privacy page without the visitor-counting section, every page is exactly as it was before, and the start-up log names the reason.",
+              "No page sets a cookie because of counting, and the start-up log never shows the token, an email or an account.",
+              "The deployment definition, the container's settings notes and the design doc describe the setting, that it must be set only once the privacy page describing counting is live, and that clearing it stops counting.",
+              "Running the playmat locally or in the desktop app adds no beacon to any page."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/ws"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/astro-site-build.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/cardsets_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_admin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_analytics_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/connect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/.well-known/oauth-protected-resource/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/healthz"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "hosted.go:232 wraps GET /board with counted(), and hosted.go:238 wraps the website at / with counted(). webanalytics.go:87-97 (Inject) adds the snippet only to a GET, 200, text/html response for the public host, once, before \u003c/body\u003e. hosted_analytics_test.go:56-133 asserts exactly one beacon on each site path and on a signed-in /board load, twice, with the page otherwise byte-identical. Privacy page carries data-retention=\"visits\" (site/src/pages/privacy.astro:109), which site.go:79-89 checks."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "hosted.go:233-237: /board signed out goes through RequireSession, and the counted wrapper sits outside it, so the redirect is a 302 and passes through Inject untouched (webanalytics.go:90, 124). /assets/, /ws and /api/ are mounted on session without counted(). /admin and /admin/ (hosted.go:226-227) and the hostauth routes registered by a.Routes (hosted.go:219) are not wrapped. Only \"/\" (hosted.go:238) and GET /board are counted. hosted_analytics_test.go:103-155 checks signed-out /board, /assets/, /api/, /ws, /mcp, the OAuth metadata, /auth/login, /healthz and /admin, with and without a cookie, and none carry the beacon."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "webanalytics.go:59-66 returns identity with the status lines \"visitor analytics: off (no TCGREPLAY_WEB_ANALYTICS_TOKEN)\", \"warning: visitor analytics: off (... not a Cloudflare site token ...)\" and \"visitor analytics: off (the privacy page does not describe visitor counting yet)\". hosted.go:396-404 logs that status. Identity means pages pass through unchanged. hosted_analytics_test.go:169-204 covers all three cases byte for byte."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "No counting code sets a cookie: webanalytics.go contains no Set-Cookie, and the injector only edits the body and Content-Length (webanalytics.go:163-175). The only Set-Cookie calls are hostauth's sign-in cookies, which are not counting. hosted_analytics_test.go:83 and :122 assert no Set-Cookie on counted pages. The start-up status (webanalytics.go:60-70) and the hosted start line (hosted.go:446) never include the token, and hosted_analytics_test.go:160 and :199 check the log. Caveat: Cloudflare's own script may set its __cf_bm cookie client-side, which the playmat does not control; the playmat itself sets none."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Deployment definition: .do/app.yaml:183-190 says the token is public, set in the control panel \"only once the privacy page describing visitor counting is live\", and \"Clear it to stop counting (needs only a restart).\" Container notes: Dockerfile:17-20 say \"set it only once the privacy page describing visitor counting is live, and clear it to stop counting.\" Design doc: \"TCG Review Playmat Design and Build Plan.md\":309 says \"Clearing the setting stops counting (restart only)\", and line 349 says \"only once the privacy page describing visitor counting is live at https://tcgreplay.app/privacy\"."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "hostedAnalytics is called only from runHosted (hosted.go:448), and the desktop board is built with webui.New without a wrapper. hosted_analytics_test.go:206-221 (TestDesktopBoardNeverCounts) sets the env token and checks the desktop board has no beacon. The flag default (main.go:175) is read only by the hosted path. Makefile:87-88 says the token is deliberately not passed to docker-run, and a local -hosted run on localhost fails the public-host check (webanalytics.go:90, :63-64), so it adds nothing."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "456866d0-d347-49a0-8404-b5e4eb0bc7d9",
+      "title": "Check counting in the website's browser suite",
+      "checks": [
+        {
+          "at": "2026-11-13T08:40:43Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "456866d0-d347-49a0-8404-b5e4eb0bc7d9",
+            "title": "Check counting in the website's browser suite",
+            "criteria": [
+              "Without the token, every website page still asks no other host for anything, sets no cookie and carries no beacon, as before.",
+              "With counting on, every website page carries exactly one beacon with single-page-app tracking off, and the only other address asked is Cloudflare's beacon script, which the test stubs.",
+              "With counting on, no cookie, local storage or session storage entry exists after visiting every page.",
+              "With the beacon blocked, every page loads with its content and navigation, raises no error, and its copy buttons still work.",
+              "No test in the suite sends anything to Cloudflare."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/sitetest/cmd/serve/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/sitetest/cmd/serve/main_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/playwright.config.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "127.0.0.1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "test.use"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/crawl.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/analytics.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "document.cookie"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "localStorage.length"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sessionStorage.length"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/e2e/site.spec.js:149-168 runs the no-token test against the default server (site/playwright.config.js:21, baseURL 127.0.0.1:7791, no -analytics-token). It checks context cookies, document.cookie, that page.content() lacks 'cloudflareinsights' (line 159), and that no request goes to another host (line 167 expects []). The site.spec.js hunk only renames the test and adds the line-159 check, so the unchanged assertions still hold."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/e2e/analytics.spec.js:52-64 checks each crawled page for exactly one script[src=beacon] tag, no other cloudflareinsights script (line 58), data-cf-beacon equal to {token, spa:false} (line 60), defer present, and the beacon ran once (line 62). Lines 72-98 check that requests to other hosts equal [beacon] (line 96) and that no request was stopped (line 97). The server side is in internal/webanalytics/webanalytics.go:33-38 (Snippet, spa:false) and internal/site/sitetest/cmd/serve/main.go (the -analytics-token wrapper). The beacon is stubbed by shield() at analytics.spec.js:28-43."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/e2e/analytics.spec.js:72-98 asserts for every page that context.cookies() is [] and that document.cookie, localStorage.length and sessionStorage.length are '', 0 and 0 (lines 82-87, expected at line 87)."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "site/e2e/analytics.spec.js:100-132 routes the beacon to an abort (shield with blocked:true, line 101) and, for every page, checks status 200 (line 108), the h1 (109), the logo (110), the site nav (111), the footer and footer nav (112-113), that the beacon never ran (114), no role=alert (115), and that each [data-copy] button yields 'Copied' with the exact clipboard text (117-128). It also collects pageerror events and expects none (lines 104, 131)."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "The only spec that enables the analytics server (port 7792, analytics.spec.js:17) routes every other-host request. shield() fulfils only the exact beacon URL, and it aborts all else, including Cloudflare's reporting address (analytics.spec.js:28-43). The crawl in beforeAll uses blocked:true (line 47). The 404 test uses the same-origin request fixture (lines 66-70). The grep of site/e2e finds no other reference to cloudflare or port 7792, and site.spec.js runs only against the no-token server. Nothing in the suite sends to Cloudflare."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b55d6c1e-1a4a-42a3-8887-70fb05eebc4d",
+      "title": "Check counting in the board's browser suite",
+      "checks": [
+        {
+          "at": "2026-11-13T08:47:07Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b55d6c1e-1a4a-42a3-8887-70fb05eebc4d",
+            "title": "Check counting in the board's browser suite",
+            "criteria": [
+              "At phone, tablet and desktop sizes, the board page carries exactly one beacon with single-page-app tracking off.",
+              "Opening card zooms, switching branches and, on a phone, opening and closing the action sheet load no second beacon.",
+              "With the beacon blocked, the board shows the game, opens a card zoom and accepts a move, with no error shown or raised.",
+              "After moving around, the browser holds only the board's four existing settings and no cookie.",
+              "No test in the suite sends anything to Cloudflare."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/cmd/boardtest/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/playwright.config.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "127.0.0.1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/analytics.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "fixtures.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/test/reset"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/fixtures.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/ActionSheet.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/playback.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/e2e/analytics.spec.js:138-146 asserts exactly one script[src=\"https://static.cloudflareinsights.com/beacon.min.js\"] and one script[src*=\"cloudflareinsights\"], parses data-cf-beacon to exactly {token, spa:false}, and checks defer. The analytics server runs with -analytics-token (web/playwright.config.js:49-55, port 7789). The phone, tablet and desktop projects are defined at web/playwright.config.js:27-40. The snippet with spa:false is built at internal/webanalytics/webanalytics.go:36-38, and the board wrap is applied at internal/webui/webtest/cmd/boardtest/main.go (counted(s.Handler()) on \"/\")."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/e2e/analytics.spec.js:148-175 runs zoom(), switchBranches() (which rewinds, so it pushes a history entry), actionSheet() on touch profiles (phone is touch, via isTouch) and zoom() again. It then asserts the URL is unchanged, window.__beacon stays 1, exactly one beacon tag remains, and the only Cloudflare request is the single stubbed beacon load. actionSheet() at lines 126-136 opens and closes the sheet with its Close button and Back. No second beacon is loaded in any of these steps."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/e2e/analytics.spec.js:177-197 uses test.use({blocked:true}), so the beacon route aborts. The test asserts riolu and active cards are visible, window.__beacon is undefined, zoom(page) opens and closes a zoom, and act(page,'move',{iid:'p1-2',to:'bench:2'}) lands (the Riolu card is visible in bench 3). It asserts no .toast.error and no role=alert, and asserts page errors are empty (the errors fixture records pageerror at lines 59 and 192). The dialog check at line 63 also fails on any browser dialog."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "web/e2e/analytics.spec.js:27 lists the four keys replaySpeed, autoplay, panelAt, prizeReminders. Lines 165-173 assert every localStorage key is in that list, sessionStorage is empty, document.cookie is '' and context.cookies() is []. The only localStorage writers in web/src are the same four keys: playback.svelte.js:18,27,34,44 (replaySpeed, autoplay) and store.svelte.js:70,71,111,121 (panelAt, prizeReminders). No cookie writer found in web/src."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "In web/e2e/analytics.spec.js, the page fixture (lines 41-53) routes every request whose host is not the analytics server. The beacon URL is fulfilled with a stub (line 47), and every other request, Cloudflare's reporting address included, is aborted (line 51). The Cloudflare URLs are recorded at line 45. The blocked test expects cloudflare to equal [beacon] only (line 195). The other board specs run on the 7790 server with no token, so the beacon is never added there, and I found no other cloudflare reference in web/e2e. The site suite's site/e2e/analytics.spec.js:28-43 applies the same shield, and site/e2e/site.spec.js:159 asserts no beacon on the no-token server. Verdict is from reading only; nothing was run. Note: the diff also touches files outside this item's scope (cmd/tcgreplay, internal/site, site/e2e), which belong to earlier tasks and are not judged here."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b47cb586-3bb8-442e-b5bd-ab4539615cf6",
+      "title": "Switch visitor counting on for tcgreplay.app",
+      "checks": [
+        {
+          "at": "2026-11-13T08:49:49Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b47cb586-3bb8-442e-b5bd-ab4539615cf6",
+            "title": "Switch visitor counting on for tcgreplay.app",
+            "criteria": [
+              "The privacy page at tcgreplay.app described visitor counting before the token was set.",
+              "tcgreplay.app exists as a Cloudflare Web Analytics site set up for the manual snippet, with automatic injection off.",
+              "The playmat's start-up log says visitor analytics are on for tcgreplay.app, and the live page source carries exactly one Cloudflare beacon."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "static.cloudflareinsights.com/beacon.min.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The source describes visitor counting: site/src/pages/privacy.astro:90-94 has a #visitor-counting section naming Cloudflare Web Analytics, and site/e2e/privacy.spec.js:57-60 checks it. The goal asks about the live page at tcgreplay.app before the token was set. Nothing in the files shows that page was deployed or what it served at that time, the staged diff only changes the source, and the deploy is a human step (plan Execution: human). No verification was run. Not verifiable read-only."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "No file shows a Cloudflare Web Analytics site for tcgreplay.app or its settings. .do/app.yaml:183-190 only tells the maintainer to create the site with the manual snippet and automatic injection off, and leaves TCGREPLAY_WEB_ANALYTICS_TOKEN without a value (app.yaml:191-192). The dashboard state cannot be checked from the repo, and the staged diff (.spektacular/tmp/.../goal-check/tcgreplay.diff) has no such evidence."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The start-up log path exists: cmd/tcgreplay/hosted.go:396-402 calls webanalytics.Setup and logs its status, and cmd/tcgreplay/hosted_analytics_test.go:62 expects 'visitor analytics: on for playmat.example'. But the live log line and the live page source (exactly one cloudflareinsights beacon on tcgreplay.app) cannot be checked from the files. The token is unset in .do/app.yaml, and no deploy or App Platform setting is in the repo. No verification command was run for this item."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T08:50:56Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "b47cb586-3bb8-442e-b5bd-ab4539615cf6",
+            "title": "Switch visitor counting on for tcgreplay.app",
+            "criteria": [
+              "The privacy page at tcgreplay.app described visitor counting before the token was set.",
+              "tcgreplay.app exists as a Cloudflare Web Analytics site set up for the manual snippet, with automatic injection off.",
+              "The playmat's start-up log says visitor analytics are on for tcgreplay.app, and the live page source carries exactly one Cloudflare beacon."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "static.cloudflareinsights.com/beacon.min.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The source has the section: site/src/pages/privacy.astro:90-112 (id visitor-counting) describes Cloudflare Web Analytics counting, with a data-retention=\"visits\" figure at line 109. The diff shows this is uncommitted working-tree content, and the tcgreplay.status file lists site/src/pages/privacy.astro as modified. Nothing in the files shows that this page is deployed on tcgreplay.app/privacy, or that it went live before the token was set. That ordering can only be checked against the live site and the deploy history, which I cannot read."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The Cloudflare Web Analytics site for tcgreplay.app, the manual snippet setting and the automatic-injection setting live in the Cloudflare dashboard, not in any file I can read. The only file evidence is .do/app.yaml:183-190, which describes the intended setup in a comment (manual snippet, automatic injection off). That is an instruction, not proof that the site exists, so the criterion is unverified from the files."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The code can produce the log line: internal/webanalytics/webanalytics.go:70 returns \"visitor analytics: on for \" + host, and cmd/tcgreplay/hosted.go:402 logs it at start-up. But the live playmat needs TCGREPLAY_WEB_ANALYTICS_TOKEN set in the App Platform control panel. .do/app.yaml:191-192 declares that variable with no value, and no file shows it set. The live page source is also unverified: the snippet is built at webanalytics.go:37 and injected per request, so exactly one beacon on the live page depends on deployment and the token, neither of which the files show."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T08:51:41Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "b47cb586-3bb8-442e-b5bd-ab4539615cf6",
+            "title": "Switch visitor counting on for tcgreplay.app",
+            "criteria": [
+              "The privacy page at tcgreplay.app described visitor counting before the token was set.",
+              "tcgreplay.app exists as a Cloudflare Web Analytics site set up for the manual snippet, with automatic injection off.",
+              "The playmat's start-up log says visitor analytics are on for tcgreplay.app, and the live page source carries exactly one Cloudflare beacon."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "static.cloudflareinsights.com/beacon.min.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The page text does describe visitor counting: site/src/pages/privacy.astro:90-112 has a #visitor-counting section naming Cloudflare Web Analytics, what is recorded, no cookies, and six-month retention. But the file shows only the working-tree content, not that tcgreplay.app/privacy served it before the token was set. The privacy.astro change is uncommitted in the staged diff, and nothing in the repo records the deploy order. The live-page timing cannot be confirmed from files."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "No file in the code root records a Cloudflare Web Analytics site for tcgreplay.app or its manual-snippet and automatic-injection settings. .do/app.yaml:183-190 only describes the dashboard steps for the maintainer to take, and TCGREPLAY_WEB_ANALYTICS_TOKEN (app.yaml:191-192) is declared with no value. The Cloudflare dashboard state cannot be checked from the files, and the plan marks this step as human-executed."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The code can produce the log line: internal/webanalytics/webanalytics.go:70 returns \"visitor analytics: on for \" + host, and cmd/tcgreplay/hosted_analytics_test.go:62 asserts it. The start-up log of the deployed playmat and the live page source are runtime state, though, and none of the files show them. The token is unset in .do/app.yaml, so the live log cannot show 'on' from the repo alone. The exactly-one-beacon check is covered only by the test at internal/webanalytics/webanalytics_test.go:56 and by site/e2e/analytics.spec.js, not by the live page. The verification summary says no commands were run."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-13T08:51:41Z",
+          "round": 1,
+          "decision": "skip",
+          "reason": "deferred to the maintainer: live switch-on after deploy, per the user"
+        }
+      ],
+      "attempts": 3,
+      "state": "skipped"
+    }
+  ]
+}

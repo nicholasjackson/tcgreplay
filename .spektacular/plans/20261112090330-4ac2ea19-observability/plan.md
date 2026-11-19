@@ -276,7 +276,7 @@ The tests are standard Go tests beside the code, run by the project's usual test
 
 **Validation point**: Hosted tests show each of those lines as a record carrying the ID and no email. The ID is stable across a sign-out and a second instance built with the same key. The guard test finds no logger call that formats an account's email. Hosted mode refuses to start without the secret.
 
-#### - [ ] Task: Add the telemetry package
+#### - [x] Task: Add the telemetry package
 **Id:** fd47106e-01ae-4d4a-b378-b06a9d82beb1
 **Repo:** tcgreplay
 **Depends on:** none
@@ -292,13 +292,13 @@ Doing these first, in isolation, lets their guarantees be tested thoroughly befo
 *Technical detail:* [context.md#task-add-the-telemetry-package](./context.md#task-add-the-telemetry-package)
 
 **Acceptance criteria**:
-- [ ] The same email, in any case or with spaces around it, always gives the same player ID under the same key; other emails and other keys give other IDs; an unkeyed hash of the email never equals the ID; a key under 32 characters is refused.
-- [ ] Every record is a single valid JSON object on its own line, with time, level, event and player first, and the email handed to the recorder never appears in its output.
-- [ ] A player's `player_day` record is written once per UTC day, and again on the next day.
-- [ ] Redacting real failing-import messages built from the repo's test battle logs and decks leaves no battle-log line, card name or player name, while the playmat's own wording survives.
-- [ ] A missing recorder records nothing and never fails.
+- [x] The same email, in any case or with spaces around it, always gives the same player ID under the same key; other emails and other keys give other IDs; an unkeyed hash of the email never equals the ID; a key under 32 characters is refused.
+- [x] Every record is a single valid JSON object on its own line, with time, level, event and player first, and the email handed to the recorder never appears in its output.
+- [x] A player's `player_day` record is written once per UTC day, and again on the next day.
+- [x] Redacting real failing-import messages built from the repo's test battle logs and decks leaves no battle-log line, card name or player name, while the playmat's own wording survives.
+- [x] A missing recorder records nothing and never fails.
 
-#### - [ ] Task: Switch the existing log lines to player IDs
+#### - [x] Task: Switch the existing log lines to player IDs
 **Id:** 2d34fbef-6106-4d4e-a632-92ecf07ef83a
 **Repo:** tcgreplay
 **Depends on:**
@@ -310,11 +310,11 @@ Hosted mode reads a new secret for player IDs, refuses to start without it, buil
 *Technical detail:* [context.md#task-switch-the-existing-log-lines-to-player-ids](./context.md#task-switch-the-existing-log-lines-to-player-ids)
 
 **Acceptance criteria**:
-- [ ] Signing in, signing out, hitting the request limit, being refused at the user cap and letting a game expire each write a record with the player ID and without the email address.
-- [ ] The admin page's own log lines and its refusal lines name the admin or caller by player ID, not email.
-- [ ] The same account has the same ID before and after a sign-out, and from a second hosted instance started with the same key.
-- [ ] Hosted mode will not start without the player-ID secret, or with one shorter than 32 characters, and its start-up line says player IDs are on without showing the key.
-- [ ] No logger call in the hosted packages formats an account's email address, and a test fails if one is added.
+- [x] Signing in, signing out, hitting the request limit, being refused at the user cap and letting a game expire each write a record with the player ID and without the email address.
+- [x] The admin page's own log lines and its refusal lines name the admin or caller by player ID, not email.
+- [x] The same account has the same ID before and after a sign-out, and from a second hosted instance started with the same key.
+- [x] Hosted mode will not start without the player-ID secret, or with one shorter than 32 characters, and its start-up line says player IDs are on without showing the key.
+- [x] No logger call in the hosted packages formats an account's email address, and a test fails if one is added.
 
 ### Milestone 2: The maintainer can see who used the playmat, with what, and what went wrong
 
@@ -322,7 +322,7 @@ Hosted mode reads a new secret for player IDs, refuses to start without it, buil
 
 **Validation point**: The end-to-end hosted tests pass for usage records, daily counts, errors with context, no identifying data, and the admin-only lookup.
 
-#### - [ ] Task: Record tool calls, daily players and errors
+#### - [x] Task: Record tool calls, daily players and errors
 **Id:** c38bb8d1-1783-470f-9dc6-d72175ff321d
 **Repo:** tcgreplay
 **Depends on:**
@@ -334,13 +334,13 @@ Adds the tool-call middleware to the MCP server, behind the rate limit. It recor
 *Technical detail:* [context.md#task-record-tool-calls-daily-players-and-errors](./context.md#task-record-tool-calls-daily-players-and-errors)
 
 **Acceptance criteria**:
-- [ ] After a sign-in, an import through a named assistant and a new game, there is a record for each sign-in, tool call (with the tool and assistant), import and new game, each with a time and the same player ID.
-- [ ] Two players, one active twice and one once in a day, produce exactly two `player_day` records for that day, alongside their tool-call, import and new-game records.
-- [ ] A failing import (a malformed battle log) writes an error record naming the tool, the error message and the player ID; a failing board action writes one naming the action.
-- [ ] Across a whole session, the records contain none of: the test player's email or display name, any Google token value, any line of the pasted battle log, any card name from the decks.
-- [ ] A request refused by the rate limit is recorded once, as a limit refusal, not as a tool call.
+- [x] After a sign-in, an import through a named assistant and a new game, there is a record for each sign-in, tool call (with the tool and assistant), import and new game, each with a time and the same player ID.
+- [x] Two players, one active twice and one once in a day, produce exactly two `player_day` records for that day, alongside their tool-call, import and new-game records.
+- [x] A failing import (a malformed battle log) writes an error record naming the tool, the error message and the player ID; a failing board action writes one naming the action.
+- [x] Across a whole session, the records contain none of: the test player's email or display name, any Google token value, any line of the pasted battle log, any card name from the decks.
+- [x] A request refused by the rate limit is recorded once, as a limit refusal, not as a tool call.
 
-#### - [ ] Task: Let admins look up a player's ID
+#### - [x] Task: Let admins look up a player's ID
 **Id:** 441388c1-66e8-4a6a-80f8-fdea78463aca
 **Repo:** tcgreplay
 **Depends on:**
@@ -352,10 +352,10 @@ Adds a "Find a player's ID" form to the existing admin page. An admin enters a p
 *Technical detail:* [context.md#task-let-admins-look-up-a-players-id](./context.md#task-let-admins-look-up-a-players-id)
 
 **Acceptance criteria**:
-- [ ] Signed in as an admin, entering a player's email shows the same player ID their records carry.
-- [ ] A signed-in non-admin is refused, and a signed-out caller is refused or sent to sign in, without seeing any ID.
-- [ ] A lookup posted from another site is refused.
-- [ ] The looked-up email address appears in no log line or record.
+- [x] Signed in as an admin, entering a player's email shows the same player ID their records carry.
+- [x] A signed-in non-admin is refused, and a signed-out caller is refused or sent to sign in, without seeing any ID.
+- [x] A lookup posted from another site is refused.
+- [x] The looked-up email address appears in no log line or record.
 
 ### Milestone 3: The platform watches the playmat, and its limits and retention are known
 
@@ -369,7 +369,7 @@ Adds a "Find a player's ID" form to the existing admin page. An admin enters a p
 - The runbook exists with measured figures and confirmed retention.
 - The manual checks in the test plan pass on the deployed playmat: records visible in Insights, alerts delivered, graphs present, memory within the limit.
 
-#### - [ ] Task: Declare alerts and the secret, and write the runbook
+#### - [x] Task: Declare alerts and the secret, and write the runbook
 **Id:** ee78d4b7-f570-4962-bbfc-e4f236151fe6
 **Repo:** tcgreplay
 **Depends on:**
@@ -388,12 +388,12 @@ Adds three alert rules to the app definition (unexpected restarts, sustained hig
 *Technical detail:* [context.md#task-declare-alerts-and-the-secret-and-write-the-runbook](./context.md#task-declare-alerts-and-the-secret-and-write-the-runbook)
 
 **Acceptance criteria**:
-- [ ] The app definition declares restart, CPU and memory alert rules for the playmat and the player-ID secret, each explained in a comment.
-- [ ] The runbook lists every record the playmat writes, matching the code, and states what records never contain.
-- [ ] The runbook explains how to read, for any day, distinct players, tool calls by assistant, imports and new games in Insights, and how to go from a player's email to their error records.
-- [ ] The website build still reads its limits from the app definition and still succeeds.
+- [x] The app definition declares restart, CPU and memory alert rules for the playmat and the player-ID secret, each explained in a comment.
+- [x] The runbook lists every record the playmat writes, matching the code, and states what records never contain.
+- [x] The runbook explains how to read, for any day, distinct players, tool calls by assistant, imports and new games in Insights, and how to go from a player's email to their error records.
+- [x] The website build still reads its limits from the app definition and still succeeds.
 
-#### - [ ] Task: Add the memory-per-game measurement
+#### - [x] Task: Add the memory-per-game measurement
 **Id:** a867b923-58c2-4ae1-92ea-1c428c383d12
 **Repo:** tcgreplay
 **Depends on:** none
@@ -404,10 +404,10 @@ Adds a measurement, run only when asked for, that imports full battle logs from 
 *Technical detail:* [context.md#task-add-the-memory-per-game-measurement](./context.md#task-add-the-memory-per-game-measurement)
 
 **Acceptance criteria**:
-- [ ] Asking for the measurement reports the average memory a full imported game with branches adds, and how many such games would fit in a given memory budget.
-- [ ] The measurement is skipped in ordinary test runs, so it never slows or fails them.
+- [x] Asking for the measurement reports the average memory a full imported game with branches adds, and how many such games would fit in a given memory budget.
+- [x] The measurement is skipped in ordinary test runs, so it never slows or fails them.
 
-#### - [ ] Task: Set up the secret and alert recipients, deploy and measure
+#### - [x] Task: Set up the secret and alert recipients, deploy and measure
 **Id:** 8a4c8b44-c64e-4ba0-ac34-d4c1346072d7
 **Repo:** tcgreplay
 **Depends on:**
@@ -429,7 +429,7 @@ They then measure on the deployed playmat: the memory figure from the measuremen
 - [ ] The restart, CPU and memory alerts exist on the app and send to the maintainer's email.
 - [ ] The memory used per full game (measured and as seen on the deployed instance) and Insights' retention for logs and metrics are written down for the next task.
 
-#### - [ ] Task: Record capacity and retention, and set the launch limits
+#### - [x] Task: Record capacity and retention, and set the launch limits
 **Id:** 0dd1d664-6c2d-4d6e-b8d5-8983e785892c
 **Repo:** tcgreplay
 **Depends on:**
@@ -442,10 +442,10 @@ Writes the maintainer's measured memory per game and Insights' confirmed retenti
 
 **Acceptance criteria**:
 - [ ] The runbook states the measured memory per full game with branches, the chosen player limit and instance size, and the headroom they leave.
-- [ ] The runbook states how long usage records, error records and the hosting platform's metrics are each kept.
-- [ ] The app definition's player limit and instance size match the runbook, and the website build still succeeds with them.
+- [x] The runbook states how long usage records, error records and the hosting platform's metrics are each kept.
+- [x] The app definition's player limit and instance size match the runbook, and the website build still succeeds with them.
 
-#### - [ ] Task: Apply the launch limits
+#### - [x] Task: Apply the launch limits
 **Id:** 9964965a-4f48-4dd8-9380-d395053d3399
 **Repo:** tcgreplay
 **Depends on:**
@@ -478,3 +478,186 @@ The maintainer applies the app definition with the new player limit and instance
 - **Tracing (OpenTelemetry spans) and custom metrics.** Insights offers no custom-telemetry ingestion for App Platform yet, and the spec asks for neither.
 - **Changing the desktop app, daemon or dev mode.** They build no recorder and keep their current logging.
 - **Automating alert recipients or Insights setup through the API.** The recipients are set once by hand in the control panel.
+
+## Changelog
+
+### 2026-11-12 — Task: Add the telemetry package
+
+**What was done**: Added `internal/telemetry`: keyed pseudonymous player IDs (`IDs`, `NewIDs`, `p_` + 16 hex of a domain-separated HMAC-SHA256), the JSON-line `Recorder` with the closed event catalogue and once-per-UTC-day `player_day`, and `Redact`/`SensitiveFromJSON` for error messages. Every method is nil-safe.
+
+**Deviations**:
+- `Redact` keeps common playmat words at either end of a matched run in place (e.g. `no Solrock in play` → `no … in play`, not `no … play`), and treats a word made only of digits as common, so `line 3:` survives. The plan's rule redacted the whole longest run; trimming common edge words keeps the message's shape and reveals nothing of the player's.
+- `commonWords` gained `and`, `or`, `have`, `are`, `was`, `current`, `branch`, `game` and the plan's prepositions (`in`, `on`, `at`, `to`, `of`, `for`, `from`, `by`, `with`, `into`, `onto`, `before`, `after`, `as`).
+- `Recorder.Record` also cuts the event's own email out of `Message` and `Reason` (case-insensitive), as a defence in depth.
+- The real-error redaction test uses import `Report.Problems` messages (replay failures are problems, not import errors) as well as the import's own errors; the "missing copies" case is a decklist with 1 Basic Fighting Energy and no `Total Cards` line.
+
+**Files changed**:
+- `internal/telemetry/ids.go`
+- `internal/telemetry/recorder.go`
+- `internal/telemetry/redact.go`
+- `internal/telemetry/ids_test.go`
+- `internal/telemetry/recorder_test.go`
+- `internal/telemetry/redact_test.go`
+
+**Discoveries**:
+- go-sdk v1.6.0 `addMiddleware` applies each call's list in `slices.Backward`, so a second `AddReceivingMiddleware` call wraps OUTSIDE the first. To run the tool-call middleware inside the rate limiter, pass both in one call: `AddReceivingMiddleware(a.MCPMiddleware(), reg.MCPMiddleware())`.
+- `game.Manager.Import` reports most replay failures as `Report.Problems` (with the log line in `Text`), not as an error; only parse-level failures (line before Setup, unknown owner, decklist count) return an error.
+
+### 2026-11-12 — Task: Switch the existing log lines to player IDs
+
+**What was done**: Hosted mode now reads `TCGREPLAY_PLAYER_ID_KEY` (environment only, at least 32 characters) and refuses to start without it, builds one recorder writing JSON lines to stdout, and hands it to the sign-in service, the registry and the admin page. Every email-bearing log line became a record keyed by player ID (`sign_in`, `sign_in_refused`, `sign_out`, `limited` rate/places, `game_expired`, `account_removed`, `board_refused`, `admin_refused`), the admin's card-set and image log lines name the admin by player ID and write `admin_action`, and a guard test parses the hosted packages' sources for an email-formatting logger call.
+
+**Deviations**:
+- `newHosted` keeps its four return values; the recorder is reached through a new `usergames.Registry.Recorder()` accessor, and `hostedAdmin` takes it as a third argument (`svc.PlayerID = rec.ID`, `svc.Recorder = rec`).
+- The cache admin keeps its text log lines (now naming the admin by ID via `Service.by(r)`, or "admin" without a `PlayerID`) **and** writes an `admin_action` record (`check`, `clear`). The admin page's "Last check now by …" and "Images … by …" lines now show the player ID instead of the email; "Signed in as <email>" stays.
+- Tests get the key from a new `TestMain` in `cmd/tcgreplay/hosted_test.go` that sets it only when the variable is unset (so a helper process given an empty key keeps it), instead of editing each helper. `serveHosted` gives each test server an `events` buffer (`hostedServer.events`).
+- Superseded log assertions were rewritten as record assertions: `internal/hostauth/cap_test.go` (`TestCapRefusesNewAccountBothFlows`), `internal/usergames/places_test.go` (`TestAdmitLogsRefusal` → `TestAdmitRecordsRefusal`), `cmd/tcgreplay/hosted_cap_test.go`, and the admin tests' "by one@example.com" expectations (now the golden ID).
+
+**Files changed**:
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `cmd/tcgreplay/cardsets_test.go`
+- `cmd/tcgreplay/hosted_admin_test.go`
+- `cmd/tcgreplay/hosted_cap_test.go`
+- `cmd/tcgreplay/hosted_events_test.go`
+- `cmd/tcgreplay/noemail_test.go`
+- `internal/hostauth/hostauth.go`
+- `internal/hostauth/google.go`
+- `internal/hostauth/board.go`
+- `internal/hostauth/limit.go`
+- `internal/hostauth/admin.go`
+- `internal/hostauth/cap_test.go`
+- `internal/hostauth/events_test.go`
+- `internal/usergames/usergames.go`
+- `internal/usergames/board.go`
+- `internal/usergames/places_test.go`
+- `internal/usergames/events_test.go`
+- `internal/cacheadmin/cacheadmin.go`
+- `internal/cacheadmin/handler.go`
+- `internal/cacheadmin/cacheadmin_test.go`
+- `internal/cacheadmin/events_test.go`
+
+**Discoveries**:
+- The guard test matches only a direct `.Email` selector in a logger call's arguments; an email copied to a local first would slip past it.
+- `internal/mcpserver` `TestInstructionsTeachTheLoop/inmemory` failed once with a `TempDir RemoveAll ... directory not empty` cleanup race and passed on three re-runs; the package is untouched by this work.
+
+### 2026-11-12 — Task: Record tool calls, daily players and errors
+
+**What was done**: Added the tool-call middleware (`usergames.Registry.MCPMiddleware`), placed inside the rate limit, which records `tool_call` (tool, assistant), `import`/`new_game` on success and `error` with a redacted message on failure; `Registry.Use` now writes each player's daily `player_day`; a new `webui.Server.OnError` hook, wired to `Registry.BoardError`, records failed board actions as `error` naming the action. Redaction draws on the call's arguments and the caller's current game (player names, card names, and an imported game's log and decklist lines).
+
+**Deviations**:
+- The middleware is added in the same `AddReceivingMiddleware` call as the rate limiter (`AddReceivingMiddleware(a.MCPMiddleware(), reg.MCPMiddleware())`), because go-sdk v1.6.0 wraps a later call outside earlier ones; the plan anticipated this case.
+- `gameNames` also feeds the imported game's record (`g.Record()`: me, log, deck, opponent deck) through `SensitiveFromJSON`, so an error on a later call still redacts the battle log; player names come from `state.Side.Name`.
+- `hostedBoard` gained an `onError` parameter before `images`.
+- `go test -race ./internal/usergames` intermittently fails `TestWaitingDoesNotKeepGame` ("the expiry did not end the wait"); it fails the same way on the unmodified HEAD source (1 of 6 race runs), so it is a pre-existing timing flake, not caused by this work. Without `-race` the whole suite passes.
+
+**Files changed**:
+- `internal/usergames/telemetry.go`
+- `internal/usergames/usergames.go`
+- `internal/usergames/telemetry_test.go`
+- `internal/webui/server.go`
+- `internal/webui/actions.go`
+- `internal/webui/onerror_test.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_cache_test.go`
+- `cmd/tcgreplay/hosted_usage_test.go`
+
+**Discoveries**:
+- The fake Google (`hostauthtest`) exposes no issued token values; the end-to-end privacy test rebuilds the unsigned ID tokens from its `Claims` hook (which also injects a `name` claim) and gets playmat tokens through `hostauthtest.Connect`.
+- A go-sdk tool handler's error reaches a receiving middleware as an `IsError` `*mcp.CallToolResult` with a nil Go error; the hosted rate limiter likewise returns an `IsError` result without calling `next`.
+
+### 2026-11-12 — Task: Let admins look up a player's ID
+
+**What was done**: The admin page gained a "Find a player's ID" form (shown only when the service has a `PlayerID` function) that POSTs an email to `/admin/player`; the handler trims it, refuses an empty one with a message, shows the email and its ID in a copyable `<code>`, and records the lookup as the admin's `admin_action` (`lookup`). The looked-up address is never logged or recorded. The existing `RequireAdmin` guard refuses non-admins (403), signed-out callers (401) and cross-site posts (403).
+
+**Deviations**:
+- Without a `PlayerID` function, `POST /admin/player` answers 404 rather than rendering the page.
+- The render path gained `renderLookup(w, status, email, msg, found)`; `render` calls it with no result. `Lookup{Email, ID}` is the page's result type.
+- The cacheadmin lookup tests went into `internal/cacheadmin/events_test.go` beside the other recorder tests, not `cacheadmin_test.go`.
+
+**Files changed**:
+- `internal/cacheadmin/handler.go`
+- `internal/cacheadmin/page.go`
+- `internal/cacheadmin/events_test.go`
+- `cmd/tcgreplay/hosted_admin_test.go`
+
+**Discoveries**: None.
+
+### 2026-11-12 — Task: Declare alerts and the secret, and write the runbook
+
+**What was done**: `.do/app.yaml` now declares the `TCGREPLAY_PLAYER_ID_KEY` secret and three alert rules on the playmat (`RESTART_COUNT` > 0 over 5 minutes, `CPU_UTILIZATION` and `MEM_UTILIZATION` > 80 over 10 minutes), each explained in comments, plus a header line pointing at the runbook. A new runbook, `docs/observability.md`, covers the record format and the full event catalogue, what is never recorded and how messages are redacted, player IDs and the key, the Insights searches for each daily number, the email-to-errors path through /admin, the graphs and the alerts. It has placeholder Capacity and Retention sections for the later task.
+
+**Deviations**:
+- The goal check's first attempt found two runbook statements that did not match the code. The `idle` field is the configured idle time the game went past, not its actual idle time. The ID recipe now names the derived HMAC key and the message prefix. Both were fixed on retry.
+- `README.md` has no operations or hosting section, so it does not link the runbook. The site's app-definition reader is `site/src/lib/facts.ts` (`loadLimits`), not something under `site/scripts`. `npm ci && npm run build` in `site/` succeeds; the Playwright browser suite was not run.
+- Added `TCGREPLAY_PLAYER_ID_KEY` to `TestAppSpecHealthCheckAndSecrets`, and a new `TestAppSpecAlerts`, in `cmd/tcgreplay`.
+- After the goal check accepted, a sentence was added to the runbook's usage table: calls from unnamed clients are the total less the four named assistants.
+
+**Files changed**:
+- `.do/app.yaml`
+- `docs/observability.md`
+- `cmd/tcgreplay/hosted_test.go`
+- `cmd/tcgreplay/hosted_events_test.go`
+
+**Discoveries**: None.
+
+### 2026-11-12 — Task: Add the memory-per-game measurement
+
+**What was done**: Added `TestMemoryPerGame` in `internal/game/measure_memory_test.go`, skipped unless `TCGREPLAY_MEASURE_MEMORY=1`. It holds N games open at once (default 10; `TCGREPLAY_MEASURE_GAMES`), each in its own manager. Each game is the corpus mirror log imported with the corpus deck as both lists, plus two branches with a few moves. Every game shares one catalogue loaded from the committed card sets, as hosted mode does. The test logs the heap before and after, the average per game, the baseline, and how many games fit in 512 MiB and 1 GiB at 70% use. Run it with `TCGREPLAY_MEASURE_MEMORY=1 go test -run TestMemoryPerGame -v ./internal/game/`.
+
+**Deviations**:
+- The test lives in `internal/game`, not `internal/usergames`, so it can reuse `committedCatalog` from `corpus_test.go`. The test data has no opponent decklists, so it uses the mirror log (`2026-10-11_lukiees_mirror.txt`) with the corpus deck as the opponent's list.
+- A first draft overwrote the existing `internal/game/memory_test.go`, which holds other tests (`TestNothingWritten`, `TestRestartForgets`, `TestImportReplaces`, `TestImportNeedsDeck`). The goal reviewer caught it. The original file was restored from git, and the measurement moved to the new file `measure_memory_test.go`. The package's tests pass.
+- A first local run measured about 0.31 MiB of heap per game (27.5 MiB baseline with one game open). That is the Go heap only: it leaves out the process's other memory and board connections, which the deployed measurement covers.
+
+**Files changed**:
+- `internal/game/measure_memory_test.go`
+
+**Discoveries**:
+- `internal/game` already has a `memory_test.go`, for the in-memory store behaviour. Check that a file name is free before creating it.
+
+### 2026-11-13 — Task: Set up the secret and alert recipients, deploy and measure
+
+**What was done**: Nothing in this run. This is a person's task. The user acknowledged it and owns it: the maintainer will set `TCGREPLAY_PLAYER_ID_KEY` and the alert recipients when deploying, then measure and confirm retention once observability is live.
+
+**Deviations**:
+- Accepted shortfall: the user deferred this task to the maintainer, to do after deploy. The goal check judged all three criteria not met: the deployed playmat with the secret and player-ID records in Insights; the alerts sending to the maintainer's email; the memory per game and Insights retention written down. None is ticked.
+- The measurement is deferred to the maintainer, to run after deploy. `docs/observability.md` records capacity as pending and lists the steps. It records Insights retention as provisional figures to be confirmed by the maintainer (see the next task).
+- The secret must be set on the live app **before** this branch reaches main: hosted mode refuses to start without it, and every push to main deploys.
+
+**Files changed**: None.
+
+**Discoveries**: None.
+
+### 2026-11-13 — Task: Record capacity and retention, and set the launch limits
+
+**What was done**: The runbook's Capacity section now records capacity as pending the maintainer's measurement. It sets out the 70% headroom rule and its formula, and the three steps: run `TestMemoryPerGame`, measure on the deployed instance, and record the results and apply the limits. It also gives the development figure, marked as not a launch figure. The Retention section gives provisional figures marked "to be confirmed by the maintainer":
+- usage records: 7 days;
+- error records: 7 days;
+- platform metrics: 7 days;
+- alert history: 30 days, which DigitalOcean documents.
+
+It also lists the DigitalOcean pages checked on 2026-11-13. `.do/app.yaml` keeps `TCGREPLAY_MAX_USERS` "10" and `instance_size_slug` `apps-s-1vcpu-0.5gb`, with comments pointing at the runbook's Capacity section.
+
+**Deviations**:
+- Accepted shortfall: the user deferred the measurement to the maintainer after deploy and asked to keep the current launch limits. Criterion 1 (measured memory per game, the chosen limit and size, and their headroom) was judged not met and is not ticked. Criteria 2 (retention stated) and 3 (limits match the runbook; site build succeeds) were met.
+- DigitalOcean documents no retention period for Insights logs or metrics during the preview; it documents only alert history, at 30 days. So, as the coordinator instructed, the runbook uses 7 days as a provisional figure: the longest range the Insights log search offers. The privacy page's retention markers are tested against these figures, so they must be updated together once the maintainer confirms the real periods.
+
+**Files changed**:
+- `docs/observability.md`
+- `.do/app.yaml`
+
+**Discoveries**:
+- DigitalOcean's public docs (Insights limits, features and view-logs pages; App Platform view-insights and limits pages) state no retention for Insights logs or metrics; only "Alert history is available for up to 30 days". The Insights log search offers relative ranges up to "Last 7 days".
+
+### 2026-11-13 — Task: Apply the launch limits
+
+**What was done**: Nothing in this run. This is a person's task, and the user deferred it to the maintainer. After deploying and measuring, the maintainer applies `.do/app.yaml` with `doctl apps update <app-id> --spec .do/app.yaml`, along with any new `TCGREPLAY_MAX_USERS` and `instance_size_slug` the Capacity section leads to, and redeploys.
+
+**Deviations**:
+- Accepted shortfall: deferred to the maintainer. The goal check judged the one criterion (the live app runs on the chosen size with the chosen player limit) not met, and it is not ticked. The current launch values (`apps-s-1vcpu-0.5gb`, 10 players) stay in `.do/app.yaml`.
+
+**Files changed**: None.
+
+**Discoveries**: None.

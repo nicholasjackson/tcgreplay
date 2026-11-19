@@ -1,0 +1,1072 @@
+{
+  "plan": "20261112090330-4ac2ea19-observability",
+  "items": [
+    {
+      "item": "fd47106e-01ae-4d4a-b378-b06a9d82beb1",
+      "title": "Add the telemetry package",
+      "checks": [
+        {
+          "at": "2026-11-12T15:04:06Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "fd47106e-01ae-4d4a-b378-b06a9d82beb1",
+            "title": "Add the telemetry package",
+            "criteria": [
+              "The same email, in any case or with spaces around it, always gives the same player ID under the same key; other emails and other keys give other IDs; an unkeyed hash of the email never equals the ID; a key under 32 characters is refused.",
+              "Every record is a single valid JSON object on its own line, with time, level, event and player first, and the email handed to the recorder never appears in its output.",
+              "A player's `player_day` record is written once per UTC day, and again on the next day.",
+              "Redacting real failing-import messages built from the repo's test battle logs and decks leaves no battle-log line, card name or player name, while the playmat's own wording survives.",
+              "A missing recorder records nothing and never fails."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/telemetry/ids.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/seal.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/telemetry/recorder.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/telemetry/redact.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/deck"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/telemetry/ids_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "recorder_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "redact_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/decks"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/parse.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/replay.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/telemetry"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/telemetry/ids.go:33-38 refuses keys under MinKey=32 (NewIDs). ids.go:43-51 lower-cases and trims the email, then returns \"p_\"+first 16 hex of HMAC-SHA256 under a key derived from the secret with a domain prefix, so the same key and email give the same ID and another key gives another ID. ids_test.go:27-37 pins golden IDs, ids_test.go:39-52 covers case and space variants, ids_test.go:54-64 covers other emails and other keys, ids_test.go:66-88 checks unkeyed sha256/base64/HMAC-with-nil-key guesses never match, ids_test.go:90-101 covers 31 vs 32 char keys."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "recorder.go:59-75 defines the line struct with time, level, event, player as the first four fields, in that order; omitempty drops empty fields. recorder.go:132-139 marshals one object and appends a newline. Event.Email is tagged json:\"-\" (recorder.go:54) and is only hashed into Player (recorder.go:124); cut() (recorder.go:128-129, 169-189) removes the email from Message and Reason. recorder_test.go:56-74 checks the email, its local part and its domain never appear in output for every event constant, and recorder_test.go:28-54 checks the line format and that each line parses as JSON."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "recorder.go:147-166: Active derives the UTC date (recorder.go:155), resets the seen-set when the day changes (recorder.go:157-158), and writes player_day only on first sighting of the ID in that day (recorder.go:160-164). recorder_test.go:78-100 checks one record for the same player across repeated calls and case variants on the 12th, none for the 12th 23:59:59 repeat, and a new record on 13th UTC (including a New York local time that is already 13th UTC)."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "redact_test.go:70-135 (TestRedactRealImportErrors) provokes four real failures via game.NewManager(...).Import using testdata/logs/2026-10-11_ledjo23_alakazam-donk.txt and testdata/decks/mega-lucario-ex-v12.txt (both exist, confirmed by glob), redacts each message against SensitiveFromJSON of the call args, and checks no leak from leaks() (player names, deck card names, every non-heading log line) survives, and that the playmat wording survives (\"\\\"…\\\" before the Setup section\", \"for … in deck\", \"for … in hand\", \"has no … in play in the bench\", \"cannot tell which player owns the log\"). The message texts are in internal/importer/parse.go:137 and :247. Redaction rules are in redact.go:40-81. redact_test.go:162-189 also redacts every corpus log line. The verify summary reports go test ./internal/telemetry passing; I did not re-run it. The 'survives' substrings for 'in deck' and 'in play in the bench' were not located in the source by grep, so their match depends on the runtime message text the passing test produces."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "recorder.go:83-108 and 112-115 and 147-149: Record, Active and ID return early on a nil *Recorder, so nothing is written and nothing panics. recorder.go:103-108 returns \"\" for nil. ids.go:43-46 also handles nil *IDs. recorder_test.go:110-118 (TestNilRecorder) exercises Record, Active and ID on a nil recorder."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "2d34fbef-6106-4d4e-a632-92ecf07ef83a",
+      "title": "Switch the existing log lines to player IDs",
+      "checks": [
+        {
+          "at": "2026-11-12T15:16:20Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "2d34fbef-6106-4d4e-a632-92ecf07ef83a",
+            "title": "Switch the existing log lines to player IDs",
+            "criteria": [
+              "Signing in, signing out, hitting the request limit, being refused at the user cap and letting a game expire each write a record with the player ID and without the email address.",
+              "The admin page's own log lines and its refusal lines name the admin or caller by player ID, not email.",
+              "The same account has the same ID before and after a sign-out, and from a second hosted instance started with the same key.",
+              "Hosted mode will not start without the player-ID secret, or with one shorter than 32 characters, and its start-up line says player IDs are on without showing the key.",
+              "No logger call in the hosted packages formats an account's email address, and a test fails if one is added."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "c.events"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/limit.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/admin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/handler.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/cacheadmin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/cacheadmin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_events_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/noemail_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "go/parser"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Each event has a recorder call with Email set, and the recorder writes only the hashed player ID. Sign-in: internal/hostauth/google.go:95 (sign_in_refused) and :230 (sign_in). Sign-out: internal/hostauth/board.go:131-133 (sign_out). Request limit: internal/hostauth/limit.go:85-86 (limited, reason rate). User cap: internal/usergames/usergames.go:131-133 (limited, reason places). Game expiry: usergames.go:200-202 (game_expired with idle). Writing is in internal/telemetry/recorder.go:110-140 (Email is json:\"-\" and only hashed into Player; cut() removes the email from Message and Reason). The cmd/tcgreplay/hosted_events_test.go:57-100 test asserts the records and checks that no email appears in records or logs."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Admin action log lines use the admin's ID: internal/cacheadmin/cacheadmin.go:196, 210, 250, 252 pass s.by(r) as the by value. The by() helper (internal/cacheadmin/handler.go:50-57) returns s.PlayerID(email) or \"admin\", never the email. Clear and check each pass s.by(r) to Start/CheckNow (handler.go:34, 73). The page's 'Last check' and 'Images for ... by' text is the ID (cacheadmin_test.go, events_test.go:46). Refusal lines: internal/hostauth/admin.go:42-44 and :51-53 replaced the 'refused admin ... for \u003cemail\u003e' log lines with admin_refused records keyed by player ID. Caveat, not a log or refusal log line: the page still renders 'Signed in as {{.Email}}' (internal/cacheadmin/page.go:40), and the RequireAdmin refusal response text at admin.go:~47 reads 'You are signed in as \u003cemail\u003e' to the refused caller. These are shown back to the user, not logged, so I did not count them against this criterion."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The ID is a deterministic keyed HMAC of the lower-cased, trimmed email with the key from TCGREPLAY_PLAYER_ID_KEY (internal/telemetry/ids.go:33-51, no per-process or per-session salt). internal/telemetry/ids_test.go:27-64 pins golden IDs and checks that the same key gives the same ID across IDs values. cmd/tcgreplay/hosted_events_test.go:102-143 (TestHostedPlayerIDStable) checks the same sign_in player ID before and after sign-out, from another assistant, and on a second startHosted instance with the same key."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:139-150 (hostedRecorder) returns an error naming TCGREPLAY_PLAYER_ID_KEY and 'at least 32 characters' when telemetry.NewIDs fails (length under telemetry.MinKey=32, including empty; ids.go:33-36). newHosted calls hostedRecorder before anything listens (hosted.go:270-275), and runHosted returns that error before net.Listen (hosted.go:395-411). The start-up line at hosted.go:415 ends with 'player IDs on' and has no key. Tests: cmd/tcgreplay/hosted_events_test.go:160-191 (missing and 31-character keys exit non-zero, naming the setting, never printing the key) and :193-215 (start-up line says 'player IDs on' and does not show the key)."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "A grep of the logger calls in internal/hostauth, internal/usergames, internal/cacheadmin, internal/webui and cmd/tcgreplay (hosted*.go, main.go) finds no call that formats an email. The remaining logger calls are in hostauth/google.go:71-90, oauth.go, board.go:65, admin.go:36, usergames.go:290, cacheadmin.go:132-252, and hosted.go, and none passes an email. The guard is cmd/tcgreplay/noemail_test.go:14-114 (TestNoLoggerFormatsAnEmail scans the non-test files of those packages for log.*, Logf or logf calls with a .Email selector argument; TestEmailLogGuardCatchesALeak checks the detector). Limitation: the guard matches only a direct .Email selector in the arguments, so an email copied to a local variable first and then logged would not be caught. No such case exists in the current code."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c38bb8d1-1783-470f-9dc6-d72175ff321d",
+      "title": "Record tool calls, daily players and errors",
+      "checks": [
+        {
+          "at": "2026-11-12T15:29:54Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c38bb8d1-1783-470f-9dc6-d72175ff321d",
+            "title": "Record tool calls, daily players and errors",
+            "criteria": [
+              "After a sign-in, an import through a named assistant and a new game, there is a record for each sign-in, tool call (with the tool and assistant), import and new game, each with a time and the same player ID.",
+              "Two players, one active twice and one once in a day, produce exactly two `player_day` records for that day, alongside their tool-call, import and new-game records.",
+              "A failing import (a malformed battle log) writes an error record naming the tool, the error message and the player ID; a failing board action writes one naming the action.",
+              "Across a whole session, the records contain none of: the test player's email or display name, any Google token value, any line of the pasted battle log, any card name from the decks.",
+              "A request refused by the rate limit is recorded once, as a limit refusal, not as a tool call."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/telemetry.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/reads.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "s.do"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "mcp/shared.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/telemetry_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_usage_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/logs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/decks"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "hostauth/google.go:230-231 records sign_in with the account email (Recorder.Record hashes it to the player field, recorder.go:124). usergames/telemetry.go:47-50 records tool_call for every tools/call with Tool, Assistant (from the session client name via mcpserver.AssistantName) and the token's account; :62 and :64 record import and new_game with the same player and Assistant. Each line carries time (recorder.go:121) and the player ID is the same HMAC of the email (ids.go:43-51). cmd/tcgreplay/hosted_usage_test.go:119-160 asserts sign_in, tool_call (import_log and new_game, assistant Claude), import and new_game for the same aID."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "usergames/usergames.go:119-122 calls r.cfg.Recorder.Active(acct.Email) in Use; telemetry.go Active (recorder.go:147-166) writes player_day only on a player's first activity per UTC day (per-day seen set). cmd/tcgreplay/hosted_usage_test.go:234-269 (TestHostedDailyPlayers) has A act twice and B once on 2026-11-12 and asserts exactly two player_day records, one for aID and one for bID, plus tool_call, import and new_game records for each. internal/usergames/telemetry_test.go:232-269 covers the once-per-day rule."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "usergames/telemetry.go:49-66: a failed tools/call (Go error or IsError result) writes an error record with e.Tool set, the account's player ID, and Message redacted (telemetry.Redact). usergames/telemetry.go:85-91 (BoardError) writes an error record with Action set (e.g. move) and the player ID; webui/actions.go:99-101 calls s.OnError on a failed action. Tests: usergames/telemetry_test.go:51-141 (failed import_log yields error with tool, message and player), cmd/tcgreplay/hosted_usage_test.go:165-184 (import_log error record and move error record each with player aID and a non-empty message), internal/webui/onerror_test.go:26-96."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "No email ever reaches a record: telemetry/recorder.go:54 tags Email json:\"-\" and the line struct (recorder.go:64-75) has no email field; cut() (recorder.go:128-129, 168-189) removes the address from Message and Reason. Google tokens and display names are never passed to Record (hostauth/google.go:92-96, 230-231 pass only the account). Tool_call records have no Message field set. Error messages go through telemetry.Redact (redact.go:40-81) against the call's JSON arguments (SensitiveFromJSON, including battle-log lines and decklist card names, redact.go:196-233) and the caller's current game text (usergames/telemetry.go:97-146). cmd/tcgreplay/hosted_usage_test.go:186-228 checks the whole session's records and log for the email, display name, Google ID and access tokens, playmat tokens, cookie, each log line, and each deck card name, and internal/usergames/telemetry_test.go:143-168 checks redaction of game names. The redaction is heuristic, but the code and tests show the criterion holds for the scenarios covered."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:134-138: a single AddReceivingMiddleware(a.MCPMiddleware(), reg.MCPMiddleware()) call, with a comment stating the ordering. In go-sdk v1.6.0 mcp/shared.go:88-92 addMiddleware iterates slices.Backward, so the first middleware is outermost. hostauth/limit.go:110-113 returns a tool error (IsError result, nil error) without calling next when over the limit, so the usergames tool-call middleware (usergames/telemetry.go:47-50) never runs for a refused call. The refusal is recorded as limited (hostauth/limit.go:85-87, reason rate). cmd/tcgreplay/hosted_usage_test.go:271-289 (TestHostedRateLimitRecordedOnce) asserts one limited record and no tool_call or error record for the refused call."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "441388c1-66e8-4a6a-80f8-fdea78463aca",
+      "title": "Let admins look up a player's ID",
+      "checks": [
+        {
+          "at": "2026-11-12T15:33:32Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "441388c1-66e8-4a6a-80f8-fdea78463aca",
+            "title": "Let admins look up a player's ID",
+            "criteria": [
+              "Signed in as an admin, entering a player's email shows the same player ID their records carry.",
+              "A signed-in non-admin is refused, and a signed-out caller is refused or sent to sign in, without seeing any ID.",
+              "A lookup posted from another site is refused.",
+              "The looked-up email address appears in no log line or record."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/handler.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/page.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/cacheadmin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_admin_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cacheadmin/handler.go:58-64 trims the posted email and renders \u0026Lookup{ID: s.PlayerID(player)}. cmd/tcgreplay/hosted.go:161-166 sets svc.PlayerID = rec.ID, and internal/telemetry/recorder.go:124 writes the record's player field with the same r.ids.ID(e.Email) (ids.go:43-51 normalises case and whitespace identically). cmd/tcgreplay/hosted_admin_test.go:273-287 (TestHostedAdminPlayerLookup) posts ' Two@Example.com ' as an admin and asserts the page contains \u003ccode\u003e\"+twoID+\"\u003c/code\u003e, where twoID is the constant in hosted_test.go:351-358 that the records are checked against."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:220-222 mounts /admin and /admin/ only as a.RequireAdmin(admin.Handler()), so POST /admin/player is covered. internal/hostauth/admin.go:33-37 refuses a signed-out non-GET with 401 'sign in required' and redirects signed-out page loads to sign-in. admin.go:43-50 refuses a signed-in non-admin with 403 and a page with no ID. The test at hosted_admin_test.go:289-302 checks 'non-admin' gets 403 and 'signed out' gets 401, and that neither body contains twoID."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/hostauth/admin.go:52-57 refuses any non-GET/HEAD admin request that fails a.sameSite(r) with 403 'admin changes must come from the playmat', before next.ServeHTTP runs the lookup. The lookup is a POST, so it is covered. hosted_admin_test.go:296 sends the lookup with Origin https://evil.example and expects 403 with no ID in the body. I did not re-run the test."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The email arrives only in the POST form body (handler.go:58), never in a URL. servePlayer (handler.go:49-65) writes no log line. Its only record is Event{Name: AdminAction, Email: email(r), Action: \"lookup\"} (handler.go:63), which carries the admin's address, hashed to a player ID, not the looked-up one. The recorder never writes the Email field (recorder.go:54 json:\"-\", recorder.go:124 writes only the ID). The old hostauth/admin.go log lines that printed the admin email were replaced with records (admin.go:44, 53). hosted_admin_test.go:303-306 and cacheadmin/events_test.go:86-92 assert the looked-up address appears in neither the records nor the logs. The email is echoed in the HTML response (page.go:67), which is neither a log line nor a record."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "ee78d4b7-f570-4962-bbfc-e4f236151fe6",
+      "title": "Declare alerts and the secret, and write the runbook",
+      "checks": [
+        {
+          "at": "2026-11-12T15:37:31Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "ee78d4b7-f570-4962-bbfc-e4f236151fe6",
+            "title": "Declare alerts and the secret, and write the runbook",
+            "criteria": [
+              "The app definition declares restart, CPU and memory alert rules for the playmat and the player-ID secret, each explained in a comment.",
+              "The runbook lists every record the playmat writes, matching the code, and states what records never contain.",
+              "The runbook explains how to read, for any day, distinct players, tool calls by assistant, imports and new games in Insights, and how to go from a player's email to their error records.",
+              "The website build still reads its limits from the app definition and still succeeds."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/scripts"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261112090330-4ac2ea19-observability/tcgreplay/.do/app.yaml lines 66-84: a comment block explains the alert rules (an unexpected restart, and CPU or memory staying high, with where the recipients are set), then the services[playmat].alerts list declares RESTART_COUNT (GREATER_THAN 0, FIVE_MINUTES), CPU_UTILIZATION (GREATER_THAN 80, TEN_MINUTES) and MEM_UTILIZATION (GREATER_THAN 80, TEN_MINUTES). The player-ID secret is declared at lines 120-128 (TCGREPLAY_PLAYER_ID_KEY, type SECRET) with a comment on its length, its effect on IDs and where to set it. Note: CPU and memory share one explanatory comment rather than one each."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The record list is complete and matches the code: the 14 event constants in internal/telemetry/recorder.go:14-46 are the 14 rows of docs/observability.md lines 53-70, and every Record call site (hostauth limit.go:86, google.go:95/233, board.go:134, admin.go:44/53; usergames usergames.go:122/133/144/203/277, usergames.go board.go:34, telemetry.go:50-64/90; cacheadmin handler.go:36/63/97) matches its row. The never-contains section (docs/observability.md lines 77-100) matches cut() and Redact(). Two statements do not match the code. (a) docs/observability.md line 67 defines the idle field as 'how long an expired game had gone without activity', but usergames.go:203 writes Idle: humanDuration(r.cfg.Idle), the configured idle timeout the game exceeded, not the actual idle time. (b) docs/observability.md lines 104-106 say the ID is an HMAC-SHA256 of the email keyed with TCGREPLAY_PLAYER_ID_KEY, but internal/telemetry/ids.go:37-50 derives the HMAC key as SHA-256('tcgreplay player-id\\x00'+secret) and hashes the message 'tcgreplay player\\x00'+email, so a reader cannot reproduce an ID from the runbook. Fix both lines in docs/observability.md."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "docs/observability.md lines 119-147 give the Insights steps (LON1, absolute UTC range, a 7-day cap noted) and a table of searches: distinct players as \"event\":\"player_day\" (line 132), tool calls by assistant as \"event\":\"tool_call\" with each \"assistant\" value (line 133), imports (135) and new games (136). Lines 149-163 give the email-to-errors path: sign in as an admin, use the Find a player's ID form on /admin (the page form is in internal/cacheadmin/page.go, the lookup is handler.go servePlayer), then search \"player\":\"p_...\" with \"event\":\"error\". The Find-ID form and the admin_action lookup record are implemented, so the path exists."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "site/src/lib/facts.ts:13 reads .do/app.yaml, and loadLimits (lines 42-62) takes TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS and TCGREPLAY_IDLE_TIMEOUT from the playmat service's envs via a YAML parse (lines 69-89), so the new alerts block and the SECRET env are ignored by it and the three limit envs are unchanged in .do/app.yaml lines 133-143. The site build is not re-run here (read-only); the reported 'npm run build' pass (19 pages, Complete) is consistent with the code read."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-12T15:39:03Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "ee78d4b7-f570-4962-bbfc-e4f236151fe6",
+            "title": "Declare alerts and the secret, and write the runbook",
+            "criteria": [
+              "The app definition declares restart, CPU and memory alert rules for the playmat and the player-ID secret, each explained in a comment.",
+              "The runbook lists every record the playmat writes, matching the code, and states what records never contain.",
+              "The runbook explains how to read, for any day, distinct players, tool calls by assistant, imports and new games in Insights, and how to go from a player's email to their error records.",
+              "The website build still reads its limits from the app definition and still succeeds."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/scripts"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": ".do/app.yaml:66-84 declares service alerts on the playmat: RESTART_COUNT (GREATER_THAN 0, FIVE_MINUTES), CPU_UTILIZATION (GREATER_THAN 80, TEN_MINUTES), MEM_UTILIZATION (GREATER_THAN 80, TEN_MINUTES). The comment at lines 66-71 explains the restart rule (an unexpected restart) and the CPU and memory rules (staying high), and says where recipients are set. The player-ID secret is declared at lines 120-128 with a comment (lines 120-125) covering its purpose, length, what changing it does, and where to set it. One comment block covers the three alert rules rather than one comment per rule; the rules are still each explained."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "docs/observability.md:29-70 has a table of 14 events, matching the 14 constants in internal/telemetry/recorder.go:14-46 (sign_in, sign_in_refused, sign_out, player_day, tool_call, import, new_game, error, limited, game_expired, account_removed, board_refused, admin_refused, admin_action). Each row's trigger matches its call site: usergames/telemetry.go:50-64 (tool_call, error, import, new_game), usergames/telemetry.go:90 (board error), usergames/usergames.go:122,133,144,203,277 and board.go:34, hostauth/google.go:95,233, hostauth/board.go:134, hostauth/limit.go:86, hostauth/admin.go:44,53, cacheadmin/handler.go:36,63,97. The field table (observability.md:29-40) and field order match the line struct at recorder.go:64-75. 'What is never recorded' is at observability.md:77-100 and states no email or name, no Google or playmat tokens or cookies, no battle log, decklist or card data, and describes the redaction. The one-line redaction claim matches telemetry/redact.go and recorder.go cut()."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "docs/observability.md:132-151 gives the Insights steps (LON1, absolute UTC range, text searches) and a table for distinct players (\"event\":\"player_day\"), tool calls by assistant (tool_call with assistant Claude, ChatGPT, Codex, Gemini), imports and new games. docs/observability.md:157-171 gives the email-to-errors procedure: the admin page's Find a player's ID form, then searching \"player\":\"\u003cid\u003e\" with \"event\":\"error\". Caveat: mcpserver/server.go:163-174 AssistantName can return the client's own name for an unknown client, and the runbook's by-assistant searches cover only the four named assistants, so a call from another client is not covered by a stated search. The required reading steps are otherwise present."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "No site file is changed in the staged diff (tcgreplay.diff lists no site/ paths). site/src/lib/facts.ts:172 still builds limits with loadLimits(appSpec), which parses .do/app.yaml as YAML (facts.ts:69-72) and reads the playmat service's envs for TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS and TCGREPLAY_IDLE_TIMEOUT (facts.ts:26-28, 42-61). The new alerts block and the new TCGREPLAY_PLAYER_ID_KEY env do not change those keys, so the reader is unaffected. The build result ('Complete!') is taken from the verification summary; I did not run it."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "a867b923-58c2-4ae1-92ea-1c428c383d12",
+      "title": "Add the memory-per-game measurement",
+      "checks": [
+        {
+          "at": "2026-11-12T15:41:21Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a867b923-58c2-4ae1-92ea-1c428c383d12",
+            "title": "Add the memory-per-game measurement",
+            "criteria": [
+              "Asking for the measurement reports the average memory a full imported game with branches adds, and how many such games would fit in a given memory budget.",
+              "The measurement is skipped in ordinary test runs, so it never slows or fails them."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/memory_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/memory_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/decks"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/index.json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/memory_test.go:28-112 (TestMemoryPerGame, package game_test) imports a full game from testdata/logs/2026-10-11_lukiees_mirror.txt with the corpus deck as deck and opponent deck (lines 39-54), adds two branches via g.Rewind with a few moves each (lines 60-70), and reports the average heap per game in bytes and MiB (lines 93-99, logged as 'average per game (a full imported game with an opponent list and two branches)'). Lines 101-111 report how many games fit in 512 MiB and 1 GiB at 70% use after the baseline. Caveat: the budgets are fixed in the code (512 MiB and 1 GiB), not read from a user-supplied value, so 'a given memory budget' is only met in the sense that the test reports fit counts for stated budgets. The staged verify run (TCGREPLAY_MEASURE_MEMORY=1) printed these figures, which is consistent with the code."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/game/memory_test.go:29-31: the first statement of TestMemoryPerGame is `if os.Getenv(\"TCGREPLAY_MEASURE_MEMORY\") != \"1\" { t.Skip(...) }`, so without the variable the test skips before any work or assertion runs. The default verify run showed '--- SKIP: TestMemoryPerGame'. The test never fails on a figure (line 110 only logs). Note for the caller, outside this criterion: the staged diff replaces the whole of internal/game/memory_test.go (diff lines 744-1037+), deleting the previous tests TestNothingWritten, TestRestartForgets, TestImportReplaces and TestImportNeedsDeck (and their helpers). A grep of the code root finds none of those names in internal/game any more, so that coverage is gone from the tree; the scope rule says to change nothing that belongs to another task, so this should be checked."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "8a4c8b44-c64e-4ba0-ac34-d4c1346072d7",
+      "title": "Set up the secret and alert recipients, deploy and measure",
+      "checks": [
+        {
+          "at": "2026-11-13T07:08:22Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "8a4c8b44-c64e-4ba0-ac34-d4c1346072d7",
+            "title": "Set up the secret and alert recipients, deploy and measure",
+            "criteria": [
+              "The deployed playmat starts with the player-ID secret set and writes records with player IDs to Insights.",
+              "The restart, CPU and memory alerts exist on the app and send to the maintainer's email.",
+              "The memory used per full game (measured and as seen on the deployed instance) and Insights' retention for logs and metrics are written down for the next task."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Code and spec side are in place: .do/app.yaml:117-128 declares TCGREPLAY_PLAYER_ID_KEY as a RUN_TIME SECRET with no value, and cmd/tcgreplay/hosted.go hostedRecorder (staged diff hunk at lines 123-138) refuses to start without it. Nothing in the staged diff or status file shows a production deploy or a live record: the secret value lives in the DigitalOcean control panel, and no deployed-instance evidence (Insights log lines, a start-up line ending 'player IDs on') is present. This needs the human deploy step and its evidence."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The rules are declared in the repo: .do/app.yaml:72-84 sets RESTART_COUNT (\u003e0, FIVE_MINUTES), CPU_UTILIZATION (\u003e80, TEN_MINUTES) and MEM_UTILIZATION (\u003e80, TEN_MINUTES) on the playmat service. The file says recipients cannot be named there (app.yaml:67-71) and must be set in the control panel, which is not in the repo. docs/observability.md:196-199 says the deploy workflow does not apply app-spec edits, and no evidence shows the rules were applied with doctl apps update or that the maintainer's email is configured. Live rules and the email recipient are unverified."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "docs/observability.md:203-215 still has the Capacity and Retention sections as placeholders ('To be filled from the memory-per-game measurement...' and 'To be filled from DigitalOcean...'). There is no measured memory per full game, no calculation, no chosen TCGREPLAY_MAX_USERS or instance size, and no Insights retention figures for logs or metrics, with no date or source. The untracked internal/game/measure_memory_test.go exists, but the written-down result the criterion asks for is absent from the docs."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:09:18Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "8a4c8b44-c64e-4ba0-ac34-d4c1346072d7",
+            "title": "Set up the secret and alert recipients, deploy and measure",
+            "criteria": [
+              "The deployed playmat starts with the player-ID secret set and writes records with player IDs to Insights.",
+              "The restart, CPU and memory alerts exist on the app and send to the maintainer's email.",
+              "The memory used per full game (measured and as seen on the deployed instance) and Insights' retention for logs and metrics are written down for the next task."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The code side is in place: .do/app.yaml:120-128 declares TCGREPLAY_PLAYER_ID_KEY as a RUN_TIME SECRET with no value, and internal/telemetry/ids.go plus cmd/tcgreplay/hosted.go:128-138 make hosted mode fail without it. Nothing in the staged diff or the status list shows the secret set on the deployed app or a deploy with player-ID records in Insights. Those are control-panel and production steps the files cannot show. Verdict is not_met because the deployed evidence is absent, not because the work is impossible."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The rules exist: .do/app.yaml:72-84 declares RESTART_COUNT (above 0, FIVE_MINUTES), CPU_UTILIZATION (above 80, TEN_MINUTES) and MEM_UTILIZATION (above 80, TEN_MINUTES) on the playmat service. The recipient is not in the files. .do/app.yaml:67-71 and docs/observability.md:197-199 say it is set in the control panel, and no record of that exists in the repo. Nothing shows the maintainer's email was configured or an alert was delivered."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "docs/observability.md:203-208 (Capacity) says 'To be filled from the memory-per-game measurement and the deployed instance' and gives no figure. docs/observability.md:212-215 (Retention) says 'To be filled from DigitalOcean' and gives no retention periods, confirmation date or source. An untracked internal/game/measure_memory_test.go exists, but no measured value is written into the docs or the diff."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:10:00Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "8a4c8b44-c64e-4ba0-ac34-d4c1346072d7",
+            "title": "Set up the secret and alert recipients, deploy and measure",
+            "criteria": [
+              "The deployed playmat starts with the player-ID secret set and writes records with player IDs to Insights.",
+              "The restart, CPU and memory alerts exist on the app and send to the maintainer's email.",
+              "The memory used per full game (measured and as seen on the deployed instance) and Insights' retention for logs and metrics are written down for the next task."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The code side is in place: .do/app.yaml:120-128 declares TCGREPLAY_PLAYER_ID_KEY as a SECRET, and cmd/tcgreplay/hosted.go:128-137 refuses to start without it and writes records to stdout. Nothing in the staged diff or the untracked files shows the deployed playmat running with the secret set or writing player-ID records to Insights; that needs the control panel and a production deploy, which the files cannot evidence."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The three alert rules exist in the app definition: .do/app.yaml:72-84 declares RESTART_COUNT, CPU_UTILIZATION and MEM_UTILIZATION. The files do not show that a recipient is set. docs/observability.md:197-201 says the maintainer's email is set in the control panel (Settings \u003e Alerts or an Insights notification channel), which is not in the repo, and no record of that setup or of a test alert arriving by email exists in the diff or the untracked files."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "docs/observability.md:203-208 (Capacity) reads 'To be filled from the memory-per-game measurement and the deployed instance', and docs/observability.md:210-215 (Retention) reads 'To be filled from DigitalOcean'. Neither section contains a measured memory per full game or Insights' log and metric retention. The untracked file internal/game/measure_memory_test.go exists, but the measured figure is not written into the docs."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-13T07:10:08Z",
+          "round": 1,
+          "decision": "accept",
+          "reason": "The user acknowledged this human task and owns it: the maintainer sets the secret and alert recipients when deploying, and measures memory and confirms Insights retention after deploy. Deferred, not done in this run."
+        }
+      ],
+      "attempts": 3,
+      "state": "accepted_shortfall"
+    },
+    {
+      "item": "0dd1d664-6c2d-4d6e-b8d5-8983e785892c",
+      "title": "Record capacity and retention, and set the launch limits",
+      "checks": [
+        {
+          "at": "2026-11-13T07:12:07Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "0dd1d664-6c2d-4d6e-b8d5-8983e785892c",
+            "title": "Record capacity and retention, and set the launch limits",
+            "criteria": [
+              "The runbook states the measured memory per full game with branches, the chosen player limit and instance size, and the headroom they leave.",
+              "The runbook states how long usage records, error records and the hosting platform's metrics are each kept.",
+              "The app definition's player limit and instance size match the runbook, and the website build still succeeds with them."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "apps-s-1vcpu-0.5gb"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "docs/observability.md:203-249 (Capacity) says 'Pending the maintainer's measurement' and 'The launch limits stay as they are', with no chosen limit or size recorded. The only figure is the 2026-11-12 development run of about 0.31 MiB per game on a 27.5 MiB baseline (lines 235-238), which the runbook itself says is 'not a launch figure'. No deployed per-game figure, no headroom result and no decision date are recorded. The criterion can be met once the maintainer runs the measurement, so it is not impossible."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "docs/observability.md:251-283 (Retention) gives a period for each kind: usage records 7 days (line 262), error records 7 days (line 263), platform metrics 7 days (line 264), and alert history 30 days (line 265). The figures are explicitly marked provisional and to be confirmed by the maintainer, but each kept period is stated. I could not verify the DigitalOcean sources cited, since I have no browsing."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": ".do/app.yaml:65 sets instance_size_slug: apps-s-1vcpu-0.5gb, and .do/app.yaml:141-142 sets TCGREPLAY_MAX_USERS to \"10\". Both match the runbook's Capacity section (docs/observability.md:208-209: TCGREPLAY_MAX_USERS is 10, instance_size_slug is apps-s-1vcpu-0.5gb). The staged diff (tcgreplay.diff) shows the app.yaml changes are comments and the new alerts and player-ID key, with the size and limit unchanged. The website build passes per the verification summary ('cd site \u0026\u0026 npm run build → pass'). I did not re-run it, since that would write to the working tree."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:12:45Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "0dd1d664-6c2d-4d6e-b8d5-8983e785892c",
+            "title": "Record capacity and retention, and set the launch limits",
+            "criteria": [
+              "The runbook states the measured memory per full game with branches, the chosen player limit and instance size, and the headroom they leave.",
+              "The runbook states how long usage records, error records and the hosting platform's metrics are each kept.",
+              "The app definition's player limit and instance size match the runbook, and the website build still succeeds with them."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "apps-s-1vcpu-0.5gb"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "docs/observability.md:203-246 (Capacity) says 'Pending the maintainer's measurement' and that the launch limits 'stay as they are'. It gives only a development-run figure of about 0.31 MiB per game on a 27.5 MiB baseline, which it labels 'not a launch figure'. It has no measured per-game memory for the deployed playmat, no chosen player limit or instance size recorded as decided, and no headroom figure for the chosen values. The steps to record these (lines 240-249) are unfilled. The diff adds no measurement results to the runbook."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "docs/observability.md:251-283 (Retention) states a period for each kind: usage records 7 days, error records 7 days, and platform metrics 7 days, plus alert history at 30 days. The periods are marked provisional and to be confirmed by the maintainer, but the runbook does state how long each is kept."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The values match: .do/app.yaml:64-65 sets instance_size_slug: apps-s-1vcpu-0.5gb and .do/app.yaml:141-142 sets TCGREPLAY_MAX_USERS to \"10\". docs/observability.md:208-209 states the same two values. The verification summary reports that go test ./cmd/tcgreplay passes (including the app.yaml tests) and that cd site \u0026\u0026 npm run build passes. I did not re-run the build; that verdict rests on the reported result."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:13:26Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "0dd1d664-6c2d-4d6e-b8d5-8983e785892c",
+            "title": "Record capacity and retention, and set the launch limits",
+            "criteria": [
+              "The runbook states the measured memory per full game with branches, the chosen player limit and instance size, and the headroom they leave.",
+              "The runbook states how long usage records, error records and the hosting platform's metrics are each kept.",
+              "The app definition's player limit and instance size match the runbook, and the website build still succeeds with them."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "apps-s-1vcpu-0.5gb"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "docs/observability.md Capacity section (lines 203-249) says the launch limits 'stay as they are until' the measurement is done ('Pending the maintainer's measurement'). It gives only a development-run figure of about 0.31 MiB per game on a 27.5 MiB baseline (lines 236-238), which it labels 'not a launch figure'. It states no deployed memory per full game with branches, no chosen player limit decided from a measurement, and no headroom result for the chosen size. The measurement itself (internal/game/measure_memory_test.go) is skipped unless TCGREPLAY_MEASURE_MEMORY=1, and no recorded result exists in the runbook."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "docs/observability.md Retention section (lines 251-283) has a table stating usage records 7 days (line 262), error records 7 days (line 263), and platform metrics 7 days (line 264). The values are marked provisional and 'to be confirmed by the maintainer', but each of the three kinds has a stated period."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Going by the files: .do/app.yaml:142 sets TCGREPLAY_MAX_USERS to \"10\", and .do/app.yaml:65 sets instance_size_slug to apps-s-1vcpu-0.5gb. docs/observability.md:208-209 states the same values (10 and apps-s-1vcpu-0.5gb), so they match. The site build passing is taken from the verify summary (npm run build reported Complete); I did not re-run it, since I am read-only."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-13T07:13:26Z",
+          "round": 1,
+          "decision": "accept",
+          "reason": "The user deferred the memory measurement to the maintainer after deploy and asked to keep the current launch limits unchanged; the runbook records capacity as pending with the measurement steps, and retention as provisional figures to be confirmed."
+        }
+      ],
+      "attempts": 3,
+      "state": "accepted_shortfall"
+    },
+    {
+      "item": "9964965a-4f48-4dd8-9380-d395053d3399",
+      "title": "Apply the launch limits",
+      "checks": [
+        {
+          "at": "2026-11-13T07:14:38Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "9964965a-4f48-4dd8-9380-d395053d3399",
+            "title": "Apply the launch limits",
+            "criteria": [
+              "The live app runs on the chosen instance size with the chosen player limit."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The repo side is consistent. .do/app.yaml:65 sets instance_size_slug: apps-s-1vcpu-0.5gb and .do/app.yaml:141-142 sets TCGREPLAY_MAX_USERS to \"10\". docs/observability.md:205-210 (Capacity) names those same two values as the launch limits, pending the memory measurement. The staged diff (/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/tmp/20261112090330-4ac2ea19-observability/goal-check/tcgreplay.diff) leaves both values unchanged as context lines, so nothing in the diff changes them. However, the criterion is about the live app, and nothing readable here shows it runs on those values. The doc (lines 246-249) says the values are applied with `doctl apps update \u003capp-id\u003e --spec .do/app.yaml`, and no record of that run, no recorded deployed spec and no measurement result (Capacity step 3 still unfilled) appears in the repo. The goal is marked as a human execution step and I cannot query DigitalOcean, so the live state is unverified."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:15:13Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "9964965a-4f48-4dd8-9380-d395053d3399",
+            "title": "Apply the launch limits",
+            "criteria": [
+              "The live app runs on the chosen instance size with the chosen player limit."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The file holds the launch values: .do/app.yaml:65 sets instance_size_slug apps-s-1vcpu-0.5gb and :141-142 sets TCGREPLAY_MAX_USERS to \"10\". The staged diff (/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/tmp/20261112090330-4ac2ea19-observability/goal-check/tcgreplay.diff) does not change either value; they are unchanged context lines. The file says both are provisional: :62-64 and :139-140 keep them only 'until the memory measurement in docs/observability.md (Capacity)' is done. docs/observability.md:203-209 says 'Pending the maintainer's measurement' and repeats the same values, and :246 asks for the chosen values to be recorded with a date, which is not present. So no chosen size or limit is recorded. Whether the live app runs these values cannot be shown from files; the goal is a human, production-access item, and no `doctl apps update` or live check is evidenced."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:15:53Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "9964965a-4f48-4dd8-9380-d395053d3399",
+            "title": "Apply the launch limits",
+            "criteria": [
+              "The live app runs on the chosen instance size with the chosen player limit."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The change in /home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261112090330-4ac2ea19-observability/tcgreplay/.do/app.yaml does not set a chosen size or limit. It keeps the launch placeholders: instance_size_slug is apps-s-1vcpu-0.5gb (line 65) and TCGREPLAY_MAX_USERS is \"10\" (line 142). The added comments (lines 62-64, 139-140) say these stay at launch values until the memory measurement in docs/observability.md (Capacity) is done. That Capacity section (lines 205-210) is marked 'Pending the maintainer's measurement', and it records no chosen size or limit with a date. The diff adds no change to either value. Whether the live DigitalOcean app runs on the chosen size and limit cannot be checked from the files, and the item is a human-executed production step with no verification run."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-13T07:15:53Z",
+          "round": 1,
+          "decision": "accept",
+          "reason": "Human task deferred to the maintainer: they apply the app definition and any new launch limits after deploy and measurement."
+        }
+      ],
+      "attempts": 3,
+      "state": "accepted_shortfall"
+    }
+  ]
+}

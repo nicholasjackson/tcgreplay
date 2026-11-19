@@ -10,3 +10,6 @@ tags: [mcp, go-sdk, auth, transport]
 - **Localhost protection.** The Streamable handler rejects a request that arrives on a loopback listener with a non-loopback `Host` unless `DisableLocalhostProtection` is set. This bites behind tunnels and proxies.
 - **Server `KeepAlive` closes the session** when a ping goes unanswered, so enabling it can drop clients that do not answer pings.
 - `auth.AuthorizationCodeHandler` works as an OAuth client in tests.
+- **Middleware order across calls is reversed.** `AddReceivingMiddleware` wraps the current handler with each call's list applied in `slices.Backward` (`mcp/shared.go`, `addMiddleware`). Within one call the first middleware is outermost, but a *later* call wraps *outside* everything added before it. To nest B inside A (for example a recorder inside the rate limiter, so refused requests never reach it), pass both in one call: `AddReceivingMiddleware(A, B)`.
+
+- **Tool failures reach middleware as results, not errors.** A typed `mcp.AddTool` handler's returned error is turned into a `*mcp.CallToolResult` with `IsError: true` and the message as its first `TextContent` (`mcp/server.go`, `SetError`), with a nil Go error. A receiving middleware that wants to see failures must inspect `IsError` on the result, not only the error.
