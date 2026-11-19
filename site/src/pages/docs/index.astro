@@ -1,0 +1,31 @@
+---
+// The docs index, served at /docs and /docs/: every docs page from the
+// same list the sidebar renders (lib/docs-pages.ts), with its one-line
+// description.
+import Docs from '../../layouts/Docs.astro';
+import { docsPages } from '../../lib/docs-pages';
+
+const pages = await docsPages();
+---
+<Docs
+  title="Docs"
+  description="Every page of the tcgreplay docs: connecting your assistant, importing and reviewing games, limits and what's new."
+>
+  <h1>Docs</h1>
+  <p>Everything about connecting your assistant to the tcgreplay playmat and using it to review your games.</p>
+  <ul class="docs-index" data-docs-index>
+    {pages.map((p) => (
+      <li>
+        <a href={p.href}>{p.title}</a>
+        {p.description && <p>{p.description}</p>}
+      </li>
+    ))}
+  </ul>
+</Docs>
+
+<style>
+  .docs-index { list-style: none; padding-left: 0; }
+  .docs-index li { margin: 0.9rem 0; }
+  .docs-index a { font-weight: 700; font-size: 1.05rem; }
+  .docs-index p { margin: 0.2rem 0 0; color: var(--muted); }
+</style>

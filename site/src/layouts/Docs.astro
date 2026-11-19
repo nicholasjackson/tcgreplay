@@ -1,8 +1,9 @@
 ---
 // Docs is the layout of the how-to pages: the shared page layout with a
-// sidebar of the docs pages, lowest order first.
+// sidebar linking the docs index, then the docs pages (lib/docs-pages.ts),
+// lowest order first.
 import Base from './Base.astro';
-import { getCollection } from 'astro:content';
+import { docsPages } from '../lib/docs-pages';
 
 interface Props {
   title: string;
@@ -10,20 +11,14 @@ interface Props {
 }
 const { title, description } = Astro.props;
 
-// Pages that are not Markdown docs, placed among them by order.
-const extra = [
-  { href: '/docs/workflows', title: 'Coaching workflows', order: 50 },
-  { href: '/docs/example', title: 'Example game', order: 70 },
-  { href: '/docs/limits', title: 'Limits', order: 80 },
-];
-const docs = (await getCollection('docs')).map((d) => ({ href: `/docs/${d.id}`, title: d.data.title, order: d.data.order }));
-const items = [...docs, ...extra].sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
+const items = await docsPages();
 const here = Astro.url.pathname.replace(/\/$/, '');
 ---
 <Base title={title} description={description}>
   <div class="docs">
     <nav class="docs-nav" aria-label="Guide">
       <ul>
+        <li><a href="/docs" aria-current={here === '/docs' ? 'page' : undefined}>All docs</a></li>
         {items.map((i) => (
           <li><a href={i.href} aria-current={here === i.href ? 'page' : undefined}>{i.title}</a></li>
         ))}
