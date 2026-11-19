@@ -100,7 +100,7 @@ func startHostedAdmin(t *testing.T, shared, token bool) *adminHosted {
 	}
 	h.admin = hostedAdmin(loader, images, reg.Recorder())
 	go h.admin.Run(ctx)
-	ts := httptest.NewServer(hostedHandler(mcpSrv, reg, a, h.admin, func(h http.Handler) http.Handler { return h }))
+	ts := httptest.NewServer(hostedHandler(mcpSrv, reg, a, h.admin, func(h http.Handler) http.Handler { return h }, ""))
 	t.Cleanup(ts.Close)
 	h.hostedServer = &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: loader, events: events}
 	return h

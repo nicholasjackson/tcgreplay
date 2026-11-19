@@ -68,6 +68,15 @@ type config struct {
 	// googleClientID is the Google OAuth client users sign in with (its
 	// secret is read from the environment only).
 	googleClientID string
+	// openAIChallenge is OpenAI's domain-verification token, served at
+	// /.well-known/openai-apps-challenge; empty means that path is not
+	// found. Read from TCGREPLAY_OPENAI_CHALLENGE only, never a flag, so
+	// it never shows in a process listing.
+	openAIChallenge string
+	// reviewer is the Google email of the one reviewer account, admitted
+	// past the user cap (see usergames.Config.Reviewer). Read from
+	// TCGREPLAY_REVIEWER only, never a flag, and never logged.
+	reviewer string
 	// rateLimit is requests a minute per account; maxUsers is places:
 	// signed-in accounts served at once. 0 turns either off.
 	rateLimit, maxUsers int
@@ -112,8 +121,13 @@ func (c config) args() []string {
 }
 
 // maxWaitCap keeps every wait_for_turn call well inside the one-minute
-// limit of clients and proxies.
+// limit of clients and proxies (ChatGPT's tool calls must return within
+// 60 seconds).
 const maxWaitCap = 50 * time.Second
+
+// defaultWaitCap is the wait cap when neither -wait-cap nor
+// TCGREPLAY_WAIT_CAP sets one.
+const defaultWaitCap = 15 * time.Second
 
 // validTiming checks the turn wait's settings: the cap must be above 0 and
 // at most 50s, and the check-in and lock-release times must not be
@@ -178,7 +192,7 @@ func main() {
 	flag.IntVar(&c.maxUsers, "max-users", envInt("TCGREPLAY_MAX_USERS", 10), "with -hosted, signed-in Google accounts served at once (a place is freed when an account's game goes idle or its last sign-in ends); 0 for no cap (default $TCGREPLAY_MAX_USERS, else 10)")
 	idle, idleErr := envDuration("TCGREPLAY_IDLE_TIMEOUT", 60*time.Minute)
 	flag.DurationVar(&c.idleTimeout, "idle-timeout", idle, "with -hosted, how long an account's game may go without activity before it is dropped, e.g. 2m or 1h; 0 never drops (default $TCGREPLAY_IDLE_TIMEOUT, else 60m)")
-	waitCap, capErr := envWait("TCGREPLAY_WAIT_CAP", 15*time.Second)
+	waitCap, capErr := envWait("TCGREPLAY_WAIT_CAP", defaultWaitCap)
 	flag.DurationVar(&c.timing.WaitCap, "wait-cap", waitCap, "longest a single wait_for_turn call waits before reporting it is still waiting; above 0 and at most 50s (default $TCGREPLAY_WAIT_CAP, else 15s)")
 	checkIn, checkErr := envWait("TCGREPLAY_CHECK_IN", 5*time.Minute)
 	flag.DurationVar(&c.timing.CheckIn, "check-in", checkIn, "how long the player may leave the board untouched on their turn before the assistant asks \"Still playing?\" (default $TCGREPLAY_CHECK_IN, else 5m)")
@@ -194,6 +208,8 @@ func main() {
 		os.Exit(2)
 	}
 	c.idleErr = idleErr
+	c.openAIChallenge = strings.TrimSpace(os.Getenv("TCGREPLAY_OPENAI_CHALLENGE"))
+	c.reviewer = strings.TrimSpace(os.Getenv("TCGREPLAY_REVIEWER"))
 	// A flag overrides the environment, even an invalid value there.
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {

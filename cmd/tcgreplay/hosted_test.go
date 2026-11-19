@@ -24,6 +24,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/oauth2"
 
+	"github.com/nicholasjackson/tcgreplay/internal/appspec"
 	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
@@ -198,7 +199,8 @@ func TestHostedHandlerServesMCPAndBoard(t *testing.T) {
 		t.Fatalf("ping tool: %q, want pong", out)
 	}
 
-	// The same tools and input schemas as a desktop (in-memory) client sees.
+	// The same tools and input schemas as a desktop (in-memory) client
+	// sees, plus get_account, which only the hosted playmat offers.
 	desktop := (&mcpserver.Server{M: game.NewManager(t.TempDir(), nil), Version: "test"}).MCP()
 	st, ct := mcp.NewInMemoryTransports()
 	if _, err := desktop.Connect(context.Background(), st, nil); err != nil {
@@ -229,9 +231,12 @@ func TestHostedHandlerServesMCPAndBoard(t *testing.T) {
 		}
 	}
 	for name := range overHTTP {
-		if _, ok := inMem[name]; !ok {
+		if _, ok := inMem[name]; !ok && name != "get_account" {
 			t.Errorf("tool %s only over HTTP", name)
 		}
+	}
+	if _, ok := overHTTP["get_account"]; !ok {
+		t.Error("hosted playmat does not offer get_account")
 	}
 
 	// The board's routes on the same address, signed in.
@@ -1283,8 +1288,9 @@ func TestHostedHealthz(t *testing.T) {
 }
 
 // TestAppSpecHealthCheckAndSecrets: the App Platform definition checks
-// health at /healthz and declares the Google credentials and the
-// player-ID key as secrets, with no value in the file.
+// health at /healthz and declares the Google credentials, the player-ID
+// key, OpenAI's domain-verification token and the reviewer's email as
+// secrets, with no value in the file.
 func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 	lines := strings.Split(readTestdata(t, "../../.do/app.yaml"), "\n")
 	var health bool
@@ -1303,8 +1309,8 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 		t.Error("app.yaml has no health_check with http_path: /healthz")
 	}
 
-	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET", "TCGREPLAY_PLAYER_ID_KEY"} {
-		f := appEnvFields(lines, key)
+	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET", "TCGREPLAY_PLAYER_ID_KEY", "TCGREPLAY_OPENAI_CHALLENGE", "TCGREPLAY_REVIEWER"} {
+		f := appspec.EnvFields(strings.Join(lines, "\n"), key)
 		if f == nil {
 			t.Errorf("app.yaml declares no %s", key)
 			continue
@@ -1318,31 +1324,6 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 	}
 }
 
-// appEnvFields returns the settings of app.yaml's env entry for key, or nil
-// if the file declares none.
-func appEnvFields(lines []string, key string) map[string]string {
-	for i, l := range lines {
-		if strings.TrimSpace(l) != "- key: "+key {
-			continue
-		}
-		out := map[string]string{}
-		indent := len(l) - len(strings.TrimLeft(l, " ")) + 2
-		for _, next := range lines[i+1:] {
-			trimmed := strings.TrimSpace(next)
-			if trimmed == "" || strings.HasPrefix(trimmed, "#") {
-				continue
-			}
-			if len(next)-len(strings.TrimLeft(next, " ")) != indent || strings.HasPrefix(trimmed, "-") {
-				break
-			}
-			k, v, _ := strings.Cut(trimmed, ":")
-			out[k] = strings.TrimSpace(v)
-		}
-		return out
-	}
-	return nil
-}
-
 // TestAppSpecIdleTimeoutAndSingleInstance: the App Platform definition sets
 // the idle drop to 60 minutes as a plain run-time setting (not a secret),
 // and runs exactly one instance, since every account's game lives in that
@@ -1350,7 +1331,7 @@ func appEnvFields(lines []string, key string) map[string]string {
 func TestAppSpecIdleTimeoutAndSingleInstance(t *testing.T) {
 	lines := strings.Split(readTestdata(t, "../../.do/app.yaml"), "\n")
 
-	f := appEnvFields(lines, "TCGREPLAY_IDLE_TIMEOUT")
+	f := appspec.EnvFields(strings.Join(lines, "\n"), "TCGREPLAY_IDLE_TIMEOUT")
 	if f == nil {
 		t.Fatal("app.yaml declares no TCGREPLAY_IDLE_TIMEOUT")
 	}

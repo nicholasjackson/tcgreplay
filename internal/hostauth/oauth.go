@@ -457,17 +457,19 @@ func (a *Auth) verify(ctx context.Context, token string, r *http.Request) (*auth
 		// token's remaining life.
 		Expiration: time.Now().Add(t.expires.Sub(now)),
 		UserID:     t.account.ID,
-		Extra:      map[string]any{"email": t.account.Email},
+		Extra:      map[string]any{"email": t.account.Email, "verified": t.account.EmailVerified},
 	}, nil
 }
 
 // AccountFromToken returns the signed-in account an MCP request acts for,
 // from the token information the MCP library hands every request
-// (RequestExtra.TokenInfo).
+// (RequestExtra.TokenInfo). EmailVerified is false for a token issued
+// before the flag was sealed into tokens.
 func AccountFromToken(ti *auth.TokenInfo) (Account, bool) {
 	if ti == nil || ti.UserID == "" {
 		return Account{}, false
 	}
 	email, _ := ti.Extra["email"].(string)
-	return Account{ID: ti.UserID, Email: email}, true
+	verified, _ := ti.Extra["verified"].(bool)
+	return Account{ID: ti.UserID, Email: email, EmailVerified: verified}, true
 }

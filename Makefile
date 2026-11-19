@@ -1,7 +1,7 @@
 # Build the playmat UI into the Go package, then the binary.
 BIN := bin/tcgreplay
 
-.PHONY: build install web site site-dev site-test test dev dev-ui docker-build docker-run clean
+.PHONY: build install web site site-dev site-test test dev dev-ui docker-build docker-run plugin clean
 
 # Dev mode runs this checkout's build beside the installed one, with its
 # own data dir and UI port, so real games and the desktop app's daemon are
@@ -84,7 +84,11 @@ dev-ui: web/node_modules
 # TCGREPLAY_SPACES_BUCKET, TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET
 # (optional). To use the admin page at /admin, export TCGREPLAY_ADMINS
 # (Google account emails), and TCGREPLAY_SPACES_CDN_TOKEN for image clears
-# to purge the CDN (both optional). TCGREPLAY_WEB_ANALYTICS_TOKEN is
+# to purge the CDN (both optional). TCGREPLAY_REVIEWER (the plugin
+# reviewer's Google email, let past the user cap) and
+# TCGREPLAY_OPENAI_CHALLENGE (OpenAI's domain-verification token, served at
+# /.well-known/openai-apps-challenge) are passed too, if exported (both
+# optional). TCGREPLAY_WEB_ANALYTICS_TOKEN is
 # deliberately not passed, so a local container run never counts visitors.
 IMAGE ?= tcgreplay
 PUBLIC_URL ?= http://localhost:8080
@@ -99,7 +103,16 @@ docker-run:
 		-e TCGREPLAY_CARDSETS_URL -e TCGREPLAY_CARDSETS_INTERVAL \
 		-e TCGREPLAY_SPACES_ENDPOINT -e TCGREPLAY_SPACES_BUCKET \
 		-e TCGREPLAY_SPACES_KEY -e TCGREPLAY_SPACES_SECRET \
-		-e TCGREPLAY_ADMINS -e TCGREPLAY_SPACES_CDN_TOKEN $(IMAGE)
+		-e TCGREPLAY_ADMINS -e TCGREPLAY_SPACES_CDN_TOKEN \
+		-e TCGREPLAY_REVIEWER -e TCGREPLAY_OPENAI_CHALLENGE $(IMAGE)
+
+# The ChatGPT plugin package for OpenAI's plugin dashboard: plugin.json,
+# mcp.json and the listing icon, built from plugin/ (the listing source,
+# release notes and icon), the public address in .do/app.yaml and the
+# fan-project notice in internal/notice/notice.json. Upload the ZIP in
+# OpenAI's plugin dashboard; plugin/SUBMITTING.md lists the steps.
+plugin:
+	go run ./cmd/tcgreplay-plugin -out bin/tcgreplay-plugin.zip
 
 clean:
 	rm -rf bin internal/webui/dist/app internal/site/dist/app
