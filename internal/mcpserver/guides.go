@@ -27,7 +27,7 @@ type guideEntry struct {
 // game, and in hosted mode must not take a place or be refused as busy (see
 // bind).
 func (s *Server) registerGuides(srv *mcp.Server) {
-	mcp.AddTool(srv, &mcp.Tool{Name: "guide", Description: guideToolDescription(), Annotations: annotations("guide")}, func(_ context.Context, _ *mcp.CallToolRequest, in GuideArg) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(srv, s.tool("guide", "Read a coaching guide", guideToolDescription()), func(_ context.Context, _ *mcp.CallToolRequest, in GuideArg) (*mcp.CallToolResult, any, error) {
 		if in.Name == "" {
 			var list []guideEntry
 			for _, g := range guides.List() {
@@ -59,7 +59,7 @@ func (s *Server) registerGuides(srv *mcp.Server) {
 // carry each guide's trigger itself.
 func guideToolDescription() string {
 	var b strings.Builder
-	b.WriteString("Pokémon TCG coaching on the playmat. Read the matching guide (pass its name) before starting its workflow, even if the player does not mention TCG Replay; call with no name to list them.")
+	b.WriteString("Use this when the player wants Pokémon TCG coaching on the playmat: read the matching guide (pass its name) before starting its workflow, even if the player does not mention TCG Replay; call with no name to list them. Do not use it for card text (card_text).")
 	for _, g := range guides.List() {
 		fmt.Fprintf(&b, " %s: %s", g.Name, g.Description)
 	}

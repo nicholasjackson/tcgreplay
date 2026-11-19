@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>TCG Replay listing icon</title>
+  <!-- The listing icon: three fanned plain cards with a replay arrow on the
+       front card, in the project's navy and cyan. It carries no
+       trademarked game mark, name, logo or character. Render to icon.png with:
+       rsvg-convert -w 512 -h 512 icon.svg -o icon.png -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14306b"/>
+      <stop offset="1" stop-color="#0a1a3d"/>
+    </linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d4a9c"/>
+      <stop offset="1" stop-color="#143a80"/>
+    </linearGradient>
+  </defs>
+  <rect x="12" y="12" width="488" height="488" rx="96" fill="url(#bg)" stroke="#22b8f0" stroke-width="16"/>
+  <!-- back cards -->
+  <g stroke="#ffffff" stroke-width="14" stroke-linejoin="round" fill="#102a5c">
+    <rect x="156" y="120" width="180" height="252" rx="22" transform="rotate(-16 246 372)"/>
+    <rect x="176" y="120" width="180" height="252" rx="22" transform="rotate(16 266 372)"/>
+  </g>
+  <!-- front card -->
+  <rect x="166" y="104" width="180" height="252" rx="22" fill="url(#face)" stroke="#ffffff" stroke-width="14" stroke-linejoin="round"/>
+  <!-- replay arrow: an open circle with an arrowhead, and a play triangle -->
+  <g fill="none" stroke="#22b8f0" stroke-width="20" stroke-linecap="round">
+    <path d="M 302 230 A 46 46 0 1 1 288 197"/>
+  </g>
+  <path d="M 268 176 L 312 186 L 290 224 Z" fill="#22b8f0" stroke="#22b8f0" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M 244 210 L 244 252 L 278 231 Z" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+  <!-- a strip under the cards echoing a timeline -->
+  <g fill="#22b8f0">
+    <rect x="132" y="408" width="248" height="14" rx="7" opacity="0.35"/>
+    <rect x="132" y="408" width="150" height="14" rx="7"/>
+    <circle cx="282" cy="415" r="16" fill="#ffffff" stroke="#22b8f0" stroke-width="6"/>
+  </g>
+</svg>

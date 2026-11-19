@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,6 +40,11 @@ type Config struct {
 	// MaxUsers is the number of places: accounts that may hold a game at
 	// once. 0 means no cap.
 	MaxUsers int
+	// Reviewer is the Google email of the one reviewer account (OpenAI's
+	// plugin review), matched without regard to case and only when Google
+	// verified it. The reviewer is admitted even when every place is held,
+	// and its place is not counted against MaxUsers. Empty means none.
+	Reviewer string
 	// Now is the clock; nil means time.Now. Tests substitute their own.
 	Now func() time.Time
 	// Recorder records the registry's events (refusals at the user cap,
@@ -80,9 +86,12 @@ type Entry struct {
 	// the server's places; both are guarded by the registry's mu.
 	last  time.Time
 	holds bool
-	ctx   context.Context
-	stop  context.CancelFunc
-	board http.Handler
+	// reviewer is whether acct is the configured reviewer, as of its last
+	// action; a reviewer's place is not counted. Guarded by mu.
+	reviewer bool
+	ctx      context.Context
+	stop     context.CancelFunc
+	board    http.Handler
 }
 
 // New returns an empty registry for cfg.
@@ -90,6 +99,7 @@ func New(cfg Config) *Registry {
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
+	cfg.Reviewer = strings.ToLower(strings.TrimSpace(cfg.Reviewer))
 	return &Registry{cfg: cfg, entries: map[string]*Entry{}}
 }
 
@@ -113,12 +123,14 @@ func (r *Registry) Use(acct hostauth.Account) (*Entry, error) {
 	if e != nil {
 		r.expireIfIdle(e, now)
 	}
-	if (e == nil || !e.holds) && r.full() {
+	reviewer := r.isReviewer(acct)
+	if (e == nil || !e.holds) && !reviewer && r.full() {
 		return nil, hostauth.BusyError(r.cfg.MaxUsers)
 	}
 	e = r.entryLocked(acct, now)
 	e.last = now
 	e.holds = true
+	e.reviewer = reviewer
 	r.cfg.Recorder.Active(acct.Email)
 	return e, nil
 }
@@ -146,8 +158,16 @@ func (r *Registry) Release(id string) {
 	r.removeLocked(id)
 }
 
+// isReviewer reports whether acct is the configured reviewer: its email
+// matches, without regard to case, and Google verified it (as admins are
+// matched, see hostauth.Auth.IsAdmin).
+func (r *Registry) isReviewer(acct hostauth.Account) bool {
+	return r.cfg.Reviewer != "" && acct.EmailVerified && strings.ToLower(strings.TrimSpace(acct.Email)) == r.cfg.Reviewer
+}
+
 // full reports whether every place is held. Idle entries are expired
-// first, so their places count as free. The caller holds mu.
+// first, so their places count as free, and the reviewer's place is not
+// counted. The caller holds mu.
 func (r *Registry) full() bool {
 	if r.cfg.MaxUsers <= 0 {
 		return false
@@ -155,7 +175,7 @@ func (r *Registry) full() bool {
 	r.sweepLocked(r.cfg.Now())
 	held := 0
 	for _, e := range r.entries {
-		if e.holds {
+		if e.holds && !e.reviewer {
 			held++
 		}
 	}

@@ -394,6 +394,8 @@ func (s *store) release(id string) {
 }
 
 // issueTokens issues an access and a refresh token to clientID for acct.
+// Both carry acct's verified-email flag, so a reviewer or admin is
+// recognised on tool calls too.
 // The refresh token takes over the live sign-in of the code or refresh
 // token just exchanged, so the account never drops out of the count.
 func (s *store) issueTokens(now time.Time, clientID string, acct Account) (access, refresh string) {
@@ -401,10 +403,10 @@ func (s *store) issueTokens(now time.Time, clientID string, acct Account) (acces
 	defer s.mu.Unlock()
 	s.sweep(now)
 	ck := clientKey(clientID)
-	access = s.seal.seal(sealAccess, grantClaims{Client: ck, Sub: acct.ID, Email: acct.Email, Exp: now.Add(accessLifetime).Unix()})
+	access = s.seal.seal(sealAccess, grantClaims{Client: ck, Sub: acct.ID, Email: acct.Email, Verified: acct.EmailVerified, Exp: now.Add(accessLifetime).Unix()})
 	id, exp := newToken(), now.Add(refreshLifetime)
 	s.refresh[id] = &refreshToken{account: acct, expires: exp}
-	refresh = s.seal.seal(sealRefresh, grantClaims{ID: id, Client: ck, Sub: acct.ID, Email: acct.Email, Exp: exp.Unix()})
+	refresh = s.seal.seal(sealRefresh, grantClaims{ID: id, Client: ck, Sub: acct.ID, Email: acct.Email, Verified: acct.EmailVerified, Exp: exp.Unix()})
 	return access, refresh
 }
 

@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/nicholasjackson/tcgreplay/internal/site"
 )
@@ -109,5 +111,113 @@ func TestHostedRoutes(t *testing.T) {
 	}
 	if resp, _ := getWith(t, h.ts.URL+"/.well-known/oauth-protected-resource", nil, nil); resp.StatusCode != http.StatusOK {
 		t.Errorf("GET OAuth metadata: %d, want 200", resp.StatusCode)
+	}
+}
+
+// testChallenge stands in for OpenAI's domain-verification token.
+const testChallenge = "oai-challenge-6f1d2c9a7b"
+
+// TestOpenAIChallengeServed: with the token set, OpenAI's verification
+// path answers anyone, without a sign-in, with exactly the token as plain
+// text, sets no cookie and is not cached; the rest of the playmat is as
+// before.
+func TestOpenAIChallengeServed(t *testing.T) {
+	h := startHostedWith(t, testPublic, func(c *config) { c.openAIChallenge = testChallenge })
+
+	resp, body := getWith(t, h.ts.URL+"/.well-known/openai-apps-challenge", nil, nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GET challenge: %d %q, want 200", resp.StatusCode, body)
+	}
+	if body != testChallenge {
+		t.Errorf("challenge body %q, want exactly %q", body, testChallenge)
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "text/plain; charset=utf-8" {
+		t.Errorf("challenge Content-Type %q, want text/plain; charset=utf-8", ct)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "no-store" {
+		t.Errorf("challenge Cache-Control %q, want no-store", cc)
+	}
+	if c := resp.Header.Values("Set-Cookie"); len(c) != 0 {
+		t.Errorf("challenge set cookies %q", c)
+	}
+
+	// The website and its 404 are unchanged.
+	for _, path := range []string{"/", "/privacy", "/.well-known/other", "/no-such-page"} {
+		wantCode, wantBody := siteResponse(t, path)
+		if resp, body := getWith(t, h.ts.URL+path, nil, nil); resp.StatusCode != wantCode || body != wantBody {
+			t.Errorf("GET %s with the token set: %d, want the website's %d", path, resp.StatusCode, wantCode)
+		}
+	}
+}
+
+// TestOpenAIChallengeNotSet: with no token, OpenAI's verification path is
+// a plain "not found", not the website's 404 page, and does not ask for a
+// sign-in.
+func TestOpenAIChallengeNotSet(t *testing.T) {
+	h := startHosted(t, testPublic)
+	resp, body := getWith(t, h.ts.URL+"/.well-known/openai-apps-challenge", nil, nil)
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("GET challenge with no token: %d %q, want 404", resp.StatusCode, body)
+	}
+	if _, site404 := siteResponse(t, "/no-such-page"); body == site404 {
+		t.Error("challenge with no token served the website's 404 page")
+	}
+	if loc := resp.Header.Get("Location"); loc != "" {
+		t.Errorf("challenge with no token redirected to %q", loc)
+	}
+}
+
+func TestChallengeText(t *testing.T) {
+	if s := challengeText(""); s != "no OpenAI domain token (TCGREPLAY_OPENAI_CHALLENGE)" {
+		t.Errorf("challengeText(\"\") = %q", s)
+	}
+	if s := challengeText(testChallenge); s != "OpenAI domain token set" {
+		t.Errorf("challengeText(token) = %q", s)
+	}
+}
+
+// TestMainServesOpenAIChallengeFromEnv runs the binary's main in hosted
+// mode with TCGREPLAY_OPENAI_CHALLENGE (with stray spaces, as a console
+// paste may leave) and TCGREPLAY_REVIEWER set: the path answers the
+// trimmed token, and the start-up log says the token and the reviewer are
+// set without printing either.
+func TestMainServesOpenAIChallengeFromEnv(t *testing.T) {
+	port := freePort(t)
+	cmd, stderr, _ := helperCmd(t, "PORT="+port, "TCGREPLAY_PUBLIC_URL=https://play.example.com",
+		"TCGREPLAY_GOOGLE_CLIENT_ID=env-client", "TCGREPLAY_GOOGLE_CLIENT_SECRET=env-secret",
+		"TCGREPLAY_OPENAI_CHALLENGE= "+testChallenge+"\n", "TCGREPLAY_REVIEWER=Reviewer@Example.com")
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	exited := make(chan error, 1)
+	go func() { exited <- cmd.Wait() }()
+	t.Cleanup(func() { cmd.Process.Kill() })
+
+	base := "http://127.0.0.1:" + port
+	waitHealthy(t, base, 10*time.Second, exited, stderr)
+	resp, body := getWith(t, base+"/.well-known/openai-apps-challenge", nil, nil)
+	if resp.StatusCode != http.StatusOK || body != testChallenge {
+		t.Errorf("GET challenge: %d %q, want 200 %q", resp.StatusCode, body, testChallenge)
+	}
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-exited:
+	case <-time.After(10 * time.Second):
+		t.Fatalf("hosted main did not stop after SIGTERM\n%s", stderr)
+	}
+	out := stderr.String()
+	if !strings.Contains(out, "OpenAI domain token set") {
+		t.Errorf("start-up log does not say the OpenAI domain token is set:\n%s", out)
+	}
+	if strings.Contains(out, testChallenge) {
+		t.Errorf("log prints the OpenAI domain token:\n%s", out)
+	}
+	if !strings.Contains(out, "reviewer account set") {
+		t.Errorf("start-up log does not say the reviewer account is set:\n%s", out)
+	}
+	if strings.Contains(strings.ToLower(out), "reviewer@example.com") {
+		t.Errorf("log names the reviewer:\n%s", out)
 	}
 }

@@ -47,3 +47,18 @@ func (r *Registry) ResolveMCPQuiet(_ context.Context, extra *mcp.RequestExtra) (
 	e := r.Get(acct)
 	return e.M, e.Link(r.cfg.Public), nil
 }
+
+// AccountID is the MCP tool server's Account hook: the Google account ID
+// (sub) of the account a request acts for, read from the request's token
+// on every call. It touches no entry, so asking who is signed in takes no
+// place and is not activity.
+func (r *Registry) AccountID(_ context.Context, extra *mcp.RequestExtra) (string, error) {
+	if extra == nil {
+		return "", errSignIn
+	}
+	acct, ok := hostauth.AccountFromToken(extra.TokenInfo)
+	if !ok || acct.ID == "" {
+		return "", errSignIn
+	}
+	return acct.ID, nil
+}

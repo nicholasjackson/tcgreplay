@@ -137,6 +137,10 @@ test('its older statements match the playmat: sign-ins, disconnecting, card imag
   await expect(outside).toContainText('Cloudflare Web Analytics');
   await expect(outside).toContainText('The playmat sends nothing about you to TCGdex or malie.io');
   await expect(outside).toContainText('when your browser loads an image from them, they see that request');
+  // The assistant is given the Google account ID (get_account), never the email.
+  await expect(outside.locator('[data-assistant-id]')).toHaveText(
+    'Google account ID (never your email address), so it can tell your accounts apart',
+  );
 });
 
 test('its cookie statement names whose cookies they are, and the only outside script', async ({ page }) => {

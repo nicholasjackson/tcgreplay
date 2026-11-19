@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -186,6 +187,43 @@ func signInText() string {
 	return "Google sign-in (kept across restarts)"
 }
 
+// openAIChallengePath is where OpenAI checks a plugin's domain for its
+// verification token.
+const openAIChallengePath = "/.well-known/openai-apps-challenge"
+
+// openAIChallengeHandler answers OpenAI's domain verification: exactly
+// token, as plain text with no newline, to anyone, never cached. With no
+// token it is not found (a plain 404, not the website's page).
+func openAIChallengeHandler(token string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if token == "" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		io.WriteString(w, token)
+	})
+}
+
+// challengeText describes the OpenAI domain token for the start-up log:
+// whether it is set, never its value.
+func challengeText(token string) string {
+	if token == "" {
+		return "no OpenAI domain token (TCGREPLAY_OPENAI_CHALLENGE)"
+	}
+	return "OpenAI domain token set"
+}
+
+// reviewerText describes the reviewer account for the start-up log:
+// whether one is set, never who.
+func reviewerText(email string) string {
+	if email == "" {
+		return "no reviewer account (TCGREPLAY_REVIEWER)"
+	}
+	return "reviewer account set"
+}
+
 // idleText describes the idle setting for the start-up log.
 func idleText(d time.Duration) string {
 	if d <= 0 {
@@ -198,6 +236,9 @@ func idleText(d time.Duration) string {
 // front:
 //   - a's own routes (metadata, client registration, authorize, token,
 //     Google's callback, /healthz) are open;
+//   - /.well-known/openai-apps-challenge is open: it answers OpenAI's
+//     domain verification with challenge, exactly, as plain text, and is
+//     not found when challenge is empty (see openAIChallengeHandler);
 //   - /mcp serves MCP over Streamable HTTP, every session sharing srv, and
 //     needs an access token;
 //   - /admin is the card sets and images admin page, admin, for admins only (see
@@ -214,9 +255,10 @@ func idleText(d time.Duration) string {
 // counted wraps the pages people read, the website and the board page,
 // and nothing else: with visitor analytics on it adds Cloudflare's beacon
 // to them (see hostedAnalytics); otherwise it is the identity.
-func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service, counted func(http.Handler) http.Handler) http.Handler {
+func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service, counted func(http.Handler) http.Handler, challenge string) http.Handler {
 	mux := http.NewServeMux()
 	a.Routes(mux)
+	mux.Handle("GET "+openAIChallengePath, openAIChallengeHandler(challenge))
 	mux.Handle("/mcp", a.RequireToken(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
 		SessionTimeout: mcpSessionTimeout,
 		// Hosted mode is public; the request's Host is the proxy's business.
@@ -294,6 +336,7 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 		Public:   public,
 		Idle:     c.idleTimeout,
 		MaxUsers: c.maxUsers,
+		Reviewer: c.reviewer,
 		Now:      c.now,
 		Recorder: rec,
 	})
@@ -303,7 +346,7 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 	}
 	// BoardURL keeps the instructions' board-link line; each result's link
 	// comes from Resolve.
-	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/board", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet}).MCP()
+	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/board", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet, Account: reg.AccountID}).MCP()
 	// One call, so the tool-call recorder runs inside the rate limit: a
 	// later AddReceivingMiddleware call would wrap outside it, and a
 	// refused request would be recorded as a tool call.
@@ -443,9 +486,9 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, player IDs on", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, %s, %s, player IDs on", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()), challengeText(c.openAIChallenge), reviewerText(c.reviewer))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
-	hs := &http.Server{Handler: movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin, hostedAnalytics(c, public))), ReadHeaderTimeout: 10 * time.Second}
+	hs := &http.Server{Handler: movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin, hostedAnalytics(c, public), c.openAIChallenge)), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)

@@ -1,0 +1,68 @@
+{
+  "name": "tcgreplay",
+  "version": "1.0.0",
+  "displayName": "TCG Replay",
+  "shortDescription": "Replay and review TCG games",
+  "description": "TCG Replay is a virtual playmat for the Pokémon Trading Card Game. Paste a battle log from Pokémon TCG Live and your decklist, and TCG Replay rebuilds the game on a live board you open in your browser. Step through it turn by turn, review your decisions with coaching notes on the timeline, rewind to any turn and replay it differently, or practise with drills and a game against the assistant. Sign in with your Google account; your games stay on your own board. For players aged 13 and over.",
+  "developerName": "the tcgreplay project",
+  "category": "Games",
+  "capabilities": [
+    "Interactive"
+  ],
+  "defaultPrompt": [
+    "Import my TCG Live battle log and review it with me",
+    "Give me a numbers drill on my last game",
+    "Play a practice game against me on the playmat"
+  ],
+  "brandColor": "#14306b",
+  "review": {
+    "test_cases": {
+      "positive": [
+        {
+          "description": "Connect TCG Replay, sign in with Google, and import the example game. Copy the decklist and the battle log from {public}/docs/example and paste both with the prompt.",
+          "prompt": "Here's a game from TCG Live and my decklist. Import it and review it with me. [paste the decklist and the battle log from the example page]",
+          "tools_triggered": "guide, import_log",
+          "expected_behavior": "On first use ChatGPT asks the reviewer to connect TCG Replay and sign in with Google. The assistant reads the import-game guide, imports the game, says whether the import was complete, summarises it (Rival wins, taking all 6 prize cards to 4) and gives a link to the board."
+        },
+        {
+          "description": "Open the board link from the import and look at a position in the example game.",
+          "prompt": "Open the board and tell me what the position was at the start of my turn 3.",
+          "tools_triggered": "get_state, get_log",
+          "expected_behavior": "The board link opens in the browser already signed in with the same Google account and shows the imported game. The assistant reads the log and the board and describes both sides' Active and Benched Pokémon, hands and prize cards at the start of that turn."
+        },
+        {
+          "description": "Review a turn of the example game, with coaching notes on the board.",
+          "prompt": "Review my turn 2 with me: what should I have done differently? Put your notes on the board.",
+          "tools_triggered": "guide, get_log, card_text, annotate",
+          "expected_behavior": "The assistant reads the review-game guide, goes through the turn quoting the cards' text, suggests a better line, and adds coaching notes that appear on the board's timeline."
+        },
+        {
+          "description": "Replay a turn of the example game differently on the board.",
+          "prompt": "Rewind to the start of my turn 3 so I can play it differently on the board.",
+          "tools_triggered": "rewind, wait_for_turn",
+          "expected_behavior": "The assistant rewinds to that point on a new branch (the original game is kept), tells the reviewer to play the turn on the board, and waits in the same reply, responding once the turn is played."
+        },
+        {
+          "description": "Keep the example game's record and restore the game from it.",
+          "prompt": "Give me the record of this game so I can keep it, then restore the game from it.",
+          "tools_triggered": "get_record, import_log",
+          "expected_behavior": "The assistant returns the game record (the battle log, both decklists, the player's name and the seed) to keep, then imports the record, which rebuilds the identical game with a new board link."
+        }
+      ],
+      "negative": [
+        {
+          "description": "A battle log pasted without its decklist: TCG Replay needs the decklist, so the assistant asks for it and imports nothing until it is pasted; it does not review the game from the log text.",
+          "prompt": "Here's my TCG Live battle log, can you review it? [paste only the battle log from the example page]"
+        },
+        {
+          "description": "A request unrelated to card games: TCG Replay is not used.",
+          "prompt": "What's a good recipe for banana bread?"
+        },
+        {
+          "description": "A request to look up live tournament results or card prices on the web: TCG Replay reaches nothing outside its playmat, so it is not used for this.",
+          "prompt": "Which decks won last weekend's regional championship, and what do their cards cost right now?"
+        }
+      ]
+    }
+  }
+}

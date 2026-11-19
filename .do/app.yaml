@@ -131,6 +131,25 @@ services:
       - key: TCGREPLAY_PLAYER_ID_KEY
         scope: RUN_TIME
         type: SECRET
+      # OpenAI's domain-verification token, copied from the plugin's MCP
+      # connection step in OpenAI's plugin dashboard and set here in the
+      # control panel, encrypted. The playmat serves it, exactly, at
+      # /.well-known/openai-apps-challenge; unset, that path is not found.
+      # It is never logged. Declaring it here reaches the platform only
+      # when this file is applied by hand (doctl apps update).
+      - key: TCGREPLAY_OPENAI_CHALLENGE
+        scope: RUN_TIME
+        type: SECRET
+      # The Google account email OpenAI's plugin reviewer signs in with (an
+      # account with no two-step verification). Once Google has verified
+      # it, that account may sign in and play even when TCGREPLAY_MAX_USERS
+      # places are held, and its place is not counted. Set it in the
+      # control panel, encrypted; it is never logged. Declaring it here
+      # reaches the platform only when this file is applied by hand
+      # (doctl apps update).
+      - key: TCGREPLAY_REVIEWER
+        scope: RUN_TIME
+        type: SECRET
       # Requests per minute per account, and places (accounts served at
       # once; a place is freed when an account's game goes idle or its last
       # sign-in ends); 0 turns either off. Changing them needs only a

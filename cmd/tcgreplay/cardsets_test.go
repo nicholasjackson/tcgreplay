@@ -289,7 +289,7 @@ func serveHosted(t *testing.T, public string, c config, g *hostauthtest.FakeGoog
 	if err != nil {
 		t.Fatal(err)
 	}
-	ts := httptest.NewServer(movedGuard(moved, u, movedMCP(c, u), hostedHandler(srv, reg, a, hostedAdmin(cat, nil, reg.Recorder()), hostedAnalytics(c, u))))
+	ts := httptest.NewServer(movedGuard(moved, u, movedMCP(c, u), hostedHandler(srv, reg, a, hostedAdmin(cat, nil, reg.Recorder()), hostedAnalytics(c, u), c.openAIChallenge)))
 	t.Cleanup(ts.Close)
 	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: cat, events: events}
 }

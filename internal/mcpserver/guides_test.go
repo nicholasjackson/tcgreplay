@@ -118,6 +118,60 @@ func TestGuideInstructions(t *testing.T) {
 	})
 }
 
+// sentenceEnd is a full stop that ends a sentence.
+var sentenceEnd = regexp.MustCompile(`\.[ \n]`)
+
+// TestInstructionsOpening: on the desktop and hosted, the first 512 bytes
+// of the instructions (all some clients are sure to read) say on their own
+// what TCG Replay is, that cards are referred to by instance ID and never
+// by name, and that the coaching guides are read with the guide tool, each
+// in a whole sentence that ends within those bytes.
+func TestInstructionsOpening(t *testing.T) {
+	servers := map[string]*Server{
+		"desktop": {Version: "test"},
+		"hosted":  {Version: "test", BoardURL: "https://playmat.example/"},
+	}
+	for name, s := range servers {
+		for _, tr := range transports {
+			t.Run(name+"/"+tr.name, func(t *testing.T) {
+				cs, _ := connectServer(t, tr, &Server{Version: s.Version, BoardURL: s.BoardURL})
+				ins := cs.InitializeResult().Instructions
+				if len(ins) < 512 {
+					t.Fatalf("instructions are only %d bytes", len(ins))
+				}
+				opening := ins[:512]
+				for _, need := range [][]string{
+					{"TCG Replay", "Pokémon TCG playmat"},
+					{"instance ID", "iid", "never by name"},
+					{"guides", "guide tool"},
+				} {
+					i := strings.Index(opening, need[0])
+					if i < 0 {
+						t.Errorf("first 512 bytes lack %q:\n%s", need[0], opening)
+						continue
+					}
+					// A sentence ends at a full stop followed by a space or
+					// a line break, within the 512 bytes.
+					end := -1
+					if m := sentenceEnd.FindStringIndex(opening[i:]); m != nil {
+						end = m[0]
+					}
+					if end < 0 {
+						t.Errorf("the sentence with %q does not end within 512 bytes", need[0])
+						continue
+					}
+					sentence := opening[strings.LastIndex(opening[:i], ". ")+1 : i+end+1]
+					for _, w := range need[1:] {
+						if !strings.Contains(sentence, w) {
+							t.Errorf("the sentence with %q lacks %q: %q", need[0], w, sentence)
+						}
+					}
+				}
+			})
+		}
+	}
+}
+
 // snakeWord matches a tool or argument name as guides write them.
 var snakeWord = regexp.MustCompile(`\b[a-z]+(_[a-z]+)+\b`)
 

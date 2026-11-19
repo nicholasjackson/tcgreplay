@@ -250,6 +250,9 @@ func TestWaitForTurnStillWaiting(t *testing.T) {
 		if w.Outcome != "still_waiting" || w.Since != since || w.Next != want {
 			t.Fatalf("result: %+v", w)
 		}
+		if !w.KeepWaiting || !strings.Contains(w.Next, "call wait_for_turn again") {
+			t.Errorf("still_waiting does not say to call again: keep_waiting %v, next %q", w.KeepWaiting, w.Next)
+		}
 		logOut, isErr := call(t, cs, "get_log", map[string]any{"since": since})
 		if isErr {
 			t.Fatal(logOut)
