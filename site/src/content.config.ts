@@ -19,6 +19,8 @@ const docs = defineCollection({
     // Position in the docs sidebar, lowest first.
     order: z.number().default(100),
     // Show the playmat's MCP address, with a copy button, above the page.
+    // No Markdown page uses it now: the connecting page, which did, is the
+    // hand-written pages/docs/connect.astro.
     showAddress: z.boolean().default(false),
   }),
 });

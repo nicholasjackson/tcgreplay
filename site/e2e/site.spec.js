@@ -12,6 +12,7 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { site } from '../src/lib/facts.ts';
+import { chatgptDirectory } from '../src/lib/listing.ts';
 import { crawl } from './crawl.js';
 
 const companies = ['Nintendo', 'The Pokémon Company', 'Creatures', 'Game Freak'];
@@ -246,7 +247,9 @@ test('the home page copy button copies the playmat address exactly', async ({ co
 // The playmat moved from tcgreplay.demo.gs to its own domain. The old
 // address may appear only inside the connecting page's marked move note
 // (an element with data-moved-note), and the playmat has no www name.
-test('no page or the README names the old address outside the move note, or a www address', () => {
+// While lib/listing.ts says TCG Replay is not listed, no page mentions
+// ChatGPT's Plugin Directory.
+test('no page or the README names the old address outside the move note, or a www address, and no page mentions the Plugin Directory before listing', () => {
   const dist = new URL('../../internal/site/dist/app/', import.meta.url);
   const files = readdirSync(dist, { recursive: true })
     .filter((f) => String(f).endsWith('.html'))
@@ -256,14 +259,19 @@ test('no page or the README names the old address outside the move note, or a ww
   const note = /<aside[^>]*data-moved-note[^>]*>[\s\S]*?<\/aside>/g;
   const stray = [];
   const www = [];
+  const directory = [];
   let notes = 0;
   for (const { name, url } of files) {
     const text = readFileSync(url, 'utf8');
     notes += (text.match(note) || []).length;
     if (text.replace(note, '').includes('demo.gs')) stray.push(name);
     if (text.includes('www.tcgreplay.app')) www.push(name);
+    // Until TCG Replay is listed (lib/listing.ts), no page may say it is in
+    // ChatGPT's Plugin Directory.
+    if (!chatgptDirectory.listed && name.endsWith('.html') && /plugin directory/i.test(text)) directory.push(name);
   }
   expect(stray, 'files naming demo.gs outside the move note').toEqual([]);
   expect(www, 'files naming www.tcgreplay.app').toEqual([]);
   expect(notes, 'move notes across the site').toBe(1);
+  expect(directory, 'pages naming the Plugin Directory before the listing is switched on').toEqual([]);
 });
