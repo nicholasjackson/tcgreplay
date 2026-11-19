@@ -36,7 +36,7 @@ class FactError extends Error {
 }
 
 /**
- * loadLimits reads the playmat service's limits from an App Platform
+ * loadLimits reads the playmat's limits from an App Platform
  * definition (YAML text). It throws if any is missing or unparsable.
  */
 export function loadLimits(yamlText: string, source = '.do/app.yaml'): Limits {
@@ -62,9 +62,9 @@ export function loadLimits(yamlText: string, source = '.do/app.yaml'): Limits {
 }
 
 /**
- * readSpec parses an App Platform definition and finds the playmat
- * service. Its value function returns an env value of that service, or
- * throws naming the key when it is unset or empty.
+ * readSpec parses an App Platform definition. Its value function returns
+ * one of the app's settings (the top-level envs, where the live app keeps
+ * them), or throws naming the key when it is unset or empty.
  */
 function readSpec(yamlText: string, source: string): { spec: any; value: (key: string) => string } {
   let spec: any;
@@ -73,15 +73,11 @@ function readSpec(yamlText: string, source: string): { spec: any; value: (key: s
   } catch (err) {
     throw new FactError(`${source} is not valid YAML: ${(err as Error).message}`);
   }
-  const service = Array.isArray(spec?.services) ? spec.services.find((s: any) => s?.name === 'playmat') : undefined;
-  if (!service) {
-    throw new FactError(`${source} has no service named "playmat"`);
-  }
-  const envs: any[] = Array.isArray(service.envs) ? service.envs : [];
+  const envs: any[] = Array.isArray(spec?.envs) ? spec.envs : [];
   const value = (key: string): string => {
     const env = envs.find((e) => e?.key === key);
     if (env === undefined || env.value === undefined || env.value === null || String(env.value).trim() === '') {
-      throw new FactError(`${source} does not set ${key} on the playmat service; the website states it, so the build stops`);
+      throw new FactError(`${source} does not set ${key} in the app's settings (top-level envs); the website states it, so the build stops`);
     }
     return String(env.value).trim();
   };

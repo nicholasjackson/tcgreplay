@@ -1,16 +1,29 @@
 # DigitalOcean App Platform definition for the hosted playmat.
 #
-# Create the app once:        doctl apps create --spec .do/app.yaml
-# Apply later edits to this:  doctl apps update <app-id> --spec .do/app.yaml
-# Deploys come from .github/workflows/deploy.yml, which runs
-# `doctl apps create-deployment` on every push to main that changes
-# anything outside cardsets/ (and when started by hand); App Platform then
-# builds the Dockerfile and deploys it. App Platform's own deploy-on-push
-# is off (deploy_on_push below), so a push that changes only card-set data
-# never restarts the playmat: that data is published to the bucket by
+# This file records the live app's definition (tcgreplay, AMS3) as it
+# should be. Nothing applies it automatically: the live definition is the
+# one stored in DigitalOcean, edited in the control panel (the app's
+# Settings > App Spec > Edit). To apply a change made here, open that
+# editor and make the same change there: add or edit only the entries that
+# changed. Never paste this whole file over the stored one: this file
+# carries no secret values, so pasting it would wipe every encrypted value
+# set in the console. Secret values are set in the console (Settings >
+# App-Level Environment Variables), encrypted.
+#
+# Deploys come from .github/workflows/deploy.yml, which asks App Platform
+# for a new deployment (`doctl apps create-deployment`, run by GitHub
+# Actions) on every push to main that changes anything outside cardsets/
+# (and when started by hand); App Platform then builds the Dockerfile and
+# deploys it with the stored definition. A deployment never reads this
+# file. App Platform's own deploy-on-push is off (deploy_on_push below),
+# so a push that changes only card-set data never restarts the playmat:
+# that data is published to the bucket by
 # .github/workflows/publish-cardsets.yml and picked up while it runs.
-# Pushes to other branches do not deploy. Edits to this file still need
-# the `doctl apps update` above.
+# Pushes to other branches do not deploy.
+#
+# A setting the playmat cannot start without (the Google client, the
+# signing and player-ID keys) must be set in the console before the push
+# that needs it, or that deploy fails and App Platform rolls back.
 #
 # Domain, DNS and Google sign-in changes (the move to tcgreplay.app, and
 # later retiring tcgreplay.demo.gs) follow docs/domain-move.md, in order.
@@ -35,26 +48,35 @@
 # playmat and drops every game. The limits below (TCGREPLAY_RATE_LIMIT,
 # TCGREPLAY_MAX_USERS, TCGREPLAY_IDLE_TIMEOUT) are also shown on the website, which reads them
 # from this file when it is built: this file stays the one place they are
-# set, and the site build fails if one goes missing. With
-# TCGREPLAY_WEB_ANALYTICS_TOKEN set, website pages and the board page are
-# counted by Cloudflare Web Analytics, with no cookies.
+# decided, and the site build fails if one goes missing. Keep the console
+# values the same. With TCGREPLAY_WEB_ANALYTICS_TOKEN set, website pages
+# and the board page are counted by Cloudflare Web Analytics, with no
+# cookies.
 #
 # Usage and error records are JSON lines on the playmat's standard output,
 # naming players only by a pseudonymous player ID (TCGREPLAY_PLAYER_ID_KEY
-# below); they are read in DigitalOcean Insights, with the graphs and the
-# alerts below. docs/observability.md is the runbook: what is recorded,
-# how to read daily usage and a player's errors, and the alert rules.
+# below). App Platform's Runtime Logs tab shows them live only, and they
+# do not reach DigitalOcean Insights at the moment (only the metrics do).
+# docs/observability.md is the runbook: what is recorded, how to read
+# daily usage and a player's errors, and the alert rules.
 name: tcgreplay
-region: lon
+region: ams
+# App-wide alerts: a failed deployment, and a domain that fails to
+# configure. The app definition cannot say who an alert goes to: set the
+# recipients once in the control panel (the app's Settings > Alert
+# Policies, or an Insights email notification channel).
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
 services:
-  - name: playmat
+  - name: tcgreplay
     github:
       repo: nicholasjackson/tcgreplay
       branch: main
       # Off: .github/workflows/deploy.yml deploys instead, skipping pushes
       # that change only cardsets/.
       deploy_on_push: false
-    dockerfile_path: Dockerfile
+    dockerfile_path: /Dockerfile
     source_dir: /
     # Plain HTTP; App Platform (and Cloudflare in front) provide HTTPS.
     http_port: 8080
@@ -68,12 +90,13 @@ services:
     # /healthz needs no sign-in; the board's root redirects to Google.
     health_check:
       http_path: /healthz
+      failure_threshold: 9
+      period_seconds: 10
+      success_threshold: 1
+      timeout_seconds: 1
     # Alert rules: an unexpected restart, and CPU or memory staying high.
-    # The thresholds are the maintainer's to change here. The app
-    # definition cannot say who an alert goes to: set the recipients once
-    # in the control panel (the app's Settings > Alerts, or an Insights
-    # email notification channel). Changes here need the `doctl apps
-    # update` above. See docs/observability.md.
+    # The thresholds are the maintainer's to change here and in the
+    # console's App Spec editor. See docs/observability.md.
     alerts:
       - rule: RESTART_COUNT
         operator: GREATER_THAN
@@ -87,140 +110,133 @@ services:
         operator: GREATER_THAN
         value: 80
         window: TEN_MINUTES
-    envs:
-      # The playmat's one public address: sign-in, the assistant connection,
-      # board links and the board's allowed origin all use it. Keep it the
-      # same as the primary domain under domains below.
-      - key: TCGREPLAY_PUBLIC_URL
-        value: https://tcgreplay.app
-        scope: RUN_TIME
-      # Old host names the playmat has moved from (comma-separated). Their
-      # /mcp tells assistants to reconnect at the public address, with no
-      # sign-in, and every other path redirects there; sign-in never works
-      # on them. Each must also be an ALIAS under domains below. Retire an
-      # old address by removing its alias under domains, its DNS record and
-      # redirect rule at Cloudflare (see docs/domain-move.md), and then this
-      # entry, and applying this file with `doctl apps update`: no release
-      # is needed.
-      - key: TCGREPLAY_MOVED_FROM
-        value: tcgreplay.demo.gs
-        scope: RUN_TIME
-      # The Google OAuth web client users sign in with. Set both values in
-      # the App Platform control panel (Settings > playmat > Environment
-      # Variables), encrypted; hosted mode will not start without them.
-      # Its authorised redirect URIs include TCGREPLAY_PUBLIC_URL followed by
-      # /auth/google/callback.
-      - key: TCGREPLAY_GOOGLE_CLIENT_ID
-        scope: RUN_TIME
-        type: SECRET
-      - key: TCGREPLAY_GOOGLE_CLIENT_SECRET
-        scope: RUN_TIME
-        type: SECRET
-      # Seals sign-ins so they survive a redeploy; at least 32 characters
-      # (e.g. openssl rand -base64 48). Without it a redeploy signs
-      # everyone out. Changing it signs everyone out once.
-      - key: TCGREPLAY_SIGNING_KEY
-        scope: RUN_TIME
-        type: SECRET
-      # Keys the pseudonymous player IDs that usage and error records name
-      # players by, in place of their email; at least 32 characters (e.g.
-      # openssl rand -base64 48). Hosted mode will not start without it.
-      # Changing it changes every player's ID, so records written before
-      # no longer match the same players. Set it in the control panel,
-      # encrypted, and keep a copy somewhere safe.
-      - key: TCGREPLAY_PLAYER_ID_KEY
-        scope: RUN_TIME
-        type: SECRET
-      # OpenAI's domain-verification token, copied from the plugin's MCP
-      # connection step in OpenAI's plugin dashboard and set here in the
-      # control panel, encrypted. The playmat serves it, exactly, at
-      # /.well-known/openai-apps-challenge; unset, that path is not found.
-      # It is never logged. Declaring it here reaches the platform only
-      # when this file is applied by hand (doctl apps update).
-      - key: TCGREPLAY_OPENAI_CHALLENGE
-        scope: RUN_TIME
-        type: SECRET
-      # The Google account email OpenAI's plugin reviewer signs in with (an
-      # account with no two-step verification). Once Google has verified
-      # it, that account may sign in and play even when TCGREPLAY_MAX_USERS
-      # places are held, and its place is not counted. Set it in the
-      # control panel, encrypted; it is never logged. Declaring it here
-      # reaches the platform only when this file is applied by hand
-      # (doctl apps update).
-      - key: TCGREPLAY_REVIEWER
-        scope: RUN_TIME
-        type: SECRET
-      # Requests per minute per account, and places (accounts served at
-      # once; a place is freed when an account's game goes idle or its last
-      # sign-in ends); 0 turns either off. Changing them needs only a
-      # restart.
-      - key: TCGREPLAY_RATE_LIMIT
-        value: "300"
-        scope: RUN_TIME
-      # TCGREPLAY_MAX_USERS is kept at its launch value until the memory
-      # measurement in docs/observability.md (Capacity) sets it.
-      - key: TCGREPLAY_MAX_USERS
-        value: "10"
-        scope: RUN_TIME
-      # How long an account's game may go without activity before it is
-      # dropped (Go duration, e.g. 2m or 1h); 0 never drops. Needs only a
-      # restart.
-      - key: TCGREPLAY_IDLE_TIMEOUT
-        value: "60m"
-        scope: RUN_TIME
-      # Card image copies: the DigitalOcean Spaces bucket card images are
-      # copied to and served from through its CDN. The endpoint is the
-      # region's, https://<region>.digitaloceanspaces.com (never the
-      # bucket's own or CDN address, which are refused); the key is a Spaces
-      # access key limited to that bucket with read and write. Leave all
-      # four unset to load images from their sources; setting only some
-      # logs a warning and does the same. The endpoint and bucket are not
-      # secret, but are declared without values so all four are set
-      # together in the control panel (encrypted), like the Google client.
-      # Card data never comes from these settings: it is read from the
-      # published card sets (TCGREPLAY_CARDSETS_URL, by default this
-      # bucket's CDN address).
-      - key: TCGREPLAY_SPACES_ENDPOINT
-        scope: RUN_TIME
-        type: SECRET
-      - key: TCGREPLAY_SPACES_BUCKET
-        scope: RUN_TIME
-        type: SECRET
-      - key: TCGREPLAY_SPACES_KEY
-        scope: RUN_TIME
-        type: SECRET
-      - key: TCGREPLAY_SPACES_SECRET
-        scope: RUN_TIME
-        type: SECRET
-      # Admins: a comma-separated list of the Google account emails allowed
-      # to use /admin to check for published card sets at once and to clear
-      # card image copies (everything, or one set by its code or id). Set
-      # it in the control panel; unset means nobody can use the admin page.
-      # Needs only a restart.
-      - key: TCGREPLAY_ADMINS
-        scope: RUN_TIME
-      # Visitor counting: the Cloudflare Web Analytics site token for
-      # tcgreplay.app (Cloudflare dashboard > Web Analytics > the site >
-      # Manage site, manual snippet; automatic injection off). Public by
-      # nature: it appears in every counted page. Set it in the control
-      # panel only once the privacy page describing visitor counting is
-      # live; the playmat also refuses to count until its own privacy page
-      # describes it. Pages are counted only for TCGREPLAY_PUBLIC_URL's
-      # host. Clear it to stop counting (needs only a restart).
-      - key: TCGREPLAY_WEB_ANALYTICS_TOKEN
-        scope: RUN_TIME
-      # A DigitalOcean API token with the cdn:read and cdn:delete scopes
-      # (purging is cdn:delete, not cdn:update), used to
-      # purge the bucket's CDN when an admin clears card image copies.
-      # Unset means clears still delete the copies but do not purge the
-      # CDN. Ignored without the four TCGREPLAY_SPACES_* settings.
-      - key: TCGREPLAY_SPACES_CDN_TOKEN
-        scope: RUN_TIME
-        type: SECRET
+# Settings, at app level as in the live app. Values that are secret are set
+# in the console (Settings > App-Level Environment Variables), encrypted;
+# the rest are written here and must match the console.
+envs:
+  # The playmat's one public address: sign-in, the assistant connection,
+  # board links and the board's allowed origin all use it. Keep it the
+  # same as the primary domain under domains below.
+  - key: TCGREPLAY_PUBLIC_URL
+    value: https://tcgreplay.app
+    scope: RUN_TIME
+  # Old host names the playmat has moved from (comma-separated). Their
+  # /mcp tells assistants to reconnect at the public address, with no
+  # sign-in, and every other path redirects there; sign-in never works
+  # on them. Each must also be an ALIAS under domains below. Retire an
+  # old address by removing its alias under domains, its DNS record and
+  # redirect rule at Cloudflare (see docs/domain-move.md), and then this
+  # entry, in the console: no release is needed.
+  - key: TCGREPLAY_MOVED_FROM
+    value: tcgreplay.demo.gs
+    scope: RUN_TIME
+  # The Google OAuth web client users sign in with. Set both values in
+  # the console, encrypted; hosted mode will not start without them.
+  # Its authorised redirect URIs include TCGREPLAY_PUBLIC_URL followed by
+  # /auth/google/callback.
+  - key: TCGREPLAY_GOOGLE_CLIENT_ID
+    scope: RUN_TIME
+    type: SECRET
+  - key: TCGREPLAY_GOOGLE_CLIENT_SECRET
+    scope: RUN_TIME
+    type: SECRET
+  # Seals sign-ins so they survive a redeploy; at least 32 characters
+  # (e.g. openssl rand -base64 48). Without it a redeploy signs
+  # everyone out. Changing it signs everyone out once.
+  - key: TCGREPLAY_SIGNING_KEY
+    scope: RUN_TIME
+    type: SECRET
+  # Keys the pseudonymous player IDs that usage and error records name
+  # players by, in place of their email; at least 32 characters (e.g.
+  # openssl rand -base64 48). Hosted mode will not start without it.
+  # Changing it changes every player's ID, so records written before
+  # no longer match the same players. Set it in the console, encrypted,
+  # and keep a copy somewhere safe.
+  - key: TCGREPLAY_PLAYER_ID_KEY
+    scope: RUN_TIME
+    type: SECRET
+  # OpenAI's domain-verification token, copied from the plugin's MCP
+  # connection step in OpenAI's plugin dashboard and set in the console,
+  # encrypted. The playmat serves it, exactly, at
+  # /.well-known/openai-apps-challenge; unset, that path is not found.
+  # It is never logged.
+  - key: TCGREPLAY_OPENAI_CHALLENGE
+    scope: RUN_TIME
+    type: SECRET
+  # The Google account email OpenAI's plugin reviewer signs in with (an
+  # account with no two-step verification). Once Google has verified
+  # it, that account may sign in and play even when TCGREPLAY_MAX_USERS
+  # places are held, and its place is not counted. Set it in the
+  # console, encrypted; it is never logged.
+  - key: TCGREPLAY_REVIEWER
+    scope: RUN_TIME
+    type: SECRET
+  # Requests per minute per account, and places (accounts served at
+  # once; a place is freed when an account's game goes idle or its last
+  # sign-in ends); 0 turns either off. Changing them needs only a
+  # restart. Unset in the console, the playmat uses these same values.
+  - key: TCGREPLAY_RATE_LIMIT
+    value: "300"
+    scope: RUN_TIME
+  # TCGREPLAY_MAX_USERS is kept at its launch value until the memory
+  # measurement in docs/observability.md (Capacity) sets it.
+  - key: TCGREPLAY_MAX_USERS
+    value: "10"
+    scope: RUN_TIME
+  # How long an account's game may go without activity before it is
+  # dropped (Go duration, e.g. 2m or 1h); 0 never drops. Needs only a
+  # restart.
+  - key: TCGREPLAY_IDLE_TIMEOUT
+    value: "60m"
+    scope: RUN_TIME
+  # Card image copies: the DigitalOcean Spaces bucket card images are
+  # copied to and served from through its CDN. The endpoint is the
+  # region's, https://<region>.digitaloceanspaces.com (never the
+  # bucket's own or CDN address, which are refused); the key is a Spaces
+  # access key limited to that bucket with read and write. Leave all
+  # four unset to load images from their sources; setting only some
+  # logs a warning and does the same. Only the secret needs encrypting;
+  # all four are set together in the console. Card data never comes from
+  # these settings: it is read from the published card sets
+  # (TCGREPLAY_CARDSETS_URL, by default this bucket's CDN address).
+  - key: TCGREPLAY_SPACES_ENDPOINT
+    scope: RUN_TIME
+  - key: TCGREPLAY_SPACES_BUCKET
+    scope: RUN_TIME
+  - key: TCGREPLAY_SPACES_KEY
+    scope: RUN_TIME
+  - key: TCGREPLAY_SPACES_SECRET
+    scope: RUN_TIME
+    type: SECRET
+  # Admins: a comma-separated list of the Google account emails allowed
+  # to use /admin to check for published card sets at once and to clear
+  # card image copies (everything, or one set by its code or id). Set
+  # it in the console; unset means nobody can use the admin page.
+  # Needs only a restart.
+  - key: TCGREPLAY_ADMINS
+    scope: RUN_TIME
+  # Visitor counting: the Cloudflare Web Analytics site token for
+  # tcgreplay.app (Cloudflare dashboard > Web Analytics > the site >
+  # Manage site, manual snippet; automatic injection off). Public by
+  # nature: it appears in every counted page. Set it in the console only
+  # once the privacy page describing visitor counting is live; the
+  # playmat also refuses to count until its own privacy page describes
+  # it. Pages are counted only for TCGREPLAY_PUBLIC_URL's host. Clear it
+  # to stop counting (needs only a restart).
+  - key: TCGREPLAY_WEB_ANALYTICS_TOKEN
+    scope: RUN_TIME
+  # A DigitalOcean API token with the cdn:read and cdn:delete scopes
+  # (purging is cdn:delete, not cdn:update), used to
+  # purge the bucket's CDN when an admin clears card image copies.
+  # Unset means clears still delete the copies but do not purge the
+  # CDN. Ignored without the four TCGREPLAY_SPACES_* settings.
+  - key: TCGREPLAY_SPACES_CDN_TOKEN
+    scope: RUN_TIME
+    type: SECRET
 ingress:
   rules:
     - component:
-        name: playmat
+        name: tcgreplay
       match:
         path:
           prefix: /

@@ -54,3 +54,11 @@ domain-move; observability -> privacy-terms-disclaimer -> visitor-analytics; cha
 - chatgpt-submission-prep DONE (task 7 human deferred/accepted), merged c5a184b. Created launch-docs worktree; starting child.
 - launch-docs DONE (task 4 directory switch-on deferred), merged. Epic implement complete (2026-11-19).
 - Ticked deferred launch-docs task 4 heading (criteria unticked) so status=done, as with visitor-analytics.
+
+## Post-launch (2026-11-19)
+- Deployed 8e01937 (healthy, AMS3) after maintainer set TCGREPLAY_PLAYER_ID_KEY; 10:59 GitHub deploy run failure is stale (pre-key). Web Analytics on (site tcgreplay.app, manual snippet).
+- Insights receives app metrics but no App Platform logs (0 results AMS2/AMS3/LON1). Maintainer chose to wait on DigitalOcean support; no forwarding for now.
+- Waiting on: DO support answer (logs + retention), OpenAI plugin approval (then flip chatgptDirectory.listed + What's new entry).
+- Open: set TCGREPLAY_OPENAI_CHALLENGE / TCGREPLAY_REVIEWER; reconcile .do/app.yaml with live app (region ams, service tcgreplay) before doctl apps update; set TCGREPLAY_MOVED_FROM.
+- .do/app.yaml reconciled with live (ams, service tcgreplay, app-level envs; readers/tests updated; docs now console-only, maintainer never uses doctl). Uncommitted.
+- Discussed: redeploys drop every in-memory game. Option: persist store.Log JSON to Spaces (debounced + flush on SIGTERM, lazy restore, overlap handling, privacy page). Maintainer deferred (2026-11-19); spec offer may be raised again later.

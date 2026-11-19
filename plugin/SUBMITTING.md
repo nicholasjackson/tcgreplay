@@ -15,9 +15,9 @@ Replay is unlisted.
    in `listing.json` (or the builder, `internal/plugin`) and rebuild.
 4. **Connect the MCP server.** In the dashboard's MCP step:
    - copy the domain-verification token, set it as `TCGREPLAY_OPENAI_CHALLENGE`
-     in the App Platform console (encrypted), with the reviewer's email as
-     `TCGREPLAY_REVIEWER`, apply `.do/app.yaml` by hand with
-     `doctl apps update <app-id> --spec .do/app.yaml`, and redeploy;
+     in the App Platform console (Settings > App-Level Environment
+     Variables, encrypted), with the reviewer's email as
+     `TCGREPLAY_REVIEWER`, and save (App Platform restarts the playmat);
    - check https://tcgreplay.app/.well-known/openai-apps-challenge returns
      exactly the token, then verify the domain in the dashboard;
    - connect, sign in with Google, and wait for the tool scan to list the

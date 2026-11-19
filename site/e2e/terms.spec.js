@@ -11,7 +11,7 @@ import { test, expect } from '@playwright/test';
 // the site's loader, rendering the idle time as the playmat does.
 function appSpecLimits() {
   const spec = parse(readFileSync(join(process.cwd(), '..', '.do', 'app.yaml'), 'utf8'));
-  const envs = spec.services.find((s) => s.name === 'playmat').envs;
+  const envs = spec.envs;
   const get = (key) => envs.find((e) => e.key === key).value;
   const m = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(get('TCGREPLAY_IDLE_TIMEOUT'));
   const secs = (Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0)) * 60 + Number(m[3] ?? 0);

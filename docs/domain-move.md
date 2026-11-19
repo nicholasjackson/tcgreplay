@@ -23,9 +23,10 @@ allowed origin and the website all use it. The old address,
   rule changes.
 
 Do the steps in order. Each has a **Check** with the result it should show.
-Steps already done on the live app only need their check run. In the
-commands, `<app-id>` is the App Platform app's id (`doctl apps list`; it is
-also the `TCGREPLAY_APP_ID` repository variable the deploy workflow uses).
+Steps already done on the live app only need their check run. App
+Platform steps are done in the control panel: the app's **Settings > App
+Spec > Edit** holds the live definition, and `.do/app.yaml` records what it
+should say.
 
 ## 1. Google OAuth client
 
@@ -107,15 +108,14 @@ alias.
 
 ## 6. App Platform app spec
 
-The deploy workflow only runs `doctl apps create-deployment`; it never
+The deploy workflow only asks App Platform for a new deployment; it never
 applies `.do/app.yaml`. Domain and environment changes reach the platform
-only when you apply the spec by hand.
+only when you make them in the console.
 
-**Do:** from a checkout of `main` with this change merged:
-
-```sh
-doctl apps update <app-id> --spec .do/app.yaml
-```
+**Do:** in the app's **Settings > App Spec > Edit**, make the same domain and
+`envs` entries as `.do/app.yaml` (edit only those entries; never paste the
+whole file over the stored one, which would wipe the encrypted values), then
+**Save**.
 
 This makes `tcgreplay.app` the PRIMARY domain and `tcgreplay.demo.gs` an
 ALIAS, and sets `TCGREPLAY_PUBLIC_URL=https://tcgreplay.app` and
@@ -125,12 +125,11 @@ the playmat, which drops every in-memory game, as any deploy does.
 
 **Check:**
 
-- `doctl apps spec get <app-id>` shows both domains, `TCGREPLAY_PUBLIC_URL`
-  and `TCGREPLAY_MOVED_FROM` as above.
+- Settings > App Spec shows both domains, `TCGREPLAY_PUBLIC_URL` and
+  `TCGREPLAY_MOVED_FROM` as above.
 - Settings > Domains shows `tcgreplay.app` as the primary domain, both
   "Active".
-- The runtime log's start line (`doctl apps logs <app-id> --type run`)
-  contains `public https://tcgreplay.app, moved from tcgreplay.demo.gs`.
+- The start-up line in the app's Runtime Logs tab contains `public https://tcgreplay.app, moved from tcgreplay.demo.gs`.
 - `curl -s https://tcgreplay.app/.well-known/oauth-protected-resource/mcp`
   shows `"resource":"https://tcgreplay.app/mcp"`.
 
@@ -207,8 +206,8 @@ no code changes and no new release.
 1. Cloudflare > the `demo.gs` zone: delete the `tcgreplay.demo.gs` redirect
    rule (Rules > Redirect Rules) and the `tcgreplay` DNS record.
 2. In `.do/app.yaml`, remove the `tcgreplay.demo.gs` ALIAS under `domains`
-   and the `TCGREPLAY_MOVED_FROM` entry, then apply it:
-   `doctl apps update <app-id> --spec .do/app.yaml`. This changes only
+   and the `TCGREPLAY_MOVED_FROM` entry, then make the same two removals in
+   the console (Settings > App Spec > Edit, Save). This changes only
    domains and environment, so App Platform restarts the playmat without a
    new build (in-memory games are dropped, as on any restart). Removing
    `TCGREPLAY_MOVED_FROM` is optional: with no alias or DNS, nothing reaches

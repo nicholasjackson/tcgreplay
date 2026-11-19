@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
 // it as the playmat does for people (minutes under two hours, else hours).
 function idleFromAppSpec() {
   const spec = parse(readFileSync(join(process.cwd(), '..', '.do', 'app.yaml'), 'utf8'));
-  const env = spec.services.find((s) => s.name === 'playmat').envs.find((e) => e.key === 'TCGREPLAY_IDLE_TIMEOUT');
+  const env = spec.envs.find((e) => e.key === 'TCGREPLAY_IDLE_TIMEOUT');
   const m = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(env.value);
   expect(m, `TCGREPLAY_IDLE_TIMEOUT ${env.value}`).not.toBeNull();
   const secs = (Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0)) * 60 + Number(m[3] ?? 0);

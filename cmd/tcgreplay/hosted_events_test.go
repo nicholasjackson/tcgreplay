@@ -221,10 +221,10 @@ func TestAppSpecAlerts(t *testing.T) {
 	spec := readTestdata(t, "../../.do/app.yaml")
 	i := strings.Index(spec, "\n    alerts:\n")
 	if i < 0 {
-		t.Fatal("app.yaml declares no alerts on the playmat service")
+		t.Fatal("app.yaml declares no alerts on the playmat's service")
 	}
 	block := spec[i:]
-	if j := strings.Index(block, "\n    envs:\n"); j >= 0 {
+	if j := strings.Index(block, "\nenvs:\n"); j >= 0 {
 		block = block[:j]
 	}
 	for _, want := range []string{

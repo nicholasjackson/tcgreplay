@@ -15,9 +15,12 @@ Everything is read in DigitalOcean. No log forwarding service and no second
 monitoring vendor is used.
 
 - **Records**: the playmat writes one JSON object per line to its standard
-  output. App Platform passes that output to DigitalOcean Insights, whose
-  Logs tab keeps it across redeploys. App Platform's own Runtime Logs tab
-  keeps no history, so always read records in Insights.
+  output. App Platform is meant to pass that output to DigitalOcean
+  Insights, whose Logs tab would keep it across redeploys. **As of
+  2026-11-19 it does not arrive there** (Insights > Logs shows nothing for
+  the app in any region, while its metrics do arrive); the maintainer has
+  asked DigitalOcean why. Until that is settled, the records can only be
+  watched live in the app's Runtime Logs tab, which keeps no history.
 - **Graphs and alerts**: these come from App Platform's metrics and alert
   rules, not from the playmat.
 
@@ -130,7 +133,7 @@ Insights has no "count distinct" or group-by. Each daily number is the
 number of matching lines for that UTC day.
 
 1. Open the Control Panel and go to **Insights > Logs**. Choose the region
-   **LON1** and the playmat app.
+   **AMS3** (the app runs in Amsterdam) and the tcgreplay app.
 2. Set an absolute time range covering one UTC day: From `YYYY-MM-DD 00:00`
    To `YYYY-MM-DD 23:59:59`, in UTC. A single query covers at most 7 days.
 3. Run each search below as a text search, and read the number of matches:
@@ -163,7 +166,7 @@ When a player reports a problem:
 2. Under **Find a player's ID**, enter the email address the player signed
    in with. The page shows their ID, for example `p_3f9a1c0b7d2e4a68`. The
    address is posted, so it never appears in a URL, and it is not logged.
-3. In **Insights > Logs** (LON1), set the time range around the report and
+3. In **Insights > Logs** (AMS3), set the time range around the report and
    search `"player":"p_3f9a1c0b7d2e4a68"` together with `"event":"error"`.
    Leave out the event to see everything the player did:
    - their tool calls, with the tool and the assistant;
@@ -191,9 +194,10 @@ App Platform charts these without any work in the playmat. Use the last
 | `CPU_UTILIZATION` | CPU stays above 80% | 10 minutes |
 | `MEM_UTILIZATION` | memory stays above 80% | 10 minutes |
 
-- **Thresholds**: these are starting values. Change them in `.do/app.yaml`,
-  then apply the file with `doctl apps update <app-id> --spec .do/app.yaml`.
-  The deploy workflow does not apply edits to the app definition.
+- **Thresholds**: these are starting values. Change them in `.do/app.yaml`
+  and make the same change in the console (the app's Settings > App Spec >
+  Edit, Save). The deploy workflow does not apply edits to the app
+  definition.
 - **Recipients**: the app definition cannot name who an alert goes to. Set
   the maintainer's email once in the control panel, either in the app's
   **Settings > Alerts** or in an Insights email notification channel.
@@ -244,9 +248,9 @@ changing the size, because it changes the hosting cost.
    figure leaves out.
 3. **Record the results here**: both per-game figures, the calculation, and
    the chosen `TCGREPLAY_MAX_USERS` and `instance_size_slug`, with the date.
-   Then set the same values in `.do/app.yaml` and apply them with
-   `doctl apps update <app-id> --spec .do/app.yaml`. The website shows the
-   player limit, and the next deploy picks it up from `.do/app.yaml`.
+   Then set the same values in `.do/app.yaml` and in the console (Settings >
+   App Spec > Edit, Save). The website shows the player limit, read from
+   `.do/app.yaml` when it is built, so the two must match.
 
 ## Retention
 

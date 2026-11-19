@@ -21,11 +21,11 @@ function fixture({ drop, publicURL = 'https://tcgreplay.app', primary = 'tcgrepl
     ['TCGREPLAY_IDLE_TIMEOUT', '"2h"'],
   ]
     .filter(([key]) => key !== drop)
-    .map(([key, value]) => `      - key: ${key}\n        value: ${value}\n        scope: RUN_TIME\n`)
+    .map(([key, value]) => `  - key: ${key}\n    value: ${value}\n    scope: RUN_TIME\n`)
     .join('');
   const domains =
     primary === null ? '' : `domains:\n  - domain: ${primary}\n    type: PRIMARY\n  - domain: tcgreplay.demo.gs\n    type: ALIAS\n`;
-  return `name: tcgreplay\nservices:\n  - name: playmat\n    http_port: 8080\n    envs:\n${envs}${domains}`;
+  return `name: tcgreplay\nservices:\n  - name: tcgreplay\n    http_port: 8080\nenvs:\n${envs}${domains}`;
 }
 
 const limitKeys = ['TCGREPLAY_RATE_LIMIT', 'TCGREPLAY_MAX_USERS', 'TCGREPLAY_IDLE_TIMEOUT'];
@@ -50,7 +50,7 @@ for (const key of limitKeys) {
   test(`${key} removed from the real definition fails with a message naming it`, () => {
     const text = appYaml();
     // Remove the "- key: X" entry and its indented lines.
-    const re = new RegExp(`\\n\\s*- key: ${key}\\n(?: {8}\\S.*\\n)*`);
+    const re = new RegExp(`\\n\\s*- key: ${key}\\n(?: {4}\\S.*\\n)*`);
     const without = text.replace(re, '\n');
     expect(without).not.toContain(`- key: ${key}`);
     expect(() => loadLimits(without)).toThrow(new RegExp(`does not set ${key}`));
@@ -62,8 +62,13 @@ test('a definition with an empty limit fails with a message naming it', () => {
   expect(() => loadLimits(yaml)).toThrow('TCGREPLAY_MAX_USERS');
 });
 
-test('a definition with no playmat service fails', () => {
-  expect(() => loadLimits(fixture().replace('name: playmat', 'name: other'))).toThrow('no service named "playmat"');
+test('a definition with the settings on the service, not the app, fails', () => {
+  const onService =
+    'name: tcgreplay\nservices:\n  - name: tcgreplay\n    http_port: 8080\n    envs:\n' +
+    '      - key: TCGREPLAY_RATE_LIMIT\n        value: "120"\n' +
+    '      - key: TCGREPLAY_MAX_USERS\n        value: "5"\n' +
+    '      - key: TCGREPLAY_IDLE_TIMEOUT\n        value: "2h"\n';
+  expect(() => loadLimits(onService)).toThrow(/does not set TCGREPLAY_\w+ in the app's settings/);
 });
 
 test('the real App Platform definition gives the public address and the addresses built from it', () => {
@@ -84,7 +89,7 @@ test('a definition without TCGREPLAY_PUBLIC_URL fails with a message naming it',
 });
 
 test('TCGREPLAY_PUBLIC_URL removed from the real definition fails with a message naming it', () => {
-  const without = appYaml().replace(/\n\s*- key: TCGREPLAY_PUBLIC_URL\n(?: {8}\S.*\n)*/, '\n');
+  const without = appYaml().replace(/\n\s*- key: TCGREPLAY_PUBLIC_URL\n(?: {4}\S.*\n)*/, '\n');
   expect(without).not.toContain('- key: TCGREPLAY_PUBLIC_URL');
   expect(() => loadPublicURL(without)).toThrow(/does not set TCGREPLAY_PUBLIC_URL/);
 });
