@@ -30,13 +30,13 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    background: #2b2410;
-    color: #f2ead0;
+    background: var(--banner-bg);
+    color: var(--banner-text);
     border-bottom: 2px solid var(--accent);
-    box-shadow: 0 4px 16px #0008;
+    box-shadow: var(--shadow-banner);
   }
   .target-banner :global(.card) { --cw: 34px; filter: none; opacity: 1; }
-  .text { display: flex; flex-direction: column; flex: 1; min-width: 0; font-size: 13px; line-height: 1.3; }
+  .text { display: flex; flex-direction: column; flex: 1; min-width: 0; font-size: var(--fs-13); line-height: 1.3; }
   .hint { color: var(--accent); font-weight: 700; }
   button { min-height: 44px; padding: 0 16px; }
 </style>

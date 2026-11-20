@@ -4,24 +4,24 @@
      10 card widths wide beside the timeline. Everything on the board
      scales from it, text included (--fs). */
   --cw: clamp(48px, min((100vh - 115px) / 11.1, (100vw - 360px) / 10), 240px);
-  --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
+  --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
 }
 /* The colour tokens come from internal/design/tokens.css (imported first,
    in main.js). On the light variant the mat keeps light text. */
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) main { color: #f2f6f3; --muted: #cfe0d5; }
+  :root:not([data-theme='dark']) main { color: var(--felt-ink); --muted: var(--felt-muted); }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font: var(--fs-14)/1.4 var(--font-ui);
   background: var(--bg);
   color: var(--text);
 }
 main { background: var(--felt); }
 button {
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-13);
   padding: 5px 10px;
   border-radius: 6px;
   border: 1px solid var(--line);
@@ -31,9 +31,9 @@ button {
 }
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { opacity: 0.45; cursor: default; }
-button.primary { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 700; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
 select { font: inherit; background: var(--input); color: var(--text); border: 1px solid var(--line); border-radius: 4px; }
-code { background: #0005; padding: 1px 5px; border-radius: 4px; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
 
 /* A card enlarged on hover sits above the cards around it. */
 :where(.slot, .main, .att, .pile, .prize, .entry):has(> * .card.lift:hover, > .card.lift:hover) {
@@ -54,7 +54,7 @@ code { background: #0005; padding: 1px 5px; border-radius: 4px; }
 .drag-source { opacity: 0.35; pointer-events: none; }
 /* The ghost's position and size are set inline (lib/pointer.svelte.js),
    where no card style can override them. */
-.drag-ghost { box-shadow: 0 16px 36px #000c; }
+.drag-ghost { box-shadow: var(--shadow-drag); }
 
 /* On a phone, Energy and Tools tuck further under their Pokémon, so less
    of them hangs below it, and fan in close so several stay within the

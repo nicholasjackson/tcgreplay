@@ -80,16 +80,16 @@
 <style>
   .attack { display: flex; flex-direction: column; gap: 4px; padding-bottom: 16px; }
   .attack-card { margin: 10px 16px; padding: 12px 14px; border-radius: 12px; background: var(--input); border: 1px solid var(--line); }
-  .head { display: flex; justify-content: space-between; font-size: 16px; }
+  .head { display: flex; justify-content: space-between; font-size: var(--fs-16); }
   .head strong:last-child { color: var(--accent); }
-  .attack-card p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+  .attack-card p { margin: 6px 0 0; color: var(--muted); font-size: var(--fs-12); }
   .name { display: flex; flex-direction: column; gap: 4px; padding: 10px 16px; font-weight: 600; }
-  .name input { min-height: 44px; font-size: 16px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--input); color: var(--text); }
+  .name input { min-height: 44px; font-size: var(--fs-16); padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--input); color: var(--text); }
   .sec { padding: 10px 0 6px; }
-  .label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0 16px 6px; }
+  .label { font-size: var(--fs-11); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0 16px 6px; }
   .target { display: flex; align-items: center; gap: 10px; padding: 0 16px; }
   .who { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-  .who span { color: var(--muted); font-size: 12px; }
+  .who span { color: var(--muted); font-size: var(--fs-12); }
   .target button { min-height: 44px; border-radius: 10px; padding: 0 14px; font-weight: 600; }
-  .go { margin: 12px 16px 0; min-height: 52px; font-size: 16px; border-radius: 12px; }
+  .go { margin: 12px 16px 0; min-height: 52px; font-size: var(--fs-16); border-radius: 12px; }
 </style>

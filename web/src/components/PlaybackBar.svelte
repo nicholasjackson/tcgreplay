@@ -70,12 +70,12 @@
     background: var(--panel);
     border: 1px solid var(--accent);
     border-radius: 12px;
-    box-shadow: 0 6px 24px #000a;
-    font-size: 14px;
+    box-shadow: var(--shadow-bar);
+    font-size: var(--fs-14);
     max-width: calc(100vw - 32px);
     flex-wrap: wrap;
   }
-  .bar button { font-size: 15px; min-width: 2.4em; }
+  .bar button { font-size: var(--fs-15); min-width: 2.4em; }
   input[type='range'] { width: clamp(120px, 18vw, 360px); accent-color: var(--accent); }
   .pos { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .msg { font-weight: 600; }

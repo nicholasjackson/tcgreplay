@@ -300,7 +300,7 @@
      height for it, and the timeline fills whatever height the board leaves. */
   .app.wide {
     --cw: clamp(48px, min((100vh - 115px) / 11.1, (100vw - 40px) / 10), 240px);
-    --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
+    --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
   }
   .app.panel-bottom {
     height: 100vh;
@@ -320,7 +320,7 @@
      up --fit (see fitBoard). */
   .board {
     --cw: max(48px, min((100cqh - 50px - var(--fit, 0px)) / 6.9, (100cqw - 80px) / (4.6 + 1.16 * var(--bench-n, 5))));
-    --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
+    --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
     font-size: var(--fs);
     position: relative;
     height: 100%;
@@ -342,7 +342,7 @@
      each Active. */
   .app.phone {
     --cw: max(40px, min(calc((100vw - 32px) / 5.6), calc((100dvh - 372px - var(--fit, 0px)) / 6.6)));
-    --fs: 13px;
+    --fs: var(--fs-13);
     height: 100dvh;
     min-height: 0;
   }
@@ -368,12 +368,12 @@
     height: 18px;
     padding: 0 4px;
     border-radius: 9px;
-    background: #ffb300;
-    color: #222;
-    font: 700 11px/18px system-ui;
+    background: var(--warn);
+    color: var(--warn-ink);
+    font: 700 var(--fs-11)/18px system-ui;
   }
   .burger { position: relative; }
-  .warning { padding: 6px 12px; font-size: 12px; color: var(--muted); max-width: 260px; }
+  .warning { padding: 6px 12px; font-size: var(--fs-12); color: var(--muted); max-width: 260px; }
   aside.sheet {
     position: fixed;
     inset: 0;
@@ -382,8 +382,8 @@
     border: 0;
   }
   aside.sheet .close { position: absolute; top: 4px; right: 8px; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
-  .upright { background: var(--felt); color: #f2f6f3; font-size: 16px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
-  .phone-icon { font-size: 40px; display: inline-block; transform: rotate(90deg); }
+  .upright { background: var(--felt); color: var(--felt-ink); font-size: var(--fs-16); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
+  .phone-icon { font-size: var(--fs-40); display: inline-block; transform: rotate(90deg); }
   header {
     display: flex;
     align-items: center;
@@ -393,18 +393,18 @@
     border-bottom: 1px solid var(--line);
     flex-wrap: wrap;
     /* Header text is today's 13px up to 1920px wide and grows above it. */
-    font-size: max(13px, 0.677vw);
+    font-size: max(var(--fs-13), 0.677vw);
   }
   header button:not(.burger), header select { font-size: inherit; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: #c62828; }
-  .dot.on { background: #43a047; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--offline); }
+  .dot.on { background: var(--live); }
   .game { color: var(--muted); }
   .branch select { margin-left: 4px; }
   .toggle { display: flex; gap: 4px; align-items: center; cursor: pointer; }
   .reveal-toggle { color: var(--reveal); font-weight: 700; }
-  .warn { color: #ffb300; cursor: help; }
+  .warn { color: var(--warn); cursor: help; }
   .more { margin-left: auto; position: relative; }
-  .burger { font-size: max(16px, 0.833vw); line-height: 1; padding: 4px 9px; }
+  .burger { font-size: max(var(--fs-16), 0.833vw); line-height: 1; padding: 4px 9px; }
   .backdrop { position: fixed; inset: 0; z-index: 70; }
   .dropdown {
     position: absolute;
@@ -418,7 +418,7 @@
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 8px;
-    box-shadow: 0 6px 20px #0008;
+    box-shadow: var(--shadow-dropdown);
   }
   /* On a phone ☰ sits at the left, so its menu opens rightwards, and
      scrolls if it is taller than the screen. */
@@ -426,20 +426,20 @@
   .dropdown button { width: 100%; text-align: left; border-color: transparent; background: none; }
   .dropdown button:hover { background: var(--hover); }
   .dropdown form { margin: 0; }
-  .menu-check { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: max(13px, 0.677vw); cursor: pointer; border-radius: 6px; }
+  .menu-check { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: max(var(--fs-13), 0.677vw); cursor: pointer; border-radius: 6px; }
   .menu-check:hover { background: var(--hover); }
   .sep { height: 1px; background: var(--line); margin: 4px 0; }
-  .account { color: var(--muted); padding: 4px 10px; font-size: 12px; }
+  .account { color: var(--muted); padding: 4px 10px; font-size: var(--fs-12); }
   .over-banner {
     background: var(--accent);
-    color: #111;
+    color: var(--accent-label-ink);
     font-weight: 800;
     text-align: center;
     padding: 4px;
   }
   .reveal-banner {
     background: var(--reveal);
-    color: #fff;
+    color: var(--on-color);
     font-weight: 800;
     text-align: center;
     padding: 4px;
@@ -465,7 +465,7 @@
     max-height: none;
     position: static;
   }
-  aside h2 { font-size: max(13px, 0.677vw); margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
+  aside h2 { font-size: max(var(--fs-13), 0.677vw); margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
   .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: 8px; }
   aside .dock {
     display: grid; place-items: center; width: 26px; height: 22px; padding: 0; margin-top: 8px;
@@ -497,10 +497,10 @@
   .overlay > :global(*) { pointer-events: auto; }
   .caption {
     white-space: pre-line;
-    font-size: 15px;
+    font-size: var(--fs-15);
     line-height: 1.45;
-    background: #000d;
-    color: #fff;
+    background: var(--caption-bg);
+    color: var(--on-color);
     padding: 8px 16px;
     border-radius: 20px;
     border: 2px solid var(--accent);
@@ -520,10 +520,10 @@
        the card it talks about (a pair's second half) waits to be dragged. */
     pointer-events: none;
   }
-  .toast { padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 16px #0008; font-size: 13px; }
-  .toast.error { background: #b71c1c; color: #fff; }
-  .toast.warn { background: #ffb300; color: #222; }
-  .toast.info { background: #263238; color: #fff; }
+  .toast { padding: 8px 12px; border-radius: 8px; box-shadow: var(--shadow-toast); font-size: var(--fs-13); }
+  .toast.error { background: var(--toast-error); color: var(--on-color); }
+  .toast.warn { background: var(--warn); color: var(--warn-ink); }
+  .toast.info { background: var(--toast-info); color: var(--on-color); }
   @media (max-width: 900px) {
     .body.panel { grid-template-columns: 1fr; }
     aside { max-height: 40vh; position: static; }

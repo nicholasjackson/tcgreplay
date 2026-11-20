@@ -33,7 +33,7 @@
     align-items: center;
     gap: 5px;
     padding: 2px 8px;
-    font-size: 13px;
+    font-size: var(--fs-13);
   }
   .counters.inset { padding-left: 76px; }
   .name { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -49,10 +49,10 @@
     border-radius: 12px;
     line-height: 1.1;
     white-space: nowrap;
-    background: #0006;
-    color: #f2f6f3;
-    border: 1px solid #ffffff33;
+    background: var(--chip-bg);
+    color: var(--felt-ink);
+    border: 1px solid var(--chip-line);
   }
-  .chip small { font-size: 10px; font-weight: 600; opacity: 0.8; }
-  .chip b { font-size: 15px; }
+  .chip small { font-size: var(--fs-10); font-weight: 600; opacity: 0.8; }
+  .chip b { font-size: var(--fs-15); }
 </style>

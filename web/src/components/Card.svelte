@@ -103,7 +103,7 @@
     flex: none;
     transform: rotate(var(--rot)) scale(var(--hs, 1));
     transition: transform 0.25s ease, box-shadow 0.25s ease, outline-color 0.25s;
-    box-shadow: 0 2px 6px #0007;
+    box-shadow: var(--shadow-card);
     cursor: grab;
     background: var(--card-bg);
     outline: 3px solid transparent;
@@ -129,7 +129,7 @@
     :global(body:not(.dragging)) .card.lift:not(.back):hover {
       --hs: 1.8;
       z-index: 40;
-      box-shadow: 0 10px 30px #000b;
+      box-shadow: var(--shadow-card-lift);
       transition-delay: 0.15s;
     }
     :global(body:not(.dragging)) .card.lift.lg:not(.back):hover { --hs: 1.55; }
@@ -157,8 +157,8 @@
     padding: 0.05em 0.45em;
     border-radius: 1em;
     background: var(--accent);
-    color: #111;
-    font: 700 max(9px, calc(var(--w, var(--cw)) * 0.11)) system-ui;
+    color: var(--accent-label-ink);
+    font: 700 max(var(--fs-9), calc(var(--w, var(--cw)) * 0.11)) system-ui;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -168,9 +168,9 @@
     width: 100%;
     height: 100%;
     border-radius: inherit;
-    background: radial-gradient(circle at 50% 50%, #e9eef3 0 13%, #232a33 13% 17%, transparent 17%),
-      linear-gradient(#c8312b 0 47%, #232a33 47% 53%, #2a5bd7 53%);
-    border: calc(var(--w) * 0.05) solid #1d3f9e;
+    background: radial-gradient(circle at 50% 50%, var(--card-back-light) 0 13%, var(--card-back-band) 13% 17%, transparent 17%),
+      linear-gradient(var(--card-back-red) 0 47%, var(--card-back-band) 47% 53%, var(--card-back-blue) 53%);
+    border: calc(var(--w) * 0.05) solid var(--card-back-edge);
     box-sizing: border-box;
   }
   .back-art.unknown {
@@ -180,8 +180,8 @@
   }
   .back-art.unknown span {
     font: 800 calc(var(--w) * 0.45) / 1 system-ui;
-    color: #fff;
-    text-shadow: 0 2px 6px #000;
+    color: var(--on-color);
+    text-shadow: var(--shadow-text-glyph);
     filter: none;
   }
   .text-card {
@@ -193,16 +193,16 @@
     display: flex;
     flex-direction: column;
     gap: 4%;
-    background: linear-gradient(160deg, #f4efe0, #d9d0b5);
-    color: #222;
+    background: linear-gradient(160deg, var(--card-text-face), var(--card-text-face-end));
+    color: var(--card-text-ink);
     font-size: calc(var(--w) * 0.12);
     line-height: 1.15;
     overflow: hidden;
-    border: calc(var(--w) * 0.04) solid #c9a43c;
+    border: calc(var(--w) * 0.04) solid var(--card-text-edge);
   }
-  .text-card[data-cat='Trainer'] { border-color: #8a8f99; background: linear-gradient(160deg, #eef1f4, #cfd5dc); }
-  .text-card[data-cat='Energy'] { border-color: #b8742a; }
-  .text-card .hp { font-weight: 700; color: #a22; }
+  .text-card[data-cat='Trainer'] { border-color: var(--card-text-edge-trainer); background: linear-gradient(160deg, var(--card-text-face-trainer), var(--card-text-face-trainer-end)); }
+  .text-card[data-cat='Energy'] { border-color: var(--card-text-edge-energy); }
+  .text-card .hp { font-weight: 700; color: var(--card-text-hp); }
   .text-card small { opacity: 0.7; }
   .token {
     width: 100%;
@@ -211,26 +211,26 @@
     display: grid;
     place-items: center;
     font: 800 calc(var(--w) * 0.5) / 1 system-ui;
-    color: #fff;
-    text-shadow: 0 1px 2px #0009;
-    background: radial-gradient(circle at 50% 45%, var(--ec) 0 38%, #fff 39% 44%, var(--ec) 45%);
-    --ec: #888;
+    color: var(--on-color);
+    text-shadow: var(--shadow-text-energy);
+    background: radial-gradient(circle at 50% 45%, var(--ec) 0 38%, var(--energy-ring) 39% 44%, var(--ec) 45%);
+    --ec: var(--energy-special);
   }
-  .token[data-type='Fighting'] { --ec: #b5562b; }
-  .token[data-type='Fire'] { --ec: #e2452b; }
-  .token[data-type='Water'] { --ec: #2f86d6; }
-  .token[data-type='Grass'] { --ec: #3f9a3a; }
-  .token[data-type='Lightning'] { --ec: #e7b322; }
-  .token[data-type='Psychic'] { --ec: #8c4bb5; }
-  .token[data-type='Darkness'] { --ec: #2d3b45; }
-  .token[data-type='Metal'] { --ec: #8b98a3; }
+  .token[data-type='Fighting'] { --ec: var(--energy-fighting); }
+  .token[data-type='Fire'] { --ec: var(--energy-fire); }
+  .token[data-type='Water'] { --ec: var(--energy-water); }
+  .token[data-type='Grass'] { --ec: var(--energy-grass); }
+  .token[data-type='Lightning'] { --ec: var(--energy-lightning); }
+  .token[data-type='Psychic'] { --ec: var(--energy-psychic); }
+  .token[data-type='Darkness'] { --ec: var(--energy-darkness); }
+  .token[data-type='Metal'] { --ec: var(--energy-metal); }
   .basis {
     position: absolute;
     top: 2px;
     left: 2px;
-    background: #7a3fd0;
-    color: white;
-    font: 700 max(10px, calc(var(--w) * 0.11))/1 system-ui;
+    background: var(--basis);
+    color: var(--on-color);
+    font: 700 max(var(--fs-10), calc(var(--w) * 0.11))/1 system-ui;
     padding: 0.2em 0.4em;
     border-radius: 3px;
     text-transform: uppercase;

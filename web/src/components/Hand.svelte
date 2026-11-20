@@ -143,11 +143,11 @@
     right: -0.4em;
     z-index: 3;
     background: var(--accent);
-    color: #111;
+    color: var(--accent-label-ink);
     border-radius: 1em;
     padding: 0.1em 0.5em;
     font: 700 0.85em system-ui;
-    box-shadow: 0 1px 3px #0008;
+    box-shadow: var(--shadow-badge);
   }
   .count {
     position: absolute;

@@ -32,7 +32,7 @@
     padding: 0 14px;
     border-radius: 10px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--fs-14);
     white-space: nowrap;
     flex: none;
   }
@@ -44,8 +44,8 @@
     background: var(--input);
     border: 1px solid var(--line);
     color: var(--text);
-    font: 800 18px system-ui, sans-serif;
+    font: 800 var(--fs-18) system-ui, sans-serif;
     text-align: center;
   }
-  small { font-size: 9px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+  small { font-size: var(--fs-9); font-weight: 600; color: var(--muted); margin-top: 2px; }
 </style>

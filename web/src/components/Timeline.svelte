@@ -141,7 +141,7 @@
     flex: 1;
     min-height: 0; /* fill what the panel's heading leaves, and scroll */
     padding: 8px 10px 40px;
-    font-size: max(12px, 0.625vw);
+    font-size: max(var(--fs-12), 0.625vw);
     line-height: 1.35;
   }
   h3 {
@@ -152,7 +152,7 @@
     margin: 10px 0 4px;
     padding: 4px 0;
     border-bottom: 1px solid var(--line);
-    font-size: max(12px, 0.625vw);
+    font-size: max(var(--fs-12), 0.625vw);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--muted);
@@ -161,7 +161,7 @@
     margin: 6px 0 2px;
     padding: 2px 6px;
     border-left: 3px solid transparent;
-    font-size: max(11px, 0.5729vw);
+    font-size: max(var(--fs-11), 0.5729vw);
     font-weight: 600;
     color: var(--muted);
   }
@@ -195,7 +195,7 @@
     opacity: 0;
     transition: opacity 0.15s;
   }
-  .acts button { padding: 0 6px; font-size: max(12px, 0.625vw); }
+  .acts button { padding: 0 6px; font-size: max(var(--fs-12), 0.625vw); }
   .line:hover .acts { opacity: 1; }
   .line.ahead { opacity: 0.4; }
   .line.now { background: var(--fresh); outline: 1px solid var(--accent); }

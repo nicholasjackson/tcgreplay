@@ -32,6 +32,6 @@
 
 <style>
   .sec { padding: 10px 0 6px; }
-  .label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0 16px 6px; }
-  .go { margin: 12px 16px 16px; min-height: 52px; font-size: 16px; border-radius: 12px; width: calc(100% - 32px); }
+  .label { font-size: var(--fs-11); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0 16px 6px; }
+  .go { margin: 12px 16px 16px; min-height: 52px; font-size: var(--fs-16); border-radius: 12px; width: calc(100% - 32px); }
 </style>

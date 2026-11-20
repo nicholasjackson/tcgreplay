@@ -274,9 +274,9 @@
     translate: 0 -50%;
     padding: 4px 8px;
     border-radius: 12px 0 0 12px;
-    background: #000a;
-    color: #fff;
-    font: 700 12px system-ui;
+    background: var(--hint-bg);
+    color: var(--on-color);
+    font: 700 var(--fs-12) system-ui;
     pointer-events: none;
   }
   @media (pointer: coarse) {

@@ -104,8 +104,8 @@
     position: absolute;
     top: -6px;
     left: -6px;
-    background: #2b2f36;
-    color: #fff;
+    background: var(--chain-bg);
+    color: var(--on-color);
     border-radius: 50%;
     width: 1.5em;
     height: 1.5em;
@@ -129,13 +129,13 @@
     font: 700 0.85em/1 system-ui;
     padding: 0.25em 0.5em;
     border-radius: 1em;
-    box-shadow: 0 1px 3px #0008;
+    box-shadow: var(--shadow-badge);
   }
-  .dmg { background: #c62828; color: #fff; }
-  .hpleft { background: #f5f5f5; color: #1b5e20; }
-  .hpleft.low { color: #b71c1c; }
-  .marker.poison { background: #7b1fa2; color: #fff; }
-  .marker.burn { background: #ef6c00; color: #fff; }
+  .dmg { background: var(--damage); color: var(--on-color); }
+  .hpleft { background: var(--hp-bg); color: var(--hp-ink); }
+  .hpleft.low { color: var(--hp-low); }
+  .marker.poison { background: var(--poison); color: var(--on-color); }
+  .marker.burn { background: var(--burn); color: var(--on-color); }
   .controls {
     position: absolute;
     bottom: 4px;
@@ -161,8 +161,8 @@
     padding: 0.2em 0.45em;
     border-radius: 4px;
     border: none;
-    background: #000c;
-    color: #fff;
+    background: var(--control-bg);
+    color: var(--on-color);
     cursor: pointer;
   }
 </style>

@@ -135,8 +135,8 @@
     position: relative;
     height: calc(var(--cw) * 0.2);
     z-index: 2;
-    color: #e8efe9;
-    --muted: #9bb0a2;
+    color: var(--strip-text);
+    --muted: var(--strip-muted);
   }
   /* The Active card is 1.25 card widths in a 1.45-wide slot. */
   .stadium {
@@ -189,34 +189,34 @@
     border-radius: 8px;
     padding: 0.8em 1.2em;
     color: var(--text);
-    background: #0006;
+    background: var(--chip-bg);
     font-size: 0.85em;
   }
   .turn {
     font-weight: 700;
     padding: 0.45em 0.9em;
     border-radius: 1.2em;
-    background: #0006;
+    background: var(--chip-bg);
     white-space: nowrap;
   }
-  .turn.mine { background: var(--accent); color: #1a1a1a; }
+  .turn.mine { background: var(--accent); color: var(--accent-ink); }
   .coin {
     width: 2.6em;
     height: 2.6em;
     padding: 0;
     flex: none;
     border-radius: 50%;
-    border: 3px solid #b8892a;
-    background: radial-gradient(circle at 35% 30%, #ffe48a, #d9a636);
-    color: #4a3200;
+    border: 3px solid var(--coin-edge);
+    background: radial-gradient(circle at 35% 30%, var(--coin-light), var(--coin-dark));
+    color: var(--coin-ink);
     font-weight: 800;
     font-size: 0.9em;
     cursor: pointer;
   }
   .effects { display: flex; gap: 6px; flex-wrap: wrap; }
   .effect {
-    background: #6a1b9a;
-    color: white;
+    background: var(--effect);
+    color: var(--on-color);
     font-size: 0.85em;
     padding: 0.3em 0.6em;
     border-radius: 1em;
@@ -276,7 +276,7 @@
     align-items: center;
     justify-content: center;
     padding: 2px 6px;
-    font-size: 12px;
+    font-size: var(--fs-12);
   }
   /* One row: the turn, the coin and the turn buttons. The Stadium sits in
      the empty felt beside an Active: left of yours, just below the row,
@@ -285,7 +285,7 @@
   .phone .coin { width: 40px; height: 40px; font-size: 0.85em; }
   .phone .status { gap: 5px; }
   .phone .buttons { flex-wrap: nowrap; gap: 5px; }
-  .phone .buttons button { padding: 0 8px; font-size: 12px; white-space: nowrap; }
+  .phone .buttons button { padding: 0 8px; font-size: var(--fs-12); white-space: nowrap; }
   .phone .stadium { position: absolute; left: 8px; top: calc(100% + 6px); bottom: auto; right: auto; transform: none; width: auto; min-width: 48px; min-height: 0; padding: 2px; }
   .phone .stadium.theirs { left: auto; right: 8px; top: auto; bottom: calc(100% + 6px); }
   .phone .stadium.pair { width: auto; }

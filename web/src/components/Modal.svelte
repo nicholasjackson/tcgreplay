@@ -261,7 +261,7 @@
 {/if}
 
 <style>
-  .backdrop { position: fixed; inset: 0; background: #0009; z-index: 30; }
+  .backdrop { position: fixed; inset: 0; background: var(--scrim-modal); z-index: 30; }
   /* A card dragged out of a view lands on the board: the view lets the
      pointer through and fades while the drag lasts. Its cards still let a
      finger scroll the list. */
@@ -282,8 +282,8 @@
     padding: 0;
     border: none;
     border-radius: 50%;
-    background: #ffffff12;
-    font-size: 18px;
+    background: var(--close-bg);
+    font-size: var(--fs-18);
   }
   .modal.phone {
     inset: 0;
@@ -306,10 +306,10 @@
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 14px 18px 18px;
-    box-shadow: 0 20px 60px #000c;
+    box-shadow: var(--shadow-dialog);
   }
   header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  header h2 { margin: 0 auto 0 0; font-size: 16px; }
+  header h2 { margin: 0 auto 0 0; font-size: var(--fs-16); }
   form { display: flex; gap: 4px; }
   select {
     background: var(--input);
@@ -331,17 +331,17 @@
   .about { max-width: 40rem; overflow-wrap: anywhere; }
   .about p { margin: 10px 0 0; line-height: 1.45; }
   .about a { color: var(--accent); }
-  .note { color: var(--muted); font-size: 12px; margin: 6px 0; }
+  .note { color: var(--muted); font-size: var(--fs-12); margin: 6px 0; }
   .grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
   .entry { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
-  .pos { position: absolute; top: -6px; left: -6px; z-index: 2; background: var(--accent); color: #111; border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; font: 700 11px system-ui; }
+  .pos { position: absolute; top: -6px; left: -6px; z-index: 2; background: var(--accent); color: var(--accent-label-ink); border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; font: 700 var(--fs-11) system-ui; }
   .acts { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; max-width: calc(var(--cw) * 1.4); }
   .list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
   .row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 3px 4px; border-radius: 6px; }
   .row:hover { background: var(--hover); }
   .row .acts { max-width: none; justify-content: flex-end; }
   .name { font-weight: 600; }
-  .kind { color: var(--muted); font-size: 12px; }
+  .kind { color: var(--muted); font-size: var(--fs-12); }
   .empty { color: var(--muted); }
   /* Beside the modal on wide screens; over its right edge on narrow ones. */
   .preview {
@@ -352,17 +352,17 @@
     --pw: clamp(240px, calc(var(--cw) * 3), 600px);
     width: var(--pw);
     border-radius: calc(var(--pw) * 0.045);
-    box-shadow: 0 20px 60px #000c;
+    box-shadow: var(--shadow-dialog);
     pointer-events: none;
   }
-  .section { font-size: 13px; margin: 14px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .section { font-size: var(--fs-13); margin: 14px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
   .dl { width: calc(var(--cw) * 0.62 + 40px); }
-  .count { position: absolute; top: -6px; right: 14px; z-index: 2; background: var(--accent); color: #111; border-radius: 10px; padding: 1px 6px; font: 700 12px system-ui; }
+  .count { position: absolute; top: -6px; right: 14px; z-index: 2; background: var(--accent); color: var(--accent-label-ink); border-radius: 10px; padding: 1px 6px; font: 700 var(--fs-12) system-ui; }
   .where { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
-  .place { font-size: 11px; padding: 1px 6px; border-radius: 8px; background: #0005; white-space: nowrap; }
-  .place.active, .place.bench { background: #2e7d32; color: #fff; }
-  .place.hand { background: #1565c0; color: #fff; }
-  .place.prizes { background: #ad1457; color: #fff; }
-  .place.discard, .place.lost { background: #5d4037; color: #fff; }
-  button { font-size: 12px; }
+  .place { font-size: var(--fs-11); padding: 1px 6px; border-radius: 8px; background: var(--place-bg); white-space: nowrap; }
+  .place.active, .place.bench { background: var(--place-board); color: var(--on-color); }
+  .place.hand { background: var(--place-hand); color: var(--on-color); }
+  .place.prizes { background: var(--place-prizes); color: var(--on-color); }
+  .place.discard, .place.lost { background: var(--place-discard); color: var(--on-color); }
+  button { font-size: var(--fs-12); }
 </style>

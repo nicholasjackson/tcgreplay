@@ -62,7 +62,7 @@
   .backdrop {
     position: fixed;
     inset: 0;
-    background: #000b;
+    background: var(--scrim-zoom);
     z-index: 50;
     display: grid;
     place-items: center;
@@ -81,7 +81,7 @@
     padding: clamp(16px, 2vh, 32px);
     overflow: auto;
     flex-wrap: wrap;
-    font-size: clamp(14px, 1.5vh, 24px);
+    font-size: clamp(var(--fs-14), 1.5vh, var(--fs-24));
   }
   img { width: var(--zw); max-width: 100%; border-radius: calc(var(--zw) * 0.045); align-self: flex-start; }
   /* A pair's halves side by side, edge to edge, as one picture: as wide as

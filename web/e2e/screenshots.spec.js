@@ -6,8 +6,11 @@
 // Captures park the pointer and wait for finite animations, so they repeat.
 import { test, expect } from './fixtures.js';
 
-// settle parks the pointer clear of the board and waits for every finite
-// animation to finish (gotcha board-boxes-settle-before-comparing).
+// settle parks the pointer clear of the board, waits for every finite
+// animation to finish (gotcha board-boxes-settle-before-comparing), and
+// waits for the timeline's smooth scroll to the newest line to stop:
+// animations: 'disabled' does not stop smooth scrolling, and a capture
+// mid-scroll shifts the timeline's text by a pixel.
 async function settle(page) {
   await page.mouse.move(1, 1);
   await page.evaluate(() =>
@@ -17,6 +20,22 @@ async function settle(page) {
         .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity)
         .map((a) => a.finished.catch(() => {})),
     ),
+  );
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const list = document.querySelector('.timeline');
+        let last = list?.scrollTop;
+        let still = 0;
+        const tick = () => {
+          const now = list?.scrollTop;
+          still = now === last ? still + 1 : 0;
+          last = now;
+          if (still >= 10) resolve();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
   );
 }
 
