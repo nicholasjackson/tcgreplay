@@ -146,19 +146,24 @@ func TestBusyRefusalIsNotActivity(t *testing.T) {
 	}
 }
 
-// TestAdmitLogsRefusal: a refused sign-in is logged with the account.
-func TestAdmitLogsRefusal(t *testing.T) {
+// TestAdmitRecordsRefusal: a refused sign-in is recorded by the
+// account's player ID, and its email is never logged.
+func TestAdmitRecordsRefusal(t *testing.T) {
 	var logs bytes.Buffer
 	prev := log.Writer()
 	log.SetOutput(&logs)
 	t.Cleanup(func() { log.SetOutput(prev) })
 	r := placesRegistry(t, 1, 0, nil)
+	rec, events := withRecorder(t, r)
 	if err := r.Admit(alice); err != nil {
 		t.Fatal(err)
 	}
 	r.Admit(bob)
-	if want := "usergames: refused " + bob.Email; !strings.Contains(logs.String(), want) {
-		t.Errorf("log %q does not record %q", logs.String(), want)
+	if want := `"event":"limited","player":"` + rec.ID(bob.Email) + `"`; !strings.Contains(events.String(), want) {
+		t.Errorf("records %q lack %s", events, want)
+	}
+	if strings.Contains(logs.String()+events.String(), bob.Email) {
+		t.Errorf("bob's email was logged or recorded: %q %q", logs.String(), events)
 	}
 }
 
@@ -247,5 +252,92 @@ func TestZeroPlacesIsOff(t *testing.T) {
 	}
 	if n := r.holding(); n != 50 {
 		t.Errorf("%d places held, want 50", n)
+	}
+}
+
+// reviewer is the configured reviewer account, as Google verified it;
+// carol is a third ordinary account.
+var (
+	reviewer = hostauth.Account{ID: "google-sub-reviewer", Email: "Reviewer@Example.com", EmailVerified: true}
+	carol    = hostauth.Account{ID: "google-sub-carol", Email: "carol@example.com"}
+)
+
+// reviewerRegistry is placesRegistry with reviewer@example.com as the
+// reviewer.
+func reviewerRegistry(t *testing.T, max int) *Registry {
+	t.Helper()
+	r := placesRegistry(t, max, 0, nil)
+	r.cfg.Reviewer = "reviewer@example.com"
+	return r
+}
+
+// TestReviewerPastTheCap: at a cap of 1 held by A, the reviewer (email
+// verified, matched without regard to case) is admitted and can act,
+// while C is still refused with the usual busy error.
+func TestReviewerPastTheCap(t *testing.T) {
+	r := reviewerRegistry(t, 1)
+	if err := r.Admit(alice); err != nil {
+		t.Fatalf("Admit(A) with a free place: %v", err)
+	}
+	if err := r.Admit(reviewer); err != nil {
+		t.Fatalf("Admit(reviewer) at the cap: %v", err)
+	}
+	e := use(t, r, reviewer)
+	startGame(t, e.M, "review-game")
+	checkBusyErr(t, "Admit(C) with the reviewer in", r.Admit(carol), 1)
+	if _, err := r.Use(carol); err == nil {
+		t.Error("Use(C) at the cap with the reviewer in was not refused")
+	}
+}
+
+// TestUnverifiedReviewerEmailIsRefused: an account whose email matches the
+// reviewer's but which Google has not verified is treated like any other
+// account at the cap.
+func TestUnverifiedReviewerEmailIsRefused(t *testing.T) {
+	r := reviewerRegistry(t, 1)
+	use(t, r, alice)
+	impostor := hostauth.Account{ID: "google-sub-impostor", Email: "reviewer@example.com"}
+	checkBusyErr(t, "Admit(unverified reviewer email) at the cap", r.Admit(impostor), 1)
+	// A verified account with a different email is not the reviewer either.
+	other := hostauth.Account{ID: "google-sub-other", Email: "reviewer@example.org", EmailVerified: true}
+	checkBusyErr(t, "Admit(another verified email) at the cap", r.Admit(other), 1)
+}
+
+// TestReviewerPlaceNotCounted: the reviewer's place does not take one of
+// the cap's: with the reviewer in, A leaving lets C in, and with the
+// reviewer alone the one place is still free for A.
+func TestReviewerPlaceNotCounted(t *testing.T) {
+	r := reviewerRegistry(t, 1)
+	use(t, r, reviewer)
+	if err := r.Admit(alice); err != nil {
+		t.Fatalf("Admit(A) with only the reviewer in: %v", err)
+	}
+	checkBusyErr(t, "Admit(C) with A and the reviewer in", r.Admit(carol), 1)
+	r.Release(alice.ID)
+	if err := r.Admit(carol); err != nil {
+		t.Fatalf("Admit(C) after A left, the reviewer still in: %v", err)
+	}
+	if !r.holdsPlace(reviewer) || !r.holdsPlace(carol) {
+		t.Errorf("reviewer holds a place: %v, C: %v; want both", r.holdsPlace(reviewer), r.holdsPlace(carol))
+	}
+}
+
+// TestNoReviewerConfigured: with no reviewer set, the verified reviewer
+// account is refused at the cap like any other.
+func TestNoReviewerConfigured(t *testing.T) {
+	r := placesRegistry(t, 1, 0, nil)
+	use(t, r, alice)
+	checkBusyErr(t, "Admit(reviewer account) with no reviewer configured", r.Admit(reviewer), 1)
+}
+
+// TestReviewerSettingNormalised: the reviewer setting is matched trimmed
+// and without regard to case.
+func TestReviewerSettingNormalised(t *testing.T) {
+	r := New(Config{Reviewer: "  Reviewer@EXAMPLE.com \n"})
+	if !r.isReviewer(reviewer) {
+		t.Errorf("reviewer %q not matched by setting %q", reviewer.Email, r.cfg.Reviewer)
+	}
+	if r.isReviewer(alice) {
+		t.Error("alice matched as the reviewer")
 	}
 }

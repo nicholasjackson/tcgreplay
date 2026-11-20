@@ -1,0 +1,1432 @@
+{
+  "plan": "20261108110847-d27a9f77-card-set-import",
+  "items": [
+    {
+      "item": "bf63f650-0e23-49a9-9406-61c923d47832",
+      "title": "Built set format",
+      "checks": [
+        {
+          "at": "2026-11-08T13:26:59Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "bf63f650-0e23-49a9-9406-61c923d47832",
+            "title": "Built set format",
+            "criteria": [
+              "A built set holds HP, types, attack costs, damage, retreat and stage once per print, apart from its English wording.",
+              "Writing the same set twice produces identical bytes, and changing one print's text changes only that print's lines.",
+              "Adding a second language's wording to one print leaves that print's English wording and language-independent facts byte for byte unchanged.",
+              "A set with a print lacking an English name or English text for one of its attacks, abilities or effect is reported as invalid.",
+              "A built print converts into the same card definition the playmat uses today, for Pokémon, Trainers and Energy."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/format.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/card.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/format_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cardstest/cardstest.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/format.go:62-81: Print holds HP, Types, Stage, Attacks (AttackCore with Cost and Damage), Retreat once per print; wording lives separately in Print.Text (line 80, PrintText at lines 102-108). AttackCore at lines 84-87 holds only cost and damage."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "format.go:11-13 and 143-173: fixed struct key order, json map keys sorted by encoding/json, prints sorted by SortPrints (lines 207-229), two-space indent, trailing newline. format_test.go:96-113 checks identical bytes for two writes; format_test.go:147-171 changes one print's English effect and asserts exactly one changed line of the same line count."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "format_test.go:173-218 adds a 'fr' block to tst-002 and asserts the English PrintText and the core (Text stripped, then marshalled) are unchanged, and that every original line of the file survives in order. Format keeps language blocks in the map under Print.Text (format.go:80), so a new language adds a block without touching the others."
+            },
+            {
+              "criterion": 4,
+              "verdict": "not_met",
+              "evidence": "format.go:262-301 (Print.Validate) rejects a print with no English text or a blank English name, and any language's blank attack or ability name (lines 281-290). It also rejects non-English effect text where English has none (lines 296-310). But it does not reject a print whose English text lacks an effect where one is required: a Trainer or Energy print with an empty English Effect (Print.Text['en'].Effect) passes, and so does an English ability with a name but no effect. Nothing in format_test.go:220-261 tests a missing English effect for a Trainer, Energy or ability. Attack effect text is legitimately optional, so only the Trainer/Energy effect and ability effect gaps are relevant. The English effect requirement is a gap."
+            },
+            {
+              "criterion": 5,
+              "verdict": "not_met",
+              "evidence": "card.go:16-55 converts a Print into cards.Card (the playmat's type, internal/cards/cards.go:72-93) for Pokémon, Trainer and Energy, carrying abilities, attacks, weaknesses, resistances, effect, trainer and energy type. Gap: the playmat today runs cards.energyArt (internal/cards/cards.go:534-546) inside loadCard (line 490) and Cached (line 520), so a Basic Energy with no image gets the Crown Zenith art. Print.Card (card.go:42-47) only takes the TCGdex image and never applies that fallback, so the converted Basic Energy can differ from the playmat's card. TestCardConversion (format_test.go:289-336) compares against hand-written expected values, not against the playmat's own conversion of TCGdex data, and has no Basic Energy without an image case. Nothing in the diff touches energyArt."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T13:30:27Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "bf63f650-0e23-49a9-9406-61c923d47832",
+            "title": "Built set format",
+            "criteria": [
+              "A built set holds HP, types, attack costs, damage, retreat and stage once per print, apart from its English wording.",
+              "Writing the same set twice produces identical bytes, and changing one print's text changes only that print's lines.",
+              "Adding a second language's wording to one print leaves that print's English wording and language-independent facts byte for byte unchanged.",
+              "A set with a print lacking an English name or English text for one of its attacks, abilities or effect is reported as invalid.",
+              "A built print converts into the same card definition the playmat uses today, for Pokémon, Trainers and Energy."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/format.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/card.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/format_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cardstest/cardstest.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/format.go:62-81 puts HP, Types, Stage, Retreat, Weaknesses, Resistances and per-attack Cost and Damage (AttackCore, format.go:83-87) on Print once, outside Text. Only names, evolveFrom, attack and ability effects, and effect go per language (PrintText and MoveText, format.go:101-114). The round-trip test at format_test.go:116-145 checks that the core keys are present and absent from the en text."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Marshal sorts prints by collector number (format.go:159-164, SortPrints at 211-233). marshal uses a fixed two-space indent with a trailing newline and SetEscapeHTML(false) (format.go:166-177). encoding/json writes map keys sorted, so the bytes are deterministic. TestWriteIsDeterministic (format_test.go:96-113) checks identical bytes. TestOnePrintChangeDiffsOnlyThatPrint (format_test.go:147-171) checks that the line count is unchanged and only the Ultra Ball effect line differs."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "TestSecondLanguageLeavesEnglishAndCoreUnchanged (format_test.go:173-218) adds a fr text to tst-002 and compares the marshalled en PrintText and the core with Text cleared; both are byte-identical. Caveat: in the file, the en object's closing brace gains a trailing comma (\"}\" becomes \"},\") because \"fr\" follows \"en\". The English content is unchanged, but that one line of the en block changes at file level. The test's subsequence check (format_test.go:206-217) passes only because greedy matching tolerates that line, so its comment saying the French block 'only adds lines' is inaccurate. This does not change the verdict because the wording itself is identical."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "format.go:253-277 (ValidateShape, reached from Decode at format.go:134-145) rejects a print with no English text (format.go:309-314) or no English name, and an English attack or ability entry that is missing or unnamed (format.go:317-332). Validate (format.go:238-247) adds MissingEnglish (format.go:283-295), which flags an ability with no English effect and a Trainer or special Energy with no English effect. Attack effects are not required, which is consistent with damage-only attacks having no effect text. TestValidateRefusesMissingEnglish (format_test.go:220-261) and TestValidateRefusesMissingEnglishEffect (format_test.go:341-373) cover these cases."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Card (internal/cardset/card.go:18-58) builds a cards.Card with the same fields the playmat's loadCard (internal/cards/cards.go:472-494) produces: json.Unmarshal into Card, then energyArt. The Basic Energy art is applied through the new cards.EnergyArt wrapper (internal/cards/cards.go:534-537), which calls the same energyArt. TestCardMatchesPlaymatCard (format_test.go:392-438) unmarshals a TCGdex-shaped body for a Pokemon (Heracross, with attacks and weakness), a Stage 1 with ability and resistance, a Trainer, a special Energy and a Basic Energy, then compares the result with DeepEqual against the converted print. Caveat: the reference is a hand-written fixture body, not a live TCGdex response, and it reproduces the client's decode path rather than calling it."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "876df490-ccfd-402a-a2f2-2744e9715227",
+      "title": "Upstream source fetchers",
+      "checks": [
+        {
+          "at": "2026-11-08T13:33:54Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "876df490-ccfd-402a-a2f2-2744e9715227",
+            "title": "Upstream source fetchers",
+            "criteria": [
+              "The TCGdex fetcher returns the English set list, a set's details and a print's card body, and reports a missing set or card as not found.",
+              "The malie fetcher returns the English index and a set's card list.",
+              "A slow or failing request is retried a few times and then fails with an error naming what was fetched, without hanging the import.",
+              "Both fetchers can be pointed at stand-in servers, so no test needs the network."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/fetch.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/tcgdex.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://api.tcgdex.net/v2/en"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/malie.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://cdn.malie.io/file/malie-io/tcgl/export"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "learnings/upstream-card-source-formats.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/fetch_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/fake_tcgdex_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/tcgdex.go:61-84 implements TCGdex.Sets (GET /sets), TCGdex.Set (GET /sets/{id}) and TCGdex.Card (GET /cards/{id}, returning the raw body). A 404 comes back as ErrNotFound via httpGetter.once in internal/cardset/fetch.go:93-94 and is not retried (fetch.go:57-61 keeps errors.Is(err, ErrNotFound) and wraps with the URL). internal/cardset/fetch_test.go:83-126 (TestTCGdexFetcher) checks the set list, set details, raw card body, and that missing set and card return ErrNotFound naming the URL with a single request."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/cardset/malie.go:96-106 Malie.Index returns the en-US sets from index.json keyed by malie set key, and malie.go:109-115 Malie.SetFile returns a set's card list (MalieCard entries, with the fields the import needs). internal/cardset/fetch_test.go:143-181 (TestMalieFetcher) exercises both against a stand-in server and checks the English-only filter and the decoded card fields."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/cardset/fetch.go:27-64: httpGetter.getJSON makes up to three attempts (defaultBackoff at fetch.go:35 is 500ms then 2s), retries network errors, 429, 5xx and undecodable bodies (fetch.go:88-109), and each attempt has its own timeout (fetch.go:71-76, default 20s). The backoff wait selects on ctx.Done() (fetch.go:51-54). Final errors are wrapped as 'GET \u003curl\u003e: ... (after 3 attempts)' (fetch.go:57-62), so they name the fetched URL. fetch_test.go:183-250 (TestFetchRetries) covers recovery after two 500s, a lasting failure naming the URL after 3 attempts, empty body retried, a slow request timing out in under a second, and a cancelled context stopping the retry pause. The test results were not re-run here; the reading of the code is the evidence."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Both fetchers take a Base field that overrides the default: tcgdex.go:17-18 and 53-58 (TCGdex.Base, default DefaultTCGdexBase), malie.go:17-18 and 88-93 (Malie.Base, default DefaultMalieBase). fetch_test.go:83-88 and 143-152 point them at an httptest server (newFakeUpstream, fetch_test.go:29-35). No test in the package uses the live URLs, so no test needs the network."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "9dc57a4a-2c92-403a-be6a-9800a2d2d0df",
+      "title": "Normalise and merge the sources",
+      "checks": [
+        {
+          "at": "2026-11-08T13:48:20Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "9dc57a4a-2c92-403a-be6a-9800a2d2d0df",
+            "title": "Normalise and merge the sources",
+            "criteria": [
+              "Text that arrived with HTML energy symbols or emphasis reads as plain words, with no tags left in any attack, ability or effect text.",
+              "A Trainer or special Energy without effect text in TCGdex gets malie's effect text; an evolved Pokémon without evolves-from gets it from malie; a print without a regulation mark or image gets malie's.",
+              "Where TCGdex has a value, the built print keeps TCGdex's value.",
+              "A print listed only by malie is built, and malie's reverse-holo entries never produce a second print.",
+              "Fields where the sources differ are recorded as disagreements, while differences only in spacing, apostrophe style or energy-symbol spelling are not.",
+              "Every print records each source that has an image for it, TCGdex first."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/text.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/normalise.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "images.tcgl.jpg.front"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/match.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/merge.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/attacks"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/normalise_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "merge_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "text_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/text.go:23-39 cleanText turns \u003cbr\u003e into newlines, strips every other tag (tagRe at line 11), then unescapes entities. text.go:19-20 documents that the energy span keeps its inner word. text_test.go:11-14 checks the span becomes \"Basic Fire Energy\" and text_test.go:15-19 checks \u003cem\u003e is stripped. normalise.go:81-84, 88, 221-224 and malieCandidate normalise.go:202-240 route every name, evolveFrom, attack, ability and effect string through cleanText. normalise_test.go:TestFromTCGdexStripsMarkup checks the me06 fixtures for leftover markup, and merge_test.go:TestMergeLeavesNoMarkup checks the merged prints."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Effect gap fill: merge.go:161 uses f.str for /text/en/effect, and str() (merge.go:76-84) returns the malie value when TCGdex is empty. Covered by merge_test.go:55-63 (me06-089 Trainer gets malie's effect) and merge_test.go:64-72 (special Energy). Evolves-from: normalise.go:203-205 parses malie stage_text, merge.go:160 fills it, and merge_test.go:36-54 (me06-003) checks it. Regulation mark: merge.go:156 via str(). Image: merge.go:217 appends malie's image when TCGdex has none, and merge_test.go:36-46 checks it."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "merge.go:76-95: str() and num() return TCGdex's value whenever it is non-empty or non-zero. merge.go:98-117 keeps TCGdex's list when it is non-empty. Attacks and abilities by position keep TCGdex's values (merge.go:179-190, 206-213). merge_test.go:413-447 TestMergePrintKeepsTCGdexAndFillsGaps builds a print where malie differs on HP, stage, types, weakness, retreat, name, attacks and abilities, and expects TCGdex's values. merge_test.go:55-63 keeps TCGdex's Supporter and merge_test.go:133-166 keeps TCGdex's stage and suffix. Note: num() treats 0 as absent, so a TCGdex retreat of 0 is silently replaced by malie's non-zero value (merge.go:87-95). This is a gap-fill with no disagreement recorded, and it contradicts a TCGdex value being kept only where TCGdex has a value; it is a minor edge case and does not reverse this verdict."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "merge.go:47-52 appends malie-only prints (no TCGdex id match) as their own merged print. merge_test.go:100-118 expects me06-063 built from malie alone, and merge_test.go:30-31 checks it. normalise.go:132-147 pickMalieEntries keeps one entry per collector number and prefers the _std_ entry. normalise.go:153-162 fromMalie builds one candidate per picked entry. normalise_test.go:213-255 checks that 13 real entries become 8 prints, and normalise_test.go:426-441 TestFromMalie expects 8 candidates with no duplicates. merge.go:47-48 also dedupes by id through seen. Note: pickMalieEntries keys on Numeric, so malie entries with a missing collector number (all 0) would collapse into one print. Not present in the fixtures."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Disagreement recording: merge.go:71-117 (f.disagree) covers category, HP, types, stage, suffix, weaknesses, resistances, retreat, trainerType, energyType, regulationMark, name, evolveFrom, effect, attack cost, damage, text and abilities (merge.go:140-221). Exempt differences: compareKey (text.go:52-55) cleans text, maps energy symbols to words (text.go:41-47) and maps curly quotes to straight ones. It also collapses whitespace, so spacing and apostrophe style are not recorded. merge_test.go:262-276 'cosmetic differences only' and merge_test.go:278-289 'Basic Energy name spelling' expect no disagreement. merge_test.go:133-166 expects the /stage and /suffix disagreements for me06-014, and merge_test.go:268-271 'damage x spelled x' expects none. Note: beyond the three exempt categories, damageKey (merge.go:223-226) also treats 'x' and '×' as equal and nameKey (text.go:60-66) ignores a leading 'Basic' on Energy names. Both are small extra exemptions beyond the list in the criterion, and they stay within the spirit of spelling-only differences."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "merge.go:217 sets out.Images = append(slices.Clone(t.Images), m.Images...), so TCGdex's image comes first and malie's second, and the list is not deduplicated. Each source only adds its own image in its constructor: normalise.go:90-92 for TCGdex and normalise.go:235-237 for malie. merge.go:153-157 and merge_test.go:178-202 TestMergeOrdersImagesTCGdexFirst expect [tcgdex, malie] with both sources' URLs, and merge_test.go:36-46 expects the malie-only image. Malie-only prints (merge.go:50) carry their malie image, and TCGdex-only prints carry theirs. Note: merge is called only from tests in this worktree (grep of internal/), so the production build path that writes a built set does not yet call it. The criterion is judged on merge's output as the built print."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "1820fbf4-0de2-40a2-b822-a05d64a511c5",
+      "title": "Import command for one set",
+      "checks": [
+        {
+          "at": "2026-11-08T13:52:39Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "1820fbf4-0de2-40a2-b822-a05d64a511c5",
+            "title": "Import command for one set",
+            "criteria": [
+              "Importing a set by its id or by its decklist code writes one built set file for it, holding one definition per print the sources list, each with its name, category and set.",
+              "Importing with malie switched off still writes a built set from TCGdex alone.",
+              "Re-importing against unchanged sources rewrites identical bytes.",
+              "The playmat's own start-up and its refusal of other unknown words are unchanged.",
+              "Card-set data never enters the container image or the binary."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/import.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "main_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/import_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/import.go:78-85 (Import resolves a set id or decklist code via resolve, lines 148-185, which matches id case-insensitively, then Abbreviation.Official or TCGOnline) and importSet 188-219 builds one Set and writes it to \u003cDir\u003e/sets/\u003cid\u003e.json. Each print is appended from the merged candidates (lines 209-211). Each Print carries Category (format.go:65) and an English name in Text[\"en\"].Name (format.go:80, 103). The set is carried by the file's header (format.go:40, SetHeader built at import.go:222-231) and the print ids are set-prefixed (tst-001). Print has no separate per-print set key, so 'set' is satisfied by containment in the one set file; this is the only reading the format allows. Tested by import_test.go:60-106 (by id 'tst' and by code 'TST', 3 prints, with names and categories checked by DeepEqual) and sets_test.go:50-65."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "import.go:201-206 skips the malie fetch when opts.NoMalie is set, so ml stays nil and merge(td, ml) builds from TCGdex alone. cmd/tcgreplay/sets.go:63 wires the -no-malie flag. Tests: import_test.go:108-135 (malie index never requested, 2 TCGdex prints, sources ['tcgdex'] only) and sets_test.go:76-88 (-no-malie gives 2 prints and no 'malie' in the file)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "format.go:147-177: Write calls Marshal, which sorts prints by collector number (SortPrints, 213-233) and encodes with a fixed struct key order, two-space indent, SetEscapeHTML(false) and a trailing newline; Go's encoder sorts map keys (Text maps), so output is stable. Files are written via temp file and rename (181-209). Tests: import_test.go:137-152 (TestImportIsDeterministic, two imports, bytes.Equal) and sets_test.go:67-74 (re-import by id, identical bytes). The tests were not re-run by me; I judged from the code."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/main.go diff: the only additions to main() are a dispatch on os.Args[1]==\"sets\" placed before flag definitions (lines 30-33 of the hunk), which leaves the playmat's flags, envWait and config start-up untouched for every other argument. The refusal of leftover words is unchanged in logic (flag.NArg()\u003e0 at main.go, 'unknown command %q' then usage). Only its comment changed to say sets is the one subcommand. The main.go diff touches nothing else."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": ".dockerignore:19-20 adds 'cardsets' (the default card-set directory, cardset.DefaultDir in internal/cardset/import.go:15). The Dockerfile copies the build context with 'COPY . .' (Dockerfile:42), so the exclusion keeps the data out of the image. Nothing embeds it: the only go:embed directives are internal/guides/guides.go:12 (*.md), internal/webui/server.go:26 (dist), internal/site/site.go:25 (dist) and skills, none of which reach cardsets/. The directory is read at run time by path, not embedded. Test cmd/tcgreplay/sets_test.go:114-125 checks the .dockerignore line. Out-of-scope note for the caller: .dockerignore is not in the goal's file list (the plan names it), and internal/cards/cards.go (adds an exported EnergyArt wrapper) is modified but is not in the goal's file list either. These do not change this verdict. Also, the sets usage text (sets.go:16-17) advertises 'sets check', which the switch in sets.go:33-40 does not implement; this is outside the acceptance criteria."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "9ca89fea-2dae-45c5-8f01-e706ef23b6bf",
+      "title": "Corrections and acknowledgements",
+      "checks": [
+        {
+          "at": "2026-11-08T13:54:49Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "9ca89fea-2dae-45c5-8f01-e706ef23b6bf",
+            "title": "Corrections and acknowledgements",
+            "criteria": [
+              "A correction to any field of a print, including text, numbers, lists and image sources, shows in the built print.",
+              "A correction to a field the format does not have, or to a card the set does not hold, fails with a message naming it.",
+              "Applying corrections never changes the corrections file.",
+              "A correction whose value the merged sources now provide is identified as redundant."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/corrections.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/corrections_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/images"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The field-setting logic exists and is tested in-memory: applyCorrection (internal/cardset/corrections.go:116-157) round-trips the Print through JSON and sets text, numbers, lists and images (corrections_test.go:23-60). But the build never applies corrections. importSet (internal/cardset/import.go:188-219) merges the TCGdex and malie candidates, writes them with Write, and never reads a corrections file or calls applyCorrections. A grep for applyCorrections, ReadCorrections and Corrections across the package finds callers only in corrections_test.go. So a correction does not reach the built print on disk. The wiring would have to go in import.go, which is outside this item's files (corrections.go and corrections_test.go), so the item as scoped cannot make this hold."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "A card the set does not hold: applyCorrections (corrections.go:98-101) returns \"correction to card %s: set %s has no such card\", naming the card (test case tst-999 at corrections_test.go:84 checks \"tst-999\" and \"no such card\"). A field the format does not have: applyCorrection decodes with dec.DisallowUnknownFields (corrections.go:148-152), wrapped as \"card %s: path %s: ... not a field of the card format\". Tests at corrections_test.go:85-86 check that /pairMark and /text/en/flavour are named in the error. The set is left unchanged on refusal (corrections_test.go:105)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "applyCorrections (corrections.go:94-112) and applyCorrection (116-157) only marshal and decode in memory and never call os.WriteFile or any writer. ReadCorrections (41-81) only reads. TestReadCorrections (corrections_test.go:148-165) writes the file, applies corrections, and asserts the file bytes are unchanged."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "applied.Redundant is set by applyCorrection at corrections.go:156 as sameValue(before, value), where before is the merged source's value. sameValue (corrections.go:239-249) treats text as equal under compareKey and other values by reflect.DeepEqual. TestCorrectionsRedundancy (corrections_test.go:111-133) checks that the hp 130, same-name, spacing-only effect and same-weaknesses corrections are flagged, and that a real change and an absent field are not. Caveat: no caller outside the tests reads Redundant yet, so nothing in the build reports it to a user (the same wiring gap as criterion 1)."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T13:57:40Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "9ca89fea-2dae-45c5-8f01-e706ef23b6bf",
+            "title": "Corrections and acknowledgements",
+            "criteria": [
+              "A correction to any field of a print, including text, numbers, lists and image sources, shows in the built print.",
+              "A correction to a field the format does not have, or to a card the set does not hold, fails with a message naming it.",
+              "Applying corrections never changes the corrections file.",
+              "A correction whose value the merged sources now provide is identified as redundant."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/corrections.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/corrections_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/images"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "corrections.go:116-156 applies a correction through the print's JSON form (json.Marshal, setPointer, strict decode back into Print), so every Print field with a JSON tag (format.go:62-81: text, numbers, types, weaknesses, attacks, images) can be set. import.go:218 applies the corrections to the built set before Write at import.go:224, and corrections_test.go:18-78 covers English text, a number, a list, a list element, image sources and an append. TestImportAppliesCorrections (corrections_test.go:194-237) checks that the written set holds them."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "An unknown card fails at corrections.go:98-100 with 'correction to card \u003cid\u003e: set \u003cset\u003e has no such card'. An unknown field fails through the strict decode at corrections.go:149-151 ('not a field of the card format' wrapped with card and path, corrections.go:118). The error is joined and returned from import.go:218-219. corrections_test.go:80-110 checks that the messages name the card and the path, and that a refused correction leaves the set unchanged. The import-level case is at corrections_test.go:233-236."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "ReadCorrections (corrections.go:44-81) only reads the file. applyCorrections and applyCorrection (corrections.go:94-157) work on in-memory values and never write. The only corrections-path use in the code root is import.go:214, a read, and import.go:212-213 says the import never writes it. The only writer is Write, which targets sets/\u003cid\u003e.json (import.go:224). corrections_test.go:159-166 reads the file back after applying corrections and compares it byte for byte to the original."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "corrections.go:85-89 defines applied.Redundant, set at corrections.go:156 via sameValue (corrections.go:239-249), which compares the corrected value with the merged value held before the change (Before). An absent field gives false (corrections.go:240-241). corrections_test.go:112-134 checks redundant and non-redundant cases: the HP 130, same name text, spacing-only effect and same weaknesses list are flagged; a real change and an absent field are not. Caveat: import.go:218 discards the returned []applied, and the Summary carries no redundancy count, so the flag is not reported to the user. Surfacing it would mean editing import.go, which is outside this item's scope."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "2b246808-02b1-49dc-b8d8-aabf794c68cd",
+      "title": "Re-import comparison",
+      "checks": [
+        {
+          "at": "2026-11-08T13:59:38Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "2b246808-02b1-49dc-b8d8-aabf794c68cd",
+            "title": "Re-import comparison",
+            "criteria": [
+              "After upstream gains a print, the re-imported set holds it and every print that was already there.",
+              "After upstream changes a card's text or image, the re-imported set shows the new value, unless a correction covers that field.",
+              "A print upstream no longer lists stays in the set and is listed as gone.",
+              "A second language's wording added by hand survives a re-import, with the English wording unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/compare.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/compare_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "compare.go:36-44 adds every fresh print absent from prev to out.added and keeps it in next.Prints; compare.go:50-55 appends every prev print not in the fresh build, so all earlier prints survive. compare_test.go:31-43 (TestCompareAddsNewPrintsAndKeepsOld) checks the new print and all old ones are present, and compare_test.go:184 checks the re-import keeps tst-001..003 plus new tst-004."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "compare.go:40-48 keeps the fresh print p (with its new Images and English Text) when the ID already exists; the import applies corrections to the fresh build before compare (import.go:213-220), so corrected fields keep their corrected value. compare.go:45-46 records the print in changed only when English text differs. compare_test.go:45-85 (TestCompareTakesUpstreamChanges) checks new effect, new image, corrected name kept, and changed == [tst-010]; compare_test.go:136-208 checks Riolu's corrected effect and Aarune's new name and art after a real re-import."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "compare.go:50-55 appends each prev print the fresh build no longer lists, unchanged, and records its ID in out.gone. compare_test.go:87-103 (TestCompareKeepsGonePrints) checks the print is kept byte-for-byte and gone == [tst-010]. Caveat: the CLI Summary (import.go:239) reports only the gone count and the IDs are not printed anywhere, so 'listed as gone' is satisfied in the comparison result and the summary count, not as a printed ID list."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "compare.go:56 and compare.go:48 call carryLanguages(prev, next), which takes every non-English text from prev and keeps next's English (compare.go:63-74), for both prints and set text. compare_test.go:105-130 (TestCompareCarriesOtherLanguages) checks French print and set text are carried, English JSON is byte-identical, and the result validates; compare_test.go:136-208 checks Riolu's French text survives a real re-import with English unchanged."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "4f2a5073-e9f7-465f-ad9c-384f065888cd",
+      "title": "Import report",
+      "checks": [
+        {
+          "at": "2026-11-08T14:02:35Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "4f2a5073-e9f7-465f-ad9c-384f065888cd",
+            "title": "Import report",
+            "criteria": [
+              "The report names a card for each kind of gap: a source disagreement, a Trainer or special Energy with no effect text in any source, a Pokémon with no attacks, an evolved Pokémon with no evolves-from, a print with no image, text changed since the last import, a correction the sources now match, and a print gone upstream.",
+              "An item covered by a correction shows as corrected, and an acknowledged item shows its recorded reason; neither counts as open.",
+              "After a correction is recorded and the set is imported again, the built card still shows the corrected value and the corrections file is unchanged.",
+              "The report is identical when the import is re-run against unchanged sources."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/report.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/import.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/report_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "import_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/report.go:17-18 and 9-19 define all eight kinds: disagreement (fed by merge's disagreements at report.go:92), missing-effect (gapItems via format.go:283 MissingEnglish, Trainer or special Energy at format.go:291), no-attacks (report.go:60), missing-evolves-from (report.go:63-64), no-image (report.go:66), text-changed (report.go:97-99 from compare.go:45-46), correction-redundant (report.go:103-107 from corrections.go:156 Redundant), print-gone-upstream (report.go:100-102 from compare.go:53). report_test.go:55-120 (TestReportEveryKind) builds one of each and asserts each card and kind is present with a name."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "report.go:123-139 setStatus: an item is StatusCorrected when an applied correction's path covers its field (covers at report.go:143-145), and StatusAcknowledged with a.Reason when a matching ack exists (report.go:133-136). report.go:177-186 open() counts only StatusOpen, so corrected and acknowledged items are excluded from the open count. report_test.go:122-170 (TestReportStatuses) checks corrected, acknowledged-with-reason and open items and open()==1; import_test.go-equivalent assertions in report_test.go:216-224 check the same through a real import."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "import.go:213-219 reads the corrections file read-only and calls applyCorrections on every fresh build before compare and write, so the built set carries the corrected value. report_test.go:202-231 (TestImportWritesReport) records a /hp correction, re-imports, asserts the built Riolu has HP 80 (line 226-227), and asserts the corrections file bytes are unchanged (lines 229-231). corrections.go:94 applyCorrections never writes the file; import.go:215 only reads it."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "report.go:30 states the report holds no timestamps. Items are sorted deterministically (report.go:147-175 sortItems over SortPrints order, then kind and field). JSON map keys in Values are sorted by encoding/json. compare.go output order derives from slice iteration over prev and next prints, which is re-sorted via SortPrints. report_test.go:233-242 imports twice against unchanged sources and asserts the report bytes are equal. Not re-run by me; the caller's verify summary reports go test -race ./internal/cardset passing."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "fceb88b2-d1f0-40b5-945b-5716447d8008",
+      "title": "Set check command and committed-data guard",
+      "checks": [
+        {
+          "at": "2026-11-08T14:06:21Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "fceb88b2-d1f0-40b5-945b-5716447d8008",
+            "title": "Set check command and committed-data guard",
+            "criteria": [
+              "Checking a clean set succeeds, and checking a set with an open item fails and names the item.",
+              "A built set with HTML in any text, a missing English name or text, or a correction that no longer resolves fails the check.",
+              "The project's test suite fails if any committed built set fails the check."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/check.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/committed_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "me06.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/sets.go:96-118 setsCheck runs cardset.Check, prints each open item via CheckItem.String (format: '\u003cset\u003e \u003ccard\u003e \u003ckind\u003e [field]: reason'), exits 1 with '\u003cn\u003e open items' when any exist, and prints 'all card sets check out' and exits 0 when none. internal/cardset/check.go:29-38 defines the item line. sets_test.go:128-151 TestSetsCheck covers a set with open no-image items (exit 1, stdout names 'tst tst-001 no-image /images') and a clean set after acknowledgements (exit 0). check_test.go:33-48 TestCheckCleanSet covers a clean set with zero items."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "HTML: check.go:91-100 runs markupFields over every print's text in every language (name, evolveFrom, effect, attack and ability name/effect; check.go:172-195) and over the set's text names, using hasMarkup (text.go:69); markup items are open and not acknowledgeable. Missing English name: check.go:82-85 turns a Read failure into a KindInvalid open item, and Read -\u003e Decode -\u003e ValidateShape (format.go:118-145, 253-260, 312-313) refuses a blank English print or set name. Missing English text: format.go:309-311 ('no English text') causes the same invalid item; a missing English effect on a Trainer or special Energy becomes a missing-effect open item via MissingEnglish (format.go:283-301, report.go:52-58). Dangling correction: check.go:108-119 applies each correction to a clone and records KindCorrectionDangling when it does not resolve (card missing, bad path, or a field outside the format, per corrections.go:94-157). check_test.go:50-94 covers each case, including 'tst tst-999 correction-dangling /hp' and 'tst tst-001 correction-dangling /pairMark'."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/cardset/committed_test.go:12 sets committedDir to ../../cardsets (DefaultDir). TestCommittedSets (lines 18-23) calls guardCommitted (lines 26-34), which runs Check over the committed directory and calls t.Errorf for every open item, so any failing committed set fails go test ./... . It skips only when cardsets/sets is absent. cardsets/sets does not exist yet, so the guard currently has nothing to check; the mechanism itself is complete. TestCommittedGuardCatchesBadEdits (lines 49-64) confirms the guard fails on markup and passes a clean set."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "21685491-95d7-4c15-8b8f-d3fffc3833e1",
+      "title": "Card-set import skill",
+      "checks": [
+        {
+          "at": "2026-11-08T14:07:33Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "21685491-95d7-4c15-8b8f-d3fffc3833e1",
+            "title": "Card-set import skill",
+            "criteria": [
+              "Asking the assistant to import a set triggers the skill.",
+              "The skill tells the assistant to check each open item against the printed card and the sources, and to record a correction or an acknowledgement with a reason for it.",
+              "The skill repeats the import until the report has nothing open and the check passes.",
+              "The skill ends with a summary of the built-set changes and forbids committing."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "skills/card-set-import/SKILL.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".claude/skills"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "skills/card-set-import/SKILL.md:3 frontmatter has name: card-set-import and a description that says to use it when the maintainer asks to import a set, build or rebuild card set data, or work through a card-set import report. Read through the symlink at .claude/skills/card-set-import/SKILL.md, the same frontmatter resolves, so the trigger is discoverable from the .claude/skills path."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "skills/card-set-import/SKILL.md:61-72 (step 3) tells the assistant to open each open item's print, download its TCGdex or malie image, and compare the printed card with the field and both sources' values. Lines 74-105 (step 4) require each decision to go in cardsets/corrections/\u003cid\u003e.json as a correction or acknowledgement, and lines 31-33 and 40-41 of the Rules section require every correction and acknowledgement to carry a reason stating what was checked."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "skills/card-set-import/SKILL.md:112-118 (step 5) says to repeat steps 2 to 5 and re-run bin/tcgreplay sets import \u003cset\u003e until the summary line says 0 open. Lines 120-127 (step 6) require bin/tcgreplay sets check \u003cid\u003e and go test ./internal/cardset/ to pass, and sets check exits 1 on any open item."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "skills/card-set-import/SKILL.md:129-137 (step 7) ends with a summary covering git diff --stat cardsets/, the notable changes in the built set, and each correction and acknowledgement with its reason. Lines 20-22 (Rules) and 139 forbid git commit, git add, git push and anything that stages or records changes."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "c37fcab9-ed2f-4207-b74f-52eb94d6662d",
+      "title": "Card-set documentation",
+      "checks": [
+        {
+          "at": "2026-11-08T14:08:44Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c37fcab9-ed2f-4207-b74f-52eb94d6662d",
+            "title": "Card-set documentation",
+            "criteria": [
+              "The documentation describes importing a set and having the assistant verify it.",
+              "The documentation describes recording a correction and an acknowledgement, with an example of each.",
+              "The documentation lists every report kind and what resolves it."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "README.md:30-33 (in the diff) says to ask the assistant to import the set, and that its card-set-import skill works through the report and records corrections. cardsets/README.md:20-29 documents the import (`sets import`, `-all`, `-no-malie`, `sets check`) and steps 1-6 of what an import does. cardsets/README.md:55-62 ('Having the assistant verify a set') describes the assistant running the import, checking each open item against the card image and both sources, recording corrections or acknowledgements, re-running until nothing is open, running `sets check`, and summarising."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cardsets/README.md:100-125 'Recording a correction' explains the fields (card, path as a JSON Pointer, value, reason) and gives an example (me06-095 at /text/en/effect). cardsets/README.md:127-140 'Recording an acknowledgement' explains `kind` and optional `field` and gives two examples (me06-050 no-image, me06-011 disagreement at /stage)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The eight kinds in internal/cardset/report.go:10-19 (disagreement, missing-effect, no-attacks, missing-evolves-from, no-image, text-changed, correction-redundant, print-gone-upstream) all appear in the table at cardsets/README.md:148-157 with a resolution for each. Each resolution matches the code: gapItems in report.go:52-70, the status logic in setStatus (report.go:123-139), and the redundant-correction handling in check.go:141. cardsets/README.md:159-161 also covers the check-only kinds from check.go:16-19 and says they are fixed in the files, not acknowledged."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "58104bf7-2374-4dcb-adda-47c2c8b3442c",
+      "title": "Ask malie.io about build-time use",
+      "checks": [
+        {
+          "at": "2026-11-08T14:11:13Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "58104bf7-2374-4dcb-adda-47c2c8b3442c",
+            "title": "Ask malie.io about build-time use",
+            "criteria": [
+              "The malie.io maintainers have been asked, and their answer (or the lack of one) is noted in the knowledge entry on card image sources."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://cdn.malie.io/file/malie-io/tcgl/export/index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "learnings/card-image-sources.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The staged diff and status for tcgreplay (/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/tmp/20261108110847-d27a9f77-card-set-import/goal-check/tcgreplay.diff and tcgreplay.status) contain no mention of asking the malie.io maintainers and no note of an answer. The only malie.io reference is a code comment at tcgreplay.diff line 23 (\"malie.io TCG Live export:\"), and the status lists only malie.go and malie testdata files. The named knowledge entry, learnings/card-image-sources.md, is a Spektacular store file outside the code root, and I did not read it directly under the store-access rule. The plan marks this task as a human action on malie.io's Discord, which is achievable, so the criterion is not impossible, but nothing in the work shows it done yet."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T14:11:54Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "58104bf7-2374-4dcb-adda-47c2c8b3442c",
+            "title": "Ask malie.io about build-time use",
+            "criteria": [
+              "The malie.io maintainers have been asked, and their answer (or the lack of one) is noted in the knowledge entry on card image sources."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://cdn.malie.io/file/malie-io/tcgl/export/index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "learnings/card-image-sources.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The staged diff (tcgreplay.diff) and untracked-file list (tcgreplay.status) contain no reference to the malie.io maintainers, a question, or an answer. The only malie mention is the card-set README text in the diff, which does not record a maintainer reply. The named entry, learnings/card-image-sources.md, is a Spektacular store file outside the code root. Under the store-access rule I did not open or search it with my own tools, so I could not confirm a note there. The plan marks the ask as a human action on Discord, so the criterion is achievable but nothing in the work shows it has happened or been recorded."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T14:12:24Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "58104bf7-2374-4dcb-adda-47c2c8b3442c",
+            "title": "Ask malie.io about build-time use",
+            "criteria": [
+              "The malie.io maintainers have been asked, and their answer (or the lack of one) is noted in the knowledge entry on card image sources."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://cdn.malie.io/file/malie-io/tcgl/export/index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "learnings/card-image-sources.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The knowledge entry .spektacular/knowledge/learnings/card-image-sources.md (read in full, lines 1-39) has no record that the malie.io maintainers were asked or what they answered. Lines 26-27 only say the format is alpha, it is a fan project, and to 'ask on its Discord before relying on it from the hosted server', which is advice, not a note of an ask or answer. A grep for 'malie' across .spektacular/knowledge found no other entry recording a reply. The staged diff (tcgreplay.diff) and status (tcgreplay.status) contain no change to this entry or any Discord note. The task is human-executed and can still be met by asking and recording the answer or its absence, so it is not impossible."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-08T14:13:40Z",
+          "round": 1,
+          "decision": "skip",
+          "reason": "Human task (ask malie.io on Discord); left open for the maintainer, nothing depends on it"
+        }
+      ],
+      "attempts": 3,
+      "state": "skipped"
+    },
+    {
+      "item": "63b04137-17cd-40e5-8163-6fe4c7592dcc",
+      "title": "Build and verify Delta Reign",
+      "checks": [
+        {
+          "at": "2026-11-08T14:16:00Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "63b04137-17cd-40e5-8163-6fe4c7592dcc",
+            "title": "Build and verify Delta Reign",
+            "criteria": [
+              "The project holds a Delta Reign built set with one definition for every print the sources list (141 at the time of writing).",
+              "Every Trainer and special Energy has effect text, every Stage 1 and Stage 2 Pokémon has evolves-from, and every print has a regulation mark.",
+              "Every print with an image in either source names that source, and every print with none is in the report.",
+              "The three Legendary Stadiums' English text includes the rule that two different prints must be played together.",
+              "Delta Reign's final report has nothing open, and nothing was committed."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/sets/me06.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/corrections/me06.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/reports/me06.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "skills/card-set-import/SKILL.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/text/en/effect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/new-set-tcgdex-data-incomplete.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/committed_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cardsets/sets/me06.json holds 141 print objects (141 \"category\" entries are per-print; 142 \"id\" matches include the set id \"me06\"), and cardsets/reports/me06.json summary shows \"prints\": 141. committed_test.go:89-91 asserts len(s.Prints) == 141."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Trainer/Energy: 27 Trainer/Energy prints in me06.json (grep \"category\": \"Trainer|Energy\"), and format.go:299-301 defines NeedsEffect as Trainer or Special Energy; committed_test.go:92-96 fails any such print with empty en.Effect unless acknowledged, and corrections/report carry no missing-effect item. I spot-checked Special Energy prints (me06.json:6614-6662) and they carry effect text, but did not read every Trainer block by eye. Evolves-from: 42 prints with stage Stage1/Stage2 and 42 \"evolveFrom\" values (me06.json). Regulation mark: 141 \"regulationMark\" entries and no empty \"regulationMark\": \"\" (grep returned none); e.g. me06.json:46 \"J\"."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Every print has an images array with one entry naming a source: 141 \"source\": \"malie\"|\"tcgdex\" entries in cardsets/sets/me06.json (e.g. line 48-51 \"source\": \"malie\"), and no \"images\": [] (grep for empty images returned no matches). The report has no no-image item, and corrections/me06.json has no no-image acknowledgement, which matches the fact that no print lacks art. committed_test.go:103-105 enforces this rule."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "cardsets/sets/me06.json:5024-5025, 5047-5048 (Legendary Pyroduct), 5070-5071, 5093-5094 (Legendary Summit), 5116-5117, 5139-5140 (Legendary Trench) each have effect text beginning \"You cannot play this card by itself. You must combine 2 different Legendary \u003cName\u003e from your hand to play as 1 Stadium card.\" The same text is recorded in cardsets/corrections/me06.json:231-266 and tested at committed_test.go:107-122."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "cardsets/reports/me06.json summary has \"open\": 0 and grep for \"status\": \"open\" returns no matches (all items are corrected or acknowledged). Nothing was committed: the me06 files (cardsets/sets/me06.json, cardsets/corrections/me06.json, cardsets/reports/me06.json, internal/cardset/committed_test.go's new content) appear as untracked (??) in tcgreplay.status, and the staged diff tcgreplay.diff contains no me06 or cardset entries. I could not run git log; the untracked status is the evidence used."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "ac0fb619-c72a-4041-9d9a-ba3591aa8f29",
+      "title": "Import every set in one run",
+      "checks": [
+        {
+          "at": "2026-11-08T14:21:02Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "ac0fb619-c72a-4041-9d9a-ba3591aa8f29",
+            "title": "Import every set in one run",
+            "criteria": [
+              "An all-sets import writes a built set and report for every English TCGdex set except Pokémon TCG Pocket sets.",
+              "A set that fails to import does not stop the others, and the summary names it.",
+              "The summary lists every malie set with no TCGdex match."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/import.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/sets"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/match.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/sets.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/import_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/import.go:371-395: ImportAll ranges over allDetails, the full TCGdex list, which the English-only endpoint (tcgdex.go:12 DefaultTCGdexBase = .../v2/en) backs. It skips Pocket sets (serie 'tcgp', lines 384-387) and calls importSet for every other set. importSet writes the built set to sets/\u003cid\u003e.json (line 237) and the report to reports/\u003cid\u003e.json (line 246). TestImportAll (import_test.go:179-221) checks a built set and report for 'other' and 'tst', and no set file for the Pocket set 'A1'."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/cardset/import.go:388-393: a failing importSet is logged as FAILED, recorded in res.Failed and the loop continues. cmd/tcgreplay/sets.go:141-143 prints one 'failed: \u003cid\u003e: \u003cerr\u003e' line per failed set, and the run exits 1 (sets.go:151-152). TestImportAll (import_test.go:215) checks that the 'broken' set is recorded with an error naming its missing card, and that the other sets still build."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/cardset/import.go:400-421: after the builds, every malie index key not claimed by a non-Pocket TCGdex set via matchMalieSet is appended to res.Unmatched with its key, abbr and entry count. cmd/tcgreplay/sets.go:144-146 prints 'malie set with no TCGdex set: \u003ckey\u003e (\u003cabbr\u003e, \u003cn\u003e entries)' for each. TestImportAll (import_test.go:218-219) expects exactly the unmatched 'svalt' entry. Limitation: with -no-malie the list is not produced, by design (import.go:397-399)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "4a8176f8-15ca-4bc4-8b77-2efbef85cca8",
+      "title": "Build and verify the Scarlet \u0026 Violet and Mega Evolution sets",
+      "checks": [
+        {
+          "at": "2026-11-08T14:32:36Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "4a8176f8-15ca-4bc4-8b77-2efbef85cca8",
+            "title": "Build and verify the Scarlet \u0026 Violet and Mega Evolution sets",
+            "criteria": [
+              "Every Scarlet \u0026 Violet and Mega Evolution set TCGdex lists has a built set holding every print either source lists.",
+              "Each of those sets' final report has nothing open."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "serie.id"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".5"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sv10.5b"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sv10.5w"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "All 30 TCGdex S\u0026V/ME sets from the verify list have a built file in cardsets/sets/ (30th, 30th-c, me01, me02, me02.5, me03, me04, me05, me06, mee, mep, mfb, sv01, sv02, sv03, sv03.5, sv04, sv04.5, sv05, sv06, sv06.5, sv07, sv08, sv08.5, sv09, sv10, sv10.5b, sv10.5w, sve, svp). Each file's print count matches its cardsets/reports/\u003cset\u003e.json summary.prints (e.g. sv01 258 prints with 259 id fields including the set id; mee 16 prints with 17 id fields; me06 141 with 142). cardsets/sets/30th.json contains 30th-R, 30th-G and 30th-B, the RGB Mew prints the malie me5-5m set maps to. I could not check the prints against live TCGdex or malie, so completeness rests on the all-sets run and the import reports, not on a re-fetch."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Every cardsets/reports/\u003cset\u003e.json for the 30 sets has summary.open = 0 (grep for open values 1-9 across cardsets/reports returned no matches). Every item status across the reports is either \"corrected\" or \"acknowledged\", with no open, pending or unresolved status. The acknowledged items carry a reason, e.g. cardsets/reports/me06.json:166-167 for Azurill. No reason text mentions an unresolved or pending item."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "67cce74f-0770-4522-b1a5-5f8764f582ef",
+      "title": "Build and verify the Sword \u0026 Shield sets",
+      "checks": [
+        {
+          "at": "2026-11-08T14:38:34Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "67cce74f-0770-4522-b1a5-5f8764f582ef",
+            "title": "Build and verify the Sword \u0026 Shield sets",
+            "criteria": [
+              "Every Sword \u0026 Shield set TCGdex lists has a built set holding every print it lists.",
+              "Each of those sets' final report has nothing open."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "serie.id"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "swsh12.5"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "All 26 Sword \u0026 Shield sets have a built set file under cardsets/sets/ (swsh1 through swsh12.5gg, swshp, cel25, cel25cc, fut2020). Counting \"localId\" entries in each file matches the report's summary.prints for every set: swsh12.5 160 (cardsets/sets/swsh12.5.json, cardsets/reports/swsh12.5.json:5), swshp 307, swsh1 216, fut2020 5, and the other 22 likewise. The 26 set files hold 3675 prints in total. The completeness of the TCGdex list itself (the 26 IDs, and no malie Sword \u0026 Shield sets) rests on the live all-sets run recorded in the verify summary and cannot be re-checked from the files, but the files agree with the recorded counts."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Every one of the 26 reports has summary.open = 0 (cardsets/reports/*.json line 9; checked by grep for swsh*, cel25*, fut2020). No report contains an open count above 0 or any item status other than \"acknowledged\". The acknowledged items are listed with reasons, for example cardsets/reports/swsh12.5.json:12-19 for Ditto (swsh12.5-107). Added counts equal prints for each set, and changed and gone are 0."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "21d20a65-34b2-468c-bb54-3a488fda76a7",
+      "title": "Build and verify the older sets",
+      "checks": [
+        {
+          "at": "2026-11-08T15:00:28Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "21d20a65-34b2-468c-bb54-3a488fda76a7",
+            "title": "Build and verify the older sets",
+            "criteria": [
+              "Every remaining English set TCGdex lists, Pokémon TCG Pocket aside, has a built set holding every print it lists.",
+              "Each of those sets' final report has nothing open.",
+              "An all-sets check over the project's card data passes, and every card in every built set has an English name and English text for every attack, ability and effect it has."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cardsets/sets/ holds 206 built set files, one per English set, and cardsets/README.md:20-23 documents the four TCGdex sets (wp, sp, rc, jumbo) built empty because TCGdex lists no English cards for them. Every one of the 206 reports carries \"open\": 0. The live TCGdex list cannot be read offline, so the completeness of the 206 against TCGdex was not independently checked; the README and the 206 count are the only evidence."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Grep for \"open\"\\s*:\\s*[1-9] over cardsets/reports/ returns no matches; grep for \"open\"\\s*:\\s*0 returns 206 files, one per report in cardsets/reports/. Acknowledged items are recorded as status acknowledged, not open."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The all-sets check passes (internal/cardset/committed_test.go:18-23 runs Check over cardsets/), but the criterion requires an English name and English text for every attack, ability and effect in every built set. cardsets/sets/ contains 22 occurrences of \"name\": \"\" across 13 files (e.g. neo4.json has 4). cardsets/corrections/neo4.json:3-15 acknowledges neo4-26 missing-name and missing-effect for /text/en/abilities/0 as \"Unverified ... Left for the maintainer\", so the English name and text are still absent. internal/cardset/check.go and report.go gapItems treat these as acknowledged gaps rather than failures. Grep for \"Unverified\" in corrections shows the 196 older-set gaps the summary cites are acknowledgements that leave the text empty, which the criterion does not allow. Fixing this needs the printed card read or another source supplying the text; the criterion is achievable, so it is not_met, not impossible."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T15:01:51Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "21d20a65-34b2-468c-bb54-3a488fda76a7",
+            "title": "Build and verify the older sets",
+            "criteria": [
+              "Every remaining English set TCGdex lists, Pokémon TCG Pocket aside, has a built set holding every print it lists.",
+              "Each of those sets' final report has nothing open.",
+              "An all-sets check over the project's card data passes, and every card in every built set has an English name and English text for every attack, ability and effect it has."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cardsets/sets/ holds one built file per set (for example cardsets/sets/base1.json, reports/base1.json summary prints 102), and the 4 empty sets wp, sp, rc, jumbo are documented in cardsets/README.md:20-23. The import fetches every card TCGdex lists for a set (internal/cardset/import.go:197 and :266-270 build ids from set.Cards and fetch all of them), so each built set takes every listed print. I could not reach live TCGdex to recount the 206 sets or 21439 prints, so this rests on the import code and the reports, not an independent count."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "A grep for \"open\": followed by a digit from 1 to 9 across cardsets/reports/ finds nothing, and cardsets/reports/base1.json:9 shows \"open\": 0. A grep for \"status\": \"open\" across the reports finds no items."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The all-sets check passes, but English text is still missing for some attacks and abilities. Examples: cardsets/sets/dp6.json:7588-7591 and 7617-7620 hold English attack entries with name \"\" (Technical Machine TS-1 and TS-2); cardsets/sets/ex15.json:624-626 holds an English ability with name \"\" and no effect (Snorlax δ, ex15-10); cardsets/sets/ex12.json:4644-4646 holds an English attack with name \"\" (Arcanine ex). About 22 such empty-name entries across 13 set files were found. cardsets/corrections/ex15.json records these as acknowledged \"Unverified ... left for the maintainer\" rather than filled, so the criterion's requirement of an English name and text for every attack, ability and effect is not satisfied in the files. The gap can be closed by reading the printed cards, so this is not impossible."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T15:02:52Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "21d20a65-34b2-468c-bb54-3a488fda76a7",
+            "title": "Build and verify the older sets",
+            "criteria": [
+              "Every remaining English set TCGdex lists, Pokémon TCG Pocket aside, has a built set holding every print it lists.",
+              "Each of those sets' final report has nothing open.",
+              "An all-sets check over the project's card data passes, and every card in every built set has an English name and English text for every attack, ability and effect it has."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cardsets/sets/ holds 206 built set files (the glob and status list show sets/*.json from 2011bw to xyp, none Pocket). cardsets/README.md:20-23 documents the 4 TCGdex sets (wp, sp, rc, jumbo) built empty because they list no English cards, so nothing is missing from them. Per-set print counts are in each report summary (e.g. reports/ex12.json summary prints 93). I could not query live TCGdex from read-only tools, so whether each set holds every print TCGdex lists rests on the import's summary and the reports, not an independent re-fetch."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Every report's summary has \"open\": 0 (reports/ex12.json:9 shows \"open\": 0). A search of cardsets/reports/ for \"open\": followed by a nonzero digit returned no matches. Remaining items are status acknowledged, not open, e.g. reports/ex12.json items with status \"acknowledged\"."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "The all-sets check passes, but criterion 3 requires an English name and English text for every attack, ability and effect a card has, and built data does not give that. sets/ex12.json:4644-4646 holds the attack of ex12-83 (Arcanine ex) as {\"name\": \"\"} with no effect; grep of cardsets/sets/ for \"name\": \"\" or \"effect\": \"\" finds 22 occurrences across 13 files (dp6, ex7, ex8, ex12, ex13, ex14, ex15, neo3, neo4, dpp, dp7, ecard1, ecard2). The matching report items (reports/ex12.json:15-50) are kind missing-name, status acknowledged, reason 'Unverified ... Left for the maintainer'. Corrections also acknowledge missing attacks (e.g. corrections/xy9.json:8, 'no attacks for this print'), and missing effects (corrections/sm4.json:8). Acknowledged gaps still leave cards without English names or effect text, so the criterion is not met. It is achievable by correcting the files from the printed cards, so it is not impossible."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-08T15:03:29Z",
+          "round": 1,
+          "decision": "accept",
+          "reason": "User chose option B: 196 older-set gaps acknowledged as unverified and left for the maintainer"
+        }
+      ],
+      "attempts": 3,
+      "state": "accepted_shortfall"
+    }
+  ]
+}

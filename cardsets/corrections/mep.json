@@ -1,0 +1,68 @@
+{
+  "corrections": [
+    {
+      "card": "mep-005",
+      "path": "/text/en/attacks/0/effect",
+      "value": "Flip a coin. If heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+      "reason": "Printed card (TCG Live image) reads 'switch in 1 of your opponent's Benched Pokémon to the Active Spot'; TCGdex has older wording"
+    },
+    {
+      "card": "mep-006",
+      "path": "/text/en/attacks/0/name",
+      "value": "Creepy Wind",
+      "reason": "Printed card (TCG Live image) names the first attack Creepy Wind; TCGdex's Disruptive Wind is wrong"
+    },
+    {
+      "card": "mep-007",
+      "path": "/text/en/attacks/0/name",
+      "value": "Ram",
+      "reason": "Printed card (TCG Live image) names the attack Ram; TCGdex's Collision is wrong"
+    },
+    {
+      "card": "mep-007",
+      "path": "/text/en/abilities/0/effect",
+      "value": "Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.",
+      "reason": "Printed card (TCG Live image) reads this Damp text; TCGdex has older wording"
+    },
+    {
+      "card": "mep-008",
+      "path": "/text/en/abilities/0/effect",
+      "value": "Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.",
+      "reason": "Same Damp Ability as mep-007, whose printed card reads this; the TCG Live card data for this card agrees"
+    },
+    {
+      "card": "mep-082",
+      "path": "/text/en/attacks/0/effect",
+      "value": "This Pokémon also does 30 damage to itself.",
+      "reason": "Printed card (TCG Live image) reads 'This Pokémon also does 30 damage to itself.'"
+    },
+    {
+      "card": "mep-051",
+      "path": "/regulationMark",
+      "value": "J",
+      "reason": "Regulation marks are upper-case letters; the TCG Live card data gives J and TCGdex's lower-case j is a typo"
+    }
+  ],
+  "acknowledged": [
+    {
+      "card": "mep-093",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "mep-107",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "mep-109",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    },
+    {
+      "card": "mep-Museum",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not carry it. A re-import picks up art when it appears."
+    }
+  ]
+}

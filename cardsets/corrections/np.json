@@ -1,0 +1,36 @@
+{
+  "corrections": [
+    {
+      "card": "np-26",
+      "path": "/text/en/effect",
+      "value": "Flip a coin. If heads, remove 2 damage counters from each Active Pokémon (remove 1 damage counter if a Pokémon has only 1). If tails, each Active Pokémon is now Asleep.",
+      "reason": "TCGdex has no effect text for this print; copied from an identical reprint of Tropical Wind (same name, stage, HP, attack costs and damage): dpp-DP05, dpp-DP25, dpp-DP48"
+    },
+    {
+      "card": "np-27",
+      "path": "/text/en/effect",
+      "value": "Flip a coin. If heads, discard all Trainer and Stadium cards your opponent has in play. If tails, discard all Trainer and Stadium cards you have in play.",
+      "reason": "TCGdex has no effect text for this print; copied from an identical reprint of Tropical Tidal Wave (same name, stage, HP, attack costs and damage): hgssp-HGSS18"
+    },
+    {
+      "card": "np-36",
+      "path": "/text/en/effect",
+      "value": "Flip a coin. If heads, discard all Trainer and Stadium cards your opponent has in play. If tails, discard all Trainer and Stadium cards you have in play.",
+      "reason": "TCGdex has no effect text for this print; copied from an identical reprint of Tropical Tidal Wave (same name, stage, HP, attack costs and damage): hgssp-HGSS18"
+    }
+  ],
+  "acknowledged": [
+    {
+      "card": "np-9",
+      "kind": "no-attacks",
+      "field": "/attacks",
+      "reason": "Unverified: TCGdex has no attacks for this print, and its reprints disagree; the printed card has not been checked. Left for the maintainer (decision of 2026-11-08 to skip image reading for the older sets)."
+    },
+    {
+      "card": "np-28",
+      "kind": "missing-effect",
+      "field": "/text/en/effect",
+      "reason": "Unverified: TCGdex has no effect text for this print, and no identical reprint gives it; the printed card has not been checked. Left for the maintainer (decision of 2026-11-08 to skip image reading for the older sets)."
+    }
+  ]
+}

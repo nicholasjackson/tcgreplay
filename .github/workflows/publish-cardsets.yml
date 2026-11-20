@@ -1,0 +1,59 @@
+# Publish card sets.
+#
+# On every push to main that changes cardsets/ (and when started by hand
+# from the Actions tab), this checks the built card sets and publishes
+# them to the playmat's Spaces bucket: each changed set is uploaded as a
+# new, never-changed object under cardsets/sets/, then cardsets/manifest.json
+# is rewritten and purged from the CDN. Unchanged sets upload nothing, and
+# earlier versions of every set stay in the bucket. If `sets check` finds
+# an open item, the job fails and nothing is published.
+#
+# Running playmats, hosted and desktop, pick a publish up on their next
+# check of the manifest (every 5 minutes by default), or at once when an
+# admin presses "Check for published card sets now" on /admin. Games
+# already open keep the cards they started with. This workflow never
+# redeploys the playmat (see deploy.yml).
+#
+# Repository secrets it needs (Settings > Secrets and variables > Actions):
+#   TCGREPLAY_SPACES_ENDPOINT   region endpoint, https://<region>.digitaloceanspaces.com
+#   TCGREPLAY_SPACES_BUCKET     the bucket name
+#   TCGREPLAY_SPACES_KEY        a Spaces key that can write public-read objects
+#   TCGREPLAY_SPACES_SECRET     its secret
+#   TCGREPLAY_SPACES_CDN_TOKEN  DigitalOcean API token with cdn:read and cdn:delete
+#
+# The same publish can be run by hand: go run ./cmd/tcgreplay sets publish
+# with those five values in the environment.
+name: Publish card sets
+
+on:
+  push:
+    branches: [main]
+    paths: ['cardsets/**']
+  workflow_dispatch:
+
+# Publishes never overlap: a second one waits for the first to finish.
+concurrency:
+  group: publish-cardsets
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Check card sets
+        run: go run ./cmd/tcgreplay sets check
+      - name: Publish card sets
+        run: go run ./cmd/tcgreplay sets publish
+        env:
+          TCGREPLAY_SPACES_ENDPOINT: ${{ secrets.TCGREPLAY_SPACES_ENDPOINT }}
+          TCGREPLAY_SPACES_BUCKET: ${{ secrets.TCGREPLAY_SPACES_BUCKET }}
+          TCGREPLAY_SPACES_KEY: ${{ secrets.TCGREPLAY_SPACES_KEY }}
+          TCGREPLAY_SPACES_SECRET: ${{ secrets.TCGREPLAY_SPACES_SECRET }}
+          TCGREPLAY_SPACES_CDN_TOKEN: ${{ secrets.TCGREPLAY_SPACES_CDN_TOKEN }}

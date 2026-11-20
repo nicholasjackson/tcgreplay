@@ -1,0 +1,27 @@
+# What's new: one entry per release that changes what players see, newest
+# first. The website's What's new page (/docs/whats-new) shows it, and the
+# build stops if an entry is missing a field or has a bad date.
+#
+#   date:    the day it shipped, YYYY-MM-DD
+#   title:   a short headline
+#   refresh: true when the release adds, removes or changes a tool, a
+#            tool's description, a guide or the playmat's instructions to
+#            assistants (players must refresh their connection to see it);
+#            otherwise false
+#   changes: short lines in plain words about what changed for players;
+#            [text](/path) or [text](https://...) links are allowed
+#
+# Never name the playmat's old address here (only the connecting page's
+# move note may), and never say TCG Replay is in ChatGPT's directory while
+# site/src/lib/listing.ts says it is not listed.
+
+- date: 2026-11-19
+  title: TCG Replay is public
+  refresh: true
+  changes:
+    - "The playmat has its own address, https://tcgreplay.app. If your assistant was connected before, remove the connection and add it again at the new address: see [the note on connecting](/docs/connect#moved)."
+    - "New ChatGPT connection steps for adding the playmat as a plugin, and the ChatGPT plans that allow it: see [Get started](/docs/connect)."
+    - "This What's new page, [steps to refresh your assistant's connection](/docs/connect#refresh) after an update, and [an index of all the docs](/docs)."
+    - "Clearer tool names and descriptions, so your assistant picks the right tool, and a new tool that tells it which Google account you signed in with."
+    - "New [terms of service](/terms) and an updated [privacy page](/privacy), linked from the foot of every page with a Get help link."
+    - "The board's ☰ menu has an About tcgreplay panel with the fan-project notice, the card-data credits and where to get help."

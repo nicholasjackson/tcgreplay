@@ -1,12 +1,90 @@
 {
   "version": 1,
   "entries": {
+    "architecture/README.md": {
+      "created": "2026-10-18T11:50:24Z",
+      "tracked_since": "2026-11-04T13:24:42.932062404Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-04T13:25:00.778305002Z",
+        "recent": [
+          {
+            "at": "2026-11-04T13:24:42.932062404Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.778305002Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          }
+        ]
+      }
+    },
+    "architecture/games-read-cards-through-their-db.md": {
+      "created": "2026-11-08T11:50:18.284312675Z",
+      "tracked_since": "2026-11-08T11:50:18.284312675Z",
+      "discoveries": {
+        "count": 7,
+        "last": "2026-11-12T09:24:44.505156141Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:54:16.39034402Z"
+          },
+          {
+            "at": "2026-11-08T16:27:38.083453811Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.852843676Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.98043501Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.91529204Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.505156141Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 4,
+        "last": "2026-11-08T18:24:35.352006659Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:54:21.203487541Z",
+            "workflow": "plan",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          },
+          {
+            "at": "2026-11-08T16:27:44.267259919Z"
+          },
+          {
+            "at": "2026-11-08T18:22:38.895595148Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.352006659Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
     "architecture/importer-determinism.md": {
       "created": "2026-10-18T11:50:24Z",
       "tracked_since": "2026-10-26T11:21:13.855512304Z",
       "discoveries": {
-        "count": 5,
-        "last": "2026-11-04T08:16:04.225813622Z",
+        "count": 13,
+        "last": "2026-11-08T11:54:16.371811671Z",
         "recent": [
           {
             "at": "2026-10-26T11:21:18.491882923Z"
@@ -22,11 +100,205 @@
           },
           {
             "at": "2026-11-04T08:16:04.225813622Z"
+          },
+          {
+            "at": "2026-11-06T12:42:50.386691701Z"
+          },
+          {
+            "at": "2026-11-06T13:35:03.188304317Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.268893462Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.669343002Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.364606142Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.375089276Z"
+          },
+          {
+            "at": "2026-11-08T11:50:05.143714109Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.371811671Z"
           }
         ]
       },
       "retrievals": {
+        "count": 11,
+        "last": "2026-11-08T19:45:08.239954253Z",
+        "recent": [
+          {
+            "at": "2026-11-04T11:43:44.030162606Z",
+            "workflow": "plan",
+            "spec": "20261104082020-109dceb1-tcgdex-spaces-cache"
+          },
+          {
+            "at": "2026-11-04T12:36:50.037672378Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:24:42.937868935Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.78095472Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-06T12:42:58.42212218Z",
+            "workflow": "plan",
+            "spec": "20261106110254-f08e142d-project-website"
+          },
+          {
+            "at": "2026-11-08T11:31:49.199641606Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T11:54:21.193170336Z",
+            "workflow": "plan",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          },
+          {
+            "at": "2026-11-08T18:22:26.443961396Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:38.909225981Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.36382059Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T19:45:08.239954253Z",
+            "workflow": "implement",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          }
+        ]
+      }
+    },
+    "architecture/published-card-sets.md": {
+      "created": "2026-11-08T18:21:22.334950492Z",
+      "tracked_since": "2026-11-08T18:21:22.334950492Z",
+      "discoveries": {
+        "count": 14,
+        "last": "2026-11-13T08:53:45.032569154Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:18.98043501Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-08T18:48:48.33544227Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.881562538Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.89264547Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.970461766Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.450936217Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.461247327Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.483901213Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.593222201Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.589942507Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.823798219Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.032569154Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 3,
+        "last": "2026-11-12T09:45:13.1242756Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:38.920593298Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.374838784Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T09:45:13.1242756Z",
+            "workflow": "plan",
+            "spec": "20261112083238-29247b36-privacy-terms-disclaimer"
+          }
+        ]
+      }
+    },
+    "architecture/visitor-counting-serve-time.md": {
+      "created": "2026-11-13T08:54:11.994927196Z",
+      "tracked_since": "2026-11-13T08:54:11.994927196Z",
+      "discoveries": {
         "count": 0
+      },
+      "retrievals": {
+        "count": 1,
+        "last": "2026-11-19T11:06:17.899131609Z",
+        "recent": [
+          {
+            "at": "2026-11-19T11:06:17.899131609Z"
+          }
+        ]
+      }
+    },
+    "conventions/README.md": {
+      "created": "2026-10-18T11:50:24Z",
+      "tracked_since": "2026-11-04T13:24:42.940481433Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-04T13:25:00.783425188Z",
+        "recent": [
+          {
+            "at": "2026-11-04T13:24:42.940481433Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.783425188Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          }
+        ]
       }
     },
     "conventions/skills-text-and-packaging.md": {
@@ -36,31 +308,628 @@
         "count": 0
       },
       "retrievals": {
-        "count": 5,
-        "last": "2026-11-04T09:22:38.46698366Z",
+        "count": 24,
+        "last": "2026-11-12T09:59:39.746750399Z",
         "recent": [
-          {
-            "at": "2026-10-26T11:21:13.855512304Z",
-            "workflow": "plan",
-            "spec": "20261026104139-4e1bb7fa-wait-for-turn"
-          },
-          {
-            "at": "2026-10-26T12:28:21.288484868Z"
-          },
-          {
-            "at": "2026-11-02T11:15:09.859539001Z",
-            "workflow": "plan",
-            "spec": "20261102110545-5c84659c-touch-friendly-board"
-          },
-          {
-            "at": "2026-11-02T11:15:14.630973305Z",
-            "workflow": "plan",
-            "spec": "20261102110545-5c84659c-touch-friendly-board"
-          },
           {
             "at": "2026-11-04T09:22:38.46698366Z",
             "workflow": "plan",
             "spec": "20261104090653-7373a393-wide-screen-landscape-board"
+          },
+          {
+            "at": "2026-11-04T11:29:07.06415215Z",
+            "workflow": "plan",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T11:43:09.433502495Z",
+            "workflow": "plan",
+            "spec": "20261104082020-109dceb1-tcgdex-spaces-cache"
+          },
+          {
+            "at": "2026-11-04T11:59:26.645117864Z",
+            "workflow": "plan",
+            "spec": "20261104090640-25f673ed-card-image-cdn"
+          },
+          {
+            "at": "2026-11-04T12:12:29.810811425Z",
+            "workflow": "plan",
+            "spec": "20261104090640-a5a74fab-admin-cache-clearing"
+          },
+          {
+            "at": "2026-11-04T13:24:42.944995005Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.785845505Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-06T12:40:33.496815398Z",
+            "workflow": "plan",
+            "spec": "20261106110254-f08e142d-project-website"
+          },
+          {
+            "at": "2026-11-07T08:19:55.717889378Z",
+            "workflow": "plan",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-08T11:14:37.086202066Z",
+            "workflow": "plan",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T11:31:14.664189462Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T11:51:29.961592541Z",
+            "workflow": "plan",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          },
+          {
+            "at": "2026-11-08T18:22:38.932440369Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.386721525Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T09:24:28.603813823Z",
+            "workflow": "plan",
+            "spec": "20261111093353-8ff3589f-domain-move"
+          },
+          {
+            "at": "2026-11-12T09:24:30.855933957Z",
+            "workflow": "plan",
+            "spec": "20261112090330-4ac2ea19-observability"
+          },
+          {
+            "at": "2026-11-12T09:38:00.902096606Z",
+            "workflow": "plan",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          },
+          {
+            "at": "2026-11-12T09:43:58.362800073Z",
+            "workflow": "plan",
+            "spec": "20261112083238-29247b36-privacy-terms-disclaimer"
+          },
+          {
+            "at": "2026-11-12T09:59:36.453019973Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          },
+          {
+            "at": "2026-11-12T09:59:39.746750399Z",
+            "workflow": "plan",
+            "spec": "20261111132045-1d1d32f6-visitor-analytics"
+          }
+        ]
+      }
+    },
+    "conventions/whats-new-entries.md": {
+      "created": "2026-11-19T09:41:14.309670522Z",
+      "tracked_since": "2026-11-19T09:41:14.309670522Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-19T09:41:35.731601337Z",
+        "recent": [
+          {
+            "at": "2026-11-19T09:41:22.274784521Z",
+            "workflow": "implement",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          },
+          {
+            "at": "2026-11-19T09:41:35.731601337Z",
+            "workflow": "implement",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          }
+        ]
+      }
+    },
+    "decisions/README.md": {
+      "created": "2026-10-18T11:50:24Z",
+      "tracked_since": "2026-11-04T11:43:44.052934186Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 3,
+        "last": "2026-11-04T13:25:00.788058061Z",
+        "recent": [
+          {
+            "at": "2026-11-04T11:43:44.052934186Z",
+            "workflow": "plan",
+            "spec": "20261104082020-109dceb1-tcgdex-spaces-cache"
+          },
+          {
+            "at": "2026-11-04T13:24:42.947197971Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.788058061Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          }
+        ]
+      }
+    },
+    "glossary/README.md": {
+      "created": "2026-10-18T11:50:24Z",
+      "tracked_since": "2026-11-04T13:24:42.949584057Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-04T13:25:00.790467247Z",
+        "recent": [
+          {
+            "at": "2026-11-04T13:24:42.949584057Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.790467247Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          }
+        ]
+      }
+    },
+    "gotchas/README.md": {
+      "created": "2026-10-18T11:50:24Z",
+      "tracked_since": "2026-11-04T13:24:42.954537583Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-04T13:25:00.793021166Z",
+        "recent": [
+          {
+            "at": "2026-11-04T13:24:42.954537583Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.793021166Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          }
+        ]
+      }
+    },
+    "gotchas/app-platform-logs-only-in-insights.md": {
+      "created": "2026-11-12T09:34:08.323221808Z",
+      "tracked_since": "2026-11-12T09:34:08.323221808Z",
+      "discoveries": {
+        "count": 2,
+        "last": "2026-11-19T11:21:27.873813624Z",
+        "recent": [
+          {
+            "at": "2026-11-12T10:04:31.845060357Z"
+          },
+          {
+            "at": "2026-11-19T11:21:27.873813624Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 4,
+        "last": "2026-11-19T11:06:17.910307857Z",
+        "recent": [
+          {
+            "at": "2026-11-12T10:04:37.758971394Z",
+            "workflow": "plan",
+            "spec": "20261111132045-1d1d32f6-visitor-analytics"
+          },
+          {
+            "at": "2026-11-13T07:13:46.180174206Z",
+            "workflow": "implement",
+            "spec": "20261112090330-4ac2ea19-observability"
+          },
+          {
+            "at": "2026-11-13T07:13:57.884365583Z",
+            "workflow": "implement",
+            "spec": "20261112090330-4ac2ea19-observability"
+          },
+          {
+            "at": "2026-11-19T11:06:17.910307857Z"
+          }
+        ]
+      }
+    },
+    "gotchas/app-spec-not-applied-by-deploy.md": {
+      "created": "2026-11-19T11:21:49.571039033Z",
+      "tracked_since": "2026-11-19T11:21:49.571039033Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 0
+      }
+    },
+    "gotchas/astro-inline-whitespace.md": {
+      "created": "2026-11-19T09:41:14.31623803Z",
+      "tracked_since": "2026-11-19T09:41:14.31623803Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 0
+      }
+    },
+    "gotchas/astro-site-build.md": {
+      "created": "2026-11-06T13:35:15.756013149Z",
+      "tracked_since": "2026-11-06T13:35:15.756013149Z",
+      "discoveries": {
+        "count": 14,
+        "last": "2026-11-19T09:40:55.548518164Z",
+        "recent": [
+          {
+            "at": "2026-11-07T08:20:00.284279052Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.680494695Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.375089276Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.407964018Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.881562538Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.461247327Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.570797913Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.576950599Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.55641993Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.610747706Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.829458996Z"
+          },
+          {
+            "at": "2026-11-12T10:04:48.923035409Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
+          },
+          {
+            "at": "2026-11-19T09:40:55.548518164Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 9,
+        "last": "2026-11-19T09:32:49.911609513Z",
+        "recent": [
+          {
+            "at": "2026-11-07T08:20:12.600790231Z",
+            "workflow": "plan",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-08T18:22:38.944662922Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.398000902Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T09:24:37.985719189Z",
+            "workflow": "plan",
+            "spec": "20261111093353-8ff3589f-domain-move"
+          },
+          {
+            "at": "2026-11-12T09:41:15.301022427Z",
+            "workflow": "plan",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          },
+          {
+            "at": "2026-11-12T09:45:13.092854606Z",
+            "workflow": "plan",
+            "spec": "20261112083238-29247b36-privacy-terms-disclaimer"
+          },
+          {
+            "at": "2026-11-12T10:04:37.755710255Z",
+            "workflow": "plan",
+            "spec": "20261111132045-1d1d32f6-visitor-analytics"
+          },
+          {
+            "at": "2026-11-12T13:22:23.697488147Z",
+            "workflow": "implement",
+            "spec": "20261111093353-8ff3589f-domain-move"
+          },
+          {
+            "at": "2026-11-19T09:32:49.911609513Z",
+            "workflow": "implement",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          }
+        ]
+      }
+    },
+    "gotchas/board-bench-hint-reads-missing-effect.md": {
+      "created": "2026-11-08T12:08:09.065305605Z",
+      "tracked_since": "2026-11-08T12:08:09.065305605Z",
+      "discoveries": {
+        "count": 3,
+        "last": "2026-11-12T09:45:08.578545963Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.970461766Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.578545963Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 3,
+        "last": "2026-11-08T18:24:35.40954906Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:26.410085075Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:38.9577004Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.40954906Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/board-boxes-settle-before-comparing.md": {
+      "created": "2026-11-13T08:23:03.535706058Z",
+      "tracked_since": "2026-11-13T08:23:03.535706058Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 0
+      }
+    },
+    "gotchas/board-card-info-per-page-load.md": {
+      "created": "2026-11-04T11:41:47.810404777Z",
+      "tracked_since": "2026-11-04T11:41:47.810404777Z",
+      "discoveries": {
+        "count": 43,
+        "last": "2026-11-12T10:07:50.330010023Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:31:35.118278623Z"
+          },
+          {
+            "at": "2026-11-08T11:31:39.74303869Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.225486288Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.236124493Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.246780699Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.258037378Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.268364641Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.289931974Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.353787705Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.386349605Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.852843676Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.886909048Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.897882493Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.98043501Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.970461766Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.450936217Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.461247327Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.834888243Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 19,
+        "last": "2026-11-08T18:24:35.421071738Z",
+        "recent": [
+          {
+            "at": "2026-11-04T11:43:39.570463614Z",
+            "workflow": "plan",
+            "spec": "20261104082020-109dceb1-tcgdex-spaces-cache"
+          },
+          {
+            "at": "2026-11-04T11:59:39.645860234Z",
+            "workflow": "plan",
+            "spec": "20261104090640-25f673ed-card-image-cdn"
+          },
+          {
+            "at": "2026-11-04T12:17:16.943674867Z",
+            "workflow": "plan",
+            "spec": "20261104090640-a5a74fab-admin-cache-clearing"
+          },
+          {
+            "at": "2026-11-04T13:24:02.715160659Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:24:42.959652339Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.795795935Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T14:54:43.35250176Z",
+            "workflow": "implement",
+            "spec": "20261104090640-25f673ed-card-image-cdn"
+          },
+          {
+            "at": "2026-11-04T14:54:57.795299889Z",
+            "workflow": "implement",
+            "spec": "20261104090640-25f673ed-card-image-cdn"
+          },
+          {
+            "at": "2026-11-04T14:55:05.88636959Z",
+            "workflow": "implement",
+            "spec": "20261104090640-25f673ed-card-image-cdn"
+          },
+          {
+            "at": "2026-11-04T14:55:16.858568729Z",
+            "workflow": "implement",
+            "spec": "20261104090640-25f673ed-card-image-cdn"
+          },
+          {
+            "at": "2026-11-04T16:05:36.201725614Z",
+            "workflow": "implement",
+            "spec": "20261104090640-a5a74fab-admin-cache-clearing"
+          },
+          {
+            "at": "2026-11-04T16:06:29.076394099Z",
+            "workflow": "implement",
+            "spec": "20261104090640-a5a74fab-admin-cache-clearing"
+          },
+          {
+            "at": "2026-11-04T16:06:57.718182999Z",
+            "workflow": "implement",
+            "spec": "20261104090640-a5a74fab-admin-cache-clearing"
+          },
+          {
+            "at": "2026-11-06T10:09:31.158458062Z"
+          },
+          {
+            "at": "2026-11-07T08:20:12.603378445Z",
+            "workflow": "plan",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-08T11:31:49.125959144Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:20:41.994220387Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:38.969184668Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.421071738Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/board-delta-unredacted.md": {
+      "created": "2026-11-07T08:30:02.173928705Z",
+      "tracked_since": "2026-11-07T08:30:02.173928705Z",
+      "discoveries": {
+        "count": 5,
+        "last": "2026-11-12T09:24:32.970461766Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:31:35.150019127Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.34310314Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.386349605Z"
+          },
+          {
+            "at": "2026-11-08T11:50:05.143714109Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.970461766Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-08T18:24:35.432354765Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:38.980790958Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.432354765Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
           }
         ]
       }
@@ -69,21 +938,9 @@
       "created": "2026-10-18T11:50:24Z",
       "tracked_since": "2026-10-26T11:21:13.855512304Z",
       "discoveries": {
-        "count": 13,
-        "last": "2026-11-04T09:22:38.48958776Z",
+        "count": 24,
+        "last": "2026-11-12T10:07:50.330010023Z",
         "recent": [
-          {
-            "at": "2026-10-26T11:21:18.501564807Z"
-          },
-          {
-            "at": "2026-10-26T11:21:18.512114187Z"
-          },
-          {
-            "at": "2026-10-26T11:21:18.522562536Z"
-          },
-          {
-            "at": "2026-10-26T11:21:18.533641569Z"
-          },
           {
             "at": "2026-10-26T11:28:10.404062049Z"
           },
@@ -110,12 +967,45 @@
           },
           {
             "at": "2026-11-04T09:22:38.48958776Z"
+          },
+          {
+            "at": "2026-11-04T11:29:11.164897499Z"
+          },
+          {
+            "at": "2026-11-04T11:59:31.686893079Z"
+          },
+          {
+            "at": "2026-11-04T11:59:31.690560654Z"
+          },
+          {
+            "at": "2026-11-06T12:42:50.349209511Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.260822149Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.660891367Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.322550244Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.386349605Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.970461766Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.461247327Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
           }
         ]
       },
       "retrievals": {
-        "count": 3,
-        "last": "2026-11-02T14:35:14.792401042Z",
+        "count": 8,
+        "last": "2026-11-08T18:24:35.444441887Z",
         "recent": [
           {
             "at": "2026-10-26T11:21:23.640551604Z",
@@ -131,6 +1021,425 @@
             "at": "2026-11-02T14:35:14.792401042Z",
             "workflow": "implement",
             "spec": "20261102110545-5c84659c-touch-friendly-board"
+          },
+          {
+            "at": "2026-11-04T11:59:39.666676096Z",
+            "workflow": "plan",
+            "spec": "20261104090640-25f673ed-card-image-cdn"
+          },
+          {
+            "at": "2026-11-04T13:24:42.962026736Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.798064391Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-08T18:22:38.993111531Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.444441887Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/cap-bypass-needs-lost-place.md": {
+      "created": "2026-11-19T09:12:44.080417746Z",
+      "tracked_since": "2026-11-19T09:12:44.080417746Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 0
+      }
+    },
+    "gotchas/cdn-purge-needs-cdn-delete.md": {
+      "created": "2026-11-06T12:32:05.75871581Z",
+      "tracked_since": "2026-11-06T12:32:05.75871581Z",
+      "discoveries": {
+        "count": 12,
+        "last": "2026-11-12T09:33:58.26940229Z",
+        "recent": [
+          {
+            "at": "2026-11-06T12:42:50.361203265Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.284279052Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.680494695Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.08695741Z"
+          },
+          {
+            "at": "2026-11-08T11:31:39.74303869Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.225486288Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.258037378Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.268364641Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.322550244Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.852843676Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.904226598Z"
+          },
+          {
+            "at": "2026-11-12T09:33:58.26940229Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 5,
+        "last": "2026-11-08T18:24:35.456029996Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:31:49.136313518Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:20:59.772358207Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:03.882137182Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.005347185Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.456029996Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/chatgpt-tool-discovery.md": {
+      "created": "2026-11-06T17:43:52.042778559Z",
+      "tracked_since": "2026-11-06T17:43:52.042778559Z",
+      "discoveries": {
+        "count": 15,
+        "last": "2026-11-12T09:59:54.030576504Z",
+        "recent": [
+          {
+            "at": "2026-11-07T08:20:00.272899128Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.27631798Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.673055596Z"
+          },
+          {
+            "at": "2026-11-07T11:13:23.680620846Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.375089276Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.397107561Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.395467078Z"
+          },
+          {
+            "at": "2026-11-11T09:16:01.782992472Z"
+          },
+          {
+            "at": "2026-11-11T09:16:01.788736003Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.91529204Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.505156141Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.582653317Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.588114896Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.593222201Z"
+          },
+          {
+            "at": "2026-11-12T09:59:54.030576504Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 11,
+        "last": "2026-11-13T09:32:55.961707889Z",
+        "recent": [
+          {
+            "at": "2026-11-06T17:50:51.418768702Z"
+          },
+          {
+            "at": "2026-11-07T08:20:12.598169526Z",
+            "workflow": "plan",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-07T11:11:29.398247991Z",
+            "workflow": "implement",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-07T11:11:49.578464756Z",
+            "workflow": "implement",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-07T11:24:52.047424495Z",
+            "workflow": "implement",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-08T11:54:21.2238414Z",
+            "workflow": "plan",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          },
+          {
+            "at": "2026-11-08T18:22:39.016841893Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.467617865Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T09:41:15.33320511Z",
+            "workflow": "plan",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          },
+          {
+            "at": "2026-11-12T10:00:05.28082208Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          },
+          {
+            "at": "2026-11-13T09:32:55.961707889Z",
+            "workflow": "implement",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          }
+        ]
+      }
+    },
+    "gotchas/css-container-units-card-size.md": {
+      "created": "2026-11-04T10:38:20.534569205Z",
+      "tracked_since": "2026-11-04T10:38:20.534569205Z",
+      "discoveries": {
+        "count": 9,
+        "last": "2026-11-12T09:45:08.589942507Z",
+        "recent": [
+          {
+            "at": "2026-11-04T11:41:40.028978998Z"
+          },
+          {
+            "at": "2026-11-04T11:59:31.686893079Z"
+          },
+          {
+            "at": "2026-11-04T11:59:31.690560654Z"
+          },
+          {
+            "at": "2026-11-06T12:42:50.349209511Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.272899128Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.673055596Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.386349605Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.970461766Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.589942507Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 4,
+        "last": "2026-11-08T18:24:35.48023289Z",
+        "recent": [
+          {
+            "at": "2026-11-04T13:24:42.964526053Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.800573479Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-08T18:22:39.029364468Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.48023289Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/disconnect-does-not-reach-playmat.md": {
+      "created": "2026-11-12T09:51:11.110424185Z",
+      "tracked_since": "2026-11-12T09:51:11.110424185Z",
+      "discoveries": {
+        "count": 4,
+        "last": "2026-11-12T10:07:50.350895518Z",
+        "recent": [
+          {
+            "at": "2026-11-12T10:04:31.84020509Z"
+          },
+          {
+            "at": "2026-11-12T10:04:48.923035409Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.350895518Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 1,
+        "last": "2026-11-13T07:31:35.766967236Z",
+        "recent": [
+          {
+            "at": "2026-11-13T07:31:35.766967236Z",
+            "workflow": "implement",
+            "spec": "20261112083238-29247b36-privacy-terms-disclaimer"
+          }
+        ]
+      }
+    },
+    "gotchas/fakedb-embedding-bypasses-overrides.md": {
+      "created": "2026-11-08T16:28:01.836334679Z",
+      "tracked_since": "2026-11-08T16:28:01.836334679Z",
+      "discoveries": {
+        "count": 4,
+        "last": "2026-11-12T10:07:50.361230735Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:20:34.852843676Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.98043501Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.361230735Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-08T18:24:35.491692348Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:39.04148079Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.491692348Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/flaky-guide-instructions-test.md": {
+      "created": "2026-11-07T11:59:57.430893247Z",
+      "tracked_since": "2026-11-07T11:59:57.430893247Z",
+      "discoveries": {
+        "count": 6,
+        "last": "2026-11-12T10:07:50.361230735Z",
+        "recent": [
+          {
+            "at": "2026-11-08T16:27:38.083453811Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.91529204Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.461247327Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.505156141Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.361230735Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 5,
+        "last": "2026-11-13T09:41:38.224836707Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:20:59.821135839Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.053040699Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.504928918Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T10:08:02.461199576Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          },
+          {
+            "at": "2026-11-13T09:41:38.224836707Z",
+            "workflow": "implement",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
           }
         ]
       }
@@ -139,8 +1448,8 @@
       "created": "2026-10-26T11:28:17.368876547Z",
       "tracked_since": "2026-10-26T11:28:17.368876547Z",
       "discoveries": {
-        "count": 7,
-        "last": "2026-11-04T09:22:38.48958776Z",
+        "count": 14,
+        "last": "2026-11-12T09:24:44.515851666Z",
         "recent": [
           {
             "at": "2026-10-26T13:18:09.959130692Z"
@@ -162,19 +1471,112 @@
           },
           {
             "at": "2026-11-04T09:22:38.48958776Z"
+          },
+          {
+            "at": "2026-11-04T11:29:11.164897499Z"
+          },
+          {
+            "at": "2026-11-04T11:59:31.686893079Z"
+          },
+          {
+            "at": "2026-11-06T12:42:50.349209511Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.260822149Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.660891367Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.34310314Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.515851666Z"
           }
         ]
       },
       "retrievals": {
-        "count": 0
+        "count": 9,
+        "last": "2026-11-08T18:24:35.517654365Z",
+        "recent": [
+          {
+            "at": "2026-11-04T11:29:15.272581202Z",
+            "workflow": "plan",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T12:17:16.966309256Z",
+            "workflow": "plan",
+            "spec": "20261104090640-a5a74fab-admin-cache-clearing"
+          },
+          {
+            "at": "2026-11-04T12:36:50.035077203Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:24:42.967253743Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.802836565Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-07T08:20:12.595669123Z",
+            "workflow": "plan",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-08T11:31:49.210563493Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.06501339Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.517654365Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/go-sdk-annotations-omit-false.md": {
+      "created": "2026-11-12T10:18:33.952743803Z",
+      "tracked_since": "2026-11-12T10:18:33.952743803Z",
+      "discoveries": {
+        "count": 1,
+        "last": "2026-11-13T09:32:14.970574806Z",
+        "recent": [
+          {
+            "at": "2026-11-13T09:32:14.970574806Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 1,
+        "last": "2026-11-13T09:32:18.919721393Z",
+        "recent": [
+          {
+            "at": "2026-11-13T09:32:18.919721393Z",
+            "workflow": "implement",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          }
+        ]
       }
     },
     "gotchas/go-sdk-sessions-and-auth.md": {
       "created": "2026-10-18T11:50:24Z",
       "tracked_since": "2026-10-26T11:21:13.855512304Z",
       "discoveries": {
-        "count": 6,
-        "last": "2026-11-02T12:36:39.230403246Z",
+        "count": 14,
+        "last": "2026-11-12T10:07:50.3189605Z",
         "recent": [
           {
             "at": "2026-10-26T11:21:18.481164162Z"
@@ -193,45 +1595,401 @@
           },
           {
             "at": "2026-11-02T12:36:39.230403246Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.272899128Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.673055596Z"
+          },
+          {
+            "at": "2026-11-08T11:14:41.528402015Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.91529204Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.926611904Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.440463955Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.505156141Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.3189605Z"
           }
         ]
       },
       "retrievals": {
-        "count": 1,
-        "last": "2026-10-26T11:21:23.630576948Z",
+        "count": 11,
+        "last": "2026-11-12T15:30:19.028001262Z",
         "recent": [
           {
             "at": "2026-10-26T11:21:23.630576948Z",
             "workflow": "plan",
             "spec": "20261026104139-4e1bb7fa-wait-for-turn"
+          },
+          {
+            "at": "2026-11-04T13:24:42.970045072Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.805203591Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-08T18:22:39.076081676Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.529932178Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T09:24:37.973736293Z",
+            "workflow": "plan",
+            "spec": "20261111093353-8ff3589f-domain-move"
+          },
+          {
+            "at": "2026-11-12T09:24:49.361591559Z",
+            "workflow": "plan",
+            "spec": "20261112090330-4ac2ea19-observability"
+          },
+          {
+            "at": "2026-11-12T10:07:56.463468451Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          },
+          {
+            "at": "2026-11-12T13:22:23.700815809Z",
+            "workflow": "implement",
+            "spec": "20261111093353-8ff3589f-domain-move"
+          },
+          {
+            "at": "2026-11-12T15:03:50.299825245Z",
+            "workflow": "implement",
+            "spec": "20261112090330-4ac2ea19-observability"
+          },
+          {
+            "at": "2026-11-12T15:30:19.028001262Z",
+            "workflow": "implement",
+            "spec": "20261112090330-4ac2ea19-observability"
           }
         ]
+      }
+    },
+    "gotchas/handoff-in-tool-results.md": {
+      "created": "2026-11-06T17:16:45.979192592Z",
+      "tracked_since": "2026-11-06T17:16:45.979192592Z",
+      "discoveries": {
+        "count": 13,
+        "last": "2026-11-12T09:59:54.030576504Z",
+        "recent": [
+          {
+            "at": "2026-11-07T08:20:00.256676552Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.272899128Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.27631798Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.280523557Z"
+          },
+          {
+            "at": "2026-11-07T08:20:03.952331096Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.673055596Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.676927552Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.395467078Z"
+          },
+          {
+            "at": "2026-11-11T09:16:01.782992472Z"
+          },
+          {
+            "at": "2026-11-11T09:16:01.788736003Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.91529204Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.505156141Z"
+          },
+          {
+            "at": "2026-11-12T09:59:54.030576504Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 6,
+        "last": "2026-11-12T10:00:05.291759699Z",
+        "recent": [
+          {
+            "at": "2026-11-06T17:16:53.114469967Z"
+          },
+          {
+            "at": "2026-11-07T07:18:55.650038832Z"
+          },
+          {
+            "at": "2026-11-07T08:20:12.58968175Z",
+            "workflow": "plan",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-08T18:22:39.087999327Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.542525804Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T10:00:05.291759699Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          }
+        ]
+      }
+    },
+    "gotchas/live-site-cf-bm-cookie.md": {
+      "created": "2026-11-12T10:04:57.97823371Z",
+      "tracked_since": "2026-11-12T10:04:57.97823371Z",
+      "discoveries": {
+        "count": 1,
+        "last": "2026-11-13T08:22:22.087012956Z",
+        "recent": [
+          {
+            "at": "2026-11-13T08:22:22.087012956Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 1,
+        "last": "2026-11-13T07:31:31.043030672Z",
+        "recent": [
+          {
+            "at": "2026-11-13T07:31:31.043030672Z",
+            "workflow": "implement",
+            "spec": "20261112083238-29247b36-privacy-terms-disclaimer"
+          }
+        ]
+      }
+    },
+    "gotchas/new-set-tcgdex-data-incomplete.md": {
+      "created": "2026-11-08T10:25:45.871445901Z",
+      "tracked_since": "2026-11-08T10:25:45.871445901Z",
+      "discoveries": {
+        "count": 30,
+        "last": "2026-11-13T08:53:45.032569154Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:31:44.225486288Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.236124493Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.246780699Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.332564105Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.397107561Z"
+          },
+          {
+            "at": "2026-11-08T11:50:05.143714109Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.361238454Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.366704414Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.39034402Z"
+          },
+          {
+            "at": "2026-11-08T14:14:52.96258227Z"
+          },
+          {
+            "at": "2026-11-08T15:17:14.396366145Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.852843676Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.863783731Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.886909048Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.98043501Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.993194587Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.593222201Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.621544087Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.032569154Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 9,
+        "last": "2026-11-08T18:24:35.553904831Z",
+        "recent": [
+          {
+            "at": "2026-11-08T10:32:46.875381219Z"
+          },
+          {
+            "at": "2026-11-08T11:14:45.280387304Z",
+            "workflow": "plan",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T11:31:49.146611631Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T11:54:21.182483489Z",
+            "workflow": "plan",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          },
+          {
+            "at": "2026-11-08T13:26:21.484320343Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T18:20:50.430483211Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:03.836614222Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.099500305Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.553904831Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/playwright-second-server-baseurl.md": {
+      "created": "2026-11-13T08:54:12.00124445Z",
+      "tracked_since": "2026-11-13T08:54:12.00124445Z",
+      "discoveries": {
+        "count": 0
+      },
+      "retrievals": {
+        "count": 0
       }
     },
     "gotchas/playwright-touch-tests.md": {
       "created": "2026-11-02T12:36:51.573729605Z",
       "tracked_since": "2026-11-02T12:36:51.573729605Z",
       "discoveries": {
-        "count": 4,
-        "last": "2026-11-04T09:22:38.51049438Z",
+        "count": 29,
+        "last": "2026-11-13T08:53:45.038132241Z",
         "recent": [
           {
-            "at": "2026-11-04T09:22:38.47804932Z"
+            "at": "2026-11-06T12:42:50.349209511Z"
           },
           {
-            "at": "2026-11-04T09:22:38.48958776Z"
+            "at": "2026-11-06T12:42:50.374276555Z"
           },
           {
-            "at": "2026-11-04T09:22:38.49994705Z"
+            "at": "2026-11-06T13:35:03.188304317Z"
           },
           {
-            "at": "2026-11-04T09:22:38.51049438Z"
+            "at": "2026-11-06T17:16:32.673206152Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.268893462Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.272899128Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.669343002Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.673055596Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.684290309Z"
+          },
+          {
+            "at": "2026-11-07T11:18:34.510139955Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.386349605Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.376535936Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.970461766Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.576950599Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.589942507Z"
+          },
+          {
+            "at": "2026-11-12T10:04:48.923035409Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.361230735Z"
+          },
+          {
+            "at": "2026-11-12T10:08:11.794632371Z"
+          },
+          {
+            "at": "2026-11-13T08:22:54.763451536Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.038132241Z"
           }
         ]
       },
       "retrievals": {
-        "count": 4,
-        "last": "2026-11-04T09:22:45.814408219Z",
+        "count": 12,
+        "last": "2026-11-12T09:45:13.114461298Z",
         "recent": [
           {
             "at": "2026-11-02T13:01:43.103505735Z",
@@ -250,56 +2008,418 @@
             "at": "2026-11-04T09:22:45.814408219Z",
             "workflow": "plan",
             "spec": "20261104090653-7373a393-wide-screen-landscape-board"
+          },
+          {
+            "at": "2026-11-04T10:00:42.732280466Z",
+            "workflow": "implement",
+            "spec": "20261104090653-7373a393-wide-screen-landscape-board"
+          },
+          {
+            "at": "2026-11-04T13:24:42.97256413Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.80778603Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-06T12:42:58.432230012Z",
+            "workflow": "plan",
+            "spec": "20261106110254-f08e142d-project-website"
+          },
+          {
+            "at": "2026-11-08T11:54:21.213823767Z",
+            "workflow": "plan",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          },
+          {
+            "at": "2026-11-08T18:22:39.110707411Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.566455846Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T09:45:13.114461298Z",
+            "workflow": "plan",
+            "spec": "20261112083238-29247b36-privacy-terms-disclaimer"
           }
         ]
+      }
+    },
+    "gotchas/spaces-endpoint-is-region-not-bucket.md": {
+      "created": "2026-11-06T10:18:26.71423738Z",
+      "tracked_since": "2026-11-06T10:18:26.71423738Z",
+      "discoveries": {
+        "count": 22,
+        "last": "2026-11-12T10:07:50.330010023Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:14:41.550525054Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.08695741Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.097951228Z"
+          },
+          {
+            "at": "2026-11-08T11:31:39.74303869Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.225486288Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.246780699Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.258037378Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.268364641Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.310850182Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.322550244Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.353787705Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.852843676Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.897882493Z"
+          },
+          {
+            "at": "2026-11-08T18:48:48.33544227Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.89264547Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.904226598Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.461247327Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.483901213Z"
+          },
+          {
+            "at": "2026-11-12T09:33:58.26940229Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 5,
+        "last": "2026-11-08T18:24:35.577160399Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:31:49.157328447Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:20:50.463902099Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:03.870810005Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.122074878Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.577160399Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/stadium-pair-log-format.md": {
+      "created": "2026-11-09T10:20:49.297342009Z",
+      "tracked_since": "2026-11-09T10:20:49.297342009Z",
+      "discoveries": {
+        "count": 1,
+        "last": "2026-11-12T10:07:50.361230735Z",
+        "recent": [
+          {
+            "at": "2026-11-12T10:07:50.361230735Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 0
       }
     },
     "gotchas/tcg-live-log-card-codes.md": {
       "created": "2026-11-04T08:16:16.5317175Z",
       "tracked_since": "2026-11-04T08:16:16.5317175Z",
       "discoveries": {
-        "count": 0
-      },
-      "retrievals": {
-        "count": 0
-      }
-    },
-    "gotchas/tcgdex-cache-never-expires.md": {
-      "created": "2026-10-26T17:45:06.969228161Z",
-      "tracked_since": "2026-10-26T17:45:06.969228161Z",
-      "discoveries": {
-        "count": 6,
-        "last": "2026-11-04T09:22:38.48958776Z",
+        "count": 33,
+        "last": "2026-11-08T18:22:19.004897357Z",
         "recent": [
           {
-            "at": "2026-11-02T11:15:09.911676608Z"
+            "at": "2026-11-07T08:20:08.669343002Z"
           },
           {
-            "at": "2026-11-02T11:15:20.523547604Z"
+            "at": "2026-11-07T08:20:08.673055596Z"
           },
           {
-            "at": "2026-11-02T11:15:20.574518045Z"
+            "at": "2026-11-07T08:20:08.684290309Z"
           },
           {
-            "at": "2026-11-02T12:36:39.230403246Z"
+            "at": "2026-11-07T11:18:34.510139955Z"
           },
           {
-            "at": "2026-11-04T08:17:26.736123289Z"
+            "at": "2026-11-08T10:23:06.013425803Z"
           },
           {
-            "at": "2026-11-04T09:22:38.48958776Z"
+            "at": "2026-11-08T11:14:41.506823459Z"
+          },
+          {
+            "at": "2026-11-08T11:14:41.539258383Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.128908868Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.150019127Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.160812564Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.236124493Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.299990335Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.332564105Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.375089276Z"
+          },
+          {
+            "at": "2026-11-08T11:50:05.143714109Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.371811671Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.852843676Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.98043501Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.993194587Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 18,
+        "last": "2026-11-08T19:45:08.228831075Z",
+        "recent": [
+          {
+            "at": "2026-11-04T11:29:15.252389745Z",
+            "workflow": "plan",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:22:44.2800506Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:24:32.120098555Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:24:42.974950397Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.755617432Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.810545059Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-06T12:42:58.442380044Z",
+            "workflow": "plan",
+            "spec": "20261106110254-f08e142d-project-website"
+          },
+          {
+            "at": "2026-11-06T14:25:27.394706925Z"
+          },
+          {
+            "at": "2026-11-06T14:25:43.097142237Z"
+          },
+          {
+            "at": "2026-11-08T10:23:09.614715654Z"
+          },
+          {
+            "at": "2026-11-08T11:14:45.27009614Z",
+            "workflow": "plan",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T11:31:49.178601757Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T11:54:21.233950895Z",
+            "workflow": "plan",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          },
+          {
+            "at": "2026-11-08T18:20:50.452653202Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:03.860936177Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.132723431Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.588410956Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T19:45:08.228831075Z",
+            "workflow": "implement",
+            "spec": "20261108110847-055548e3-paired-stadiums"
+          }
+        ]
+      }
+    },
+    "gotchas/tcgdex-card-data-errors.md": {
+      "created": "2026-11-08T14:52:08.680260636Z",
+      "tracked_since": "2026-11-08T14:52:08.680260636Z",
+      "discoveries": {
+        "count": 2,
+        "last": "2026-11-08T18:22:19.004897357Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:18.993194587Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 4,
+        "last": "2026-11-08T18:24:35.600133715Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:20:59.808437842Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:26.432238466Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.145398597Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.600133715Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "gotchas/test-card-swaps-revert.md": {
+      "created": "2026-11-07T11:18:44.786753253Z",
+      "tracked_since": "2026-11-07T11:18:44.786753253Z",
+      "discoveries": {
+        "count": 9,
+        "last": "2026-11-13T08:53:45.032569154Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:31:35.150019127Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.236124493Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.34310314Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.364606142Z"
+          },
+          {
+            "at": "2026-11-08T11:50:05.143714109Z"
+          },
+          {
+            "at": "2026-11-08T16:27:38.083453811Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.361230735Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.032569154Z"
           }
         ]
       },
       "retrievals": {
         "count": 2,
-        "last": "2026-11-04T08:18:25.451304605Z",
+        "last": "2026-11-08T18:24:35.611866825Z",
         "recent": [
           {
-            "at": "2026-11-04T08:17:33.094702187Z"
+            "at": "2026-11-08T18:22:39.157309498Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
           },
           {
-            "at": "2026-11-04T08:18:25.451304605Z"
+            "at": "2026-11-08T18:24:35.611866825Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
           }
         ]
       }
@@ -308,8 +2428,8 @@
       "created": "2026-10-26T13:18:20.265128388Z",
       "tracked_since": "2026-10-26T13:18:20.265128388Z",
       "discoveries": {
-        "count": 4,
-        "last": "2026-11-04T09:22:38.48958776Z",
+        "count": 19,
+        "last": "2026-11-13T08:53:45.032569154Z",
         "recent": [
           {
             "at": "2026-10-26T17:41:36.690913995Z"
@@ -322,58 +2442,367 @@
           },
           {
             "at": "2026-11-04T09:22:38.48958776Z"
+          },
+          {
+            "at": "2026-11-04T11:29:11.164897499Z"
+          },
+          {
+            "at": "2026-11-04T11:59:31.686893079Z"
+          },
+          {
+            "at": "2026-11-06T17:16:32.673206152Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.256676552Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.260822149Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.264900396Z"
+          },
+          {
+            "at": "2026-11-07T08:20:03.952331096Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.660891367Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.665086195Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.684290309Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.688067094Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.691751068Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.150019127Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.34310314Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.032569154Z"
           }
         ]
       },
       "retrievals": {
+        "count": 5,
+        "last": "2026-11-08T18:24:35.62286067Z",
+        "recent": [
+          {
+            "at": "2026-11-04T13:24:42.979827541Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.815220232Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-07T08:20:12.592789137Z",
+            "workflow": "plan",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-08T18:22:39.167996051Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.62286067Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "learnings/README.md": {
+      "created": "2026-10-18T11:50:24Z",
+      "tracked_since": "2026-11-04T13:24:42.982287079Z",
+      "discoveries": {
         "count": 0
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-04T13:25:00.817526188Z",
+        "recent": [
+          {
+            "at": "2026-11-04T13:24:42.982287079Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.817526188Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          }
+        ]
       }
     },
     "learnings/card-image-sources.md": {
       "created": "2026-10-26T17:41:49.004835569Z",
       "tracked_since": "2026-10-26T17:41:49.004835569Z",
       "discoveries": {
-        "count": 10,
-        "last": "2026-11-04T09:22:38.48958776Z",
+        "count": 47,
+        "last": "2026-11-12T10:07:50.330010023Z",
         "recent": [
           {
-            "at": "2026-11-02T11:15:09.870299688Z"
+            "at": "2026-11-08T10:23:06.013425803Z"
           },
           {
-            "at": "2026-11-02T11:15:09.890155084Z"
+            "at": "2026-11-08T11:14:41.506823459Z"
           },
           {
-            "at": "2026-11-02T11:15:09.911676608Z"
+            "at": "2026-11-08T11:14:41.517793068Z"
           },
           {
-            "at": "2026-11-02T11:15:14.634396383Z"
+            "at": "2026-11-08T11:14:41.539258383Z"
           },
           {
-            "at": "2026-11-02T11:15:20.512479515Z"
+            "at": "2026-11-08T11:14:41.550525054Z"
           },
           {
-            "at": "2026-11-02T11:15:20.523547604Z"
+            "at": "2026-11-08T11:14:41.571144102Z"
           },
           {
-            "at": "2026-11-02T11:15:20.574518045Z"
+            "at": "2026-11-08T11:31:35.097951228Z"
           },
           {
-            "at": "2026-11-04T08:17:26.736123289Z"
+            "at": "2026-11-08T11:31:35.160812564Z"
           },
           {
-            "at": "2026-11-04T09:22:38.47804932Z"
+            "at": "2026-11-08T11:31:44.236124493Z"
           },
           {
-            "at": "2026-11-04T09:22:38.48958776Z"
+            "at": "2026-11-08T11:31:44.246780699Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.332564105Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.386349605Z"
+          },
+          {
+            "at": "2026-11-08T14:14:52.96258227Z"
+          },
+          {
+            "at": "2026-11-08T15:17:14.396366145Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.993194587Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.970461766Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.461247327Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.593222201Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
           }
         ]
       },
       "retrievals": {
-        "count": 1,
-        "last": "2026-11-04T08:17:33.097436543Z",
+        "count": 23,
+        "last": "2026-11-09T08:05:06.129951235Z",
         "recent": [
           {
-            "at": "2026-11-04T08:17:33.097436543Z"
+            "at": "2026-11-04T11:59:35.392608509Z",
+            "workflow": "plan",
+            "spec": "20261104090640-25f673ed-card-image-cdn"
+          },
+          {
+            "at": "2026-11-04T13:24:42.986891041Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.820088256Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-07T08:42:36.360177499Z",
+            "workflow": "plan",
+            "spec": "20261107074845-fc71eb04-real-game-opponent"
+          },
+          {
+            "at": "2026-11-08T10:23:13.51057691Z"
+          },
+          {
+            "at": "2026-11-08T11:14:45.291989077Z",
+            "workflow": "plan",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T11:31:49.167799611Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T13:26:21.496520658Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T14:15:00.5072191Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T15:17:18.121809078Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T15:17:53.96065873Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T15:18:19.617977896Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T18:20:59.784559079Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:26.398317605Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.179921582Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:14.278384348Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.634197827Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-09T08:04:46.992992795Z"
+          },
+          {
+            "at": "2026-11-09T08:04:58.371754157Z"
+          },
+          {
+            "at": "2026-11-09T08:05:06.129951235Z"
+          }
+        ]
+      }
+    },
+    "learnings/card-text-always-english.md": {
+      "created": "2026-11-07T08:43:23.042818646Z",
+      "tracked_since": "2026-11-07T08:43:23.042818646Z",
+      "discoveries": {
+        "count": 16,
+        "last": "2026-11-08T18:22:19.004897357Z",
+        "recent": [
+          {
+            "at": "2026-11-07T11:18:34.510139955Z"
+          },
+          {
+            "at": "2026-11-08T10:23:06.013425803Z"
+          },
+          {
+            "at": "2026-11-08T11:14:41.506823459Z"
+          },
+          {
+            "at": "2026-11-08T11:14:41.517793068Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.150019127Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.160812564Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.236124493Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.299990335Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.332564105Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.34310314Z"
+          },
+          {
+            "at": "2026-11-08T11:50:05.143714109Z"
+          },
+          {
+            "at": "2026-11-08T11:54:16.39034402Z"
+          },
+          {
+            "at": "2026-11-08T16:27:38.083453811Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.875156698Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.993194587Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 6,
+        "last": "2026-11-08T18:24:35.646552431Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:14:45.303063797Z",
+            "workflow": "plan",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T11:31:49.18876828Z",
+            "workflow": "plan",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:20:50.442238251Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:03.848348562Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.191968504Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.646552431Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
           }
         ]
       }
@@ -382,19 +2811,550 @@
       "created": "2026-10-18T11:50:24Z",
       "tracked_since": "2026-10-26T11:21:13.855512304Z",
       "discoveries": {
-        "count": 2,
-        "last": "2026-10-26T11:21:18.543822727Z",
+        "count": 17,
+        "last": "2026-11-12T10:07:50.350895518Z",
         "recent": [
           {
             "at": "2026-10-26T11:21:18.481164162Z"
           },
           {
             "at": "2026-10-26T11:21:18.543822727Z"
+          },
+          {
+            "at": "2026-11-04T12:17:11.385151967Z"
+          },
+          {
+            "at": "2026-11-06T12:42:50.314307508Z"
+          },
+          {
+            "at": "2026-11-06T12:42:50.361203265Z"
+          },
+          {
+            "at": "2026-11-06T12:42:54.133709529Z"
+          },
+          {
+            "at": "2026-11-06T13:35:03.188304317Z"
+          },
+          {
+            "at": "2026-11-07T08:20:00.284279052Z"
+          },
+          {
+            "at": "2026-11-07T08:20:08.680494695Z"
+          },
+          {
+            "at": "2026-11-07T11:13:23.680620846Z"
+          },
+          {
+            "at": "2026-11-08T11:14:41.528402015Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.869716877Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.91529204Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.926611904Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.440463955Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.505156141Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.350895518Z"
           }
         ]
       },
       "retrievals": {
+        "count": 8,
+        "last": "2026-11-12T10:08:02.471637948Z",
+        "recent": [
+          {
+            "at": "2026-11-04T13:24:42.989488819Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-04T13:25:00.822648114Z",
+            "workflow": "implement",
+            "spec": "20261104090640-51bd1f36-card-cache-freshness"
+          },
+          {
+            "at": "2026-11-06T12:42:58.411850807Z",
+            "workflow": "plan",
+            "spec": "20261106110254-f08e142d-project-website"
+          },
+          {
+            "at": "2026-11-08T18:22:39.203953135Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.658128449Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T09:24:37.941450869Z",
+            "workflow": "plan",
+            "spec": "20261111093353-8ff3589f-domain-move"
+          },
+          {
+            "at": "2026-11-12T09:24:49.372947646Z",
+            "workflow": "plan",
+            "spec": "20261112090330-4ac2ea19-observability"
+          },
+          {
+            "at": "2026-11-12T10:08:02.471637948Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          }
+        ]
+      }
+    },
+    "learnings/cloudflare-web-analytics-data.md": {
+      "created": "2026-11-13T08:22:32.11706718Z",
+      "tracked_since": "2026-11-13T08:22:32.11706718Z",
+      "discoveries": {
         "count": 0
+      },
+      "retrievals": {
+        "count": 1,
+        "last": "2026-11-19T11:06:17.921574082Z",
+        "recent": [
+          {
+            "at": "2026-11-19T11:06:17.921574082Z"
+          }
+        ]
+      }
+    },
+    "learnings/publishing-to-chatgpt.md": {
+      "created": "2026-11-07T11:24:52.041591888Z",
+      "tracked_since": "2026-11-07T11:24:52.041591888Z",
+      "discoveries": {
+        "count": 58,
+        "last": "2026-11-19T11:21:27.873813624Z",
+        "recent": [
+          {
+            "at": "2026-11-12T09:24:44.505156141Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.52646105Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.570797913Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.582653317Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.588114896Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.593222201Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.55641993Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.567899278Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.621544087Z"
+          },
+          {
+            "at": "2026-11-12T09:59:54.030576504Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.834888243Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.845060357Z"
+          },
+          {
+            "at": "2026-11-12T10:04:48.923035409Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.350895518Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.032569154Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.038132241Z"
+          },
+          {
+            "at": "2026-11-19T09:12:29.853024123Z"
+          },
+          {
+            "at": "2026-11-19T09:12:35.1880613Z"
+          },
+          {
+            "at": "2026-11-19T11:21:23.851530915Z"
+          },
+          {
+            "at": "2026-11-19T11:21:27.873813624Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 14,
+        "last": "2026-11-19T09:32:49.901005189Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:39.215130072Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.669349656Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-11T09:16:06.820947472Z"
+          },
+          {
+            "at": "2026-11-11T09:16:12.638689187Z"
+          },
+          {
+            "at": "2026-11-12T09:08:10.763088322Z"
+          },
+          {
+            "at": "2026-11-12T09:24:37.951799835Z",
+            "workflow": "plan",
+            "spec": "20261111093353-8ff3589f-domain-move"
+          },
+          {
+            "at": "2026-11-12T09:24:49.383993249Z",
+            "workflow": "plan",
+            "spec": "20261112090330-4ac2ea19-observability"
+          },
+          {
+            "at": "2026-11-12T09:41:15.311648254Z",
+            "workflow": "plan",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          },
+          {
+            "at": "2026-11-12T09:45:13.103382406Z",
+            "workflow": "plan",
+            "spec": "20261112083238-29247b36-privacy-terms-disclaimer"
+          },
+          {
+            "at": "2026-11-12T09:59:58.623459237Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          },
+          {
+            "at": "2026-11-12T10:00:05.269708004Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          },
+          {
+            "at": "2026-11-12T10:18:45.529083262Z",
+            "workflow": "plan",
+            "spec": "20261112090820-07d70cfb-chatgpt-submission-prep"
+          },
+          {
+            "at": "2026-11-13T07:31:35.777705632Z",
+            "workflow": "implement",
+            "spec": "20261112083238-29247b36-privacy-terms-disclaimer"
+          },
+          {
+            "at": "2026-11-19T09:32:49.901005189Z",
+            "workflow": "implement",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          }
+        ]
+      }
+    },
+    "learnings/publishing-to-claude.md": {
+      "created": "2026-11-07T11:22:51.889782426Z",
+      "tracked_since": "2026-11-07T11:22:51.889782426Z",
+      "discoveries": {
+        "count": 53,
+        "last": "2026-11-19T11:21:27.873813624Z",
+        "recent": [
+          {
+            "at": "2026-11-12T09:24:44.52646105Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.570797913Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.582653317Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.588114896Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.55641993Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.567899278Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.621544087Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.823798219Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.834888243Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.845060357Z"
+          },
+          {
+            "at": "2026-11-12T10:04:48.923035409Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.350895518Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.361230735Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.032569154Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.038132241Z"
+          },
+          {
+            "at": "2026-11-19T09:12:29.853024123Z"
+          },
+          {
+            "at": "2026-11-19T09:12:35.1880613Z"
+          },
+          {
+            "at": "2026-11-19T11:21:23.851530915Z"
+          },
+          {
+            "at": "2026-11-19T11:21:27.873813624Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 4,
+        "last": "2026-11-12T09:41:15.322550762Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:39.227447595Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.682634696Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-12T09:24:37.963483888Z",
+            "workflow": "plan",
+            "spec": "20261111093353-8ff3589f-domain-move"
+          },
+          {
+            "at": "2026-11-12T09:41:15.322550762Z",
+            "workflow": "plan",
+            "spec": "20261112091756-c5b6d1fd-launch-docs"
+          }
+        ]
+      }
+    },
+    "learnings/publishing-to-gemini.md": {
+      "created": "2026-11-07T11:26:35.646651717Z",
+      "tracked_since": "2026-11-07T11:26:35.646651717Z",
+      "discoveries": {
+        "count": 49,
+        "last": "2026-11-19T11:21:27.873813624Z",
+        "recent": [
+          {
+            "at": "2026-11-12T09:24:44.505156141Z"
+          },
+          {
+            "at": "2026-11-12T09:24:44.52646105Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.582653317Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.588114896Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.593222201Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.567899278Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.600141154Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.621544087Z"
+          },
+          {
+            "at": "2026-11-12T09:51:01.196094318Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.823798219Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.834888243Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.845060357Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.330010023Z"
+          },
+          {
+            "at": "2026-11-12T10:07:50.350895518Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.032569154Z"
+          },
+          {
+            "at": "2026-11-13T08:53:45.038132241Z"
+          },
+          {
+            "at": "2026-11-19T09:12:29.853024123Z"
+          },
+          {
+            "at": "2026-11-19T09:12:35.1880613Z"
+          },
+          {
+            "at": "2026-11-19T11:21:23.851530915Z"
+          },
+          {
+            "at": "2026-11-19T11:21:27.873813624Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 2,
+        "last": "2026-11-08T18:24:35.69802112Z",
+        "recent": [
+          {
+            "at": "2026-11-08T18:22:39.239807619Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.69802112Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
+      }
+    },
+    "learnings/upstream-card-source-formats.md": {
+      "created": "2026-11-08T11:20:34.710691469Z",
+      "tracked_since": "2026-11-08T11:20:34.710691469Z",
+      "discoveries": {
+        "count": 18,
+        "last": "2026-11-12T10:04:48.923035409Z",
+        "recent": [
+          {
+            "at": "2026-11-08T11:31:35.097951228Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.128908868Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.150019127Z"
+          },
+          {
+            "at": "2026-11-08T11:31:35.160812564Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.236124493Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.246780699Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.332564105Z"
+          },
+          {
+            "at": "2026-11-08T11:31:44.397107561Z"
+          },
+          {
+            "at": "2026-11-08T14:14:52.96258227Z"
+          },
+          {
+            "at": "2026-11-08T15:17:14.396366145Z"
+          },
+          {
+            "at": "2026-11-08T18:20:34.897882493Z"
+          },
+          {
+            "at": "2026-11-08T18:22:18.993194587Z"
+          },
+          {
+            "at": "2026-11-08T18:22:19.004897357Z"
+          },
+          {
+            "at": "2026-11-12T09:24:32.948543925Z"
+          },
+          {
+            "at": "2026-11-12T09:41:10.593222201Z"
+          },
+          {
+            "at": "2026-11-12T09:45:08.621544087Z"
+          },
+          {
+            "at": "2026-11-12T10:04:31.818328962Z"
+          },
+          {
+            "at": "2026-11-12T10:04:48.923035409Z"
+          }
+        ]
+      },
+      "retrievals": {
+        "count": 7,
+        "last": "2026-11-08T18:24:35.710056562Z",
+        "recent": [
+          {
+            "at": "2026-11-08T13:26:21.472411308Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T14:24:22.153216426Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T14:51:53.910693596Z",
+            "workflow": "implement",
+            "spec": "20261108110847-d27a9f77-card-set-import"
+          },
+          {
+            "at": "2026-11-08T18:20:59.797091975Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:26.420771348Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:22:39.252019462Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          },
+          {
+            "at": "2026-11-08T18:24:35.710056562Z",
+            "workflow": "implement",
+            "spec": "20261108105504-9abfa10e-card-set-publishing"
+          }
+        ]
       }
     }
   }

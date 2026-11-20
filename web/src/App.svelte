@@ -1,6 +1,6 @@
 <script>
   import { openDeckList } from './lib/actions.js';
-  import { app, benchSlots, setPanelAt } from './lib/store.svelte.js';
+  import { app, benchSlots, setPanelAt, setPrizeReminders } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
   import { setAutoplay } from './lib/playback.svelte.js';
   import Side from './components/Side.svelte';
@@ -91,6 +91,7 @@
   const oppStatus = {
     waiting: 'Opponent is waiting',
     acting: 'Opponent is acting',
+    deciding: 'Opponent is deciding',
     stopped: 'Opponent stopped responding',
   };
 
@@ -176,9 +177,15 @@
           {:else}
             <button role="menuitem" onclick={() => menu(() => (app.panelOpen = !app.panelOpen))}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
           {/if}
+          <label class="menu-check" title="After a Knock Out, remind me how many prize cards to take">
+            <input type="checkbox" checked={app.prizeReminders} onchange={(ev) => setPrizeReminders(ev.target.checked)} /> Prize reminders
+          </label>
           <label class="menu-check" title="Play the assistant's moves on the board as they arrive">
             <input type="checkbox" checked={app.autoplay} onchange={(ev) => setAutoplay(ev.target.checked)} /> Autoplay {app.assistant}'s moves
           </label>
+          <!-- At every layout and in the desktop app alike, outside the hosted-only account block. -->
+          <div class="sep"></div>
+          <button role="menuitem" onclick={() => menu(() => (app.modal = { kind: 'about' }))}>About tcgreplay</button>
           {#if app.account}
             <div class="sep"></div>
             <div class="account" title="Signed in with Google">{app.account}</div>
@@ -189,6 +196,9 @@
     </div>
   </header>
 
+  {#if app.board?.winner}
+    <div class="over-banner" role="status">Game over: {nameOf(app.board.winner)} wins ({app.board.win_reason})</div>
+  {/if}
   {#if app.reveal}
     <div class="reveal-banner">REVEAL VIEW: both hands, prizes and decks are face up. Post-mortem only.</div>
   {/if}
@@ -420,6 +430,13 @@
   .menu-check:hover { background: var(--hover); }
   .sep { height: 1px; background: var(--line); margin: 4px 0; }
   .account { color: var(--muted); padding: 4px 10px; font-size: 12px; }
+  .over-banner {
+    background: var(--accent);
+    color: #111;
+    font-weight: 800;
+    text-align: center;
+    padding: 4px;
+  }
   .reveal-banner {
     background: var(--reveal);
     color: #fff;
@@ -458,6 +475,7 @@
   .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
   .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: 999px; border: 1px solid var(--line); color: var(--text); }
   .opp-status.acting { border-color: var(--accent); color: var(--accent); }
+  .opp-status.deciding { border-color: var(--accent); color: var(--accent); border-style: dashed; }
   .opp-status.stopped { border-color: var(--reveal); color: var(--reveal); }
   .landing { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .muted { color: var(--muted); }
@@ -498,6 +516,9 @@
     gap: 6px;
     z-index: 60;
     max-width: min(420px, calc(100vw - 32px));
+    /* A toast never takes a touch: on a phone it lies over the hand, where
+       the card it talks about (a pair's second half) waits to be dragged. */
+    pointer-events: none;
   }
   .toast { padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 16px #0008; font-size: 13px; }
   .toast.error { background: #b71c1c; color: #fff; }

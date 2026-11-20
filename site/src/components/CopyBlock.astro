@@ -1,0 +1,18 @@
+---
+// CopyBlock shows a block of text with a Copy button (see
+// scripts/copy.ts) that copies exactly that text. wrap: wrap long lines
+// (prompts, addresses); otherwise lines are kept and scroll inside the box.
+// tall: cap the height and scroll (long logs).
+interface Props {
+  text: string;
+  label?: string;
+  wrap?: boolean;
+  tall?: boolean;
+  class?: string;
+}
+const { text, label, wrap = false, tall = false, class: extra } = Astro.props;
+---
+<div class:list={['copy-block', { wrap, tall }, extra]}>
+  {label && <span class="label">{label}</span>}
+  <div class="copy-box"><pre data-copy data-copy-label={label}><code>{text}</code></pre></div>
+</div>

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"html/template"
-	"log"
 	"net/http"
 
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
 // Board returns the hosted board's front door, to mount behind
@@ -31,7 +31,7 @@ func (r *Registry) Board() http.Handler {
 		}
 		if pageLoad(req) {
 			if h := req.URL.Query().Get("board"); h != "" && h != Handle(acct.ID) {
-				log.Printf("usergames: %s opened another account's board link", acct.Email)
+				r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.BoardRefused, Email: acct.Email})
 				notYoursPage(w, acct)
 				return
 			}
@@ -121,7 +121,7 @@ button { font: inherit; padding: 0.4rem 1rem; }
 <main>
 <h1>Not your game</h1>
 <p>This board belongs to another account. You are signed in as {{.}}.</p>
-<p><a href="/">Open your own board</a></p>
+<p><a href="/board">Open your own board</a></p>
 <form method="post" action="/auth/logout"><button type="submit">Sign out</button></form>
 </main>
 </body>

@@ -66,7 +66,14 @@ func describe(e *state.Event, before, after *state.State, viewer state.Seat) str
 		if p.From != nil && p.From.Zone == state.Prizes && p.To.Zone == state.Hand {
 			return fmt.Sprintf("%s took prize %s", owner, cardLabel(after, p.IID, visible))
 		}
-		s := fmt.Sprintf("%s moved %s %s → %s", who, cardLabel(after, p.IID, visible), from, to)
+		label := cardLabel(after, p.IID, visible)
+		if p.Pair != "" {
+			pairVisible := viewer == "" ||
+				(p.From != nil && p.From.Zone.IsPublic()) || p.To.Zone.IsPublic() ||
+				after.KnownTo(p.Pair, viewer) || before.KnownTo(p.Pair, viewer)
+			label += " + " + cardLabel(after, p.Pair, pairVisible)
+		}
+		s := fmt.Sprintf("%s moved %s %s → %s", who, label, from, to)
 		if p.As != "" && p.As != state.AsPokemon {
 			s += " as " + p.As
 		}
@@ -429,10 +436,15 @@ func (g *Game) Warnings() []string {
 	return append(g.st.Check(), g.turnWarnings()...)
 }
 
-// turnWarnings scans the current turn for soft rule breaches.
+// turnWarnings scans the current turn for soft rule breaches, after the
+// standing warnings about the Stadium in play.
 func (g *Game) turnWarnings() []string {
+	w := g.stadiumWarnings()
+	if g.st.Phase == state.PhaseSetup {
+		return append(w, g.setupWarnings()...)
+	}
 	if g.st.Phase != state.PhasePlaying {
-		return nil
+		return w
 	}
 	seat := g.st.Current
 	var energy, retreats int
@@ -465,12 +477,15 @@ func (g *Game) turnWarnings() []string {
 				case "Supporter":
 					supporters[a.ID] = true
 				case "Stadium":
-					stadiums[a.ID] = true
+					// Completing a pair (a half joining as pair) is not
+					// another Stadium played.
+					if playsStadium(e) {
+						stadiums[a.ID] = true
+					}
 				}
 			}
 		}
 	}
-	var w []string
 	if energy > 1 {
 		w = append(w, fmt.Sprintf("%s attached %d Energy from hand this turn", seat, energy))
 	}
@@ -489,6 +504,80 @@ func (g *Game) turnWarnings() []string {
 	return append(w, g.benchWarnings()...)
 }
 
+// setupPlays names, in the order they are warned about, the kinds of action
+// that wait for the game to start: during setup a player only places Basic
+// Pokémon (and mulligans).
+var setupPlays = []struct{ kind, what string }{
+	{"trainer", "played a Trainer"},
+	{"attach", "attached a card"},
+	{"evolve", "evolved a Pokémon"},
+	{"ability", "used an Ability"},
+	{"retreat", "retreated"},
+	{"attack", "attacked"},
+}
+
+// setupWarnings flags, while the game is still in setup, each kind of
+// action a seat took that only belongs to a turn: playing a Trainer,
+// attaching, evolving, an Ability, a retreat or an attack.
+func (g *Game) setupWarnings() []string {
+	done := map[state.Seat]map[string]bool{}
+	for id := g.log.Head(); id != 0; {
+		e := g.log.Event(id)
+		if e == nil {
+			break
+		}
+		id = e.Parent
+		a := g.log.Action(e.Action)
+		if a == nil || !a.Seat.Valid() {
+			continue
+		}
+		if done[a.Seat] == nil {
+			done[a.Seat] = map[string]bool{}
+		}
+		done[a.Seat][a.Kind] = true
+	}
+	var w []string
+	for _, seat := range state.Seats {
+		for _, p := range setupPlays {
+			if done[seat][p.kind] {
+				w = append(w, fmt.Sprintf("%s %s during setup: that waits until the game starts (start_game)", seat, p.what))
+			}
+		}
+	}
+	return w
+}
+
+// playsStadium reports whether e puts a Stadium into the spot other than as
+// the second half joining a lone first half.
+func playsStadium(e *state.Event) bool {
+	if e.Type != state.EvMove {
+		return false
+	}
+	p, err := e.Decode()
+	if err != nil {
+		return false
+	}
+	mv := p.(*state.MovePayload)
+	return mv.To.Zone == state.Stadium && mv.As != state.AsPair
+}
+
+// stadiumWarnings are the standing warnings about the Stadium spot, shown
+// for as long as it holds them: a lone half of a pair-played Stadium, and
+// a pair made of two copies of one print.
+func (g *Game) stadiumWarnings() []string {
+	switch st := g.st.Stadium; len(st) {
+	case 1:
+		if c := g.card(g.st, st[0]); c != nil && c.PlayedAsPair {
+			return []string{fmt.Sprintf("%s (%s) is played as a pair: play a second, different %s with it", c.Name, st[0], c.Name)}
+		}
+	case 2:
+		if def := g.st.Cards[st[0]].Def; def != "" && def == g.st.Cards[st[1]].Def {
+			return []string{fmt.Sprintf("the Stadium pair %s is two copies of the same print (%s): a pair needs two different prints", g.st.Name(st[0]), def)}
+		}
+	}
+	return nil
+}
+
 // expandsBench matches the text of a Stadium that lets a bench hold 8
 // (Area Zero Underdepths, Sky Field).
 var expandsBench = regexp.MustCompile(`\b8 Pokémon on (?:their|his or her) Bench`)
@@ -497,8 +586,11 @@ var expandsBench = regexp.MustCompile(`\b8 Pokémon on (?:their|his or her) Benc
 // a Stadium in play that allows it, such as after the Stadium leaves.
 func (g *Game) benchWarnings() []string {
 	limit := g.st.BenchSize
-	if c := g.card(g.st, g.st.Stadium); c != nil && expandsBench.MatchString(c.Effect) {
-		limit = state.MaxBench
+	// Both halves of a pair share a name and text, so the first speaks for both.
+	if len(g.st.Stadium) > 0 {
+		if c := g.card(g.st, g.st.Stadium[0]); c != nil && expandsBench.MatchString(c.Effect) {
+			limit = state.MaxBench
+		}
 	}
 	var w []string
 	for _, seat := range state.Seats {
@@ -643,6 +735,36 @@ func (g *Game) Undo(n int) (int, error) {
 	return head, nil
 }
 
+// StepBackTo moves the current branch's head back to just after eventID,
+// an earlier event on it: undo to a point, with no new branch. The events
+// after it stay in the log. It refuses an event off the current line, the
+// head itself, or one before the game was set up.
+func (g *Game) StepBackTo(eventID int) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	path, err := g.log.PathTo(g.log.Head())
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(path, func(e state.Event) bool { return e.ID == eventID })
+	switch {
+	case i < 0:
+		return fmt.Errorf("event %d is not on the current branch", eventID)
+	case i == len(path)-1:
+		return errors.New("that is already the latest event")
+	}
+	for _, e := range path[i+1:] {
+		if e.Actor == state.ActorImport || e.Type == state.EvSetup {
+			return fmt.Errorf("can only step back over moves made on the playmat; event %d is part of the game itself", e.ID)
+		}
+	}
+	branch := g.log.Current()
+	if err := g.log.Branch(branch, eventID); err != nil {
+		return err
+	}
+	return g.checkoutLocked(branch, ChangeUndo)
+}
+
 // SetDrawsLikeMain makes the current branch's draws repeat main's, or
 // draw from the top again. Each draw then takes the card main drew at the
 // same point, matched by game turn and order within the turn, while that
@@ -686,6 +808,7 @@ func (g *Game) checkoutLocked(name, change string) error {
 	}
 	g.open = nil
 	g.responder = ""
+	g.handed = ""
 	u := Update{Head: g.log.Head(), Branch: name, Change: change}
 	for _, f := range g.listeners {
 		f(u)

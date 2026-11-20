@@ -115,9 +115,12 @@ func TestRelaySurvivesDaemonRestart(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+	// The new daemon's stop is handed back over a channel, so reading it
+	// below is ordered after the goroutine set it.
+	restarted := make(chan func(), 1)
 	go func() {
 		time.Sleep(200 * time.Millisecond)
-		stop = startDaemon()
+		restarted <- startDaemon()
 	}()
 	sendPing(3)
 	expect("notifications/tools/list_changed") // sent before the reply
@@ -125,5 +128,5 @@ func TestRelaySurvivesDaemonRestart(t *testing.T) {
 	ping(4)
 	inW.Close()
 	cancel()
-	stop()
+	(<-restarted)()
 }

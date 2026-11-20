@@ -1,0 +1,106 @@
+[
+  {
+    "name": "Pineco",
+    "card_type": "POKEMON",
+    "regulation_mark": "G",
+    "collector_number": {
+      "full": "001/198",
+      "numerator": "001",
+      "denominator": "198",
+      "numeric": 1
+    },
+    "stage": "BASIC",
+    "hp": 60,
+    "types": [
+      "GRASS"
+    ],
+    "weakness": {
+      "types": [
+        "FIRE"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 2,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Guard Press",
+        "text": "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).",
+        "cost": [
+          "COLORLESS",
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 10
+        }
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "sv1_1",
+        "longFormID": "Pineco_sv1_1_std_Common_NonFoil_None",
+        "key": "sv1"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv1/sv1_en_001_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Pineco",
+    "card_type": "POKEMON",
+    "regulation_mark": "G",
+    "collector_number": {
+      "full": "001/198",
+      "numerator": "001",
+      "denominator": "198",
+      "numeric": 1
+    },
+    "stage": "BASIC",
+    "hp": 60,
+    "types": [
+      "GRASS"
+    ],
+    "weakness": {
+      "types": [
+        "FIRE"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 2,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Guard Press",
+        "text": "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).",
+        "cost": [
+          "COLORLESS",
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 10
+        }
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "sv1_1_ph",
+        "longFormID": "Pineco_sv1_1_ph_Common_FlatSilver_Reverse",
+        "key": "sv1"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv1/sv1_en_001_std.jpg"
+        }
+      }
+    }
+  }
+]

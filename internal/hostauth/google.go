@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"golang.org/x/oauth2"
+
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
 const (
@@ -90,7 +92,7 @@ func (a *Auth) serveGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := a.signIn(w, acct); err != nil {
-		log.Printf("hostauth: refused sign-in for %s: %v", acct.Email, err)
+		a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.SignInRefused, Email: acct.Email, Reason: err.Error()})
 		var b busyError
 		if errors.As(err, &b) {
 			busyPage(w, b.max)
@@ -136,6 +138,19 @@ type idClaims struct {
 	Nonce string          `json:"nonce"`
 	Sub   string          `json:"sub"`
 	Email string          `json:"email"`
+	// EmailVerified is true or "true" when Google verified Email; Google
+	// has sent both forms.
+	EmailVerified json.RawMessage `json:"email_verified"`
+}
+
+// verified reports whether an email_verified claim says yes.
+func verified(raw json.RawMessage) bool {
+	var b bool
+	if json.Unmarshal(raw, &b) == nil {
+		return b
+	}
+	var s string
+	return json.Unmarshal(raw, &s) == nil && strings.EqualFold(s, "true")
 }
 
 // checkIDToken decodes Google's ID token and checks its issuer, audience,
@@ -173,7 +188,7 @@ func (a *Auth) checkIDToken(raw, nonce string) (Account, error) {
 	if c.Sub == "" {
 		return Account{}, errors.New("ID token names no account")
 	}
-	return Account{ID: c.Sub, Email: c.Email}, nil
+	return Account{ID: c.Sub, Email: c.Email, EmailVerified: verified(c.EmailVerified)}, nil
 }
 
 // audienceHas reports whether an aud claim (a string or an array of
@@ -215,7 +230,7 @@ func (a *Auth) signIn(w http.ResponseWriter, acct Account) error {
 		Secure:   a.secure(),
 		SameSite: http.SameSiteLaxMode,
 	})
-	log.Printf("hostauth: signed in %s", acct.Email)
+	a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.SignIn, Email: acct.Email})
 	return nil
 }
 

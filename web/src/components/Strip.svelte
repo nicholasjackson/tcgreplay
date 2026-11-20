@@ -33,6 +33,15 @@
   // On a phone the Stadium sits on the side of whoever played it: left of
   // your Active, or right of the opponent's.
   const theirs = $derived(!!b.stadium && ownerOf(b.stadium.iid) !== app.human);
+  // The two halves of a pair-played Stadium form one picture, left half the
+  // lower collector number, so they show in print order whichever was
+  // played first: turned a quarter anticlockwise, the left half ends up
+  // at the bottom.
+  const halves = $derived.by(() => {
+    if (!b.stadium?.pair) return [];
+    const both = [b.stadium, b.stadium.pair];
+    return both.sort((x, y) => (x.def || '').localeCompare(y.def || '', undefined, { numeric: true }));
+  });
   function whoseTurn() {
     if (setup) return 'Setup';
     if (phone) return `T${b.turn} · ${b.current === app.human ? 'You' : nameOf(b.current)}`;
@@ -44,8 +53,20 @@
 <!-- No bar: a thin midline between the halves. The Stadium straddles it
      left of the Active Spots, the turn controls float on the right. -->
 <div class="strip" class:phone={app.layout === 'phone'} class:wide>
-  <div class="stadium" class:theirs {@attach zone('stadium')} role="region" aria-label="Stadium">
-    {#if b.stadium}
+  <div class="stadium" class:theirs class:pair={!!b.stadium?.pair} {@attach zone('stadium')} role="region" aria-label="Stadium">
+    {#if b.stadium?.pair}
+      <!-- A Stadium played as a pair stands as one card, as TCG Live shows
+           it: its two halves joined edge to edge into one picture, turned a
+           quarter so it fills a single Stadium's place. Each half is still
+           its own card to tap, drag or zoom. -->
+      <div class="joined" class:sm={app.layout === 'phone'} aria-label="{b.stadium.name} (pair)" role="group">
+        {#each halves as half, i (half.iid)}
+          <div class="half" class:top={i === 1}>
+            <Card card={half} rotate={-90} lift={false} from="stadium" />
+          </div>
+        {/each}
+      </div>
+    {:else if b.stadium}
       <Card card={b.stadium} size={app.layout === 'phone' ? 'sm' : 'lg'} from="stadium" />
     {:else}
       <span>Stadium</span>
@@ -134,6 +155,23 @@
     transition: background 0.15s;
   }
   .stadium:has(.card) { border-color: transparent; }
+  /* A pair is one card the size of a single Stadium (--jw wide): each half,
+     turned a quarter, is as tall as half the card, so its width is half the
+     card's height (63/88 of a card is 0.698 of its width). The halves are
+     centred a quarter and three quarters of the way down. */
+  .joined { --jw: calc(var(--cw) * 1.25); position: relative; width: var(--jw); aspect-ratio: 63 / 88; }
+  .joined.sm { --jw: calc(var(--cw) * 0.62); }
+  @media (pointer: coarse) { .joined.sm { --jw: max(44px, calc(var(--cw) * 0.62)); } }
+  .joined .half { position: absolute; left: 50%; top: 75%; width: 0; height: 0; }
+  .joined .half.top { top: 25%; }
+  /* The pair is one card, so it carries one basis mark: the lower half's. */
+  .joined .half.top :global(.basis) { display: none; }
+  .joined :global(.card) {
+    --w: calc(var(--jw) * 0.698);
+    position: absolute;
+    left: calc(var(--w) / -2);
+    top: calc(var(--w) * 88 / 63 / -2);
+  }
   .controls {
     position: absolute;
     top: 50%;
@@ -206,6 +244,8 @@
      so the row, and so every card, keeps its size. */
   .wide .play { position: absolute; top: calc(100% + 6px); left: 0; z-index: 3; white-space: nowrap; }
   .wide :global(.card.lg) { --w: calc(var(--cw) * 1.1); }
+  /* A pair-played Stadium matches a single Stadium on the landscape mat. */
+  .wide .joined { --jw: calc(var(--cw) * 1.1); }
   .actives { display: flex; align-items: flex-start; gap: calc(var(--cw) * 0.2); }
   .vs { align-self: center; }
   /* The caption sits on the spot's top edge, taking no row of its own. */
@@ -248,6 +288,7 @@
   .phone .buttons button { padding: 0 8px; font-size: 12px; white-space: nowrap; }
   .phone .stadium { position: absolute; left: 8px; top: calc(100% + 6px); bottom: auto; right: auto; transform: none; width: auto; min-width: 48px; min-height: 0; padding: 2px; }
   .phone .stadium.theirs { left: auto; right: 8px; top: auto; bottom: calc(100% + 6px); }
+  .phone .stadium.pair { width: auto; }
   .phone .controls { position: static; transform: none; flex-direction: row; flex-wrap: nowrap; align-items: center; max-width: none; gap: 5px; }
   .phone .effects { position: absolute; top: 100%; left: 8px; right: 8px; z-index: 3; }
   .phone .play { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; }

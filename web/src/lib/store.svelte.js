@@ -15,8 +15,13 @@ export const app = $state({
   // Why there is no game, when the server says (an expired game); '' otherwise.
   notice: '',
   // What the assistant is doing: 'waiting' for the human's turn, 'acting'
-  // (the board is locked), 'stopped' responding, or ''.
+  // (its own turn: the board is locked), 'deciding' (it answers a decision;
+  // the human keeps playing what does not depend on it), 'stopped'
+  // responding, or ''.
   opponent: '',
+  // The decision it is making ('promote' or 'answer_card') while deciding,
+  // or the one it left unanswered when it stopped; '' otherwise.
+  decision: '',
   // Latest snapshot from the server (game, branch, mode, board, log, ...).
   snap: null,
   // Board being displayed; differs from snap.board while animating frames.
@@ -57,6 +62,9 @@ export const app = $state({
   // Play the assistant's moves on the board as they arrive, rather than
   // holding them for the playback bar. Remembered in this browser.
   autoplay: true,
+  // Show "Knocked Out: take N prize cards" after a knock-out. Off for
+  // practising without the hint. Remembered in this browser.
+  prizeReminders: true,
   acting: false, // a request of the viewer's own is in flight
   deckListShow: 'all', // deck list filter: all, unplayed or undrawn
   lastLog: 0, // highest log id seen, to mark new lines
@@ -64,6 +72,7 @@ export const app = $state({
 
 try {
   if (localStorage.getItem('panelAt') === 'bottom') app.panelAt = 'bottom';
+  if (localStorage.getItem('prizeReminders') === 'off') app.prizeReminders = false;
 } catch {
   // storage unavailable: keep the default
 }
@@ -97,6 +106,16 @@ export function pointerTypeOf(ev) {
 // tap gets the phone sheet or tablet panel, a mouse the popover.
 export function openSheet(ev, build, pointerType = pointerTypeOf(ev)) {
   app.sheet = { build, pointerType, x: ev.clientX, y: ev.clientY };
+}
+
+// setPrizeReminders turns the knock-out prize reminder on or off.
+export function setPrizeReminders(on) {
+  app.prizeReminders = on;
+  try {
+    localStorage.setItem('prizeReminders', on ? 'on' : 'off');
+  } catch {
+    // storage unavailable: the choice lasts for this page only
+  }
 }
 
 // setPanelAt moves the timeline to the side or the bottom.
@@ -147,6 +166,48 @@ export function cardInfo(def) {
 export function benchSlots(side) {
   const expands = /\b8 Pokémon on (their|his or her) Bench/.test(cardInfo(app.board?.stadium?.def)?.effect ?? '');
   return expands && side.bench.length < 8 && side.bench.every(Boolean) ? [...side.bench, null] : side.bench;
+}
+
+// A card image is tried in stages, one per candidate address, in the
+// order info.images lists its sources. A base-path entry gives its address
+// with the size file appended (with ?v=<image_version> when the server
+// gives a copy's content version, so changed art gets a new address past
+// browser and CDN caches), then its image_fallback with the size file (the
+// card source, when the address is a CDN copy). A file entry
+// (image_file) gives its address as is, for every size. When an image
+// fails to load the board moves to the next stage; past the last one
+// nothing is left to load, so it shows its text stand-in or Energy token.
+// Each image spot keeps its own stage and resets it to 0 when it shows
+// another card.
+
+// imageCandidates lists the addresses to try for info's image at size
+// (low.webp or high.webp), in order.
+export function imageCandidates(info, size) {
+  const out = [];
+  for (const img of info?.images ?? []) {
+    if (!img?.image) continue;
+    if (img.image_file) {
+      out.push(img.image);
+      continue;
+    }
+    const v = img.image_version ? `?v=${encodeURIComponent(img.image_version)}` : '';
+    out.push(`${img.image}/${size}${v}`);
+    if (img.image_fallback) out.push(`${img.image_fallback}/${size}`);
+  }
+  return out;
+}
+
+// imageSrc is the address of the image file at size for info at stage, or
+// null when the stage has nothing to load.
+export function imageSrc(info, size, stage) {
+  return imageCandidates(info, size)[stage] ?? null;
+}
+
+// nextImageStage is the stage after the image at stage failed to load.
+// Every size has the same number of candidates, so the stage counts the
+// same for the mat, the zoom and the preview.
+export function nextImageStage(info, stage) {
+  return stage + 1;
 }
 
 // ownerOf returns the seat that owns a card from its iid ("p1-12" -> p1).

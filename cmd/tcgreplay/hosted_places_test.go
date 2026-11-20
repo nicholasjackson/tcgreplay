@@ -61,7 +61,7 @@ func TestHostedExpiredGameFreesPlace(t *testing.T) {
 	if got := stateGame(t, csB); got != "game-b" {
 		t.Errorf("B's get_state reads %q, want game-b", got)
 	}
-	if resp, body := getWith(t, h.ts.URL+"/", cookieB, nil); resp.StatusCode != http.StatusOK {
+	if resp, body := getWith(t, h.ts.URL+"/board", cookieB, nil); resp.StatusCode != http.StatusOK {
 		t.Errorf("B's board page: %d %q", resp.StatusCode, body)
 	}
 }
@@ -106,7 +106,7 @@ func TestHostedFreedPlaceToldBusy(t *testing.T) {
 		}
 	}
 	checkGuidesWhileBusy(t, "A", csA)
-	if resp, body := getWith(t, h.ts.URL+"/", cookieA, nil); resp.StatusCode != http.StatusServiceUnavailable || !strings.Contains(body, "the server is busy") {
+	if resp, body := getWith(t, h.ts.URL+"/board", cookieA, nil); resp.StatusCode != http.StatusServiceUnavailable || !strings.Contains(body, "the server is busy") {
 		t.Errorf("A's board page with B holding the place: %d %q, want 503 busy", resp.StatusCode, body)
 	}
 

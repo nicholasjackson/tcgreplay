@@ -1,5 +1,7 @@
-// Package cards looks up card definitions from TCGdex and caches them on
-// disk, so card text is quoted from data rather than memory.
+// Package cards holds the playmat's runtime card definitions, the card
+// lookup interface, TCG Live log-code and name matching, and the card image
+// cache. Card definitions themselves come from the published card sets
+// (internal/catalog).
 package cards
 
 import (
@@ -7,21 +9,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
+	"path"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
-	"sync"
-	"time"
 )
 
-// ErrNotFound means TCGdex has no such card or set.
+// ErrNotFound means there is no such card or set.
 var ErrNotFound = errors.New("not found")
+
+// ErrUnknownSet means a name given to name a set names no set.
+var ErrUnknownSet = fmt.Errorf("no such set: %w", ErrNotFound)
 
 // Ability is a Pokémon's ability.
 type Ability struct {
@@ -70,11 +69,17 @@ type SetRef struct {
 
 // Card is a card definition.
 type Card struct {
-	ID             string      `json:"id"`
-	LocalID        string      `json:"localId"`
-	Name           string      `json:"name"`
-	Category       string      `json:"category"` // Pokemon, Trainer, Energy
-	Image          string      `json:"image,omitempty"`
+	ID       string `json:"id"`
+	LocalID  string `json:"localId"`
+	Name     string `json:"name"`
+	Category string `json:"category"` // Pokemon, Trainer, Energy
+	// Image is the first of Images (empty when the card has no art), for
+	// readers that only ask whether a card has art.
+	Image string `json:"image,omitempty"`
+	// Images is the print's whole ordered list of image sources, in the
+	// order the board tries them; empty means no art. Cards that set only
+	// Image (test pools) are read through ImageList.
+	Images         []ImageRef  `json:"images,omitempty"`
 	Set            SetRef      `json:"set"`
 	HP             int         `json:"hp,omitempty"`
 	Types          []string    `json:"types,omitempty"`
@@ -90,6 +95,43 @@ type Card struct {
 	EnergyType     string      `json:"energyType,omitempty"`  // Normal, Special
 	Effect         string      `json:"effect,omitempty"`
 	RegulationMark string      `json:"regulationMark,omitempty"`
+	// PlayedAsPair marks a card whose two different prints of this name
+	// are played together as one card (a Legendary Stadium, say). It
+	// drives behaviour only: the card states its rule in its own Effect
+	// text, and Text adds nothing from the mark.
+	PlayedAsPair bool `json:"playedAsPair,omitempty"`
+}
+
+// ImageRef is one source of a card's image.
+type ImageRef struct {
+	URL string `json:"url"`
+	// File marks a complete image file used for every size (a malie.io
+	// jpg, say). Otherwise URL is a TCGdex base path, to which the board
+	// appends /low.webp or /high.webp.
+	File bool `json:"file,omitempty"`
+}
+
+// ImageList is the card's ordered image sources: Images, or one entry
+// made from Image when only Image is set, or nil for a card with no art.
+func (c *Card) ImageList() []ImageRef {
+	if len(c.Images) > 0 {
+		return c.Images
+	}
+	if c.Image != "" {
+		return []ImageRef{{URL: c.Image, File: ImageIsFile(c.Image)}}
+	}
+	return nil
+}
+
+// ImageIsFile reports whether an image address names a complete image
+// file (its last path segment ends in .jpg, .jpeg, .png or .webp) rather
+// than a TCGdex base path, which ends in the card number.
+func ImageIsFile(addr string) bool {
+	if u, err := url.Parse(addr); err == nil {
+		addr = u.Path
+	}
+	ext := strings.ToLower(path.Ext(path.Base(addr)))
+	return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp"
 }
 
 // IsPokemon reports whether the card is a Pokémon.
@@ -164,128 +206,6 @@ type DB interface {
 	ByName(ctx context.Context, name string, moves ...string) (string, error)
 }
 
-// Client is a TCGdex client with a disk cache.
-type Client struct {
-	Base     string // default https://api.tcgdex.net/v2/en
-	CacheDir string
-	HTTP     *http.Client
-	// Offline disables network access; only cached data is used.
-	Offline bool
-
-	mu       sync.Mutex
-	mem      map[string]*Card
-	setIndex map[string]string // upper set code -> set id
-	indexed  bool
-	byName   map[string][]string // nameKey -> card ids, preferred print first
-}
-
-// NewClient returns a client caching under dir.
-func NewClient(dir string) *Client {
-	return &Client{
-		Base:     "https://api.tcgdex.net/v2/en",
-		CacheDir: dir,
-		HTTP:     &http.Client{Timeout: 20 * time.Second},
-		mem:      map[string]*Card{},
-	}
-}
-
-// DefaultCacheDir returns $XDG_CACHE_HOME/tcgreplay or ~/.cache/tcgreplay.
-func DefaultCacheDir() string {
-	if d, err := os.UserCacheDir(); err == nil {
-		return filepath.Join(d, "tcgreplay")
-	}
-	return filepath.Join(os.TempDir(), "tcgreplay-cache")
-}
-
-func safeName(id string) string {
-	return strings.NewReplacer("/", "_", "\\", "_", "..", "_").Replace(id)
-}
-
-// getJSON fetches path relative to Base, caching the raw body at cacheFile.
-func (c *Client) getJSON(ctx context.Context, path, cacheFile string, out any) error {
-	if b, err := os.ReadFile(cacheFile); err == nil {
-		return json.Unmarshal(b, out)
-	}
-	if c.Offline {
-		return fmt.Errorf("%s: not cached and offline: %w", path, ErrNotFound)
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.Base+path, nil)
-	if err != nil {
-		return err
-	}
-	resp, err := c.HTTP.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("tcgdex %s: %w", path, ErrNotFound)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("tcgdex %s: %s", path, resp.Status)
-	}
-	b, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
-	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(b, out); err != nil {
-		return fmt.Errorf("tcgdex %s: %w", path, err)
-	}
-	if err := os.MkdirAll(filepath.Dir(cacheFile), 0o755); err == nil {
-		tmp := cacheFile + ".tmp"
-		if os.WriteFile(tmp, b, 0o644) == nil {
-			os.Rename(tmp, cacheFile)
-		}
-	}
-	return nil
-}
-
-// Card implements DB.
-func (c *Client) Card(ctx context.Context, id string) (*Card, error) {
-	if id == "" {
-		return nil, fmt.Errorf("empty card id: %w", ErrNotFound)
-	}
-	c.mu.Lock()
-	if card, ok := c.mem[id]; ok {
-		c.mu.Unlock()
-		return card, nil
-	}
-	c.mu.Unlock()
-	var card Card
-	err := c.getJSON(ctx, "/cards/"+url.PathEscape(id), filepath.Join(c.CacheDir, "cards", safeName(id)+".json"), &card)
-	if err != nil {
-		return nil, err
-	}
-	energyArt(&card)
-	c.mu.Lock()
-	c.mem[id] = &card
-	c.mu.Unlock()
-	return &card, nil
-}
-
-// Cached implements DB.
-func (c *Client) Cached(id string) *Card {
-	c.mu.Lock()
-	card, ok := c.mem[id]
-	c.mu.Unlock()
-	if ok {
-		return card
-	}
-	b, err := os.ReadFile(filepath.Join(c.CacheDir, "cards", safeName(id)+".json"))
-	if err != nil {
-		return nil
-	}
-	var cc Card
-	if json.Unmarshal(b, &cc) != nil {
-		return nil
-	}
-	energyArt(&cc)
-	c.mu.Lock()
-	c.mem[id] = &cc
-	c.mu.Unlock()
-	return &cc
-}
-
 // basicEnergyArt is Crown Zenith's Basic Energy art. TCGdex has no images
 // for the Scarlet & Violet and Mega Evolution Energy prints that decks
 // use, and every other print with art is a gold hyper rare.
@@ -293,6 +213,12 @@ var basicEnergyArt = map[string]string{
 	"Grass": "152", "Fire": "153", "Water": "154", "Lightning": "155",
 	"Psychic": "156", "Fighting": "157", "Darkness": "158", "Metal": "159",
 }
+
+// EnergyArt gives a Basic Energy card without an image the art of the same
+// type (Crown Zenith's), as the playmat has always shown it. Built card
+// sets apply it when a print is converted (cardset.Print.Card); the art is
+// never stored in the built set.
+func EnergyArt(c *Card) { energyArt(c) }
 
 // energyArt gives a Basic Energy card without an image the art of the
 // same type. Only the picture is borrowed; the card keeps its identity.
@@ -303,47 +229,10 @@ func energyArt(c *Card) {
 	for t, n := range basicEnergyArt {
 		if strings.Contains(c.Name, t) {
 			c.Image = "https://assets.tcgdex.net/en/swsh/swsh12.5/" + n
+			c.Images = []ImageRef{{URL: c.Image}}
 			return
 		}
 	}
-}
-
-type setSummary struct {
-	ID string `json:"id"`
-}
-
-type setDetail struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	ReleaseDate string `json:"releaseDate"`
-	Serie       struct {
-		ID string `json:"id"`
-	} `json:"serie"`
-	Abbreviation struct {
-		Official string `json:"official"`
-	} `json:"abbreviation"`
-	TCGOnline string `json:"tcgOnline"`
-	Cards     []struct {
-		ID      string `json:"id"`
-		LocalID string `json:"localId"`
-		Name    string `json:"name"`
-		Image   string `json:"image"`
-	} `json:"cards"`
-}
-
-// codeAliases maps TCG Live set codes that differ from TCGdex
-// abbreviations.
-var codeAliases = map[string]string{
-	"PR-SV": "SVP",
-	"PR-SW": "SWSHP",
-}
-
-// setAliases maps set codes straight to a TCGdex set id, for sets whose
-// official abbreviation is shared (30th Celebration and its Classic
-// Collection are both "30C") or that exports spell their own way.
-var setAliases = map[string]string{
-	"30TH": "30th",
-	"M30":  "30th",
 }
 
 // logCodePrefix maps the set part of a TCG Live log code that does not
@@ -357,7 +246,7 @@ var logCodeRe = regexp.MustCompile(`^([a-z]+?)(\d+)?(?:-(\d+))?_(\d+)(?:_[a-z0-9
 
 // LogCodeID turns a TCG Live log card code into the TCGdex id it most
 // likely names: me3_121 is me03-121, me2-5_172 me02.5-172, zsv10-5_79
-// sv10.5b-079 (Black Bolt) and mebsp_33 mep-033. Callers should check the
+// sv10.5b-079 (Black Bolt), mebsp_33 mep-033 and swsh1_213 swsh1-213. Callers should check the
 // card exists and has the expected name.
 func LogCodeID(code string) (string, bool) {
 	m := logCodeRe.FindStringSubmatch(strings.ToLower(code))
@@ -382,7 +271,13 @@ func LogCodeID(code string) (string, bool) {
 			prefix, suffix = "sv", "w"
 		}
 		mj, _ := strconv.Atoi(major)
-		set = fmt.Sprintf("%s%02d", prefix, mj)
+		// TCGdex pads the set number for Scarlet & Violet and Mega
+		// Evolution (sv01, me01) but not for older series (swsh1).
+		if prefix == "sv" || prefix == "me" {
+			set = fmt.Sprintf("%s%02d", prefix, mj)
+		} else {
+			set = fmt.Sprintf("%s%d", prefix, mj)
+		}
 		if half != "" {
 			set += "." + half
 		}
@@ -391,129 +286,10 @@ func LogCodeID(code string) (string, bool) {
 	return fmt.Sprintf("%s-%03d", set, n), true
 }
 
-func (c *Client) set(ctx context.Context, id string) (*setDetail, error) {
-	var s setDetail
-	err := c.getJSON(ctx, "/sets/"+url.PathEscape(id), filepath.Join(c.CacheDir, "sets", safeName(id)+".json"), &s)
-	return &s, err
-}
-
-// buildIndex maps set codes to TCGdex set ids. It fetches every set once and
-// caches the result.
-func (c *Client) buildIndex(ctx context.Context, refresh bool) error {
-	// v2: shared codes now keep the main set; older indexes may not.
-	indexFile := filepath.Join(c.CacheDir, "set-index-v2.json")
-	if !refresh {
-		if b, err := os.ReadFile(indexFile); err == nil {
-			idx := map[string]string{}
-			if json.Unmarshal(b, &idx) == nil {
-				c.setIndex = idx
-				return nil
-			}
-		}
-	}
-	if c.Offline {
-		return fmt.Errorf("set index not cached and offline: %w", ErrNotFound)
-	}
-	var sets []setSummary
-	// Always refetch the set list when rebuilding.
-	os.Remove(filepath.Join(c.CacheDir, "sets.json"))
-	if err := c.getJSON(ctx, "/sets", filepath.Join(c.CacheDir, "sets.json"), &sets); err != nil {
-		return err
-	}
-	idx := map[string]string{}
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, 8)
-	var firstErr error
-	for _, s := range sets {
-		wg.Add(1)
-		go func(id string) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			d, err := c.set(ctx, id)
-			mu.Lock()
-			defer mu.Unlock()
-			if err != nil {
-				if firstErr == nil && !errors.Is(err, ErrNotFound) {
-					firstErr = err
-				}
-				return
-			}
-			for _, code := range []string{d.Abbreviation.Official, d.TCGOnline} {
-				if code == "" {
-					continue
-				}
-				// Sets sharing a code (30th and 30th-c, cel25 and
-				// cel25cc) keep the main set, whose id is shorter, so
-				// the pick does not depend on fetch order.
-				k := strings.ToUpper(code)
-				if old, ok := idx[k]; !ok || len(d.ID) < len(old) || (len(d.ID) == len(old) && d.ID < old) {
-					idx[k] = d.ID
-				}
-			}
-		}(s.ID)
-	}
-	wg.Wait()
-	if len(idx) == 0 && firstErr != nil {
-		return firstErr
-	}
-	c.setIndex = idx
-	if b, err := json.Marshal(idx); err == nil {
-		os.MkdirAll(c.CacheDir, 0o755)
-		os.WriteFile(indexFile, b, 0o644)
-	}
-	return nil
-}
-
-// Resolve implements DB.
-func (c *Client) Resolve(ctx context.Context, setCode, number string) (string, error) {
-	code := strings.ToUpper(strings.TrimSpace(setCode))
-	if a, ok := codeAliases[code]; ok {
-		code = a
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	setID, ok := setAliases[code]
-	if !ok && c.setIndex == nil {
-		if err := c.buildIndex(ctx, false); err != nil {
-			return "", err
-		}
-	}
-	if !ok {
-		setID, ok = c.setIndex[code]
-	}
-	if !ok && !c.indexed && !c.Offline {
-		// The cached index may predate a new set.
-		c.indexed = true
-		if err := c.buildIndex(ctx, true); err != nil {
-			return "", err
-		}
-		setID, ok = c.setIndex[code]
-	}
-	if !ok {
-		return "", fmt.Errorf("unknown set code %q: %w", setCode, ErrNotFound)
-	}
-	s, err := c.set(ctx, setID)
-	if err != nil {
-		return "", err
-	}
-	want, numErr := strconv.Atoi(number)
-	for _, card := range s.Cards {
-		if strings.EqualFold(card.LocalID, number) {
-			return card.ID, nil
-		}
-		if numErr == nil {
-			if n, err := strconv.Atoi(card.LocalID); err == nil && n == want {
-				return card.ID, nil
-			}
-		}
-	}
-	return "", fmt.Errorf("no card %s %s in set %s: %w", setCode, number, setID, ErrNotFound)
-}
-
-// nameKey normalises a card name for lookup: case and apostrophe style
+// NameKey normalises a card name for lookup: case and apostrophe style
 // differ between TCG Live and TCGdex.
+func NameKey(name string) string { return nameKey(name) }
+
 func nameKey(name string) string {
 	name = strings.NewReplacer("’", "'", "‘", "'").Replace(name)
 	return strings.ToLower(strings.Join(strings.Fields(name), " "))
@@ -522,138 +298,3 @@ func nameKey(name string) string {
 // SameName reports whether two card names match, ignoring case, spacing
 // and apostrophe style.
 func SameName(a, b string) bool { return nameKey(a) == nameKey(b) }
-
-// ByName implements DB. A name has many prints; it picks the newest one
-// with art (what Standard play uses), preferring the regular print over
-// higher-numbered alternate arts. Pokémon TCG Pocket sets are skipped. "Basic Fire Energy", as logs name it,
-// also matches "Fire Energy". With moves, it picks the preferred print
-// that has the most of them: Chi-Yu seen using Ground Melter is the
-// Twilight Masquerade Fire Chi-Yu, not a newer Darkness one.
-func (c *Client) ByName(ctx context.Context, name string, moves ...string) (string, error) {
-	ids, err := c.prints(ctx, name)
-	if err != nil {
-		return "", err
-	}
-	if len(moves) == 0 {
-		return ids[0], nil
-	}
-	best, most := ids[0], 0
-	for _, id := range ids {
-		card, err := c.Card(ctx, id)
-		if err != nil {
-			continue // offline or gone: not a candidate
-		}
-		if n := card.hasMoves(moves); n > most {
-			best, most = id, n
-			if n == len(moves) {
-				break
-			}
-		}
-	}
-	return best, nil
-}
-
-// prints lists the prints of name, preferred first.
-func (c *Client) prints(ctx context.Context, name string) ([]string, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.byName == nil {
-		if err := c.buildNameIndex(ctx); err != nil {
-			return nil, err
-		}
-	}
-	key := nameKey(name)
-	if ids, ok := c.byName[key]; ok {
-		return ids, nil
-	}
-	if k, ok := strings.CutPrefix(key, "basic "); ok {
-		if ids, ok := c.byName[k]; ok {
-			return ids, nil
-		}
-	}
-	return nil, fmt.Errorf("no card named %q: %w", name, ErrNotFound)
-}
-
-// hasMoves counts the moves the card has as an attack or Ability.
-func (c *Card) hasMoves(moves []string) int {
-	n := 0
-	for _, m := range moves {
-		if slices.ContainsFunc(c.Attacks, func(a Attack) bool { return a.Name == m }) ||
-			slices.ContainsFunc(c.Abilities, func(a Ability) bool { return a.Name == m }) {
-			n++
-		}
-	}
-	return n
-}
-
-// buildNameIndex reads every set (cached after the first time) and keeps
-// every print of each name, preferred first. The caller holds c.mu.
-func (c *Client) buildNameIndex(ctx context.Context) error {
-	var sets []setSummary
-	if err := c.getJSON(ctx, "/sets", filepath.Join(c.CacheDir, "sets.json"), &sets); err != nil {
-		return err
-	}
-	type pick struct {
-		id, release string
-		art         bool
-		num         int
-	}
-	better := func(a, b pick) bool { // is a preferred to b?
-		if a.art != b.art {
-			return a.art
-		}
-		if a.release != b.release {
-			return a.release > b.release
-		}
-		return a.num < b.num
-	}
-	all := map[string][]pick{}
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, 8)
-	for _, s := range sets {
-		wg.Add(1)
-		go func(id string) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			d, err := c.set(ctx, id)
-			if err != nil {
-				return // offline or gone: its prints are simply not offered
-			}
-			if d.Serie.ID == "tcgp" {
-				return // Pokémon TCG Pocket, a different game
-			}
-			mu.Lock()
-			defer mu.Unlock()
-			for _, card := range d.Cards {
-				num, err := strconv.Atoi(card.LocalID)
-				if err != nil {
-					num = 1 << 30 // lettered prints (TG05) after numbered ones
-				}
-				p := pick{card.ID, d.ReleaseDate, card.Image != "", num}
-				k := nameKey(card.Name)
-				all[k] = append(all[k], p)
-			}
-		}(s.ID)
-	}
-	wg.Wait()
-	c.byName = make(map[string][]string, len(all))
-	for k, ps := range all {
-		slices.SortFunc(ps, func(a, b pick) int {
-			switch {
-			case better(a, b):
-				return -1
-			case better(b, a):
-				return 1
-			}
-			return strings.Compare(a.id, b.id)
-		})
-		ids := make([]string, len(ps))
-		for i, p := range ps {
-			ids[i] = p.id
-		}
-		c.byName[k] = ids
-	}
-	return nil
-}

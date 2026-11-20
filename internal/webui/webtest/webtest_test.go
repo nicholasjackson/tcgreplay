@@ -21,7 +21,7 @@ func checkPosition(t *testing.T, g *game.Game) {
 	if st.Turn != 1 || st.Current != state.P1 || !st.TurnOpen {
 		t.Errorf("turn = %d %s (open %v), want p1's turn 1, open", st.Turn, st.Current, st.TurnOpen)
 	}
-	if st.Stadium != "p1-11" {
+	if !slices.Equal(st.Stadium, []state.IID{"p1-11"}) {
 		t.Errorf("stadium = %q, want p1-11 (Arena)", st.Stadium)
 	}
 	want := map[state.Seat]struct {
@@ -86,7 +86,7 @@ func checkPosition(t *testing.T, g *game.Game) {
 			}
 		}
 		if seat == state.P1 {
-			n++ // the Stadium
+			n += len(st.Stadium) // the Stadium
 		}
 		if n != 60 {
 			t.Errorf("%s has %d cards in all, want 60", seat, n)
@@ -147,6 +147,26 @@ func TestNotInShippedBinary(t *testing.T) {
 	for _, pkg := range strings.Fields(string(out)) {
 		if strings.Contains(pkg, "/webtest") || strings.HasSuffix(pkg, "/cardstest") {
 			t.Errorf("the shipped binary depends on %s", pkg)
+		}
+	}
+}
+
+// TestTwinPeakInDeck: p1's two prints of the pair-played Twin Peak are
+// p1-59 and p1-60, and start in the deck.
+func TestTwinPeakInDeck(t *testing.T) {
+	m := NewManager(t.TempDir())
+	if err := Reset(context.Background(), m); err != nil {
+		t.Fatal(err)
+	}
+	g, _ := m.Current()
+	st := g.State()
+	for i, def := range []string{"tst-10", "tst-11"} {
+		iid := TwinPeak[i]
+		if c := st.Cards[iid]; c == nil || c.Def != def || c.Name != "Twin Peak" {
+			t.Errorf("%s = %+v, want Twin Peak %s", iid, c, def)
+		}
+		if l, _ := st.Find(iid); l.Zone != state.Deck && l.Zone != state.Prizes {
+			t.Errorf("%s is in %s, want the deck (or a prize)", iid, l)
 		}
 	}
 }

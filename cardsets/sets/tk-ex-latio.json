@@ -1,0 +1,400 @@
+{
+  "format": 1,
+  "set": {
+    "id": "tk-ex-latio",
+    "serie": "tk",
+    "releaseDate": "2004-07-01",
+    "abbreviation": "TK1O",
+    "text": {
+      "en": {
+        "name": "EX trainer Kit (Latios)"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "tk-ex-latio-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Electrike",
+          "attacks": [
+            {
+              "name": "Headbutt"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Latios",
+          "attacks": [
+            {
+              "name": "Gather Energy",
+              "effect": "Flip a coin. If heads, search your deck for a basic Energy card and attach it to 1 of your Pokémon. Shuffle your deck afterward."
+            },
+            {
+              "name": "Dragon Claw"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Linoone",
+          "evolveFrom": "Zigzagoon",
+          "attacks": [
+            {
+              "name": "Seek Out",
+              "effect": "Search your deck for up to 2 cards and put them into your hand. Shuffle your deck afterward."
+            },
+            {
+              "name": "Continuous Headbutt",
+              "effect": "Flip a coin until you get tails. This attack does 40 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Metal",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magnemite",
+          "attacks": [
+            {
+              "name": "Rollout"
+            },
+            {
+              "name": "Hook"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magneton",
+          "evolveFrom": "Magnemite",
+          "attacks": [
+            {
+              "name": "Ram"
+            },
+            {
+              "name": "Triple Smash",
+              "effect": "Flip 3 coins. This attack does 20 damage plus 20 more damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu",
+          "attacks": [
+            {
+              "name": "Scratch"
+            },
+            {
+              "name": "Pika Bolt"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zigzagoon",
+          "attacks": [
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 10 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-8",
+      "localId": "8",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Potion",
+          "effect": "Remove 2 damage counters from 1 of your Pokémon (remove 1 damage counter if that Pokémon has only 1)."
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-9",
+      "localId": "9",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Energy Search",
+          "effect": "Search your deck for a basic Energy card, show it to your opponent, and put it into your hand. Shuffle your deck afterward"
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latio-10",
+      "localId": "10",
+      "category": "Energy",
+      "stage": "Basic",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lightning Energy"
+        }
+      }
+    }
+  ]
+}

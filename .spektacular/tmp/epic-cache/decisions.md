@@ -1,0 +1,2 @@
+- **admin-cache-clearing extends card-image-cdn's contracts.** Plans involved: card-image-cdn, admin-cache-clearing. The admin plan adds `ETags` to `spaces.ListPage`, a version to `webui.ImageSource.Image` and `image_version` to `/api/card`. Outcome: accepted as additive extensions made by the later spec. card-image-cdn's plan is unchanged and is implemented first. Settled by the orchestrator under the user's "just do the whole thing".
+- **Changelog handling.** Plans involved: all four. Every plan uses the default implement workflow's changelog. Outcome: no disagreement.

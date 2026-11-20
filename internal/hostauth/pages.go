@@ -43,7 +43,7 @@ func renderPage(w http.ResponseWriter, status int, d pageData) {
 
 // errorPage shows a sign-in problem to the user in the browser.
 func errorPage(w http.ResponseWriter, status int, msg string) {
-	renderPage(w, status, pageData{Title: "Sign-in problem", Message: msg, Link: "/auth/login?next=/", LinkText: "Sign in again"})
+	renderPage(w, status, pageData{Title: "Sign-in problem", Message: msg, Link: "/auth/login?next=/board", LinkText: "Sign in again"})
 }
 
 // busyPage tells a new account that the server is at its user cap.

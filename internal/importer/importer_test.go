@@ -355,8 +355,8 @@ func TestAttackDiscardsStadium(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if st.Stadium != "" {
-			t.Errorf("seed %d: %s is still in play", seed, st.Cards[st.Stadium].Name)
+		if len(st.Stadium) != 0 {
+			t.Errorf("seed %d: %s is still in play", seed, st.Cards[st.Stadium[0]].Name)
 		}
 		n := 0
 		for _, iid := range st.Sides[OppSeat].Discard {
@@ -636,5 +636,278 @@ func TestBenchPastFive(t *testing.T) {
 	}
 	if most <= 5 {
 		t.Errorf("opponent's bench peaked at %d, want more than 5", most)
+	}
+}
+
+// TestRetreatToSameName: a Pokémon that retreats in favour of a benched
+// copy of itself goes to the Bench with its damage and Energy, and the
+// fresh copy comes in, rather than the damaged one staying Active.
+func TestRetreatToSameName(t *testing.T) {
+	entries, _ := loadCorpus(t)
+	b, err := os.ReadFile(filepath.Join(corpus, "logs/2026-10-11_ledjo23_alakazam-donk.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Itchy Pollen has left the Active Solrock with 20 damage and an
+	// Energy; a second Solrock is drawn, benched and swapped in.
+	extra := "NicJackson drew Solrock.\n" +
+		"NicJackson played Solrock to the Bench.\n" +
+		"NicJackson retreated Solrock to the Bench.\n" +
+		"- NicJackson discarded Basic Fighting Energy.\n" +
+		"NicJackson's Solrock is now in the Active Spot.\n"
+	text := strings.Replace(string(b), "NicJackson drew Hariyama.\n", extra, 1)
+	res, err := Import(text, Options{MyDeck: entries, Seed: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Report.Problems {
+		if strings.Contains(p.Text, "Solrock") && p.Line < 50 {
+			t.Errorf("line %d not imported: %q: %s", p.Line, p.Text, p.Err)
+		}
+	}
+	st := state.New()
+	evs := res.Events()
+	for i := range evs {
+		e := &evs[i]
+		if err := st.Apply(e); err != nil {
+			t.Fatal(err)
+		}
+		if e.Type != state.EvSwap {
+			continue
+		}
+		if p, _ := e.Decode(); p.(*state.SwapPayload).A.Seat != MeSeat {
+			continue
+		}
+		active := st.Sides[MeSeat].Active
+		var benched *state.Stack
+		for _, s := range st.Sides[MeSeat].Bench {
+			if !s.Empty() && st.Name(s.Top()) == "Solrock" {
+				benched = s
+			}
+		}
+		if st.Name(active.Top()) != "Solrock" || benched == nil {
+			t.Fatalf("after the swap: Active %s, no benched Solrock", st.Name(active.Top()))
+		}
+		if active.Damage != 0 || benched.Damage != 20 {
+			t.Errorf("after the retreat the Active Solrock has %d damage and the benched one %d; want 0 and 20", active.Damage, benched.Damage)
+		}
+		return
+	}
+	t.Fatal("no swap event: the retreat was not replayed")
+}
+
+// pairLog is the synthetic Legendary Summit pair log (not a real TCG Live
+// log). Its pair lines are in the real shape (pairRealLog): LeDjo23
+// attaches one print to the other, then plays the pair; NicJackson's
+// Gravity Mountain then replaces it, in lines still assumed.
+const pairLog = "logs/synthetic_2026-11-08_ledjo23_legendary-summit-pair.txt"
+
+// pairRealLog is the first real TCG Live log with a Stadium pair.
+const pairRealLog = "logs/2026-11-09_gamespeer_mega-rayquaza-talonflame.txt"
+
+const (
+	pairLines   = "LeDjo23 attached (me6_97) Legendary Summit to (me6_96) Legendary Summit.\nLeDjo23 played (me6_96) Legendary Summit to the Stadium spot.\n"
+	pairDiscard = "- LeDjo23 discarded (me6_96) Legendary Summit.\n- LeDjo23 discarded (me6_97) Legendary Summit.\n"
+)
+
+// importPairLog imports the synthetic pair log with the edits applied,
+// checking it applies cleanly, and returns the result and its events.
+func importPairLog(t *testing.T, edits ...[2]string) (*Result, []state.Event) {
+	t.Helper()
+	entries, _ := loadCorpus(t)
+	b, err := os.ReadFile(filepath.Join(corpus, pairLog))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(b)
+	for _, e := range edits {
+		if !strings.Contains(text, e[0]) {
+			t.Fatalf("the pair log has no %q", e[0])
+		}
+		text = strings.Replace(text, e[0], e[1], 1)
+	}
+	res, err := Import(text, Options{MyDeck: entries, Seed: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Report.Problems {
+		t.Errorf("line %d %q: %s", p.Line, p.Text, p.Err)
+	}
+	return res, res.Events()
+}
+
+// stadiumMoves lists the moves into or out of the Stadium spot.
+func stadiumMoves(t *testing.T, evs []state.Event) []*state.MovePayload {
+	t.Helper()
+	var out []*state.MovePayload
+	for i := range evs {
+		p, err := evs[i].Decode()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if mv, ok := p.(*state.MovePayload); ok && (mv.To.Zone == state.Stadium || mv.From != nil && mv.From.Zone == state.Stadium) {
+			out = append(out, mv)
+		}
+	}
+	return out
+}
+
+// pairOnBoard folds events until the Stadium spot holds two cards and
+// returns that state, or nil if it never does.
+func pairOnBoard(t *testing.T, evs []state.Event) *state.State {
+	t.Helper()
+	st := state.New()
+	for i := range evs {
+		if err := st.Apply(&evs[i]); err != nil {
+			t.Fatal(err)
+		}
+		if len(st.Stadium) == 2 {
+			return st
+		}
+	}
+	return nil
+}
+
+// countIn counts the cards named name in seat's discard.
+func countIn(st *state.State, seat state.Seat, name string) int {
+	n := 0
+	for _, iid := range st.Sides[seat].Discard {
+		if st.Cards[iid].Name == name {
+			n++
+		}
+	}
+	return n
+}
+
+// TestStadiumPairFromLog: one print attached to the other with no place,
+// then played to the Stadium spot, puts both in the spot as one pair in
+// one move, and a Stadium played over the pair sends both halves to their
+// owner's discard in one move, its two "discarded" sublines already done.
+// Every seed agrees.
+func TestStadiumPairFromLog(t *testing.T) {
+	for seed := uint64(1); seed <= 5; seed++ {
+		entries, _ := loadCorpus(t)
+		b, err := os.ReadFile(filepath.Join(corpus, pairLog))
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := Import(string(b), Options{MyDeck: entries, Seed: seed})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Report.Problems) > 0 || len(res.Report.Warnings) > 0 {
+			t.Fatalf("seed %d: problems %v, warnings %v", seed, res.Report.Problems, res.Report.Warnings)
+		}
+		evs := res.Events()
+		mid := pairOnBoard(t, evs)
+		if mid == nil {
+			t.Fatalf("seed %d: the Stadium spot never held the pair", seed)
+		}
+		for _, iid := range mid.Stadium {
+			if c := mid.Cards[iid]; c.Owner != OppSeat || c.Name != "Legendary Summit" {
+				t.Errorf("seed %d: %s in the spot is %s's %q", seed, iid, c.Owner, c.Name)
+			}
+		}
+		mv := stadiumMoves(t, evs)
+		if len(mv) != 3 || mv[0].Pair == "" || mv[0].To.Zone != state.Stadium || mv[1].Pair == "" || mv[1].To.Zone != state.Discard || mv[2].To.Zone != state.Stadium {
+			t.Fatalf("seed %d: Stadium moves %+v, want one pair play, one pair move to the discard and Gravity Mountain", seed, mv)
+		}
+		st, err := state.Fold(evs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n := countIn(st, OppSeat, "Legendary Summit"); n != 2 {
+			t.Errorf("seed %d: %d Legendary Summit in LeDjo23's discard, want 2", seed, n)
+		}
+		if len(st.Stadium) != 1 || st.Cards[st.Stadium[0]].Name != "Gravity Mountain" {
+			t.Errorf("seed %d: Stadium spot %v, want Gravity Mountain", seed, st.Stadium)
+		}
+	}
+}
+
+// TestStadiumPairRealLog: in the real TCG Live log, GameSpeer's two
+// Legendary Pyroduct prints (me6_94 and me6_95) go down as one Stadium in
+// one move, each half keeping its own print. Every seed agrees.
+func TestStadiumPairRealLog(t *testing.T) {
+	for seed := uint64(1); seed <= 5; seed++ {
+		entries, _ := loadCorpus(t)
+		b, err := os.ReadFile(filepath.Join(corpus, pairRealLog))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// The print's def is its log code, so the halves' prints show.
+		res, err := Import(string(b), Options{MyDeck: entries, Seed: seed, DefOfCode: func(_, code string) string { return code }})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Report.Problems) > 0 || len(res.Report.Warnings) > 0 {
+			t.Fatalf("seed %d: problems %v, warnings %v", seed, res.Report.Problems, res.Report.Warnings)
+		}
+		evs := res.Events()
+		mv := stadiumMoves(t, evs)
+		if len(mv) != 1 || mv[0].Pair == "" || mv[0].To.Zone != state.Stadium {
+			t.Fatalf("seed %d: Stadium moves %+v, want one pair play", seed, mv)
+		}
+		st, err := state.Fold(evs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(st.Stadium) != 2 {
+			t.Fatalf("seed %d: Stadium spot %v, want the pair", seed, st.Stadium)
+		}
+		var defs []string
+		for _, iid := range st.Stadium {
+			c := st.Cards[iid]
+			if c.Owner != OppSeat || c.Name != "Legendary Pyroduct" {
+				t.Errorf("seed %d: %s in the spot is %s's %q", seed, iid, c.Owner, c.Name)
+			}
+			defs = append(defs, c.Def)
+		}
+		slices.Sort(defs)
+		if !slices.Equal(defs, []string{"me6_94", "me6_95"}) {
+			t.Errorf("seed %d: halves are prints %v, want me6_94 and me6_95", seed, defs)
+		}
+	}
+}
+
+// TestStadiumPairDiscardedTwoCards: the replaced pair's halves listed
+// under one "discarded 2 cards" line are the halves already moved, not
+// two more cards from the hand.
+func TestStadiumPairDiscardedTwoCards(t *testing.T) {
+	_, evs := importPairLog(t, [2]string{pairDiscard, "- LeDjo23 discarded 2 cards.\n   • Legendary Summit, Legendary Summit\n"})
+	st, err := state.Fold(evs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n := countIn(st, OppSeat, "Legendary Summit"); n != 2 {
+		t.Errorf("%d Legendary Summit in LeDjo23's discard, want 2", n)
+	}
+}
+
+// TestStadiumSamePrintWarns: a pair whose two halves the log's card
+// codes give as the same print still goes down as logged, with a warning.
+func TestStadiumSamePrintWarns(t *testing.T) {
+	res, evs := importPairLog(t,
+		[2]string{"attached (me6_97) Legendary Summit to", "attached (me6_96) Legendary Summit to"},
+		[2]string{"- LeDjo23 discarded (me6_97) Legendary Summit.\n", "- LeDjo23 discarded (me6_96) Legendary Summit.\n"})
+	if !slices.ContainsFunc(res.Report.Warnings, func(w string) bool { return strings.Contains(w, "same print (me6_96)") }) {
+		t.Errorf("no same-print warning: %v", res.Report.Warnings)
+	}
+	if pairOnBoard(t, evs) == nil {
+		t.Error("the logged pair was not played")
+	}
+}
+
+// TestStadiumLoneHalf: one half played alone imports as a single Stadium,
+// as before (the playmat's own standing warning flags it, from card data).
+func TestStadiumLoneHalf(t *testing.T) {
+	res, evs := importPairLog(t,
+		[2]string{pairLines, "LeDjo23 played (me6_96) Legendary Summit to the Stadium spot.\n"},
+		[2]string{pairDiscard, "- LeDjo23 discarded (me6_96) Legendary Summit.\n"})
+	if len(res.Report.Warnings) > 0 {
+		t.Errorf("warnings: %v", res.Report.Warnings)
+	}
+	if mv := stadiumMoves(t, evs); len(mv) != 3 || mv[0].Pair != "" || mv[0].As != "" {
+		t.Errorf("Stadium moves %+v, want a single play and its replacement", mv)
 	}
 }

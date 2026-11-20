@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/coder/websocket"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/cards/cardstest"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
@@ -78,6 +80,9 @@ func dial(t *testing.T, ts *httptest.Server) *websocket.Conn {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { c.CloseNow() })
+	// State pushes can exceed the client's default 32 KiB read limit (the
+	// browser has none), which made board tests fail at random.
+	c.SetReadLimit(1 << 22)
 	return c
 }
 
@@ -745,4 +750,400 @@ func TestModeSwitchRefreshesBoard(t *testing.T) {
 	if st.Snapshot == nil || st.Snapshot.Mode != game.ModeReview {
 		t.Fatalf("state after mode switch: %+v", st.Snapshot)
 	}
+}
+
+// stubImages is an ImageSource answering with a fixed rule and recording
+// what it was asked.
+type stubImages struct {
+	answer func(src string) (string, string)
+	asked  []string
+}
+
+func (s *stubImages) Image(src string) (string, string, string) {
+	s.asked = append(s.asked, src)
+	img, fb := s.answer(src)
+	return img, fb, ""
+}
+
+// cardJSON fetches /api/card for def and decodes it into a map, so a test
+// can tell an absent key from an empty one.
+func cardJSON(t *testing.T, ts *httptest.Server, def string) map[string]any {
+	t.Helper()
+	resp, err := http.Get(ts.URL + "/api/card?def=" + def)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("card %s: status %d", def, resp.StatusCode)
+	}
+	var m map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		t.Fatal(err)
+	}
+	return m
+}
+
+// cardImages is the images list of a card's JSON, failing the test when
+// the key is missing or is not a list.
+func cardImages(t *testing.T, card map[string]any) []map[string]any {
+	t.Helper()
+	raw, ok := card["images"].([]any)
+	if !ok {
+		t.Fatalf("card has no images list: %v", card)
+	}
+	out := make([]map[string]any, len(raw))
+	for i, r := range raw {
+		out[i] = r.(map[string]any)
+	}
+	return out
+}
+
+// firstImage is the first entry of a card's images list, or an empty map
+// for a card with no art.
+func firstImage(t *testing.T, card map[string]any) map[string]any {
+	t.Helper()
+	imgs := cardImages(t, card)
+	if len(imgs) == 0 {
+		return map[string]any{}
+	}
+	return imgs[0]
+}
+
+// TestCardImageList: /api/card sends the card's whole image list in its
+// order. A base-path entry goes through the image source (copy, version,
+// fallback). A complete image file goes through it too: when it has a
+// resized copy, the copy goes first as a base-path entry with its version
+// and no fallback, then the file itself, marked image_file; without a
+// copy, the file alone. A card with no art sends an empty list.
+func TestCardImageList(t *testing.T) {
+	const (
+		src      = "https://assets.tcgdex.net/en/sv/sv1/1"
+		cdn      = "https://cdn.example/images/en/sv/sv1/1"
+		malie    = "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/tst/tst_en_001_std.jpg"
+		malieCDN = "https://cdn.example/images/malie/jpg/en/tst/tst_en_001_std"
+	)
+	db := cardstest.New()
+	db["tst-1"].Images = []cards.ImageRef{{URL: src}, {URL: malie, File: true}}
+	db["tst-1"].Image = src
+	db["tst-3"].Images = []cards.ImageRef{{URL: malie, File: true}, {URL: src}}
+	db["tst-3"].Image = malie
+	m := game.NewManager(t.TempDir(), db)
+	s := New(m, state.P1)
+	copies := map[string]string{src: cdn, malie: malieCDN}
+	stub := &stubImages{answer: func(s string) (string, string) { return copies[s], s }}
+	s.Images = versionedStub{stub, "abc123"}
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+
+	imgs := cardImages(t, cardJSON(t, ts, "tst-1"))
+	if len(imgs) != 3 {
+		t.Fatalf("images %v, want 3 entries", imgs)
+	}
+	if imgs[0]["image"] != cdn || imgs[0]["image_fallback"] != src || imgs[0]["image_version"] != "abc123" {
+		t.Errorf("base-path entry %v", imgs[0])
+	}
+	if imgs[1]["image"] != malieCDN || imgs[1]["image_version"] != "abc123" {
+		t.Errorf("file copy entry %v", imgs[1])
+	}
+	if _, ok := imgs[0]["image_file"]; ok {
+		t.Errorf("base-path entry marked as a file: %v", imgs[0])
+	}
+	for _, k := range []string{"image_file", "image_fallback"} {
+		if _, ok := imgs[1][k]; ok {
+			t.Errorf("file copy entry has %s: %v", k, imgs[1])
+		}
+	}
+	if imgs[2]["image"] != malie || imgs[2]["image_file"] != true {
+		t.Errorf("file entry %v", imgs[2])
+	}
+	for _, k := range []string{"image_fallback", "image_version"} {
+		if _, ok := imgs[2][k]; ok {
+			t.Errorf("file entry has %s: %v", k, imgs[2])
+		}
+	}
+	if !slices.Equal(stub.asked, []string{src, malie}) {
+		t.Errorf("image source asked %v, want both entries", stub.asked)
+	}
+
+	// Reordered: the file's copy and the file come first.
+	imgs = cardImages(t, cardJSON(t, ts, "tst-3"))
+	if len(imgs) != 3 || imgs[0]["image"] != malieCDN || imgs[1]["image"] != malie || imgs[2]["image"] != cdn {
+		t.Errorf("reordered list %v", imgs)
+	}
+
+	// A file with no copy yet goes alone.
+	delete(copies, malie)
+	stub.answer = func(s string) (string, string) {
+		if c, ok := copies[s]; ok {
+			return c, s
+		}
+		return s, ""
+	}
+	imgs = cardImages(t, cardJSON(t, ts, "tst-3"))
+	if len(imgs) != 2 || imgs[0]["image"] != malie || imgs[0]["image_file"] != true || imgs[1]["image"] != cdn {
+		t.Errorf("list without a file copy %v", imgs)
+	}
+
+	// No art and nothing to borrow: an empty list.
+	if imgs := cardImages(t, cardJSON(t, ts, "tst-7")); len(imgs) != 0 {
+		t.Errorf("Makuhita images %v, want none", imgs)
+	}
+}
+
+// versionedStub gives a stubImages answer a content version.
+type versionedStub struct {
+	*stubImages
+	version string
+}
+
+func (v versionedStub) Image(src string) (string, string, string) {
+	img, fb, _ := v.stubImages.Image(src)
+	return img, fb, v.version
+}
+
+func TestCardImageSource(t *testing.T) {
+	const src = "https://assets.tcgdex.net/en/sv/sv1/1"
+	const cdn = "https://cdn.example/images/en/sv/sv1/1"
+	db := cardstest.New()
+	db["tst-1"].Image = src // Riolu has art; Lucario (tst-2) has none
+	m := game.NewManager(t.TempDir(), db)
+	s := New(m, state.P1)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+
+	t.Run("no image source", func(t *testing.T) {
+		s.Images = nil
+		got := cardJSON(t, ts, "tst-1")
+		if firstImage(t, got)["image"] != src {
+			t.Fatalf("image = %v, want %s", firstImage(t, got)["image"], src)
+		}
+		if _, ok := firstImage(t, got)["image_fallback"]; ok {
+			t.Fatalf("image_fallback present without an image source: %v", got)
+		}
+		got = cardJSON(t, ts, "tst-2")
+		if _, ok := firstImage(t, got)["image"]; ok {
+			t.Fatalf("imageless card has an image: %v", got)
+		}
+	})
+
+	t.Run("source gives another address", func(t *testing.T) {
+		stub := &stubImages{answer: func(s string) (string, string) { return cdn, s }}
+		s.Images = stub
+		got := cardJSON(t, ts, "tst-1")
+		if firstImage(t, got)["image"] != cdn || firstImage(t, got)["image_fallback"] != src {
+			t.Fatalf("image = %v, fallback = %v; want %s, %s", firstImage(t, got)["image"], firstImage(t, got)["image_fallback"], cdn, src)
+		}
+		if len(stub.asked) != 1 || stub.asked[0] != src {
+			t.Fatalf("source asked %v, want [%s]", stub.asked, src)
+		}
+		got = cardJSON(t, ts, "tst-2")
+		if _, ok := firstImage(t, got)["image"]; ok {
+			t.Fatalf("imageless card has an image: %v", got)
+		}
+		if _, ok := firstImage(t, got)["image_fallback"]; ok {
+			t.Fatalf("imageless card has a fallback: %v", got)
+		}
+		if len(stub.asked) != 1 {
+			t.Fatalf("source asked about an imageless card: %v", stub.asked)
+		}
+	})
+
+	t.Run("source keeps the address", func(t *testing.T) {
+		s.Images = &stubImages{answer: func(s string) (string, string) { return s, "" }}
+		got := cardJSON(t, ts, "tst-1")
+		if firstImage(t, got)["image"] != src {
+			t.Fatalf("image = %v, want %s", firstImage(t, got)["image"], src)
+		}
+		if _, ok := firstImage(t, got)["image_fallback"]; ok {
+			t.Fatalf("image_fallback present when the source keeps the address: %v", got)
+		}
+		// A source that echoes the address as its own fallback adds none.
+		s.Images = &stubImages{answer: func(s string) (string, string) { return s, s }}
+		if _, ok := firstImage(t, cardJSON(t, ts, "tst-1"))["image_fallback"]; ok {
+			t.Fatal("image_fallback equal to image was not dropped")
+		}
+	})
+}
+
+// versionedImages is an ImageSource answering every address with a copy
+// at cdn and a fixed content version, or, with keep, the address itself
+// (and the version anyway, which the server must drop).
+type versionedImages struct {
+	cdn, version string
+	keep         bool
+}
+
+func (v versionedImages) Image(src string) (string, string, string) {
+	if v.keep {
+		return src, "", v.version
+	}
+	return v.cdn, src, v.version
+}
+
+func TestCardImageVersion(t *testing.T) {
+	const src = "https://assets.tcgdex.net/en/sv/sv1/1"
+	const cdn = "https://cdn.example/images/en/sv/sv1/1"
+	db := cardstest.New()
+	db["tst-1"].Image = src // Riolu has art; Lucario (tst-2) has none
+	m := game.NewManager(t.TempDir(), db)
+	s := New(m, state.P1)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+
+	t.Run("a versioned copy carries its version", func(t *testing.T) {
+		s.Images = versionedImages{cdn: cdn, version: "abc123def456"}
+		got := cardJSON(t, ts, "tst-1")
+		if firstImage(t, got)["image"] != cdn || firstImage(t, got)["image_fallback"] != src || firstImage(t, got)["image_version"] != "abc123def456" {
+			t.Fatalf("card = %v; want image %s, fallback %s, version abc123def456", got, cdn, src)
+		}
+		if _, ok := firstImage(t, cardJSON(t, ts, "tst-2"))["image_version"]; ok {
+			t.Fatal("imageless card has a version")
+		}
+	})
+
+	t.Run("no version without a versioned copy", func(t *testing.T) {
+		for name, src := range map[string]ImageSource{
+			"no image source":      nil,
+			"copy with no version": versionedImages{cdn: cdn},
+			"address kept":         versionedImages{keep: true, version: "abc123def456"},
+		} {
+			s.Images = src
+			if _, ok := firstImage(t, cardJSON(t, ts, "tst-1"))["image_version"]; ok {
+				t.Errorf("%s: image_version present", name)
+			}
+		}
+	})
+}
+
+// sendDelta sends a board request and returns its result's delta, failing
+// the test if the request is refused.
+func sendDelta(t *testing.T, c *websocket.Conn, id int, verb string, args map[string]any) []string {
+	t.Helper()
+	b, _ := json.Marshal(map[string]any{"id": id, "verb": verb, "args": args})
+	if err := c.Write(context.Background(), websocket.MessageText, b); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	for {
+		_, raw, err := c.Read(ctx)
+		if err != nil {
+			t.Fatalf("waiting for result %d: %v", id, err)
+		}
+		var r struct {
+			Type  string   `json:"type"`
+			ID    int      `json:"id"`
+			OK    bool     `json:"ok"`
+			Error string   `json:"error"`
+			Delta []string `json:"delta"`
+		}
+		json.Unmarshal(raw, &r)
+		if r.Type != "result" || r.ID != id {
+			continue
+		}
+		if !r.OK {
+			t.Fatalf("%s refused: %s", verb, r.Error)
+		}
+		return r.Delta
+	}
+}
+
+// TestBoardDeltaHidesOpponentCards: the board's result for a move that
+// makes the opponent draw (the player's Judge, applied to p2) shows p2's
+// drawn cards as hidden in play mode. With the reveal view on in review
+// mode it names every card, as the board itself does.
+func TestBoardDeltaHidesOpponentCards(t *testing.T) {
+	db := cardstest.New()
+	db["tst-9"] = &cards.Card{ID: "tst-9", Name: "Judge", Category: "Trainer", TrainerType: "Supporter", Effect: "Each player shuffles their hand into their deck and draws 4 cards."}
+	m := game.NewManager(t.TempDir(), db)
+	deck := strings.Replace(testDeck, "Trainer: 4\n4 Ultra Ball TST 3", "Trainer: 8\n4 Ultra Ball TST 3\n4 Judge TST 9", 1)
+	deck = strings.Replace(deck, "48 Basic {F} Energy SVE 6", "44 Basic {F} Energy SVE 6", 1)
+	deck = strings.Replace(deck, "Energy: 48", "Energy: 44", 1)
+	if _, _, err := m.New(context.Background(), game.NewGameRequest{ID: "ui-delta", DeckP1: deck, DeckP2: deck}); err != nil {
+		t.Fatal(err)
+	}
+	s := New(m, state.P1)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	s.StartHub(ctx)
+	ts := httptest.NewServer(s.Handler())
+	t.Cleanup(ts.Close)
+
+	g, _ := m.Current()
+	startPlay(t, g)
+	var judge state.IID
+	st := g.State()
+	for _, iid := range append(append([]state.IID{}, st.Sides[state.P1].Hand...), st.Sides[state.P1].Deck...) {
+		if st.Cards[iid].Def == "tst-9" {
+			judge = iid
+			break
+		}
+	}
+	if judge == "" {
+		t.Fatal("p1 has no Judge outside its prizes")
+	}
+	if l, _ := st.Find(judge); l.Zone != state.Hand {
+		if _, err := g.Move(state.P1, state.ActorSystem, judge, state.Loc{Zone: state.Hand}, "", ""); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	c := dial(t, ts)
+	var sm stateMsg
+	next(t, c, "state", &sm)
+
+	// Play mode: p2's new hand is drawn by the applied Judge.
+	delta := sendDelta(t, c, 1, "play_trainer", map[string]any{"iid": string(judge)})
+	after := g.State()
+	drawn := after.Sides[state.P2].Hand
+	if len(drawn) != 4 {
+		t.Fatalf("p2 holds %d cards after the player's Judge, want 4", len(drawn))
+	}
+	hidden := 0
+	for _, iid := range drawn {
+		for _, line := range delta {
+			if !strings.Contains(line, string(iid)+" ") {
+				continue
+			}
+			if strings.Contains(line, string(iid)+" "+after.Name(iid)) {
+				t.Errorf("play-mode delta names p2's drawn card: %q", line)
+			}
+			if strings.Contains(line, string(iid)+" (hidden)") {
+				hidden++
+			}
+		}
+	}
+	if hidden < len(drawn) {
+		t.Errorf("play-mode delta hides %d mentions of p2's %d drawn cards, want each hidden; delta %q", hidden, len(drawn), delta)
+	}
+
+	// Review mode with the reveal view on: a p2 draw is named.
+	sendDelta(t, c, 2, "set_mode", map[string]any{"mode": "review"})
+	sendDelta(t, c, 3, "set_reveal", map[string]any{"reveal": true})
+	delta = sendDelta(t, c, 4, "draw", map[string]any{"seat": "p2"})
+	after = g.State()
+	top := after.Sides[state.P2].Hand[len(after.Sides[state.P2].Hand)-1]
+	want := string(top) + " " + after.Name(top)
+	if !slicesContainsSub(delta, want) {
+		t.Errorf("reveal-view delta %q does not name the drawn card %q", delta, want)
+	}
+
+	// Review mode with the reveal view off: hidden again.
+	sendDelta(t, c, 5, "set_reveal", map[string]any{"reveal": false})
+	delta = sendDelta(t, c, 6, "draw", map[string]any{"seat": "p2"})
+	after = g.State()
+	top = after.Sides[state.P2].Hand[len(after.Sides[state.P2].Hand)-1]
+	if !slicesContainsSub(delta, string(top)+" (hidden)") || slicesContainsSub(delta, string(top)+" "+after.Name(top)) {
+		t.Errorf("review delta without reveal %q should hide %s", delta, top)
+	}
+}
+
+func slicesContainsSub(lines []string, sub string) bool {
+	for _, l := range lines {
+		if strings.Contains(l, sub) {
+			return true
+		}
+	}
+	return false
 }

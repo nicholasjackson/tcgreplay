@@ -15,8 +15,8 @@ import (
 // status.
 func wantLock(t *testing.T, m *game.Manager, when string, locked bool, opponent string) {
 	t.Helper()
-	if got := m.Locked(); got != locked {
-		t.Errorf("%s: Locked() = %v, want %v", when, got, locked)
+	if got := m.Hold() != game.HoldNone; got != locked {
+		t.Errorf("%s: Hold() = %q, want a hold %v", when, m.Hold(), locked)
 	}
 	if got := m.Opponent(); got != opponent {
 		t.Errorf("%s: Opponent() = %q, want %q", when, got, opponent)
@@ -72,13 +72,13 @@ func TestToolCallsKeepLock(t *testing.T) {
 		until := time.Now().Add(4 * release)
 		for time.Now().Before(until) {
 			time.Sleep(30 * time.Millisecond)
-			if !m.Locked() {
+			if !(m.Hold() != game.HoldNone) {
 				t.Fatalf("lock released while the assistant called get_state every 30ms (release %v)", release)
 			}
 			mustCall(t, cs, "get_state", nil)
 		}
 		deadline := time.Now().Add(2 * time.Second)
-		for m.Locked() {
+		for m.Hold() != game.HoldNone {
 			if time.Now().After(deadline) {
 				t.Fatal("lock never released after the calls stopped")
 			}

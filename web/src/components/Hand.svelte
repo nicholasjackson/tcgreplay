@@ -11,19 +11,25 @@
 
   const side = $derived(app.board.sides[seat]);
   const order = { Pokemon: 0, Trainer: 1, Energy: 2 };
+  // groupKey is what stacks cards in one fan slot: the name, so alternate
+  // prints of a card share a slot, except for a card played as a pair,
+  // whose two prints are different halves the player must choose between.
+  const groupKey = (c) => (cardInfo(c.def)?.played_as_pair ? c.def : c.name);
   // groups is the hand as fan slots: one per distinct face-up card (its
   // copies stacked), then one per face-down card.
   const groups = $derived.by(() => {
     const known = [...(side.hand || [])].sort((a, b) => {
       const ca = order[cardInfo(a.def)?.category] ?? 3;
       const cb = order[cardInfo(b.def)?.category] ?? 3;
-      return ca - cb || (a.name || '').localeCompare(b.name || '') || a.iid.localeCompare(b.iid);
+      return ca - cb || (a.name || '').localeCompare(b.name || '') ||
+        (a.def || '').localeCompare(b.def || '', undefined, { numeric: true }) || a.iid.localeCompare(b.iid);
     });
     const out = [];
     for (const c of known) {
       const g = out.at(-1);
-      if (g && c.name && g.name === c.name) g.cards.push(c);
-      else out.push({ key: c.iid, name: c.name, cards: [c] });
+      const k = c.name && groupKey(c);
+      if (g && k && g.group === k) g.cards.push(c);
+      else out.push({ key: c.iid, name: c.name, group: k, cards: [c] });
     }
     const backs = Math.max(0, side.hand_count - known.length);
     for (let i = 0; i < backs; i++) {

@@ -30,7 +30,7 @@ func TestResolveMCPFindsTheCallersGame(t *testing.T) {
 	if m != a.M {
 		t.Error("ResolveMCP returned a manager other than the account's own")
 	}
-	if want := "https://playmat.example.com/?board=" + Handle(alice.ID); link != want {
+	if want := "https://playmat.example.com/board?board=" + Handle(alice.ID); link != want {
 		t.Errorf("link = %q, want %q", link, want)
 	}
 	if got := r.LastActive(a); !got.Equal(clock.t) {
@@ -86,7 +86,7 @@ func TestResolveMCPQuietIsNotActivity(t *testing.T) {
 	if m != a.M {
 		t.Error("ResolveMCPQuiet returned a manager other than the account's own")
 	}
-	if want := "https://playmat.example.com/?board=" + Handle(alice.ID); link != want {
+	if want := "https://playmat.example.com/board?board=" + Handle(alice.ID); link != want {
 		t.Errorf("link = %q, want %q", link, want)
 	}
 	if got := r.LastActive(a); !got.Equal(created) {

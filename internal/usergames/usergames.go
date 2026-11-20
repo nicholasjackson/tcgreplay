@@ -14,11 +14,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
 
@@ -38,8 +40,17 @@ type Config struct {
 	// MaxUsers is the number of places: accounts that may hold a game at
 	// once. 0 means no cap.
 	MaxUsers int
+	// Reviewer is the Google email of the one reviewer account (OpenAI's
+	// plugin review), matched without regard to case and only when Google
+	// verified it. The reviewer is admitted even when every place is held,
+	// and its place is not counted against MaxUsers. Empty means none.
+	Reviewer string
 	// Now is the clock; nil means time.Now. Tests substitute their own.
 	Now func() time.Time
+	// Recorder records the registry's events (refusals at the user cap,
+	// expiries, removals, foreign board links) by player ID, never by
+	// email; nil records nothing.
+	Recorder *telemetry.Recorder
 }
 
 // purgeAfter is how long an entry that holds no place is kept without
@@ -75,9 +86,12 @@ type Entry struct {
 	// the server's places; both are guarded by the registry's mu.
 	last  time.Time
 	holds bool
-	ctx   context.Context
-	stop  context.CancelFunc
-	board http.Handler
+	// reviewer is whether acct is the configured reviewer, as of its last
+	// action; a reviewer's place is not counted. Guarded by mu.
+	reviewer bool
+	ctx      context.Context
+	stop     context.CancelFunc
+	board    http.Handler
 }
 
 // New returns an empty registry for cfg.
@@ -85,10 +99,15 @@ func New(cfg Config) *Registry {
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
+	cfg.Reviewer = strings.ToLower(strings.TrimSpace(cfg.Reviewer))
 	return &Registry{cfg: cfg, entries: map[string]*Entry{}}
 }
 
 var _ hostauth.Places = (*Registry)(nil)
+
+// Recorder returns the registry's recorder (nil when it has none), so
+// hosted wiring can hand the same one to the admin page.
+func (r *Registry) Recorder() *telemetry.Recorder { return r.cfg.Recorder }
 
 // Use returns acct's entry for an action (a tool call, a board move or a
 // board page load), creating it the first time, and records the activity.
@@ -104,12 +123,15 @@ func (r *Registry) Use(acct hostauth.Account) (*Entry, error) {
 	if e != nil {
 		r.expireIfIdle(e, now)
 	}
-	if (e == nil || !e.holds) && r.full() {
+	reviewer := r.isReviewer(acct)
+	if (e == nil || !e.holds) && !reviewer && r.full() {
 		return nil, hostauth.BusyError(r.cfg.MaxUsers)
 	}
 	e = r.entryLocked(acct, now)
 	e.last = now
 	e.holds = true
+	e.reviewer = reviewer
+	r.cfg.Recorder.Active(acct.Email)
 	return e, nil
 }
 
@@ -120,7 +142,7 @@ func (r *Registry) Use(acct hostauth.Account) (*Entry, error) {
 func (r *Registry) Admit(acct hostauth.Account) error {
 	_, err := r.Use(acct)
 	if err != nil {
-		log.Printf("usergames: refused %s: %v", acct.Email, err)
+		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "places", Message: err.Error()})
 	}
 	return err
 }
@@ -131,13 +153,21 @@ func (r *Registry) Release(id string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if e := r.entries[id]; e != nil {
-		log.Printf("usergames: %s signed out; removed", e.acct.Email)
+		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.Email, Reason: "signed_out"})
 	}
 	r.removeLocked(id)
 }
 
+// isReviewer reports whether acct is the configured reviewer: its email
+// matches, without regard to case, and Google verified it (as admins are
+// matched, see hostauth.Auth.IsAdmin).
+func (r *Registry) isReviewer(acct hostauth.Account) bool {
+	return r.cfg.Reviewer != "" && acct.EmailVerified && strings.ToLower(strings.TrimSpace(acct.Email)) == r.cfg.Reviewer
+}
+
 // full reports whether every place is held. Idle entries are expired
-// first, so their places count as free. The caller holds mu.
+// first, so their places count as free, and the reviewer's place is not
+// counted. The caller holds mu.
 func (r *Registry) full() bool {
 	if r.cfg.MaxUsers <= 0 {
 		return false
@@ -145,7 +175,7 @@ func (r *Registry) full() bool {
 	r.sweepLocked(r.cfg.Now())
 	held := 0
 	for _, e := range r.entries {
-		if e.holds {
+		if e.holds && !e.reviewer {
 			held++
 		}
 	}
@@ -190,7 +220,7 @@ func (r *Registry) expireIfIdle(e *Entry, now time.Time) bool {
 	e.holds = false
 	if _, err := e.M.Current(); err == nil {
 		e.M.Expire(r.notice())
-		log.Printf("usergames: game for %s expired after %s idle", e.acct.Email, humanDuration(r.cfg.Idle))
+		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.GameExpired, Email: e.acct.Email, Idle: humanDuration(r.cfg.Idle)})
 	}
 	return true
 }
@@ -264,7 +294,7 @@ func (r *Registry) sweepLocked(now time.Time) {
 		}
 		if !e.holds && now.Sub(e.last) > purgeAfter {
 			r.removeLocked(id)
-			log.Printf("usergames: removed idle account %s", e.acct.Email)
+			r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.Email, Reason: "idle"})
 			changed = true
 		}
 	}
@@ -330,11 +360,11 @@ func Handle(accountID string) string {
 }
 
 // Link returns the entry's board link on the public address:
-// <public>/?board=<handle>.
+// <public>/board?board=<handle>.
 func (e *Entry) Link(public *url.URL) string {
 	if public == nil {
 		return ""
 	}
-	u := url.URL{Scheme: public.Scheme, Host: public.Host, Path: "/", RawQuery: url.Values{"board": {e.Handle}}.Encode()}
+	u := url.URL{Scheme: public.Scheme, Host: public.Host, Path: "/board", RawQuery: url.Values{"board": {e.Handle}}.Encode()}
 	return u.String()
 }

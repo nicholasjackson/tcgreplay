@@ -1,0 +1,16 @@
+{
+  "corrections": [],
+  "acknowledged": [
+    {
+      "card": "det1-25",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not cover sets before Scarlet & Violet. A re-import picks up art when it appears."
+    },
+    {
+      "card": "det1-25",
+      "kind": "missing-effect",
+      "field": "/text/en/effect",
+      "reason": "Unverified: TCGdex has no effect text for this print, and no identical reprint gives it; the printed card has not been checked. Left for the maintainer (decision of 2026-11-08 to skip image reading for the older sets)."
+    }
+  ]
+}

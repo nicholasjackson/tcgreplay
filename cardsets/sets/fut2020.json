@@ -1,0 +1,253 @@
+{
+  "format": 1,
+  "set": {
+    "id": "fut2020",
+    "serie": "swsh",
+    "releaseDate": "2020-09-11",
+    "abbreviation": "FUT20",
+    "text": {
+      "en": {
+        "name": "Pokémon Futsal 2020"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "fut2020-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 60,
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "D",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/swsh/fut2020/1"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu on the Ball",
+          "attacks": [
+            {
+              "name": "Tail Whap"
+            },
+            {
+              "name": "Lightning Shot",
+              "effect": "Flip a coin. If tails, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "fut2020-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 60,
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "regulationMark": "D",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/swsh/fut2020/2"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Eevee on the Ball",
+          "attacks": [
+            {
+              "name": "Make the Assist",
+              "effect": "Attach a basic Energy card from your hand to 1 of your Benched Pokémon."
+            },
+            {
+              "name": "Tackle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "fut2020-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 60,
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ]
+        },
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "regulationMark": "D",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/swsh/fut2020/3"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Grookey on the Ball",
+          "attacks": [
+            {
+              "name": "Tenacious Defense",
+              "effect": "During your opponent's next turn, the Defending Pokémon can't retreat."
+            },
+            {
+              "name": "Razor Leaf"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "fut2020-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 60,
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "20×"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "regulationMark": "D",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/swsh/fut2020/4"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Scorbunny on the Ball",
+          "attacks": [
+            {
+              "name": "Fiery Dribbling",
+              "effect": "Flip a coin until you get tails. This attack does 20 damage for each heads."
+            },
+            {
+              "name": "Reckless Charge",
+              "effect": "This Pokémon also does 10 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "fut2020-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 60,
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "regulationMark": "D",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/swsh/fut2020/5"
+        }
+      ],
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sobble on the Ball",
+          "attacks": [
+            {
+              "name": "Spectacular Save",
+              "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to this Pokémon."
+            },
+            {
+              "name": "Rain Splash"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

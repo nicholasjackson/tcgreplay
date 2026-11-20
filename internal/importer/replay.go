@@ -106,12 +106,21 @@ type replay struct {
 	consumed *Node
 	// boundAt records the log line that revealed each card, for tracing.
 	boundAt map[state.IID]int
+	// lineCodes is the card codes on each log line; codes is the code the
+	// line that revealed each card gave for it, when it gave exactly one.
+	lineCodes map[int][]lineCode
+	codes     map[state.IID]string
 
 	pendingPrize   map[state.Seat][]state.IID
 	pendingRetreat map[state.Seat]bool
 	lastKO         *koInfo
-	lastStadium    state.IID
-	lastDevolved   state.IID
+	lastStadium    []state.IID // replaced (or attack-discarded) Stadium cards whose "discarded" sublines are done
+	// pairHalf is the half of a Stadium pair a player has just attached to
+	// another card of the same name in hand ("attached X to X."), with the
+	// line it was on: the next line, playing the other half to the Stadium
+	// spot, plays both as one Stadium.
+	pairHalf     map[state.Seat]pairHalf
+	lastDevolved state.IID
 }
 
 type koInfo struct {
@@ -197,6 +206,7 @@ func (r *replay) bind(iid state.IID, name string) error {
 		if b != name {
 			return fmt.Errorf("%s is already %s, not %s", iid, b, name)
 		}
+		r.noteCode(iid, name)
 		return nil
 	}
 	if !r.bindable(iid, name) {
@@ -212,6 +222,7 @@ func (r *replay) bind(iid state.IID, name string) error {
 	if r.boundAt != nil && r.pos < len(r.flat) {
 		r.boundAt[iid] = r.flat[r.pos].No
 	}
+	r.noteCode(iid, name)
 	r.st.Cards[iid].Name = name
 	r.used[seatName{r.st.Cards[iid].Owner, name}]++
 	return nil
@@ -594,4 +605,30 @@ func (r *replay) sawMove(seat state.Seat, name, move string) {
 	if seat == OppSeat && !slices.Contains(r.oppMoves[name], move) {
 		r.oppMoves[name] = append(r.oppMoves[name], move)
 	}
+}
+
+// noteCode records the print the line being replayed names for iid, if it
+// names exactly one for name and iid has none yet. A card first named in a
+// list holding two prints of it gets its code from a later line that names
+// it alone (drawing it, evolving into it).
+func (r *replay) noteCode(iid state.IID, name string) {
+	if r.codes == nil || r.codes[iid] != "" || r.pos >= len(r.flat) {
+		return
+	}
+	if code := codeFor(r.nodeCodes(r.flat[r.pos], nil), name); code != "" {
+		r.codes[iid] = code
+	}
+}
+
+// nodeCodes appends the card codes on n's line and every line nested under
+// it (a headline's handler may bind cards its bullet lists name).
+func (r *replay) nodeCodes(n *Node, out []lineCode) []lineCode {
+	if r.lineCodes == nil {
+		return out
+	}
+	out = append(out, r.lineCodes[n.No]...)
+	for _, c := range n.Children {
+		out = r.nodeCodes(c, out)
+	}
+	return out
 }

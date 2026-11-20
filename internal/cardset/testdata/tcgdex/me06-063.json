@@ -1,0 +1,36 @@
+{
+  "category": "Pokemon",
+  "id": "me06-063",
+  "localId": "063",
+  "name": "Darkrai",
+  "hp": 120,
+  "types": [
+    "Darkness"
+  ],
+  "stage": "Basic",
+  "attacks": [
+    {
+      "cost": [
+        "Darkness"
+      ],
+      "name": "Shadow-Clad",
+      "effect": "Search your deck for up to 2 Basic <span class=\"energy-symbol Darkness\" title=\"Darkness\">Darkness</span> Energy cards and attach them to this Pokémon. Then, shuffle your deck."
+    },
+    {
+      "cost": [
+        "Darkness",
+        "Darkness",
+        "Colorless"
+      ],
+      "name": "Dark Cutter",
+      "damage": 110
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Grass",
+      "value": "×2"
+    }
+  ],
+  "retreat": 2
+}

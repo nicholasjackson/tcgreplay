@@ -39,7 +39,31 @@ type Server struct {
 	// with the live connection's request context; an error refuses the
 	// action with its message. Nil (the desktop) never refuses.
 	Limit func(ctx context.Context) error
-	hub   *hub
+	// Images, when set (hosted mode with the shared store only), decides
+	// where the board loads each card image from. Nil (the desktop, the
+	// daemon, dev and the board test server) keeps the TCGdex address.
+	Images ImageSource
+	// OnError, when set (hosted mode), is told of each board action that
+	// fails, with the live connection's request context, the action's verb
+	// and its error. An action the Limit refuses is not a failure. Nil (the
+	// desktop) tells nobody.
+	OnError func(ctx context.Context, action string, err error)
+	hub     *hub
+}
+
+// ImageSource decides where the board loads a card image from. It is
+// called once for each entry of a card's image list: a TCGdex image base
+// address, or a complete image file such as a malie.io jpg. It returns the
+// base address to load (to which the board appends /low.webp or
+// /high.webp) when the image has a copy, else src itself; when that
+// differs from src, the address to fall back to (ignored for an image
+// file, whose file itself is the fallback); and the content version of
+// the image at that address ("" when there is none), which changes
+// whenever its bytes do. Implementations
+// must never block or touch the network: the card endpoint answers on the
+// board's critical path.
+type ImageSource interface {
+	Image(src string) (image, fallback, version string)
 }
 
 // New returns a server for m with the UI playing human.
@@ -82,6 +106,33 @@ func (s *Server) Handler() http.Handler {
 		return mux
 	}
 	return localOnly(mux)
+}
+
+// borrowedArt is the art for a card with no image of its own (a new
+// promo, say): the whole image list of the print of the same name and
+// moves that the card database prefers, which is one with art. Only the
+// pictures are borrowed; the card keeps its identity. Nil if there is
+// none.
+func (s *Server) borrowedArt(ctx context.Context, db cards.DB, c *cards.Card) []cards.ImageRef {
+	if c.Category == "Energy" {
+		return nil // Basic Energy art is borrowed by the card database
+	}
+	var moves []string
+	for _, a := range c.Attacks {
+		moves = append(moves, a.Name)
+	}
+	for _, a := range c.Abilities {
+		moves = append(moves, a.Name)
+	}
+	id, err := db.ByName(ctx, c.Name, moves...)
+	if err != nil || id == "" || id == c.ID {
+		return nil
+	}
+	alt, err := db.Card(ctx, id)
+	if err != nil || !cards.SameName(alt.Name, c.Name) {
+		return nil
+	}
+	return alt.ImageList()
 }
 
 // StartHub runs the update hub until ctx is done, for use with Handler.
@@ -129,23 +180,82 @@ type CardInfo struct {
 	Retreat     int             `json:"retreat,omitempty"`
 	Attacks     []cards.Attack  `json:"attacks,omitempty"`
 	Abilities   []cards.Ability `json:"abilities,omitempty"`
-	// Image is the TCGdex image base URL; append /low.webp or /high.webp.
-	Image string `json:"image,omitempty"`
-	Text  string `json:"text"`
+	// PlayedAsPair marks a card whose two different prints are played
+	// together as one card (a Legendary Stadium), so the hand keeps the
+	// prints apart for the player to choose between.
+	PlayedAsPair bool `json:"played_as_pair,omitempty"`
+	// Images lists every source of the card's image, in the order the
+	// board tries them; empty for a card with no art.
+	Images []CardImage `json:"images"`
+	Text   string      `json:"text"`
+}
+
+// CardImage is one source of a card's image.
+type CardImage struct {
+	// Image is, without File, the base address to load the image from
+	// (the CDN copy in hosted mode with the shared store, else TCGdex), to
+	// which the board appends /low.webp or /high.webp; with File, a
+	// complete image file loaded as is for every size.
+	Image string `json:"image"`
+	// File marks Image as a complete image file.
+	File bool `json:"image_file,omitempty"`
+	// Fallback is the TCGdex base address, set only when Image is a copy
+	// that differs from it; the board loads it if Image fails.
+	Fallback string `json:"image_fallback,omitempty"`
+	// Version is the content version of the copy at Image, set only when
+	// Image is a copy. The board appends ?v=<image_version> to the Image
+	// address with its size (never to the fallback), so a browser or CDN
+	// holding an old copy fetches changed art again.
+	Version string `json:"image_version,omitempty"`
 }
 
 func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 	def := r.URL.Query().Get("def")
-	if def == "" || s.M.DB == nil {
+	// The open game's own snapshot, so its cards never change under it.
+	db := s.M.CardDB()
+	if def == "" || db == nil {
 		http.Error(w, "unknown card", http.StatusNotFound)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
-	c, err := s.M.DB.Card(ctx, def)
+	c, err := db.Card(ctx, def)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
+	}
+	refs := c.ImageList()
+	if len(refs) == 0 {
+		refs = s.borrowedArt(ctx, db, c)
+	}
+	images := make([]CardImage, 0, len(refs))
+	for _, ref := range refs {
+		if ref.URL == "" {
+			continue
+		}
+		if ref.File {
+			// A file source image (malie.io) the cache copies resized,
+			// like a TCGdex image: its copy first, the file itself after.
+			if s.Images != nil {
+				if img, _, ver := s.Images.Image(ref.URL); img != ref.URL {
+					images = append(images, CardImage{Image: img, Version: ver})
+				}
+			}
+			images = append(images, CardImage{Image: ref.URL, File: true})
+			continue
+		}
+		img := CardImage{Image: ref.URL}
+		if s.Images != nil {
+			var fb, ver string
+			img.Image, fb, ver = s.Images.Image(ref.URL)
+			if fb != img.Image {
+				img.Fallback = fb
+			}
+			if img.Image != ref.URL {
+				img.Version = ver // a version only ever names a copy
+			}
+		}
+		images = append(images, img)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	// Revalidate: what is served for a card (e.g. borrowed Energy art) can
@@ -155,6 +265,7 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		ID: c.ID, Name: c.Name, Category: c.Category, Stage: c.Stage,
 		TrainerType: c.TrainerType, EnergyType: c.EnergyType, HP: c.HP,
 		Types: c.Types, EvolveFrom: c.EvolveFrom, Retreat: c.Retreat,
-		Attacks: c.Attacks, Abilities: c.Abilities, Image: c.Image, Text: c.Text(),
+		Attacks: c.Attacks, Abilities: c.Abilities, PlayedAsPair: c.PlayedAsPair,
+		Images: images, Text: c.Text(),
 	})
 }

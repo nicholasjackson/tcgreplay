@@ -23,7 +23,8 @@ import (
 // The data directory holds only the assistant label.
 type Manager struct {
 	Dir string
-	DB  cards.DB
+	// src gives the card database each new game pins; nil means none.
+	src CardSource
 	// Rand, if set, seeds every new game (for tests).
 	Rand func() *rand.Rand
 
@@ -43,10 +44,47 @@ type Manager struct {
 	Timing Timing
 }
 
+// CardSource gives the current card catalogue. Each new, imported or
+// rebuilt game captures one snapshot from it and keeps it for its whole
+// life, so a newer catalogue never changes an open game's cards.
+// *catalog.Loader satisfies it; so does a fixed database wrapped in
+// Static, and cardstest.FakeDB, which is its own snapshot.
+type CardSource interface {
+	Snapshot() cards.DB
+}
+
+// Static is a CardSource that always gives the same database.
+type Static struct{ cards.DB }
+
+// Snapshot returns the database.
+func (s Static) Snapshot() cards.DB { return s.DB }
+
 // NewManager returns a manager with no game open; dir holds the assistant
-// label.
-func NewManager(dir string, db cards.DB) *Manager {
-	return &Manager{Dir: dir, DB: db}
+// label and src gives the card database each game pins (nil: none).
+func NewManager(dir string, src CardSource) *Manager {
+	return &Manager{Dir: dir, src: src}
+}
+
+// snapshot is the card database a game starting now pins: the source's
+// current snapshot, or nil when there is no source.
+func (m *Manager) snapshot() cards.DB {
+	if m.src == nil {
+		return nil
+	}
+	return m.src.Snapshot()
+}
+
+// CardDB is the card database to show cards through: the open game's own
+// snapshot, so its card text and art never change under it, or the
+// current snapshot when no game is open. Nil when there is no source.
+func (m *Manager) CardDB() cards.DB {
+	m.mu.Lock()
+	g := m.current
+	m.mu.Unlock()
+	if g != nil {
+		return g.DB()
+	}
+	return m.snapshot()
 }
 
 // SetAssistant records which assistant is connected over MCP (Claude,
@@ -238,7 +276,9 @@ func BuildCards(ctx context.Context, db cards.DB, lists map[state.Seat]string) (
 
 // New creates a game from two decklists, sets it up and makes it current.
 func (m *Manager) New(ctx context.Context, req NewGameRequest) (*Game, *Result, error) {
-	cardList, warnings, err := BuildCards(ctx, m.DB, map[state.Seat]string{state.P1: req.DeckP1, state.P2: req.DeckP2})
+	// One snapshot resolves the decklists and is the game's card database.
+	db := m.snapshot()
+	cardList, warnings, err := BuildCards(ctx, db, map[state.Seat]string{state.P1: req.DeckP1, state.P2: req.DeckP2})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -249,7 +289,7 @@ func (m *Manager) New(ctx context.Context, req NewGameRequest) (*Game, *Result, 
 		req.Source = "play"
 	}
 	l := store.NewMemory(store.Header{Game: req.ID, Created: time.Now().UTC(), Source: req.Source})
-	g, err := Load(req.ID, l, m.DB, m.rng())
+	g, err := Load(req.ID, l, db, m.rng())
 	if err != nil {
 		return nil, nil, err
 	}

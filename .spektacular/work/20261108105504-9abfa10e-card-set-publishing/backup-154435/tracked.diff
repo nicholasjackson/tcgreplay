@@ -1,0 +1,379 @@
+diff --git a/.do/app.yaml b/.do/app.yaml
+index 3fb1bbe..affac26 100644
+--- a/.do/app.yaml
++++ b/.do/app.yaml
+@@ -2,8 +2,15 @@
+ #
+ # Create the app once:        doctl apps create --spec .do/app.yaml
+ # Apply later edits to this:  doctl apps update <app-id> --spec .do/app.yaml
+-# Deploying code needs only a push to main: App Platform builds the
+-# Dockerfile and deploys it. Pushes to other branches do not deploy.
++# Deploys come from .github/workflows/deploy.yml, which runs
++# `doctl apps create-deployment` on every push to main that changes
++# anything outside cardsets/ (and when started by hand); App Platform then
++# builds the Dockerfile and deploys it. App Platform's own deploy-on-push
++# is off (deploy_on_push below), so a push that changes only card-set data
++# never restarts the playmat: that data is published to the bucket by
++# .github/workflows/publish-cardsets.yml and picked up while it runs.
++# Pushes to other branches do not deploy. Edits to this file still need
++# the `doctl apps update` above.
+ #
+ # Users sign in with Google (see TCGREPLAY_GOOGLE_CLIENT_ID below). Each
+ # Google account has its own game, held in memory; games left idle are
+@@ -18,10 +25,10 @@
+ # or one set) without a redeploy.
+ #
+ # The playmat also serves the public website (built from site/ by the
+-# Dockerfile) at / , with the board at /board. Every push to main
+-# redeploys it, so a docs change also restarts the playmat and drops every
+-# game. The limits below (TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS,
+-# TCGREPLAY_IDLE_TIMEOUT) are also shown on the website, which reads them
++# Dockerfile) at / , with the board at /board. Every deploy (each push to
++# main outside cardsets/) restarts it, so a docs change also restarts the
++# playmat and drops every game. The limits below (TCGREPLAY_RATE_LIMIT,
++# TCGREPLAY_MAX_USERS, TCGREPLAY_IDLE_TIMEOUT) are also shown on the website, which reads them
+ # from this file when it is built: this file stays the one place they are
+ # set, and the site build fails if one goes missing.
+ name: tcgreplay
+@@ -31,7 +38,9 @@ services:
+     github:
+       repo: nicholasjackson/tcgreplay
+       branch: main
+-      deploy_on_push: true
++      # Off: .github/workflows/deploy.yml deploys instead, skipping pushes
++      # that change only cardsets/.
++      deploy_on_push: false
+     dockerfile_path: Dockerfile
+     source_dir: /
+     # Plain HTTP; App Platform (and Cloudflare in front) provide HTTPS.
+diff --git a/cmd/tcgreplay/main.go b/cmd/tcgreplay/main.go
+index efe27b4..127fbc2 100644
+--- a/cmd/tcgreplay/main.go
++++ b/cmd/tcgreplay/main.go
+@@ -16,7 +16,9 @@
+ //
+ // tcgreplay sets builds card sets into the project ahead of time, for the
+ // maintainer: sets import <set> fetches and merges a set, sets check checks
+-// the built sets (see internal/cardset). It never starts the playmat.
++// the built sets, and sets publish publishes them to the bucket the
++// playmat loads card data from (see internal/cardset). It never starts the
++// playmat.
+ package main
+ 
+ import (
+diff --git a/cmd/tcgreplay/sets.go b/cmd/tcgreplay/sets.go
+index c0343ba..5ac8540 100644
+--- a/cmd/tcgreplay/sets.go
++++ b/cmd/tcgreplay/sets.go
+@@ -9,15 +9,18 @@ import (
+ 	"os"
+ 	"os/signal"
+ 	"slices"
++	"strings"
+ 	"syscall"
+ 
+ 	"github.com/nicholasjackson/tcgreplay/internal/cardset"
++	"github.com/nicholasjackson/tcgreplay/internal/spaces"
+ )
+ 
+ const setsUsage = `usage:
+   tcgreplay sets import <set-id|code> [-dir cardsets] [-no-malie]
+   tcgreplay sets import -all [-dir cardsets] [-no-malie]
+   tcgreplay sets check [<set>...] [-dir cardsets]
++  tcgreplay sets publish [-dir cardsets] [-to <directory>] [-dry-run]
+ `
+ 
+ // runSets runs the sets subcommand, which builds card sets into the
+@@ -38,6 +41,8 @@ func runSetsTo(args []string, stdout, stderr io.Writer) int {
+ 		return setsImport(ctx, args[1:], stdout, stderr)
+ 	case "check":
+ 		return setsCheck(args[1:], stdout, stderr)
++	case "publish":
++		return setsPublish(ctx, args[1:], os.Getenv, stdout, stderr)
+ 	default:
+ 		fmt.Fprintf(stderr, "unknown sets command %q\n", args[0])
+ 		fmt.Fprint(stderr, setsUsage)
+@@ -153,3 +158,88 @@ func setsImportAll(ctx context.Context, opts cardset.ImportOptions, stdout, stde
+ 	}
+ 	return 0
+ }
++
++// envCDNToken is the DigitalOcean API token the publish purges the CDN
++// with; the hosted playmat reads the same setting.
++const envCDNToken = "TCGREPLAY_SPACES_CDN_TOKEN"
++
++// setsPublish publishes the built sets: to the bucket the TCGREPLAY_SPACES_*
++// settings name (purging the manifest from the CDN when
++// TCGREPLAY_SPACES_CDN_TOKEN is set), or to a local directory with -to. It
++// prints what it uploaded and what was unchanged, and exits 1 when the
++// publish fails (open check items, a published set missing from the
++// directory, an upload or purge failure) and 2 when the settings are
++// missing or partial.
++func setsPublish(ctx context.Context, args []string, getenv func(string) string, stdout, stderr io.Writer) int {
++	fs := flag.NewFlagSet("tcgreplay sets publish", flag.ContinueOnError)
++	fs.SetOutput(stderr)
++	dir := fs.String("dir", cardset.DefaultDir, "card-set directory")
++	to := fs.String("to", "", "publish to this local directory instead of the bucket")
++	dryRun := fs.Bool("dry-run", false, "report what would be uploaded, writing nothing")
++	cdnAPI := fs.String("cdn-api", "", "DigitalOcean API base URL (tests)")
++	pos, err := parseInterspersed(fs, args)
++	if err != nil {
++		return 2
++	}
++	if len(pos) > 0 {
++		fmt.Fprintf(stderr, "sets publish takes no set names (it publishes every built set): %q\n", pos)
++		fmt.Fprint(stderr, setsUsage)
++		return 2
++	}
++	opts := cardset.PublishOptions{
++		Dir:    *dir,
++		DryRun: *dryRun,
++		Logf:   func(format string, a ...any) { fmt.Fprintf(stderr, format+"\n", a...) },
++	}
++	where := *to
++	if *to != "" {
++		opts.Target = cardset.DirTarget{Dir: *to}
++	} else {
++		cfg, set, err := spaces.FromEnv(getenv)
++		if !set {
++			fmt.Fprintln(stderr, "set TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET, or use -to")
++			return 2
++		}
++		if err != nil {
++			fmt.Fprintln(stderr, err)
++			return 2
++		}
++		c, err := spaces.New(cfg)
++		if err != nil {
++			fmt.Fprintln(stderr, err)
++			return 2
++		}
++		opts.Target = cardset.SpacesTarget{C: c}
++		opts.Prefix = cardset.BucketPrefix
++		where = "bucket " + cfg.Bucket
++		if token := strings.TrimSpace(getenv(envCDNToken)); token != "" {
++			cdn := spaces.NewCDN(cfg, token)
++			if *cdnAPI != "" {
++				cdn.API = *cdnAPI
++			}
++			opts.Purge = cdn.Purge
++		}
++	}
++	res, err := cardset.Publish(ctx, opts)
++	if err != nil {
++		fmt.Fprintln(stderr, err)
++		return 1
++	}
++	verb := "uploaded"
++	if *dryRun {
++		verb = "would upload"
++	}
++	for _, id := range res.Uploaded {
++		fmt.Fprintf(stdout, "%s %s (%d prints)\n", verb, id, res.Manifest.Sets[id].Prints)
++	}
++	fmt.Fprintf(stdout, "unchanged: %d sets\n", len(res.Unchanged))
++	switch {
++	case !res.ManifestChanged:
++		fmt.Fprintln(stdout, "manifest unchanged")
++	case *dryRun:
++		fmt.Fprintf(stdout, "manifest would be updated (dry run: nothing written to %s)\n", where)
++	default:
++		fmt.Fprintf(stdout, "manifest updated in %s\n", where)
++	}
++	return 0
++}
+diff --git a/cmd/tcgreplay/sets_test.go b/cmd/tcgreplay/sets_test.go
+index 585c333..0171f5a 100644
+--- a/cmd/tcgreplay/sets_test.go
++++ b/cmd/tcgreplay/sets_test.go
+@@ -8,6 +8,10 @@ import (
+ 	"path/filepath"
+ 	"strings"
+ 	"testing"
++
++	"github.com/nicholasjackson/tcgreplay/internal/cardset"
++	"github.com/nicholasjackson/tcgreplay/internal/spaces"
++	"github.com/nicholasjackson/tcgreplay/internal/spaces/spacestest"
+ )
+ 
+ // fakeCardSources starts stand-ins for TCGdex and the malie export serving
+@@ -167,3 +171,165 @@ func TestSetsImportAll(t *testing.T) {
+ 		t.Errorf("-all with a set: exit %d, stderr %q; want a usage error", code, stderr)
+ 	}
+ }
++
++// builtCardsets writes a card-set directory holding one clean built set,
++// "tst" with two prints, and returns it.
++func builtCardsets(t *testing.T) string {
++	t.Helper()
++	dir := filepath.Join(t.TempDir(), "cardsets")
++	s := &cardset.Set{
++		Format: cardset.Format,
++		Set:    cardset.SetHeader{ID: "tst", Serie: "me", Text: map[string]cardset.SetText{"en": {Name: "Test Set"}}},
++		Prints: []cardset.Print{
++			{ID: "tst-001", LocalID: "001", Category: "Pokemon", HP: 70, Stage: "Basic",
++				Attacks: []cardset.AttackCore{{Cost: []string{"Fighting"}, Damage: "30"}},
++				Images:  []cardset.Image{{Source: "tcgdex", URL: "https://assets.tcgdex.net/en/me/tst/001"}},
++				Text:    map[string]cardset.PrintText{"en": {Name: "Riolu", Attacks: []cardset.MoveText{{Name: "Punch"}}}}},
++			{ID: "tst-002", LocalID: "002", Category: "Trainer", TrainerType: "Supporter",
++				Images: []cardset.Image{{Source: "tcgdex", URL: "https://assets.tcgdex.net/en/me/tst/002"}},
++				Text:   map[string]cardset.PrintText{"en": {Name: "Aarune", Effect: "Search your deck."}}},
++		},
++	}
++	if err := cardset.Write(filepath.Join(dir, "sets", "tst.json"), s); err != nil {
++		t.Fatal(err)
++	}
++	return dir
++}
++
++// setPublishEnv points the TCGREPLAY_SPACES_* settings the publish reads
++// (inherited by runMain's subprocess) at cfg; an empty Config clears them.
++func setPublishEnv(t *testing.T, cfg spaces.Config, token string) {
++	t.Setenv(spaces.EnvEndpoint, cfg.Endpoint)
++	t.Setenv(spaces.EnvBucket, cfg.Bucket)
++	t.Setenv(spaces.EnvKey, cfg.AccessKey)
++	t.Setenv(spaces.EnvSecret, cfg.SecretKey)
++	t.Setenv("TCGREPLAY_SPACES_CDN_TOKEN", token)
++}
++
++// sets publish -to writes the published layout to a directory.
++func TestSetsPublishToDirectory(t *testing.T) {
++	dir := builtCardsets(t)
++	to := t.TempDir()
++	setPublishEnv(t, spaces.Config{}, "")
++	code, stdout, stderr := runMain(t, "sets", "publish", "-dir", dir, "-to", to)
++	if code != 0 {
++		t.Fatalf("exit %d; stderr:\n%s", code, stderr)
++	}
++	for _, want := range []string{"uploaded tst (2 prints)", "unchanged: 0 sets", "manifest updated"} {
++		if !strings.Contains(stdout, want) {
++			t.Errorf("stdout lacks %q:\n%s", want, stdout)
++		}
++	}
++	mb, err := os.ReadFile(filepath.Join(to, "manifest.json"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	m, err := cardset.DecodeManifest(mb)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err := os.Stat(filepath.Join(to, filepath.FromSlash(m.Sets["tst"].Path))); err != nil {
++		t.Errorf("set object not written: %v", err)
++	}
++}
++
++// sets publish with the storage settings publishes to the bucket, purging
++// the manifest from the CDN, and a second run reports everything unchanged.
++func TestSetsPublishToBucket(t *testing.T) {
++	dir := builtCardsets(t)
++	srv := spacestest.New(t)
++	cfg := srv.Config()
++	cdn := spacestest.NewCDN(t, spacestest.Bucket+"."+strings.TrimPrefix(cfg.Endpoint, "http://"), "tok")
++	setPublishEnv(t, cfg, "tok")
++	code, stdout, stderr := runMain(t, "sets", "publish", "-dir", dir, "-cdn-api", cdn.URL)
++	if code != 0 {
++		t.Fatalf("exit %d; stderr:\n%s", code, stderr)
++	}
++	if !strings.Contains(stdout, "uploaded tst (2 prints)") || !strings.Contains(stdout, "manifest updated in bucket "+spacestest.Bucket) {
++		t.Errorf("stdout:\n%s", stdout)
++	}
++	if _, ok := srv.Object("cardsets/manifest.json"); !ok {
++		t.Error("no manifest in the bucket")
++	}
++	if p := cdn.Purges(); len(p) != 1 || len(p[0]) != 1 || p[0][0] != "cardsets/manifest.json" {
++		t.Errorf("purges %v", p)
++	}
++
++	srv.Reset()
++	code, stdout, stderr = runMain(t, "sets", "publish", "-dir", dir, "-cdn-api", cdn.URL)
++	if code != 0 {
++		t.Fatalf("second run exit %d; stderr:\n%s", code, stderr)
++	}
++	if strings.Contains(stdout, "uploaded") || !strings.Contains(stdout, "unchanged: 1 sets") || !strings.Contains(stdout, "manifest unchanged") {
++		t.Errorf("second run stdout:\n%s", stdout)
++	}
++	for _, k := range srv.Keys("") {
++		if srv.Requests("PUT", k) > 0 {
++			t.Errorf("second run wrote %s", k)
++		}
++	}
++}
++
++// Missing or partial storage settings fail naming what is missing, and
++// upload nothing.
++func TestSetsPublishSettingsErrors(t *testing.T) {
++	dir := builtCardsets(t)
++	setPublishEnv(t, spaces.Config{}, "")
++	code, _, stderr := runMain(t, "sets", "publish", "-dir", dir)
++	if code != 2 || !strings.Contains(stderr, "set TCGREPLAY_SPACES_ENDPOINT, _BUCKET, _KEY and _SECRET, or use -to") {
++		t.Errorf("unset: exit %d, stderr %q", code, stderr)
++	}
++
++	srv := spacestest.New(t)
++	cfg := srv.Config()
++	cfg.SecretKey = ""
++	cfg.Bucket = ""
++	setPublishEnv(t, cfg, "")
++	code, _, stderr = runMain(t, "sets", "publish", "-dir", dir)
++	if code != 2 || !strings.Contains(stderr, "TCGREPLAY_SPACES_BUCKET is not set") || !strings.Contains(stderr, "TCGREPLAY_SPACES_SECRET is not set") {
++		t.Errorf("partial: exit %d, stderr %q", code, stderr)
++	}
++	if srv.Total() != 0 {
++		t.Errorf("partial settings reached the bucket: %d requests", srv.Total())
++	}
++}
++
++// A dry run reports what would be uploaded and writes nothing.
++func TestSetsPublishDryRun(t *testing.T) {
++	dir := builtCardsets(t)
++	srv := spacestest.New(t)
++	setPublishEnv(t, srv.Config(), "")
++	code, stdout, stderr := runMain(t, "sets", "publish", "-dir", dir, "-dry-run")
++	if code != 0 {
++		t.Fatalf("exit %d; stderr:\n%s", code, stderr)
++	}
++	if !strings.Contains(stdout, "would upload tst (2 prints)") || !strings.Contains(stdout, "dry run") {
++		t.Errorf("stdout:\n%s", stdout)
++	}
++	if keys := srv.Keys(""); len(keys) != 0 {
++		t.Errorf("dry run wrote %v", keys)
++	}
++
++	to := t.TempDir()
++	if code, _, stderr := runMain(t, "sets", "publish", "-dir", dir, "-to", to, "-dry-run"); code != 0 {
++		t.Fatalf("-to dry run exit %d; stderr:\n%s", code, stderr)
++	}
++	if entries, _ := os.ReadDir(to); len(entries) != 0 {
++		t.Errorf("-to dry run wrote %d entries", len(entries))
++	}
++}
++
++// A publish error (here an open check item) exits 1 and uploads nothing.
++func TestSetsPublishRefusesOpenItems(t *testing.T) {
++	dir := builtCardsets(t)
++	os.MkdirAll(filepath.Join(dir, "reports"), 0o755)
++	os.WriteFile(filepath.Join(dir, "reports", "tst.json"), []byte(`{"set":"tst","summary":{},"items":[{"card":"tst-001","kind":"disagreement","field":"/hp","status":"open"}]}`), 0o644)
++	to := t.TempDir()
++	code, _, stderr := runMain(t, "sets", "publish", "-dir", dir, "-to", to)
++	if code != 1 || !strings.Contains(stderr, "open items") {
++		t.Errorf("exit %d, stderr %q", code, stderr)
++	}
++	if entries, _ := os.ReadDir(to); len(entries) != 0 {
++		t.Errorf("refused publish wrote %d entries", len(entries))
++	}
++}
+diff --git a/internal/cardset/fetch.go b/internal/cardset/fetch.go
+index 9081a9d..a5d37b3 100644
+--- a/internal/cardset/fetch.go
++++ b/internal/cardset/fetch.go
+@@ -11,7 +11,8 @@ import (
+ 	"time"
+ )
+ 
+-// ErrNotFound means an upstream source has no such set or card.
++// ErrNotFound means an upstream source has no such set or card, or a
++// publish target has no object under a key.
+ var ErrNotFound = errors.New("not found")
+ 
+ // UserAgent is sent with every upstream request.

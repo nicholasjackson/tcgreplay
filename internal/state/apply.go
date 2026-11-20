@@ -108,7 +108,10 @@ func (s *State) remove(iid IID) (Loc, error) {
 	}
 	switch loc.Zone {
 	case Stadium:
-		s.Stadium = ""
+		s.Stadium = slices.DeleteFunc(s.Stadium, func(x IID) bool { return x == iid })
+		if len(s.Stadium) == 0 {
+			s.Stadium = nil
+		}
 	case Deck:
 		side.Deck = del(side.Deck)
 	case Prizes:
@@ -134,6 +137,9 @@ func (s *State) remove(iid IID) (Loc, error) {
 }
 
 func (s *State) applyMove(p *MovePayload) error {
+	if p.Pair != "" {
+		return s.applyPairMove(p)
+	}
 	card, ok := s.Cards[p.IID]
 	if !ok {
 		return fmt.Errorf("no card %s", p.IID)
@@ -178,8 +184,14 @@ func (s *State) applyMove(p *MovePayload) error {
 			return fmt.Errorf("prize slot %d is occupied by %s", to.Slot, side.Prizes[to.Slot])
 		}
 	case Stadium:
-		if s.Stadium != "" && s.Stadium != p.IID {
-			return fmt.Errorf("stadium is occupied by %s (%s); discard it first", s.Stadium, s.Name(s.Stadium))
+		// A stack role means nothing here and is ignored, as it always was,
+		// so saved moves that carry one still replay.
+		lone := len(s.Stadium) == 1 && s.Stadium[0] != p.IID
+		switch {
+		case p.As == AsPair && !lone:
+			return fmt.Errorf("%s joins the Stadium spot as a pair only when it holds one other card", p.IID)
+		case p.As != AsPair && len(s.Stadium) > 0 && !(len(s.Stadium) == 1 && s.Stadium[0] == p.IID):
+			return fmt.Errorf("stadium is occupied by %s (%s); discard it first", s.Stadium[0], s.Name(s.Stadium[0]))
 		}
 	case Active, Bench:
 		dest, err = s.Stack(to)
@@ -221,7 +233,7 @@ func (s *State) applyMove(p *MovePayload) error {
 	case Lost:
 		side.Lost = append(side.Lost, p.IID)
 	case Stadium:
-		s.Stadium = p.IID
+		s.Stadium = append(s.Stadium, p.IID)
 	case Active, Bench:
 		// The source removal may have changed the destination pointer if it
 		// emptied a stack, so look it up again.
@@ -440,4 +452,56 @@ func (s *State) applyAssume(p *AssumePayload) error {
 		c.Def, c.Name, c.Basis = a.Def, a.Name, a.Basis
 	}
 	return nil
+}
+
+// applyPairMove moves both halves of a Stadium pair in one event: into the
+// empty Stadium spot, out of it, or between piles, each card to its owner's
+// side. It is the two single moves in turn, validated first so the second
+// cannot fail once the first is done.
+func (s *State) applyPairMove(p *MovePayload) error {
+	if p.Pair == p.IID {
+		return fmt.Errorf("%s cannot be its own pair", p.IID)
+	}
+	if _, ok := s.Cards[p.IID]; !ok {
+		return fmt.Errorf("no card %s", p.IID)
+	}
+	if _, ok := s.Cards[p.Pair]; !ok {
+		return fmt.Errorf("no card %s", p.Pair)
+	}
+	if p.As != "" {
+		return fmt.Errorf("a pair moves together; it takes no %s role", p.As)
+	}
+	if p.To.Zone.IsStack() || p.To.Zone == Prizes {
+		return fmt.Errorf("a pair moves only into or out of the Stadium spot, or between piles")
+	}
+	a, err := s.Find(p.IID)
+	if err != nil {
+		return err
+	}
+	b, err := s.Find(p.Pair)
+	if err != nil {
+		return err
+	}
+	if a.Zone != b.Zone || a.Seat != b.Seat {
+		return fmt.Errorf("%s is in %s but its pair %s is in %s; a pair moves from one place", p.IID, a, p.Pair, b)
+	}
+	if p.To.Zone == Stadium {
+		if a.Zone == Stadium {
+			return fmt.Errorf("%s and %s are already in the Stadium spot", p.IID, p.Pair)
+		}
+		if len(s.Stadium) > 0 {
+			return fmt.Errorf("stadium is occupied by %s (%s); discard it first", s.Stadium[0], s.Name(s.Stadium[0]))
+		}
+	}
+	first := *p
+	first.Pair = ""
+	second := MovePayload{IID: p.Pair, To: p.To, Face: p.Face}
+	second.To.Seat = "" // each card goes to its own owner's side
+	if p.To.Zone == Stadium {
+		second.As = AsPair
+	}
+	if err := s.applyMove(&first); err != nil {
+		return err
+	}
+	return s.applyMove(&second)
 }

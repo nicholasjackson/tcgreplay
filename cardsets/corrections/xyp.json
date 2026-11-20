@@ -1,0 +1,53 @@
+{
+  "corrections": [
+    {
+      "card": "xyp-XY161",
+      "path": "/text/en/evolveFrom",
+      "value": "Fennekin",
+      "reason": "TCGdex has no evolves-from for this print; copied from an identical reprint of Braixen (same name, stage, HP, attack costs and damage): me04-012, sm6-16, swsh12-026"
+    },
+    {
+      "card": "xyp-XY94",
+      "path": "/attacks",
+      "value": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70+"
+        }
+      ],
+      "reason": "TCGdex lists no attacks for this print; copied from an identical reprint of Trevenant (same name, HP and Abilities): xy9-65"
+    },
+    {
+      "card": "xyp-XY94",
+      "path": "/text/en/attacks",
+      "value": [
+        {
+          "name": "Energy Press",
+          "effect": "This attack does 10 more damage for each Energy attached to your opponent's Active Pokémon."
+        }
+      ],
+      "reason": "Attack text of the identical reprint xy9-65"
+    }
+  ],
+  "acknowledged": [
+    {
+      "card": "xyp-XY39",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not cover sets before Scarlet & Violet. A re-import picks up art when it appears."
+    },
+    {
+      "card": "xyp-XY46",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not cover sets before Scarlet & Violet. A re-import picks up art when it appears."
+    },
+    {
+      "card": "xyp-XY68",
+      "kind": "no-image",
+      "reason": "No source has art for this print yet: TCGdex lists no image and has none at its usual asset address (404 on 2026-11-08), and the TCG Live export does not cover sets before Scarlet & Violet. A re-import picks up art when it appears."
+    }
+  ]
+}

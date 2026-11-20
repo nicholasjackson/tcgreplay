@@ -1,0 +1,12 @@
+Kept DONE summary for 20261108110847-d27a9f77-card-set-import (see orchestrator conversation; key project-wide rules):
+- Built format: cardsets/sets/<tcgdex-id>.json, format:1, language-independent core + text keyed by lang (en required), attacks/abilities positional, images list of {source,url} preference order, Print.Card(lang) -> cards.Card.
+- Corrections: cardsets/corrections/<id>.json, corrections[{card,path(RFC6901),value,reason}], acknowledged[{card,kind,field?,reason}]; correcting a field the format lacks is an error (paired-stadiums must add pair-mark field to Print first).
+- Report kinds: disagreement, missing-effect, no-attacks, missing-evolves-from, no-image, text-changed, correction-redundant, print-gone-upstream; status open/corrected/acknowledged.
+- cardsets/ outside internal/, never embedded, in .dockerignore.
+- HTML stripped from card text; {X} symbols kept.
+- `sets` is the binary's only subcommand, dispatched on os.Args[1] before flags.
+- Print.Card puts first tcgdex image into cards.Card.Image; publishing spec decides wider image policy.
+- No changelog convention involved.
+- Skill at skills/card-set-import/SKILL.md via .claude/skills symlink; never commits.
+- Pair rule recorded as a correction prepending rule text to effect; no pair field in format.
+- Person task: ask malie.io about build-time use. Knowledge: learnings/upstream-card-source-formats.md (repo tier, tcgreplay).

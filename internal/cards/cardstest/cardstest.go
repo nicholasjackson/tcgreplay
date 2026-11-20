@@ -25,6 +25,10 @@ func New() FakeDB {
 		"tst-7":   {ID: "tst-7", Name: "Makuhita", Category: "Pokemon", Stage: "Basic", HP: 80, Types: []string{"Fighting"}, Retreat: 2, Attacks: []cards.Attack{{Cost: []string{"Fighting"}, Name: "Slap", Damage: "20"}, {Cost: []string{"Fighting", "Colorless"}, Name: "Body Slam", Damage: "60"}}, Weaknesses: []cards.TypeValue{{Type: "Psychic", Value: "×2"}}},
 		"tst-8":   {ID: "tst-8", Name: "Deep Zone", Category: "Trainer", TrainerType: "Stadium", Effect: "Each player can have 8 Pokémon on their Bench."},
 		"sve-006": {ID: "sve-006", Name: "Fighting Energy", Category: "Energy", EnergyType: "Normal"},
+		// Twin Peak is a made-up pair-played Stadium in two prints. Like a
+		// real pair-played card it carries its pair rule in its effect text.
+		"tst-10": {ID: "tst-10", LocalID: "10", Name: "Twin Peak", Category: "Trainer", TrainerType: "Stadium", PlayedAsPair: true, Effect: "You cannot play this card by itself. You must combine 2 different Twin Peak from your hand to play as 1 Stadium card. Each player's Pokémon get +10 HP."},
+		"tst-11": {ID: "tst-11", LocalID: "11", Name: "Twin Peak", Category: "Trainer", TrainerType: "Stadium", PlayedAsPair: true, Effect: "You cannot play this card by itself. You must combine 2 different Twin Peak from your hand to play as 1 Stadium card. Each player's Pokémon get +10 HP."},
 	}
 }
 
@@ -35,6 +39,10 @@ func (f FakeDB) Card(_ context.Context, id string) (*cards.Card, error) {
 	return nil, fmt.Errorf("%s: %w", id, cards.ErrNotFound)
 }
 func (f FakeDB) Cached(id string) *cards.Card { return f[id] }
+
+// Snapshot makes the pool its own card source (game.CardSource): every
+// game pins the same pool.
+func (f FakeDB) Snapshot() cards.DB { return f }
 func (f FakeDB) ByName(_ context.Context, name string, _ ...string) (string, error) {
 	for id, c := range f {
 		if c.Name == name {

@@ -39,8 +39,12 @@ func newTestGame(t *testing.T) (*Manager, *Game) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(res.Warnings) > 0 {
-		t.Fatalf("setup warnings: %v", res.Warnings)
+	// Automatic mulligans are reported as warnings; anything else is not
+	// expected.
+	for _, w := range res.Warnings {
+		if !strings.Contains(w, " mulliganed ") {
+			t.Fatalf("setup warnings: %v", res.Warnings)
+		}
 	}
 	return m, g
 }
@@ -335,7 +339,7 @@ func TestStadiumReplacesAndEffectsExpire(t *testing.T) {
 	}
 	must(t)(g.PlayTrainer(state.P2, cl, "p2-18"))
 	st := g.State()
-	if st.Stadium != "p2-18" || !slices.Contains(st.Sides[state.P1].Discard, "p1-17") {
+	if !slices.Equal(st.Stadium, []state.IID{"p2-18"}) || !slices.Contains(st.Sides[state.P1].Discard, "p1-17") {
 		t.Fatal("stadium not replaced into owner's discard")
 	}
 	must(t)(g.EndTurn(state.P2, cl))
@@ -923,8 +927,16 @@ func TestWrongSeatErrorNamesCombinedTurn(t *testing.T) {
 // Opening-turn warnings follow each player's first turn: no Supporter or
 // attack for the player going first, no evolving for either player.
 func TestOpeningTurnWarnings(t *testing.T) {
-	_, g := newTestGame(t)
+	m, g := newTestGame(t)
 	hu, cl := state.ActorHuman, state.ActorClaude
+	// p1's Supporters draw only: the fixture Iono's effect would now be
+	// applied to p2's hand, which this test sets up by hand.
+	m.CardDB().(cardstest.FakeDB)["tst-90"] = &cards.Card{ID: "tst-90", Name: "Professor", Category: "Trainer", TrainerType: "Supporter", Effect: "Draw 3 cards."}
+	g.mu.Lock()
+	for _, iid := range []state.IID{"p1-13", "p1-14"} {
+		g.st.Cards[iid].Def, g.st.Cards[iid].Name = "tst-90", "Professor"
+	}
+	g.mu.Unlock()
 	actor := map[state.Seat]state.Actor{state.P1: hu, state.P2: cl}
 	for _, seat := range state.Seats {
 		for _, n := range []int{1, 2, 5, 6, 13, 14} {
@@ -1066,7 +1078,7 @@ func TestBenchPastFive(t *testing.T) {
 	m, g := newTestGame(t)
 	hu, cl := state.ActorHuman, state.ActorClaude
 	// The Arena becomes a Stadium that lets each bench hold 8.
-	m.DB.(cardstest.FakeDB)["tst-5"].Effect = "Each player can have 8 Pokémon on their Bench."
+	m.CardDB().(cardstest.FakeDB)["tst-5"].Effect = "Each player can have 8 Pokémon on their Bench."
 	for _, iid := range []state.IID{"p1-1", "p1-2", "p1-3", "p1-4", "p1-5", "p1-6", "p1-7", "p1-17"} {
 		if l, _ := g.State().Find(iid); l.Zone != state.Hand {
 			must(t)(g.Move(state.P1, hu, iid, state.Loc{Zone: state.Hand}, "", ""))

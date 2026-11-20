@@ -1,0 +1,397 @@
+{
+  "format": 1,
+  "set": {
+    "id": "tk-ex-latia",
+    "serie": "tk",
+    "releaseDate": "2004-07-01",
+    "abbreviation": "TK1A",
+    "text": {
+      "en": {
+        "name": "EX trainer Kit (Latias)"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "tk-ex-latia-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Bagon",
+          "attacks": [
+            {
+              "name": "Headbutt"
+            },
+            {
+              "name": "Flare"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Combusken",
+          "evolveFrom": "Torchic",
+          "attacks": [
+            {
+              "name": "Flare"
+            },
+            {
+              "name": "Double Kick",
+              "effect": "Flip 2 coins. This attack does 40 damage times the number of heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "10×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Delcatty",
+          "evolveFrom": "Skitty",
+          "attacks": [
+            {
+              "name": "Scratch"
+            },
+            {
+              "name": "Ultra Energy Source",
+              "effect": "Does 10 damage times the number of basic Energy cards attached to all of the Active Pokémon (both yours and your opponent’s)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Latias",
+          "attacks": [
+            {
+              "name": "Dragon Dew",
+              "effect": "Remove 1 damage counter from 1 of your Pokémon."
+            },
+            {
+              "name": "Heat Blast"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "10+"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Numel",
+          "attacks": [
+            {
+              "name": "Firebreathing",
+              "effect": "Flip a coin. If heads, this attack does 10 damage plus 10 more damage."
+            },
+            {
+              "name": "Tackle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Skitty",
+          "attacks": [
+            {
+              "name": "Tackle"
+            },
+            {
+              "name": "Lunge",
+              "effect": "Flip a coin. If tails, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "20+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": ""
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Torchic",
+          "attacks": [
+            {
+              "name": "Firebreathing",
+              "effect": "Flip a coin. If heads, this attack does 20 damage plus 20 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-8",
+      "localId": "8",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Potion",
+          "effect": "Remove 2 damage counters from 1 of your Pokémon (remove 1 damage counter if that Pokémon has only 1)."
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-9",
+      "localId": "9",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Energy Search",
+          "effect": "Search your deck for a basic Energy card, show it to your opponent, and put it into your hand. Shuffle your deck afterward"
+        }
+      }
+    },
+    {
+      "id": "tk-ex-latia-10",
+      "localId": "10",
+      "category": "Energy",
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "energyType": "Normal",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fire Energy"
+        }
+      }
+    }
+  ]
+}

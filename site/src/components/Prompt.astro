@@ -1,0 +1,10 @@
+---
+// Prompt is an example prompt to say to the assistant, with a Copy button.
+import CopyBlock from './CopyBlock.astro';
+interface Props {
+  text: string;
+  label?: string;
+}
+const { text, label = 'Example prompt' } = Astro.props;
+---
+<CopyBlock text={text} label={label} wrap class="prompt" />

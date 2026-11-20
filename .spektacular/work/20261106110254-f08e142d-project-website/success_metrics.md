@@ -1,0 +1,3 @@
+- A player new to tcgreplay, given only the site's link, connects it to their assistant and imports the example game in under 10 minutes, without help, on at least two of three tries with different people.
+- The home page loads, including the animation, with its largest content shown in under 2.5 seconds in a Lighthouse audit with mobile emulation (Slow 4G throttling), and its total download is under 1.5 MB.
+- Every page scores at least 90 for accessibility and performance in a Lighthouse audit with mobile emulation.

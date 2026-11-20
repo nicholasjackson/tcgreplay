@@ -1,0 +1,807 @@
+{
+  "plan": "20261112083238-29247b36-privacy-terms-disclaimer",
+  "items": [
+    {
+      "item": "1cd169b9-8886-4729-8233-d2e423427168",
+      "title": "Share one notice wording and show it in the website footer",
+      "checks": [
+        {
+          "at": "2026-11-13T07:24:25Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "1cd169b9-8886-4729-8233-d2e423427168",
+            "title": "Share one notice wording and show it in the website footer",
+            "criteria": [
+              "The notice (naming Nintendo, The Pokémon Company, Creatures and Game Freak), the TCGdex and malie.io credit and the GitHub issues address exist in exactly one file, and the footer of every website page shows them word for word.",
+              "A missing or broken shared file, a notice that drops one of the four companies, or a non-https address stops the website build with a message naming the problem.",
+              "Every website page's footer links to the privacy page and to the project's GitHub issues.",
+              "The container image still builds, with the guides still copied into the website build."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/notice/notice.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/layouts/Base.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "credit.lead"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgdex.dev"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://malie.io"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/notice.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/facts.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "import.meta.url"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/astro-site-build.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "help.label"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../lib/notice"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".credit"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "notice.help.url"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/styles/site.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/notice.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/facts.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The wording is in one source, internal/notice/notice.json (lines 2-10), and the footer reads it: Base.astro:62 renders {notice.notice}, Base.astro:63-68 render the credit lead and sources. The built HTML has the footer on all 19 pages (internal/site/dist/app, 19 files contain 'unofficial fan project'), and site.spec.js:79-88 asserts exact toHaveText equality with the shared file on every page. But the same notice text is also written out literally in site/e2e/notice.spec.js:13-14 (the 'want' object, also the credit lead and help label at lines 16 and 22). That is a second copy of the wording in a second file, which the criterion's 'exists in exactly one file' does not allow. Fix: have notice.spec.js compare against the shared file it already reads (or check only the four company names and the https rule) instead of pinning the literal text."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/lib/notice.ts:102 loads the file at module load, and Base.astro:11 imports it, so every page build reads it. A missing or unreadable file throws 'site notice: cannot read \u003cpath\u003e' (notice.ts:93-98). A notice missing a company throws 'site notice: \u003csource\u003e: the notice does not name \u003cCompany\u003e; it must name Nintendo, The Pokémon Company, Creatures, Game Freak' (notice.ts:72-75). A non-https URL throws 'site notice: ... sets \u003cfield\u003e to ...; it must be an https:// address' (notice.ts:57-69). The supplied verification run showed the Game Freak case exiting 1 with that message. Tests for each case are in site/e2e/notice.spec.js:38-78."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/layouts/Base.astro:69-75 places a nav aria-label='Footer' in the footer with \u003ca href=\"/privacy\"\u003ePrivacy\u003c/a\u003e (line 71) and \u003ca href={notice.help.url}\u003e 'Get help' (line 72), where help.url is https://github.com/nicholasjackson/tcgreplay/issues (internal/notice/notice.json:10). Every page uses this one layout (the Base.astro footer is shared), and site.spec.js:110-118 asserts the Privacy and help links on every page. Side note, not a criterion: the comments at Base.astro:5-6 and Dockerfile:10-12 and 15-16 say the board UI and the ChatGPT listing also read notice.json, but web/src/App.svelte has no reference to it, so those comments are inaccurate."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Dockerfile:22 has 'COPY internal/notice /src/internal/notice' in the web stage, and Dockerfile:36-37 keep 'COPY internal/guides /src/internal/guides' and add 'COPY internal/notice /src/internal/notice' in the site stage. .dockerignore does not exclude internal/notice or internal/guides (.dockerignore:1-21). The supplied podman build passed with those COPY lines in its log. I did not rerun the build."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:27:12Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "1cd169b9-8886-4729-8233-d2e423427168",
+            "title": "Share one notice wording and show it in the website footer",
+            "criteria": [
+              "The notice (naming Nintendo, The Pokémon Company, Creatures and Game Freak), the TCGdex and malie.io credit and the GitHub issues address exist in exactly one file, and the footer of every website page shows them word for word.",
+              "A missing or broken shared file, a notice that drops one of the four companies, or a non-https address stops the website build with a message naming the problem.",
+              "Every website page's footer links to the privacy page and to the project's GitHub issues.",
+              "The container image still builds, with the guides still copied into the website build."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/notice/notice.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/layouts/Base.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "credit.lead"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgdex.dev"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://malie.io"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/notice.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/lib/facts.ts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "import.meta.url"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/astro-site-build.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "help.label"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../lib/notice"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".credit"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "notice.help.url"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/styles/site.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/notice.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/facts.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The wording lives only in internal/notice/notice.json (line 2 notice, lines 4-8 credit lead and TCGdex/malie.io sources, line 10 help url https://github.com/nicholasjackson/tcgreplay/issues). A grep of the code root (excluding node_modules, dist, .git, .spektacular) finds the notice sentence and credit text only in notice.json, the e2e spec that checks them, and notice.ts comments. Base.astro:62 renders {notice.notice} verbatim, Base.astro:63-68 renders notice.credit.lead and each source name with its url, and Base.astro:72 links the help url. The e2e check (site.spec.js:78, 86-91) asserts the footer text equals the file's text. Nuance: the GitHub issues address appears in the footer as the href of the 'Get help' link, not as visible text; the visible words are 'Get help'."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/lib/notice.ts:93-99 throws 'site notice: cannot read \u003cpath\u003e' when the file is missing or unreadable. notice.ts:71-76 throws 'site notice: \u003csource\u003e: the notice does not name \u003ccompany\u003e; it must name Nintendo, The Pokémon Company, Creatures, Game Freak' for each missing company. notice.ts:61-67 throws a message naming the field and requiring an https:// address for a non-https or non-URL url. notice.ts:102 runs the loader at build time, and Base.astro:11 imports it on every page. The verification run with Game Freak removed exited 1 with that message, and site/e2e/notice.spec.js covers each failure case."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Base.astro:70-74 renders the footer nav (aria-label Footer) with a Privacy link to /privacy and a 'Get help' link to notice.help.url, which is https://github.com/nicholasjackson/tcgreplay/issues (notice.json:10). site.spec.js:93-97 asserts both hrefs on every crawled page. Base.astro is the shared layout that every page uses."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Dockerfile:29 COPY internal/notice into the web stage, and Dockerfile:41-42 COPY internal/guides and internal/notice into the site stage. Dockerfile:41 still copies internal/guides, so the existing guides copy is kept. .dockerignore does not exclude internal/notice (its only excludes are .git, bin, dev and build output, .spektacular, skills, .claude, .agents, cardsets). The podman build passed before the last edit, which changed only Dockerfile comments, so the build has not been re-run since that edit."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "958e954d-c12a-4b23-86c4-0870f30eebb4",
+      "title": "Publish the terms of service page",
+      "checks": [
+        {
+          "at": "2026-11-13T07:30:47Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "958e954d-c12a-4b23-86c4-0870f30eebb4",
+            "title": "Publish the terms of service page",
+            "criteria": [
+              "The terms page opens at `/terms` without signing in, sets no cookie, and is linked from the footer of every website page.",
+              "It names the tcgreplay project as running the playmat and states that the playmat is free and provided as is, with no guarantee it stays available, and that games may be lost at any time.",
+              "It states the hosted limits (requests a minute, players served at once, idle games dropped after the idle time), with the same figures as the playmat's configuration.",
+              "It states the disallowed uses (overloading or attacking the service, automated scraping, getting round the limits, anything unlawful), the minimum age of 13, and that the terms and the service may change or end.",
+              "Its trademarks and card images section carries the shared non-affiliation notice naming Nintendo, The Pokémon Company, Creatures and Game Freak, and the TCGdex and malie.io credit.",
+              "It links to the privacy page and to the project's GitHub issues for help, and shows a last-updated date."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/terms.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/privacy.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "lib/facts"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/notice/notice.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "lib/notice"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/limits"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "notice.credit"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "notice.help.url"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/layouts/Base.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/terms"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/terms.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/limits.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/site.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_routes_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/site/site_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "dist/app/terms/index.html"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Terms page exists at site/src/pages/terms.astro (untracked, listed in tcgreplay.status). It uses the Base layout, which renders the footer at site/src/layouts/Base.astro:72 (\u003cli\u003e\u003ca href=\"/terms\"\u003eTerms\u003c/a\u003e\u003c/li\u003e inside nav.footer-links, aria-label Footer). Docs.astro also wraps Base (site/src/layouts/Docs.astro:4,23), and index.astro, privacy.astro and 404.astro import Base, so every page gets the footer. No cookie is set by the page or layout; cmd/tcgreplay/hosted_routes_test.go:50 adds /terms to the signed-out no-redirect/no-cookie check, and site/e2e/terms.spec.js:40-50 asserts a 200, no set-cookie header, and no browser cookies. Signed-out access is not gated in the page itself."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "site/src/pages/terms.astro:32 'tcgreplay is run by the tcgreplay project'; lines 38-42 'The hosted playmat is free. It is provided as is, with no warranty of any kind. There is no guarantee that it stays available, works without interruption or keeps working the same way.'; lines 49-50 'Games ... can be lost at any time'."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "terms.astro:59-61 render limits.requestsPerMinute, limits.maxUsers and limits.idleTimeout from site/src/lib/facts.ts, which reads TCGREPLAY_RATE_LIMIT, TCGREPLAY_MAX_USERS and TCGREPLAY_IDLE_TIMEOUT from .do/app.yaml (lines 136-148: 300, 10, 60m). humanDuration gives '60 minutes' for 60m (facts.ts:154-159). Text reads 'up to 300 requests a minute', 'up to 10 signed-in players at once', 'games idle for 60 minutes are dropped'. terms.spec.js:72-84 also checks these against app.yaml."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "terms.astro:70-73 disallowed uses: 'overload or attack the service', 'use automated scraping of the site, the playmat or its card data', 'get round the limits, for example by using several accounts', 'use it for anything unlawful'. terms.astro:80 'You must be at least 13 years old'. terms.astro:103 'These terms and the service may change or end at any time' (Changes section)."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "terms.astro:83-92 Trademarks and card images section renders {notice.notice} (the fan-project notice naming Nintendo, The Pokémon Company, Creatures and Game Freak, from internal/notice/notice.json:2) and the credit from notice.credit (lead plus TCGdex and malie.io links, notice.json:3-9). The page imports notice from site/src/lib/notice.ts, which reads the shared file."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "terms.astro:97 links the privacy page (href=\"/privacy\"); terms.astro:108-113 Help section links notice.help.url, which is https://github.com/nicholasjackson/tcgreplay/issues (notice.json:10). terms.astro:23 shows '\u003cp class=\"updated\" data-updated\u003eLast updated {updated}.\u003c/p\u003e' with updated = '13 November 2026' (line 14)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "8d984cd4-8af8-4541-9215-e91038a05c89",
+      "title": "Bring the privacy page up to date",
+      "checks": [
+        {
+          "at": "2026-11-13T07:37:54Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "8d984cd4-8af8-4541-9215-e91038a05c89",
+            "title": "Bring the privacy page up to date",
+            "criteria": [
+              "The privacy page has a visitor-counting section naming Cloudflare Web Analytics, listing page, referrer, country and device, saying it sets no cookies and is never linked to an account, and saying how long Cloudflare keeps the counts.",
+              "It has a diagnostics section naming DigitalOcean's request and performance metrics and the playmat's own usage and error records, listing what they contain and what they never contain, and saying how long each is kept, matching the observability runbook.",
+              "It no longer says analytics are never collected, that the website loads nothing from other sites, or that logs hold email addresses.",
+              "Its cookie statement is true on the live site: the playmat sets no cookies of its own beyond the two sign-in cookies, Cloudflare (in front of the site) may set a short-lived bot-protection cookie (`__cf_bm`) that is not used for visitor counting and is not tied to an account, and the only thing loaded from another site is the visitor-counting script.",
+              "If a What's new list (`site/src/data/whats-new.yaml`) exists when this lands, the launch entry gains this work's player-visible changes (the terms page and the board's About panel) rather than a new entry; otherwise the launch-docs launch entry covers them.",
+              "Its statements on sign-ins, disconnecting an assistant, card images and outside services match how the playmat works.",
+              "Its other statements (cookies, browser settings, games, retention of games and sign-ins, removing data) are unchanged where the code bears them out.",
+              "It shows a new last-updated date and still links to the project's GitHub issues for questions."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/privacy.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/live-site-cf-bm-cookie.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/seal.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/disconnect-does-not-reach-playmat.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/privacy.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/privacy.astro:90-112 (section id visitor-counting) names Cloudflare Web Analytics, lists the page, referrer, country, device type/browser/OS and page-load timing, says it sets no cookies and stores nothing in the browser and is never linked to the Google account, and gives Cloudflare's retention (six months, full detail for 7 days, then about a tenth). The retention wording matches the Cloudflare FAQ quoted in the goal. Caveat: no Cloudflare beacon exists in the code (see criterion 4), so the statement that the website counts visits is not backed by any code in the tree. The criterion is about the page wording, which is present."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "privacy.astro:114-142 (section id diagnostics) names DigitalOcean's request and performance metrics and the playmat's own usage and error records, lists their contents (requests, latency, status codes, CPU, memory, restarts; sign-ins, tool calls with assistant, imports, new games, first daily activity, limits, expiries, errors), and states what they never contain (email, name, Google tokens, battle logs, decklists, card names, IP address). Both are kept 7 days (data-retention logs and metrics, lines 139-140), which matches docs/observability.md Retention table lines 260-264. The runbook's contents list at lines 26-83 also matches."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "privacy.astro contains none of the old false statements: no 'loads nothing from other sites', no 'Analytics' in the never-list (line 203 now reads 'Advertising or cross-site tracking data, or anything that identifies you in visitor counts'), and no claim that logs hold an email address (line 164 says 'The playmat's own records hold no email address'). The diff removes the old lines 360-361, 458-460 and 487-488."
+            },
+            {
+              "criterion": 4,
+              "verdict": "not_met",
+              "evidence": "The playmat-side cookie part holds: the only cookies it sets are tcgreplay_session (internal/hostauth/google.go:25-27, set at google.go:224) and tcgreplay_login_\u003cstate\u003e (google.go:36, 45 and 76); board.go:136 only clears the session cookie. privacy.astro:40-45 states this, and the __cf_bm description matches knowledge gotcha live-site-cf-bm-cookie.md. The 'only thing loaded from another site is Cloudflare's visitor-counting script' part is not shown: no beacon or analytics script exists in site/src/layouts/Base.astro, site/src/components/Playmat.astro, web/ or any non-test Go file (grep for cloudflareinsights, beacon, web-analytics found none). The gotcha (line 8) records that the live page carried no analytics beacon when observed on 2026-11-12. The beacon would have to be added in Base.astro or the board, which is outside this item's scope, so the page's claim is not true of the live site as the files stand. It could become true if another task adds the beacon."
+            },
+            {
+              "criterion": 5,
+              "verdict": "not_met",
+              "evidence": "site/src/data/whats-new.yaml does not exist (confirmed by the verification run and by the Glob of site/src/data and docs). So the launch-docs launch entry must cover the terms page and the About panel. No launch entry exists in this tree: grep for 'launch' under site/src returns no files, and docs/ holds only domain-move.md and observability.md. The sibling launch-docs plan (.spektacular/plans/20261112091756-c5b6d1fd-launch-docs/plan.md:113) says the terms and privacy pages belong in the launch entry, but nothing in the files shows that it does."
+            },
+            {
+              "criterion": 6,
+              "verdict": "not_met",
+              "evidence": "Most sign-in, disconnect and card-image statements match the code: scopes openid and email (internal/hostauth/hostauth.go:139), three kept fields and no name or photo (google.go:191), the ID token used once (google.go:115-131), disconnect not reaching the playmat (no revoke route in internal/hostauth; gotcha disconnect-does-not-reach-playmat.md), 30-day refresh and session lifetimes (store.go:15-17) and a one-hour access lifetime (oauth.go:27). One sentence does not match: privacy.astro:477-478 says 'Nothing about you is sent to TCGdex or malie.io'. Yet privacy.astro:476-477 says the browser loads images from TCGdex or malie.io when a copy is missing, and the client falls back to the TCGdex address (web/src/lib/store.svelte.js:163-164; internal/webui/server.go:202). That browser request sends the visitor's IP address and headers to those hosts. The sentence should say the playmat sends nothing, and that a fallback image request reaches them as any browser request does. Also, 'stay signed in when the playmat is updated' (privacy.astro:63-64) holds only with TCGREPLAY_SIGNING_KEY set (hosted.go:182-183). .do/app.yaml:117-119 declares it, so this is accurate as deployed."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "The unchanged statements are verbatim in the diff: the game idle timeout, the restart and update drop, and 'held in memory only ... never written to disk' (privacy.astro:77-88), the account-to-game isolation, the four display settings in the browser (lines 71-73), the board sign-in and connection durations, and the 'what it never collects' items other than analytics. The changed sentences (sign-ins at lines 62-66, account details at 152-156, removing data at 208-215) were corrected where the code contradicts the old text: the server records are plain in-memory maps and only the handed-out copies are sealed, and disconnecting does not make the playmat forget a player (gotcha disconnect-does-not-reach-playmat.md lines 9-15)."
+            },
+            {
+              "criterion": 8,
+              "verdict": "met",
+              "evidence": "privacy.astro:34 has 'Last updated 13 November 2026.' with data-updated, matching the regex used in site/e2e/privacy.spec.js:151. The Questions section (privacy.astro:218-221) links to notice.help.url, which internal/notice/notice.json:10 sets to https://github.com/nicholasjackson/tcgreplay/issues."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:41:01Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "8d984cd4-8af8-4541-9215-e91038a05c89",
+            "title": "Bring the privacy page up to date",
+            "criteria": [
+              "The privacy page has a visitor-counting section naming Cloudflare Web Analytics, listing page, referrer, country and device, saying it sets no cookies and is never linked to an account, and saying how long Cloudflare keeps the counts.",
+              "It has a diagnostics section naming DigitalOcean's request and performance metrics and the playmat's own usage and error records, listing what they contain and what they never contain, and saying how long each is kept, matching the observability runbook.",
+              "It no longer says analytics are never collected, that the website loads nothing from other sites, or that logs hold email addresses.",
+              "Its cookie statement is true on the live site: the playmat sets no cookies of its own beyond the two sign-in cookies, Cloudflare (in front of the site) may set a short-lived bot-protection cookie (`__cf_bm`) that is not used for visitor counting and is not tied to an account, and the only thing loaded from another site is the visitor-counting script.",
+              "If a What's new list (`site/src/data/whats-new.yaml`) exists when this lands, the launch entry gains this work's player-visible changes (the terms page and the board's About panel) rather than a new entry; otherwise the launch-docs launch entry covers them.",
+              "Its statements on sign-ins, disconnecting an assistant, card images and outside services match how the playmat works.",
+              "Its other statements (cookies, browser settings, games, retention of games and sign-ins, removing data) are unchanged where the code bears them out.",
+              "It shows a new last-updated date and still links to the project's GitHub issues for questions."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/privacy.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/live-site-cf-bm-cookie.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/seal.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/disconnect-does-not-reach-playmat.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/privacy.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/privacy.astro:90-112 has section id visitor-counting naming Cloudflare Web Analytics, listing the page, referrer (line 98), country (line 99) and device type/browser/OS (line 100), saying it sets no cookies and stores nothing in the browser and is never linked to the Google account (line 104), and that Cloudflare keeps the counts for six months with full detail for 7 days then a tenth sample (lines 109-110, matching the Cloudflare FAQ cited in the header comment lines 14-21). Caveat, not a verdict change: line 93 says the website and board count visits in the present tense, but docs/observability and the visitor-analytics plan show no counting script is live yet (research.md line 91: no beacon on the live page on 2026-11-12)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The diagnostics section (privacy.astro:114-142) names DigitalOcean's request and performance metrics (line 119) and the playmat's own usage and error records (line 124), and gives 7 days for both (lines 139-140), matching docs/observability.md Retention table (lines 260-264). But its never-list (privacy.astro:135-136) says these records never contain 'card names' and 'IP address'. docs/observability.md 'What is never recorded' (lines 79-83) lists only email, name, Google token or the playmat's tokens/cookies, battle log, decklist and card data; and lines 88-89 say error messages 'can quote battle-log lines and name cards and players', redacted only where the words appear in the player's own text. So 'never contain card names' is not what the runbook says, and the IP address claim is not in the runbook at all. The usage list also omits the account_removed, board_refused and admin events the runbook's event table lists (observability.md:67-70). Fix: align the never-list and usage list with the runbook."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "No 'analytics are never collected' remains: privacy.astro:204 now reads 'Advertising or cross-site tracking data, or anything that identifies you in visitor counts.' The 'loads nothing from other sites' sentence is gone from the intro (lines 40-45 replace it). No logs-hold-email statement remains: the logs bullet (lines 164-166) says the playmat's own records hold no email address. A search of the page found no 'writes your email' text."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "privacy.astro:40-45 says the playmat sets no cookies on this website beyond the two sign-in cookies, that Cloudflare may set a short-lived __cf_bm bot-protection cookie not used for visitor counting and not tied to the account, and that the only thing this website may load from another site is Cloudflare's visitor-counting script. Code: internal/hostauth/google.go:25-27 defines tcgreplay_login and tcgreplay_session (login cookie name suffixed with state, line 36), both set HttpOnly (google.go:45, 224; board.go:136 clears the session). The board's other settings are localStorage (web/src/lib/store.svelte.js:70-121, playback.svelte.js:18-44), not cookies. The __cf_bm cookie is confirmed by knowledge gotcha live-site-cf-bm-cookie.md (Cloudflare edge, 30 minutes), which the goal says I may only ask for, not open. The site loads no other external resource today (no beacon, no fonts, no external stylesheet found in site/src or web/index.html)."
+            },
+            {
+              "criterion": 5,
+              "verdict": "not_met",
+              "evidence": "The condition holds: site/src/data/whats-new.yaml does not exist (confirmed by the goal's verification and no whats-new match in internal/ or site/src). So the launch-docs launch entry must cover the terms page and the board's About panel. No launch entry exists in site/src (a search for 'launch' in site/src returned no files), and the launch-docs item (20261112091756-c5b6d1fd-launch-docs) is still only planned. Nothing in this item's files (privacy.astro, privacy.spec.js and the rest) can satisfy this, so the criterion is not yet met."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Sign-ins: privacy.astro:63-65 says the sign-ins are kept in memory, the browser cookie and assistant copies are encrypted and survive an update. internal/hostauth/seal.go:16-21, 51-59 seals the values with AES-GCM under the signing key; store.go:21-24 says sealed values are taken up again after a restart. Disconnect: privacy.astro:154-156 and 212-215 say the assistant's sign-in ends when its connection runs out, up to 30 days after last use, and that disconnecting does not tell the playmat. store.go:17 refreshLifetime is 30 days, renewed in issueTokens (store.go:399-409). There is no revoke endpoint: grep of internal/hostauth/oauth.go for revoke found none, and the routes at oauth.go:64-70 are metadata, register, authorize and token only. Sign-out: privacy.astro:212 says sign-out from the board ends the board's sign-in; board.go:125 posts to /auth/logout; store.go:216-231 endSession. Card images: privacy.astro:180-183 matches internal/cards/images.go (ImageCache fetches from TCGdex and malie.io, copies in Spaces) and webui/server.go:227-258 (CDN copy first, fallback to TCGdex or the malie file). Outside services (privacy.astro:174-190) match the code."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "Comparing the diff against HEAD: the unchanged parts of privacy.astro include the game retention paragraph (lines 147-151, idle time from lib/facts), the board display settings (lines 71-74, matching the four localStorage keys in web/src/lib/store.svelte.js and playback.svelte.js), the 'Each Google account has its own game' text (lines 79-83), and the Google sign-in and profile fields (lines 49-60). Only the removing-data and sign-in and disconnect statements changed, and those were false before (for example 'the playmat forgets you', which store.go shows is not true: sealed copies and the connection record run out later). The retained 'Your game' retention statement is accurate per the idle timeout and restart behaviour."
+            },
+            {
+              "criterion": 8,
+              "verdict": "met",
+              "evidence": "privacy.astro:26 sets updated = '13 November 2026' (was 8 November 2026 in HEAD), and line 34 marks the paragraph data-updated with 'Last updated {updated}.'. The Questions section (lines 219-221) links to notice.help.url, which internal/notice/notice.json:10 sets to https://github.com/nicholasjackson/tcgreplay/issues (label 'GitHub issues')."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T07:44:07Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "8d984cd4-8af8-4541-9215-e91038a05c89",
+            "title": "Bring the privacy page up to date",
+            "criteria": [
+              "The privacy page has a visitor-counting section naming Cloudflare Web Analytics, listing page, referrer, country and device, saying it sets no cookies and is never linked to an account, and saying how long Cloudflare keeps the counts.",
+              "It has a diagnostics section naming DigitalOcean's request and performance metrics and the playmat's own usage and error records, listing what they contain and what they never contain, and saying how long each is kept, matching the observability runbook.",
+              "It no longer says analytics are never collected, that the website loads nothing from other sites, or that logs hold email addresses.",
+              "Its cookie statement is true on the live site: the playmat sets no cookies of its own beyond the two sign-in cookies, Cloudflare (in front of the site) may set a short-lived bot-protection cookie (`__cf_bm`) that is not used for visitor counting and is not tied to an account, and the only thing loaded from another site is the visitor-counting script.",
+              "If a What's new list (`site/src/data/whats-new.yaml`) exists when this lands, the launch entry gains this work's player-visible changes (the terms page and the board's About panel) rather than a new entry; otherwise the launch-docs launch entry covers them.",
+              "Its statements on sign-ins, disconnecting an assistant, card images and outside services match how the playmat works.",
+              "Its other statements (cookies, browser settings, games, retention of games and sign-ins, removing data) are unchanged where the code bears them out.",
+              "It shows a new last-updated date and still links to the project's GitHub issues for questions."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/privacy.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/live-site-cf-bm-cookie.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/seal.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/disconnect-does-not-reach-playmat.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/privacy.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/pages/privacy.astro:90-111 has section id=visitor-counting: names Cloudflare Web Analytics; lists the page, referrer, country, device type/browser/OS and page-load time; says 'It sets no cookies and stores nothing in your browser' and 'never linked to your Google account'; line 109-110 says Cloudflare keeps counts six months, full detail for 7 days then about a tenth. Matches the Cloudflare FAQ and dimensions docs cited in the frontmatter (lines 14-21)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "privacy.astro:114-144 has section id=diagnostics naming 'DigitalOcean's request and performance metrics' and 'The playmat's own usage and error records', listing sign-ins, refused sign-ins, sign-outs, tool calls with assistant, imports, new games, first activity per day, limits, expiries, removed accounts, refused board links, refused admin visits, admin actions and errors. Lines 136-139 state the never-list (email, name, Google tokens, playmat tokens and cookies, battle logs, decklists, card data), which matches docs/observability.md 'What is never recorded' (lines 77-86). Lines 141-142 give 7 days for logs and 7 days for metrics, matching docs/observability.md Retention table (lines 260-264). Player-ID wording matches observability.md 'Player IDs' and internal/telemetry/recorder.go event catalogue."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The old 'Analytics' never-collects bullet is replaced at privacy.astro:206 with 'Advertising or cross-site tracking data, or anything that identifies you in visitor counts.' The old 'loads nothing from other sites' sentence is gone (intro, lines 35-45). Logs line at privacy.astro:166 says 'The playmat's own records hold no email address'. No 'Analytics', 'loads nothing' or email-in-logs wording remains in the page. Non-test Go shows only player IDs written by telemetry.Recorder (recorder.go:54,110-128), and no log.Printf names an email."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "privacy.astro:40-45 says the playmat's only cookies are the two sign-in cookies and that Cloudflare may set a short-lived __cf_bm cookie which is not used for visitor counting and not tied to the account; it also says the only thing loaded from another site is Cloudflare's visitor-counting script. Code check: the only cookies set are tcgreplay_session (google.go:224-232, board.go:136) and tcgreplay_login_\u003cstate\u003e (google.go:45-51,76); the session cookie value is a sealed grant (google.go:223-231, store.go:185), so 'encrypted' is accurate. No other Set-Cookie in non-test hostauth/site code. site/src/styles has no external @import or font URL. The visitor-counting script is not yet in the site (its own planned epic), and the page words it as 'may load'."
+            },
+            {
+              "criterion": 5,
+              "verdict": "not_met",
+              "evidence": "The file site/src/data/whats-new.yaml does not exist, so the 'otherwise' branch applies: the launch-docs launch entry must cover the terms page and the board's About panel. That entry does not exist yet (the launch-docs task is only planned, per the status check). This item's files (privacy.astro, privacy.spec.js, and the knowledge/doc files named in scope) contain no launch-entry text, and the item may not change the launch-docs task's files. The requirement can be met by that task but the files do not show it yet. Note: the diff does not include any change to the board's About panel or a launch entry."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Sign-ins: privacy.astro:47-75 says the playmat asks Google only for openid and email (matches hostauth.go:139 Scopes) and keeps the account ID, email and verified flag (google.go:191). Display settings line (lines 71-73) is consistent with the board's four preferences. Disconnect: privacy.astro:154-158 and 214-217 say signing out ends the board sign-in (board.go:134-136, store.go:228) and that disconnecting in the assistant does not tell the playmat, so its record runs out within 30 days; no revocation path exists in hostauth (grep for revoke found nothing), and refreshLifetime is 30 days (store.go:17). Card images: lines 181-186 say the playmat fetches from TCGdex and malie.io and keeps copies on DigitalOcean Spaces, matching internal/cards/images.go:137,145-149 and the spaces client. Outside services (lines 173-199) match the code."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "Game retention (privacy.astro:149-153: 60-minute idle drop, sign-in end, restart) and the While you play section (lines 77-87, memory-only) are unchanged from the base and consistent with usergames.go:57 and the in-memory store. Browser settings line (lines 71-73) is unchanged. Cookie wording, sign-in-end and removing-data statements changed only where criteria 4 and 6 required it. One minor residual: 'Your account details ... dropped when your last one ends' (lines 155-158) does not mention the one-day idle removal of account entries (usergames.go:277, reason 'idle'), but that wording predates this diff and is not contradicted."
+            },
+            {
+              "criterion": 8,
+              "verdict": "met",
+              "evidence": "privacy.astro:26 sets updated = '13 November 2026' (today), rendered with data-updated at line 34. Questions section lines 221-224 links to notice.help.url, which internal/notice/notice.json:10 sets to https://github.com/nicholasjackson/tcgreplay/issues (label 'GitHub issues'). e2e/privacy.spec.js lines 176-182 asserts the date format and that the link ends in /issues."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-13T08:15:19Z",
+          "round": 1,
+          "decision": "accept",
+          "reason": "Criterion 5 is covered by the launch-docs launch entry (whats-new.yaml does not exist yet); the coordinator adds the About panel to the launch-docs plan."
+        }
+      ],
+      "attempts": 3,
+      "state": "accepted_shortfall"
+    },
+    {
+      "item": "80cee16e-9860-43f5-b7b7-14cf144c5944",
+      "title": "Add an About panel to the board",
+      "checks": [
+        {
+          "at": "2026-11-13T08:22:15Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "80cee16e-9860-43f5-b7b7-14cf144c5944",
+            "title": "Add an About panel to the board",
+            "criteria": [
+              "At phone (390 px), tablet (820 px) and desktop (1440 px) widths, a player can open \"About tcgreplay\" from the board's ☰ menu.",
+              "The panel shows the same notice and credit wording as the website, with links to TCGdex, malie.io and the project's GitHub issues.",
+              "Before it is opened nothing covers or moves any card or control, and it closes with its close button and with Escape, leaving the board as it was.",
+              "Opening it stores nothing new in the browser."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/vite.config.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/about.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/fixtures.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/phone.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/App.svelte:154 adds a role=menuitem button 'About tcgreplay' in the ☰ dropdown (outside the phone-only and hosted-only blocks, so it renders at every layout). web/e2e/about.spec.js:99-120 opens it from ☰ on the phone and desktop projects (checkAbout) and on the 820px tablet width (tablet project, setViewportSize 820x1180). The verification summary reports those runs passing (phone 390x844, tablet 820x1180, desktop 1440x900)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/src/components/Modal.svelte:246-255 renders the 'about' modal: \u003cp class=\"fan-notice\"\u003e{notice.notice}\u003c/p\u003e, a credit paragraph built from notice.credit.lead and notice.credit.sources (TCGdex, malie.io links), and a 'Get help' link to notice.help.url with label 'GitHub issues' (the help url is https://github.com/nicholasjackson/tcgreplay/issues per internal/notice/notice.json:10). The same file drives the website footer (site/src/layouts/Base.astro diff), so wording matches. about.spec.js:62-71 asserts the text and link hrefs against the shared file."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The menu item sits inside {#if menuOpen} (web/src/App.svelte:115-161), so nothing new is rendered before the menu is opened, and the About modal is a new {#if m.kind === 'about'} branch that only renders when app.modal is set (Modal.svelte:132, 246). The close button (Modal.svelte:247 header Close on non-touch, :135 the ✕ on touch) calls close() which sets app.modal = null; Escape is handled by the svelte:window handler at Modal.svelte:130. Menu selection calls menu() which closes the dropdown first (App.svelte:54-57). about.spec.js:80-92 checks close via button and Escape and that the card and control boxes are unchanged afterwards. Nothing in the diff changes existing layout or z-index of the board; the only style additions are .about rules scoped to the modal (Modal.svelte:331-333)."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Opening the panel only sets app.modal = { kind: 'about' } (App.svelte:154) and menu() only sets menuOpen = false; neither touches localStorage or cookies. The About branch in Modal.svelte (lines 246-255) has no storage calls. The only localStorage writes in web/src/lib are the pre-existing settings keys (store.svelte.js:111,121; playback.svelte.js:27,44). about.spec.js:93-96 asserts that localStorage keys are limited to the existing settings keys, sessionStorage is empty and document.cookie is empty after opening and closing."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    }
+  ]
+}

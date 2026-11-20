@@ -1,0 +1,36 @@
+{
+  "category": "Pokemon",
+  "id": "me06-003",
+  "localId": "003",
+  "name": "Masquerain",
+  "hp": 110,
+  "types": [
+    "Grass"
+  ],
+  "stage": "Stage1",
+  "attacks": [
+    {
+      "cost": [
+        "Colorless"
+      ],
+      "name": "Frightening Pattern",
+      "effect": "During your opponent's next turn, the Defending Pokémon can't use attacks.",
+      "damage": 30
+    },
+    {
+      "cost": [
+        "Grass"
+      ],
+      "name": "Bug Out",
+      "effect": "Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards.",
+      "damage": "50×"
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fire",
+      "value": "×2"
+    }
+  ],
+  "retreat": 1
+}

@@ -30,6 +30,9 @@ func iidsOf(e *state.Event, blind bool) []state.IID {
 	}
 	switch p := p.(type) {
 	case *state.MovePayload:
+		if p.Pair != "" {
+			return []state.IID{p.IID, p.Pair}
+		}
 		return []state.IID{p.IID}
 	case *state.RevealPayload:
 		return p.IIDs

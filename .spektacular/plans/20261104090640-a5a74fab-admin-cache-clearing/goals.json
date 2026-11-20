@@ -1,0 +1,1440 @@
+{
+  "plan": "20261104090640-a5a74fab-admin-cache-clearing",
+  "items": [
+    {
+      "item": "d28975cd-5c4c-4a5f-a7c5-9b0f728eea81",
+      "title": "Delete objects in bulk and report their checksums",
+      "checks": [
+        {
+          "at": "2026-11-04T15:06:41Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "d28975cd-5c4c-4a5f-a7c5-9b0f728eea81",
+            "title": "Delete objects in bulk and report their checksums",
+            "criteria": [
+              "Deleting a list of keys removes exactly those objects from the stand-in and leaves every other object in place.",
+              "Deleting more than 1,000 keys is split into several requests, and every key is removed.",
+              "Deleting a key that does not exist is not an error.",
+              "Refused credentials, a server error, or keys the store refuses individually are reported, naming the refused keys.",
+              "A listing reports, for each key, the checksum of its bytes, and an object rewritten with different bytes is listed with a different checksum.",
+              "Existing listing callers see the same keys and paging as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "encoding/xml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/spacestest/spacestest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/spaces/client.go:240-260 (Delete) and deleteBatch at :264-316 send the keys in one POST ?delete body; spacestest/spacestest.go:276-324 (serveDelete) removes only the listed keys. delete_test.go:18-32 (TestDeleteRemovesExactlyTheKeysGiven) seeds five objects, deletes three, and asserts Keys(\"\") is exactly the two others."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "client.go:217 sets deleteBatch = 1000 and client.go:242-255 loops over keys in chunks of min(len, 1000), one request per chunk. delete_test.go:34-52 (TestDeleteSplitsIntoBatchesOfAThousand) deletes 2500 keys and asserts Requests(\"POST\",\"?delete\") == 3 and that all 2500 are gone; the server also enforces the 1000 cap at spacestest.go:298."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "spacestest.go:312-319 deletes only keys that exist and never reports a missing key as an error; client.go:299-315 treats an empty result as success. delete_test.go:54-70 (TestDeleteMissingKeyAndNoKeysAreNotErrors) deletes a missing key alongside an existing one and asserts err == nil."
+            },
+            {
+              "criterion": 4,
+              "verdict": "not_met",
+              "evidence": "Per-key refusals are met: client.go:221-233 DeleteError carries Failed map[key]code and its Error() names the first refused key (delete_test.go:114-140 checks k0001 and k1200 AccessDenied). But whole-request refusals and server errors are not: client.go:296-297 returns responseError(resp) and client.go:292-294 and 244-246 only add a wrapper message 'spaces: delete N keys', and errors.go:8-12 defines *Error with Status, Code and Message only, with no key field. So refused credentials or a 500 are reported without naming the keys they applied to. delete_test.go:86-112 (TestDeleteFailuresAreReported) checks status and code only, never the keys. Needed: the batch's keys must be attached to the error for the credential and server-error paths (e.g. a wrapper carrying the keys, or an added Keys field) and asserted in a test."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "client.go:25-30 and 153-162 add ListPage.ETags, filled from each Contents ETag with quotes trimmed (client.go:203-208). spacestest.go:236-247 and 264-265 list each object's ETag as the hex MD5 of its bytes (newObject at :39-42, set on every PUT at :186 and SetObject at :354). delete_test.go:147-195 (TestListReportsEachObjectsChecksum) checks the MD5 of each listed key and that a rewrite with new bytes reports the MD5 of the new bytes, which differs from the old one."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "client.go:153-162 keeps Keys and Next unchanged in meaning; the List body at :191-212 still decodes the same Contents, IsTruncated and NextContinuationToken fields and sets Next only when truncated. The ETag field is additive. spacestest.go:232-270 (serveList) keeps the same prefix, token and page-size logic. delete_test.go:147-195 pages through List with PageSize(1) and checks that Keys and Next behave as before. client_test.go is not in the diff, so its existing List assertions are unchanged, and the goal's go test run passed."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T15:08:23Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "d28975cd-5c4c-4a5f-a7c5-9b0f728eea81",
+            "title": "Delete objects in bulk and report their checksums",
+            "criteria": [
+              "Deleting a list of keys removes exactly those objects from the stand-in and leaves every other object in place.",
+              "Deleting more than 1,000 keys is split into several requests, and every key is removed.",
+              "Deleting a key that does not exist is not an error.",
+              "Refused credentials, a server error, or keys the store refuses individually are reported, naming the refused keys.",
+              "A listing reports, for each key, the checksum of its bytes, and an object rewritten with different bytes is listed with a different checksum.",
+              "Existing listing callers see the same keys and paging as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "encoding/xml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/spacestest/spacestest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/client_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/spaces/client.go:255-280 Delete sends each key in a DeleteObjects request; spacestest/spacestest.go serveDelete (diff ~L316-364) deletes only the listed keys from s.objects. internal/spaces/delete_test.go:18-32 TestDeleteRemovesExactlyTheKeysGiven seeds 5 objects, deletes 3, and asserts Keys('') == the 2 untouched keys."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "client.go:215 const deleteBatch = 1000; Delete loops over keys[:min(len,1000)] (client.go:257-275). delete_test.go:34-52 TestDeleteSplitsIntoBatchesOfAThousand deletes 2500 keys and asserts exactly 3 POST ?delete requests and only the one non-target key left."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "serveDelete removes via Go map delete, which is a no-op for a missing key, and reports no error entry for it (spacestest.go serveDelete loop). delete_test.go:54-70 TestDeleteMissingKeyAndNoKeysAreNotErrors deletes a missing key alongside a present one and asserts err == nil."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "client.go:219-246 DeleteError carries Failed map (key-\u003eS3 code) and Err; Error() names the count and first refused key with its code. Whole-request failures (refused creds, 500, bad digest, transport) set every carried key in Failed (client.go:261-269); per-key refusals come from the response \u003cError\u003e entries (client.go:328-334). delete_test.go:104-158 covers refused credentials, InternalError, InvalidDigest, a closed server, a request failure naming all 1500 keys, and per-key AccessDenied naming k0001 and k1200 (160-186)."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "client.go:152-208: ListPage gains ETags map populated from each \u003cContents\u003e\u003cETag\u003e (quotes trimmed). The doc comment (client.go:156-160) states it is the hex MD5 of the bytes for single-part PUTs; grep found no multipart upload path in internal/spaces, so every object this package writes qualifies. spacestest.go newObject computes MD5 on every write, and SetObject/PUT both use it. delete_test.go:193-241 TestListReportsEachObjectsChecksum checks each key's MD5 and that a rewrite with different bytes lists a different checksum. Caveat: the checksum is S3's ETag, not a checksum the client computes, so it holds only for objects written without multipart or SSE-C; the code documents this."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "client.go:168-212: List still builds Keys in the same order, sets Next only when IsTruncated, and sends the same query (list-type, prefix, continuation-token). The only change is the added ETags field and the ETag element in the decode struct, which existing callers ignore. spacestest.go serveList still sorts and pages the same way; the ETag element is omitempty. The existing client_test.go list tests were not changed, and the verification summary reports go test ./internal/... passing."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "a1a61615-9c94-4ab3-a7a2-18aad9fbe17e",
+      "title": "Purge the bucket CDN through the DigitalOcean API",
+      "checks": [
+        {
+          "at": "2026-11-04T15:11:39Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a1a61615-9c94-4ab3-a7a2-18aad9fbe17e",
+            "title": "Purge the bucket CDN through the DigitalOcean API",
+            "criteria": [
+              "A purge sends exactly the requested paths, wildcards included, to the CDN endpoint whose origin is the bucket, with the token.",
+              "When the account has no CDN endpoint for the bucket, the purge reports that distinctly and purges nothing.",
+              "A refused token, or a failing or unreachable API, is reported as an error that never contains the token.",
+              "The stand-in records every purge's paths, and refuses requests without the right token."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/cdn.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/spacestest/cdn.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/spaces/cdn_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "b.lon1.digitaloceanspaces.com"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://lon1.digitaloceanspaces.com"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/spaces/cdn.go:72-94 (Purge) sends paths[:n] unchanged, in batches of at most 50, as the JSON body {\"files\": [...]} to DELETE /v2/cdn/endpoints/\u003cid\u003e/cache. The id comes from endpointID (cdn.go:98-129), which matches e.Origin against c.Origin with strings.EqualFold. NewCDN (cdn.go:55-66) sets Origin to \u003cbucket\u003e.\u003chost\u003e. do (cdn.go:133-170) sets Authorization: Bearer \u003ctoken\u003e. Wildcards pass through untouched, and cdn_test.go:43-58 checks that the fake receives exactly the paths asked for, including 'images/en/me/me01/*'."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cdn.go:126 returns the sentinel ErrNoCDN when the endpoint pages run out with no endpoint whose origin matches (cdn.go:125 also stops on an empty page). Purge returns that error at cdn.go:76-78 before any DELETE is sent, so nothing is purged. The error is distinct and testable with errors.Is. cdn_test.go:92-102 (TestPurgeWithoutAnEndpointForTheBucket) sets a different origin and asserts ErrNoCDN with zero purges recorded."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "do (cdn.go:133-170) returns a *CDNError built from the API's id and message for non-2xx responses, and both fields pass through scrubText (cdn.go:165, 180-185). Transport errors go through scrub (cdn.go:150-152, 172-178), which replaces the token in the error text. Purge and endpointID wrap these errors without adding the token. The request URL carries no token. cdn_test.go:128-158 covers a wrong token (401), a failing API (500) and a closed server (transport error), and checks that none of the error texts contain the token."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "spacestest/cdn.go:39-44 checks the bearer token before anything else and answers 401 without recording. spacestest/cdn.go:79-82 appends body.Files to c.purges for each valid DELETE on the bucket's endpoint, and Purges() (spacestest/cdn.go:89-97) returns them in order. cdn_test.go:160-178 checks that requests without the token get 401 and that no purge is recorded. Note: a DELETE aimed at another endpoint id gets a 404 and is not recorded, and a purge with an empty files list gets a 422 and is not recorded. Both fit the stand-in's stated scope of recording the bucket endpoint's purges."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b96d1764-0345-478d-b6b2-c6e90ee34dcf",
+      "title": "Clear the card stores",
+      "checks": [
+        {
+          "at": "2026-11-04T15:25:58Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b96d1764-0345-478d-b6b2-c6e90ee34dcf",
+            "title": "Clear the card stores",
+            "criteria": [
+              "Clearing everything leaves no card data files in the cache directory and no objects under the card data prefix in the stand-in Spaces.",
+              "Clearing one set removes its card list and every one of its cards from disk and from the stand-in, and keeps the set list and every other set's data.",
+              "Sets whose ids share a beginning with the cleared set (for example `sv03` and `sv03.5`) are untouched.",
+              "Each store reports how many entries it removed. A shared-store failure is reported while the local tier is still cleared.",
+              "A clear reaches the shared store even when lookups are currently skipping it after a failure.",
+              "Stores that cannot clear, and every existing caller of the stores, keep working unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/scope.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/scope_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sets/me01"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards/me01-001"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sets/me01.5"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards/me01.5-001"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "sv03.5"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "swsh12.5"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/me/me01/001"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/swsh/swsh12.5/157"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/spacesstore.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/tiered.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/clear_store_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards/me01-002"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards/sv1-001"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "scope.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Disk clear-all removes sets.json, set-index-v2.json, and every file in sets/ and cards/ then RemoveAll on both dirs: /home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261104090640-a5a74fab-admin-cache-clearing/tcgreplay/internal/cards/store.go:177-191. Spaces clear-all lists the whole tcgdex/ prefix (spacesprefix) and deletes every key: internal/cards/spacesstore.go:65-97. Test clear_store_test.go:69-97 and 108-133 checks the disk dir and Keys(\"tcgdex/\") are empty after clear-all. Images live under images/ in the bucket (images.go:21-23, 404), not in the cache directory, and the cache directory holds nothing else card-related in the non-test code."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Disk one-set clear removes sets/\u003cid\u003e.json and cards/\u003cid\u003e-*.json only: store.go:193-204. Spaces one-set clear lists exactly tcgdex/sets/\u003cid\u003e.json and tcgdex/cards/\u003cid\u003e- and deletes them: spacesstore.go:66-71, 84-95. Set list (sets.json, tcgdex/sets.json) is never in those prefixes. Test clear_store_test.go:55-67 and 108-121 asserts the sets list and other sets survive."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The separator rule is in internal/cards/scope.go:14-15 and 33-40: the key match requires \"cards/\u003cid\u003e-\", so sv03 does not match cards/sv03.5-001 or sets/sv03.5. Disk uses prefix safeName(id)+\"-\" at store.go:196-201, and Spaces uses tcgdex/cards/\u003cid\u003e- and tcgdex/sets/\u003cid\u003e.json at spacesstore.go:68-69. Tests scope_test.go:21-25 (sv03 vs sv03.5) and clear_store_test.go:55-67 cover it."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Each store returns a TierReport with a Removed count: disk at store.go:170-176 and 193-205, shared at spacesstore.go:84-95 (Removed = keys minus DeleteError.Failed). A shared failure does not stop the local clear: tieredStore.Clear at tiered.go:116-133 clears shared, appends its reports, then always runs the local clear. The listing error path returns early only inside spacesStore.Clear, and the tiered method continues. Test clear_store_test.go:168-188 asserts the shared error is reported and disk removed everything."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "tieredStore.Clear at internal/cards/tiered.go:116-133 calls the shared store's Clear without consulting t.skip(). It only calls t.ok() when no shared report has an error (tiered.go:124-126), so a failed clear does not trip the skip. Test clear_store_test.go:201-224 trips the breaker with a failed Get, then asserts the clear issues one POST ?delete request, removes the 3 keys, and lifts the skip."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The Store interface is unchanged (store.go:32-37, Get and Put only). Clear is an optional interface found by type assertion (scope.go:68-72), so plainStore and other stores are unaffected; clear_store_test.go:251-266 covers a non-clearer local tier. Existing callers in cmd/tcgreplay/hosted.go:255 (NewTieredStore(db.Store, NewSpacesStore(sc))) and internal/cards/cards.go:201-218 are unchanged in the diff. The spaces.ListPage change is additive (ETags field, List signature unchanged) in internal/spaces/client.go. Verification reports go vet, gofmt and go test ./... as passing. Scope note, not a criterion verdict: the diff also touches internal/spaces/client.go, internal/spaces/spacestest/spacestest.go and the untracked internal/spaces/cdn.go, cdn_test.go, delete_test.go and spacestest/cdn.go, none of which are in this item's file list, so the scope rule may be violated."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "e4d686b1-4a39-45bc-8f47-582936141ba6",
+      "title": "Clear the card database and name sets",
+      "checks": [
+        {
+          "at": "2026-11-04T15:33:06Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "e4d686b1-4a39-45bc-8f47-582936141ba6",
+            "title": "Clear the card database and name sets",
+            "criteria": [
+              "A set named by its decklist code (such as `MEG`), by its id (such as `me01`) or by its id in another case names the same set. A name that matches no set is refused, even after the set list has been refreshed.",
+              "After a clear of everything, the next card lookup makes one request to the card source and returns its current data, and deck codes resolve again through freshly fetched set data.",
+              "After a clear of one set, a lookup of a card in that set makes one request to the card source, while a lookup of a cached card in another set makes none.",
+              "After a clear, the cached-only lookup still returns a cleared card's previous copy without any network request, and returns the fresh copy once the background fetch completes.",
+              "If the card source is down after a clear, card lookups return the previous copy with no error.",
+              "A fetch or set-data build that started before a clear does not put pre-clear data back into memory.",
+              "A recent failed or missed lookup inside the cleared scope does not stop the next lookup from asking the card source."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "fresh.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "catalog.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/fresh.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "c.gen"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/clear.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "c.mu"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/clear_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/cards/me01-001"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/clear.go:21-60 SetID resolves a name by case-insensitive TCGdex id (EqualFold over cat.setIDs), then normCode (cards.go:695, upper case plus codeAliases) through setAliases and cat.setIndex, which is built from the set's official abbreviation (catalog.go:199-210). A miss calls refreshSetList once per RetryAfter per name (missAllowed, catalog.go:426) and retries; a name still unmatched returns ErrUnknownSet (clear.go:50-51). TestSetIDNamesASetByCodeOrID in clear_test.go:53-92 checks MEG, meg, me01, ME01 and ' me01 ' all give me01, and that XYZ is refused after one refresh."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Clear(Scope{}) (clear.go:74-115) clears the store (diskStore.Clear store.go:427-470 removes sets.json, set-index-v2.json, sets/, cards/; tieredStore.Clear tiered.go:490-507 clears shared then local), marks memory cards cleared, sets c.cat=nil and resets tracker.failed/bg/miss. The next Card goes loadCard (cards.go:472-494): store miss, recentlyFailed is false, shared() makes one source request. Resolve goes ensureCatalog (catalog.go:47-80) and buildCatalog reloads sets from source since the store is empty. TestClearEverythingRefetchesCardsAndSets (clear_test.go:98-145) asserts one /cards/me01-001 request, one /sets and one /sets/me01 request, and the new data. Caveat, not a verdict: shared() (cards.go:372) writes the store with no generation check, so a pre-clear fetch still in flight can write pre-clear data to disk after the clear. That race is not covered by any test."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Scope.Key (scope.go:35-40) matches only sets/\u003cid\u003e and cards/\u003cid\u003e- keys, so sv03 does not match sv03.5. Clear(Scope{Set}) (clear.go:84-105) marks only in-scope memory entries cleared and forgets only in-scope tracker.failed/bg keys. diskStore.Clear (store.go:441-469) removes only that set's files. The lookup of an in-scope card makes one request (loadCard path, cards.go:472-494). A cached card in another set is served from memory with no request (cards.go:454-456, cleared is false). TestClearOneSetLeavesOtherSets (clear_test.go:149-176) asserts me01-001 gets 2 requests in total and sv1-001 gets 1 request."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Cached (cards.go:499-524) returns the cleared entry's old copy at once and calls warmCleared, a background refresh (fresh.go:118-135), without waiting on the network. refreshCard captures gen before starting, and remember (cards.go:272-286) accepts the fresh copy because gen still matches and a cleared entry gives way to a fetched one. TestCachedServesClearedCopyThenFreshOne (clear_test.go:181-210) asserts the old copy within 500ms while the fetch is delayed by 1s, then the fresh copy (HP 80) after waitBackground."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Card (cards.go:446-468): a cleared entry goes to loadCard; when that errors and ok is true, it returns old.card with a nil error (cards.go:461-465). Offline also returns old.card (cards.go:454). TestClearedCardSurvivesSourceOutage (clear_test.go:212-235) covers unreachable, failing and offline sources and expects the old copy with no error."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "remember (cards.go:272-286) returns without storing when c.gen != gen, so a card load or background refresh begun before a clear never writes memory. publish (catalog.go:84-90) and update (catalog.go:257-304) also check gen, and refreshSet, refreshSetList and sweep capture gen first (catalog.go:260, 276-283, 378-380). ensureCatalog's flight key includes the generation (catalog.go:59-60). TestCatalogBuildBegunBeforeClearIsNotKept (clear_test.go:240-281) and TestCardFetchBegunBeforeClearIsNotKept (clear_test.go:285-322) both assert nothing pre-clear reaches memory. The disk write noted under criterion 2 is not memory, so it does not affect this criterion."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "Clear (clear.go:92-108) deletes tracker.failed and tracker.bg entries whose keys are in scope (all of them on a whole clear), and sets tracker.miss = nil on every clear, so missAllowed (catalog.go:426-438) and recentlyFailed (fresh.go:58-63) no longer block the next lookup. TestClearForgetsRecentFailuresInScope (clear_test.go:324-366) covers a failed card and a missed number in scope, and expects the next lookups to ask the source."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "6933d1f1-b6f3-41ae-8a4f-80de777b8d07",
+      "title": "Prove an open game survives a clear",
+      "checks": [
+        {
+          "at": "2026-11-04T15:35:45Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "6933d1f1-b6f3-41ae-8a4f-80de777b8d07",
+            "title": "Prove an open game survives a clear",
+            "criteria": [
+              "After everything is cleared, board reads of the open game still show every card's definition (name, HP, text, image), each read returning within a second.",
+              "A play on the game after the clear succeeds and behaves as before the clear.",
+              "Once background work settles, the game's cards have been fetched again from the card source.",
+              "With the card source down during and after the clear, the game still shows and plays its cards with no error."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/clear_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/spacescache_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "manager_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/clear_test.go:96-121 (TestOpenGameSurvivesAClear): client.Clear(ctx, cards.Scope{}) at line 108, then inside quick(t, \"board reads after the clear\", ...) (quick fails at \u003e=1s, internal/game/cardlock_test.go:84-91) defsShown reads every def via client.Cached and compares Name, HP, Text() and Image against the pre-clear snapshot (lines 115-119). clear_test.go:144-172 does the same with Name-less Text/Image checks under the source-down test. Cached returns the cleared in-memory copy without blocking (internal/cards/cards.go:499-508, warmCleared is background)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/game/clear_test.go:63-90 (playOn) runs after the clear in both tests (lines 122, 163): it reads both seats' View, then PlaceActive(state.P1, state.ActorHuman, basic) with t.Fatalf on error (line 84) and asserts the Active spot holds the played Riolu (tst-1) card (lines 87-89). Caveat: no pre-clear play is run for side-by-side comparison; 'as before' is judged as the same play succeeding with the same resulting state."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/game/clear_test.go:124-137: after playOn, waitFor(t, 5*time.Second, \"cards fetched again\", ...) waits until src.count(\"/cards/\"+d) \u003e 0 for every def and until client.Cached(\"tst-4\") contains the corrected text; then each def's fetch count is asserted to be exactly 1 (lines 133-137). The liveSource hit counter is in internal/game/clear_test.go:186-191 and internal/game/spacescache_test.go:20-69. The background warm path is internal/cards/cards.go:499-508 (Cached -\u003e warmCleared) and internal/cards/fresh.go:316-334 (refreshCard)."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/game/clear_test.go:147-172 (TestOpenGameSurvivesAClearWithTheSourceDown): src.Close() at line 151 before client.Clear at line 154, so the source is down during and after the clear. Board reads via quick and Cached (lines 155-162) compare the old copies with no error path; playOn (line 163) fails the test on any play error; client.Card for each def (lines 164-170) must return a non-nil card with nil error and the old text, as internal/cards/cards.go:446-471 returns old.card when the load fails and a cleared copy exists. Final View at line 171 ignores its return value, but the earlier playOn views do check errors (line 67)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "0d9a0015-f4e5-46f6-8a08-ccb29e4f2c9b",
+      "title": "Version image copies by their content",
+      "checks": [
+        {
+          "at": "2026-11-04T15:39:45Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "0d9a0015-f4e5-46f6-8a08-ccb29e4f2c9b",
+            "title": "Version image copies by their content",
+            "criteria": [
+              "A copied image is answered with its CDN address, its card source fallback, and a version. An image without a copy has no version.",
+              "Copying the same bytes again gives the same version. Copying different bytes gives a different one.",
+              "After a restart, an image found in the bucket gets the same version it had before the restart.",
+              "An image whose two files' checksums are not both known counts as not copied, as a half copy does.",
+              "Answers still never wait on the network."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/images.go:171-199: Image now returns (image, fallback, version). A copied image (ic.known[rel] present, line 181) returns the CDN address ic.Public+\"/\"+ImagePrefix+rel, the source as fallback, and the stored content version (line 183). An uncopied image returns the source with fallback \"\" and version \"\" on every uncopied path (lines 174, 177, 188, 191, 199). internal/cards/images_version_test.go:72-94 (TestImageCopyIsAnsweredWithItsContentVersion) checks each part. Note: internal/webui/server.go discards the version (`img, fb, _ =`); that wiring is outside this item's scope."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "images.go:149-165: imageVersion is the first 12 hex chars of SHA-256(lowETag + \"\\n\" + highETag), and the copier takes each ETag as MD5 of the uploaded bytes (images.go:420-421, copyOne). Same bytes give the same MD5 and so the same version; changed bytes in either file change the MD5 and so the version. images_version_test.go:96-121 (TestImageVersionFollowsTheBytes) covers the same-bytes and new-bytes cases; TestImageVersionFormula pins the formula."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "images.go:254-281: loadKnown lists ImagePrefix with ETags (list passes page.ETags[k], line 337-338) and marks each whole image known at versionOf(fs), the same formula as the copier. The ETags are parsed in internal/spaces/client.go (ListPage.ETags, List reads \u003cETag\u003e). images_version_test.go:123-137 (TestImageVersionSurvivesARestart) checks the version is unchanged after a restart."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "images.go:163-165: versionOf returns \"\" unless both ImageFiles have a non-empty ETag. loadKnown (images.go:266-274) records an image as known only when versionOf is non-empty; otherwise it goes to partial and is not known. copyOne (images.go:431-434) returns before marking known when versionOf is \"\". Image answers such an image with no version (images.go:185-199). images_version_test.go:154-190 (TestImageWithoutBothChecksumsCountsAsNotCopied) checks both the listing path and the self-listing path."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "images.go:171-200: Image does only a map lookup under ic.mu, a bounded in-memory check, and a non-blocking select send on ic.queue (default branch at line 196). It makes no network call. imageVersion/versionOf are pure CPU work. images_version_test.go:192-209 (TestImageAnswersWithVersionsNeverWaitOnTheNetwork) holds the server with Hang() and checks Image still answers quickly with versions. Caveat, not a verdict issue: images_version_test.go is an untracked file outside the scope's two named files."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "2326484e-c15d-45ea-af26-2ae311e5a032",
+      "title": "Send image versions to the board",
+      "checks": [
+        {
+          "at": "2026-11-04T15:44:43Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "2326484e-c15d-45ea-af26-2ae311e5a032",
+            "title": "Send image versions to the board",
+            "criteria": [
+              "With an image source that gives a version, the card endpoint's answer carries that version beside the image and fallback addresses.",
+              "Without an image source, or for an image without a version, the answer is the same as before this change.",
+              "The board requests the CDN address with the version for the card on the mat, the zoom and the dialog preview, and requests the fallback without it.",
+              "Every existing board and browser test passes unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Zoom.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/images.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/webui/server.go serveCard (diff hunk @@ -166,12 +173,15 @@) takes the version from s.Images.Image and sets ImageVersion on CardInfo (json image_version, omitempty), beside Image and ImageFallback. internal/webui/webui_test.go subtest 'source gives a versioned copy' (diff @@ -820,11 +828,33 @@) asserts image, image_fallback and image_version = abc123def456 for tst-1."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "No source: ver stays \"\" and the field is omitted (server.go CardInfo tag omitempty; webui_test.go TestCardImageSource 'no image source' subtest asserts image_version absent). Source with no version: stubImages carries version \"\" and the test 'copy without a version' asserts absence. Imageless card and source-keeps-address cases also assert absence. In cards/images.go, Image returns version \"\" for every non-copy path (src/pending/failed), so non-copies stay unchanged. The only other difference, the field moved before Text in the struct, does not change the JSON for absent fields."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/src/lib/store.svelte.js imageSrc (diff @@ -161,7 +163,10 @@): stage 0 returns `${info.image}/${size}?v=\u003cencoded image_version\u003e` when image_version is set; stage 1 returns `${info.image_fallback}/${size}` with no version. The three board consumers all call imageSrc: web/src/components/Card.svelte:82 (mat), Zoom.svelte:19 (zoom, high.webp), Modal.svelte:246 (dialog preview, high.webp). A grep of web/src found no other place that builds card image URLs. web/e2e/images.spec.js adds tests 'a copy with a content version is requested with it, and the fallback without it' and 'when a versioned copy fails, the fallback is requested without the version', which check the mat, zoom and preview src values and that no tcgdex request carries ?v=."
+            },
+            {
+              "criterion": 4,
+              "verdict": "not_met",
+              "evidence": "The existing webui test helper was edited, not left alone: webui_test.go diff @@ -750,13 +750,15 @@ changes stubImages.Image from (string,string) to (string,string,string) and adds a version field, and the existing TestCardImageSource subtests gained new assertions (@@ -797, -813, -820, -834 hunks). The new interface signature in server.go forces the helper change, and the signature could have been kept unchanged by a separate optional interface, so this is not impossible. Also internal/cards/images_test.go (lines 227, 703: img, fb, _ := f.ic.Image(...)) was edited, and that file is not in this item's file list. web/e2e/images.spec.js changed only serveImages (new optional version param, which is inert when unset) and added tests; the existing e2e test bodies are unchanged. Passing commands show the suite is green, but they do not show the tests are unchanged. The caller should decide whether the helper and signature edits count as changing existing tests."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T15:48:18Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "2326484e-c15d-45ea-af26-2ae311e5a032",
+            "title": "Send image versions to the board",
+            "criteria": [
+              "With an image source that gives a version, the card endpoint's answer carries that version beside the image and fallback addresses.",
+              "Without an image source, or for an image without a version, the answer is the same as before this change.",
+              "The board requests the CDN address with the version for the card on the mat, the zoom and the dialog preview, and requests the fallback without it.",
+              "Every existing board and browser test passes unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webui_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Card.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Zoom.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Modal.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/images.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/webui/server.go (serveCard, diff hunk at @@ -166,12 +173,15 @@) takes the version from s.Images.Image and sets ImageVersion on the CardInfo answer; CardInfo gains `ImageVersion string json:\"image_version,omitempty\"` beside Image and ImageFallback. internal/webui/webui_test.go TestCardImageVersion ('a versioned copy carries its version') asserts image, image_fallback and image_version together."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "With a nil Images source, ver stays \"\" (server.go, `img, fb, ver := c.Image, \"\", \"\"`), and with a copy that has no version or an address kept as-is, ver is dropped (`if img == c.Image { ver = \"\" }`). omitempty keeps image_version out of the JSON, and the Image and ImageFallback fields are unchanged. webui_test.go 'no version without a versioned copy' and the imageless-card check cover these cases. The stubImages signature change in webui_test.go only adapts the helper to the new interface; its assertions are untouched."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "web/src/lib/store.svelte.js imageSrc() (diff @@ -161,7 +163,10 @@): stage 0 appends `?v=\u003cencodeURIComponent(info.image_version)\u003e` to `${info.image}/${size}`, and stage 1 returns `${info.image_fallback}/${size}` with no version. Card.svelte:82 (low.webp), Zoom.svelte:19 (high.webp) and Modal.svelte:246 (high.webp, the .preview img) all take their src from imageSrc, so all three spots get the versioned CDN address. images.spec.js 'a copy with a content version is requested with it, and the fallback without it' checks the card, the zoom and the preview, and 'when a versioned copy fails...' checks that the fallback request has no ?v=."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "No existing board or browser test assertion is altered. In web/e2e/images.spec.js, serveImages only gains an optional `version` parameter that adds nothing when it is undefined, and the new tests are appended. In internal/webui/webui_test.go the only change to an existing item is the stubImages.Image signature, forced by the ImageSource interface change; its test bodies are untouched. The verification summary reports go test ./... and the Playwright run with 0 failed. Note: the staged diff also touches internal/cards/images.go and images_test.go and many files outside the goal's file list (cards, spaces, cache clearing). Those are outside this goal's scope rule but do not change any of the four criteria."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "0bbbf9d5-59ea-4852-aa44-b3246d038beb",
+      "title": "Clear image copies and purge the CDN",
+      "checks": [
+        {
+          "at": "2026-11-04T15:52:13Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "0bbbf9d5-59ea-4852-aa44-b3246d038beb",
+            "title": "Clear image copies and purge the CDN",
+            "criteria": [
+              "Clearing one set deletes every copy of that set's images from the stand-in, and keeps every other set's copies.",
+              "Clearing everything deletes every image copy.",
+              "From the moment a clear starts, images in scope are answered with the card source's address. No copy in scope is made until the clear has finished, and the next view after it copies the current art again.",
+              "With a purge client, the stand-in DigitalOcean API records a purge of the cleared set's image paths, or of all image paths for a full clear. Without one, the clear completes and reports that the CDN was not purged.",
+              "A failed delete or purge is reported, and the copies in scope are still no longer pointed at."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/images_clear_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/me/me01/001"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/me/me01/002"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/sv/sv1/1"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "en/swsh/swsh12.5/157"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cards/images.go Clear (around lines 741-765): keys are kept only when !s.All() and s.Image(rest[:i]) matches, i.e. segs[2]==set (scope.go:44-50), so only that set's objects are deleted via ic.Spaces.Delete. known/partial/failed entries for the set are dropped (images.go Clear, the known/partial/failed loops). Other sets' keys are not in the delete list. images_clear_test.go TestImageClearOfOneSet asserts 4 removed, the me01 copies gone, sv1 and swsh12.5 copies kept (2 files each) and the purge of images/en/me/me01/*; it passed."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "images.go Clear: when s.All() every key under ImagePrefix is appended (the set filter is skipped because of !s.All()), and paths = [ImagePrefix+\"*\"]. The delete at images.go (images.Removed = len(keys); ic.Spaces.Delete) covers all of them, including stray non-copy objects under images/. images_clear_test.go TestImageClearOfEverything asserts srv.Keys(ImagePrefix) is empty after the clear (9 removed, including images/stray.txt) and that every swsh/sv/me image answers the source."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "images.go Clear appends s to ic.clearing under ic.mu before any listing or delete. Image() returns (src, \"\", \"\") for inScopes(ic.clearing, rel) before consulting known or queuing (images.go Image, the inScopes(ic.clearing) branch). handle() sets skip when inScopes(ic.clearing, rel) and only marks copying[rel] when not skipping. Clear waits (ic.idle.Wait loop over ic.copying) until no in-scope copy is under way, then drops known/partial/failed for the scope, so no in-scope copy is made during the clear. The scope is removed from clearing only in the deferred function at the end, so the next Image after the clear sees known deleted and queues a fresh copy (copyOne). Tests: TestImageClearHoldsOffCopiesThenCopiesTheCurrentArt (source answered during clear, PUT count unchanged, new version after re-copy) and TestImageClearWaitsForACopyUnderWay both exist and passed."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "images.go Clear, cdn switch: a set clear purges images/\u003clang\u003e/\u003cserie\u003e/\u003cset\u003e/* per directory found (dirs map), and a full clear purges [\"images/*\"]; the purge goes through ic.CDN.Purge, which is internal/spaces/cdn.go CDN.Purge (DELETE /v2/cdn/endpoints/{id}/cache with the files). The stand-in is internal/spaces/spacestest/cdn.go (NewCDN, Purges, SetFail). images_clear_test.go TestImageClearOfOneSet asserts cdn.Purges() == [[images/en/me/me01/*]]; TestImageClearOfEverything asserts [[images/*]]. Without a purge client (ic.CDN == nil) cdn.Err = ErrCDNNotConfigured and the log says \"CDN not purged (no TCGREPLAY_SPACES_CDN_TOKEN)\"; TestImageClearWithoutAPurgeClient checks both. Caveat, not a verdict change: no production code sets ImageCache.CDN or calls ImageCache.Clear (grep finds ImageCache.Clear only in tests; cards/clear.go Client.Clear does not call the image cache; cmd/tcgreplay/hosted.go hostedCardDB sets no CDN), so the admin clear path does not reach this yet. Also when a set has no copies, no purge is sent (\"nothing to purge\"), which is the expected reading of 'the cleared set's image paths'."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "images.go Clear: a failed listing or delete sets images.Err; the delete failure is reported through images.Err and Removed is reduced by the DeleteError.Failed count (internal/cards/images.go Clear and internal/spaces/client.go Delete/DeleteError). A failed purge sets cdn.Err, which is returned in the report (\"error: ...\" in the log). The copies are no longer pointed at as the clear returns: known, partial and failed for the scope were deleted up front, and Image() answers the source while the scope is in clearing and afterwards finds no known entry (images.go Clear loops; TestImageClearWithDeletesRefused asserts Image returns the source after a refused delete, and TestImageClearReportsAFailedPurge asserts the copies are gone after a failed purge). Caveat: the leftover objects that could not be deleted are added to ic.unsure, and the next view's copyOne lists them and can re-mark the image known (images.go copyOne, versionOf(have)), so the cache may point at undeleted old copies again after a later view. TestImageClearWithDeletesRefused checks the no-overwrite and LIST behaviour there but does not assert against re-pointing. The immediate criterion holds."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "62859d76-6566-4410-9748-bc7f55360283",
+      "title": "Name admins and guard the admin page",
+      "checks": [
+        {
+          "at": "2026-11-04T15:55:52Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "62859d76-6566-4410-9748-bc7f55360283",
+            "title": "Name admins and guard the admin page",
+            "criteria": [
+              "An account whose confirmed email is on the admin list, in any letter case, passes the guard.",
+              "A signed-out request for an admin page is sent through Google sign-in and comes back to it. A signed-out direct or form request is refused as not signed in.",
+              "A signed-in account not on the list, one whose email Google did not confirm, or a sign-in from before this change is refused with a page saying so, and the request does not reach the admin page.",
+              "A request that changes something, sent from another site or with no origin, is refused even for an admin.",
+              "With no admins configured, everyone is refused.",
+              "Existing board sessions keep working for the board after this change."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/seal.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/admin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/admin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "board_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "oauth_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "google_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/hostauth/hostauth.go:117-121 lower-cases and trims each configured admin into a.admins; internal/hostauth/admin.go:13 IsAdmin lower-cases and trims the account email and requires EmailVerified. admin_test.go:53-70 (TestAdminPassesTheGuardInAnyCase) configures \" ONE@Example.com \", signs in as one@example.com, and gets 200 on GET and POST /admin/clear. Caveat: no production code sets Config.Admins (cmd/tcgreplay/hosted.go:120-125 has no Admins field), and no real route is mounted with RequireAdmin, so the list is only populated by tests."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/hostauth/admin.go:31-38: a signed-out request that is a read and not a subresource (no Sec-Fetch-Mode other than navigate) is redirected to /auth/login?next=\u003cpath\u003e. admin.go:32-36: any signed-out POST, or a subresource/cors request, gets 401 \"sign in required\". admin_test.go:72-98 (TestAdminSignedOut) checks the redirect, the 401s for POST and cors GET, that the page is never reached, and that signing in from /admin returns to /admin. Caveat: a GET with no Sec-Fetch-Mode header at all (for example plain curl) is redirected, not refused; this matches RequireSession in board.go:58-69."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/hostauth/admin.go:41-49: a signed-in account where IsAdmin is false gets a 403 HTML page titled \"Not an admin\" that names the email, and returns before next.ServeHTTP. The unverified-email case adds \"sign out and sign in again\" (admin.go:44-46). A pre-change sign-in has no \"v\" claim, so it opens as Verified false (seal.go:99-107, omitempty). Tests: admin_test.go:111-131 (other accounts), 133-168 (verified claim values, including absent), 170-183 (pre-change cookie, with the page not reached)."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/hostauth/admin.go:50-55: for any non-GET/HEAD request, the guard calls a.sameSite(r) after the admin check and returns 403 \"admin changes must come from the playmat\" when it fails. board.go:113-120 sameSite takes Origin, falls back to Referer when Origin is empty or \"null\", and compares the host with the public host; an empty value is refused. admin_test.go:185-206 (TestAdminChangesMustComeFromThePlaymat) covers foreign Origin, foreign Referer, no origin and null origin, all for an admin, with the page not reached."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "internal/hostauth/hostauth.go:116-123 builds a.admins from the configured list, skipping blank entries, so a nil or blank list leaves an empty map. admin.go:13 IsAdmin then returns false for every account, and admin.go:17 AdminCount returns 0. admin_test.go:208-218 (TestNoAdminsMeansNobody) checks nil and {\"\", \"  \"} both give 403 for a verified signed-in account."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The only session-shape change is grantClaims.Verified with json tag \"v,omitempty\" (internal/hostauth/seal.go:99-107). Old cookies still open, and store.go:191-211 session() accepts any cookie that opens, so the account comes back with EmailVerified false. board.go:58-93 RequireSession does not read EmailVerified, so board requests still pass. admin_test.go:170-183 checks that a pre-change cookie reaches the board with 200 and the board text. board_test.go and root board.go are unchanged in the staged diff, so the existing board tests are untouched."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "931c0a49-f2e4-4fb9-bdf9-0edc5792fa7e",
+      "title": "Add the cache admin page and clear job",
+      "checks": [
+        {
+          "at": "2026-11-04T15:58:48Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "931c0a49-f2e4-4fb9-bdf9-0edc5792fa7e",
+            "title": "Add the cache admin page and clear job",
+            "criteria": [
+              "The page shows the signed-in admin, both clear actions and the state of the last clear.",
+              "\"Clear everything\" clears the card database and, when present, the image copies, and the page then shows each tier's result.",
+              "\"Clear one set\" with a set code or a set id clears that set. An unknown or empty name is reported on the page, and nothing is cleared.",
+              "A clear asked for while another runs is refused with a message saying one is running.",
+              "A clear that fails part-way shows which tier failed and why. Clearing again is allowed.",
+              "Every clear is logged when it starts and when it ends, with who started it and its scope."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/cacheadmin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/page.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "html/template"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/handler.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin/cacheadmin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tcgdex/sets/me01.json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cacheadmin/page.go:37 renders 'Signed in as {{.Email}}' (email from hostauth.AccountFrom in handler.go:28-29); page.go:41 and :43 are the 'Clear everything' and 'Clear one set' forms posting to /admin/clear; page.go:44-46 shows 'Last clear' with the job label, admin, start time, duration and per-tier lines (or 'No clear since the playmat started'). Caveat, not part of this verdict: Handler() is not mounted anywhere outside the package (grep for cacheadmin finds only the package itself and its test), so the live server does not yet serve /admin."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cacheadmin.go:163-165: Start runs s.Cards.Clear(jctx, Scope{}) and, when s.Images != nil, s.Images.Clear(jctx, Scope{}) (the all scope). page.go:99-115 and tierText (page.go:75-95) show each tier's line. Test TestClearEverythingClearsCardsAndImagesAndShowsEachTier (cacheadmin_test.go:151-179) checks both clears run and each tier line appears."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "handler.go:40-44: an empty set with no all=1 gets a 400 'Name a set by its code (such as MEG) or id (such as me01).' cacheadmin.go:128-136: a blank name returns cards.ErrUnknownSet before any clear; a non-blank name goes through Cards.SetID (cards/clear.go:21-24 handles '' and unknown names via ErrUnknownSet). handler.go:50-51 shows 'No set is named %q. Nothing was cleared.' with 400. Nothing is cleared on these paths. Test TestUnknownOrEmptySetIsRefusedAndNothingCleared (cacheadmin_test.go:203-224) and TestClearOneSetByCodeOrID cover code and id."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "cacheadmin.go:123-125 and 139-143 return ErrBusy while a job is running; handler.go:52-53 maps ErrBusy to HTTP 409 with 'A clear is already running. Wait for it to finish, then try again.' Test TestOneClearAtATime (cacheadmin_test.go:226-257) checks the refusal while a clear is held."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "A failed tier is recorded in the job's Reports (cacheadmin.go:167-168). page.go:91-93 renders '\u003cn\u003e \u003ctier name\u003e, then failed: \u003cerr\u003e' with class failed, and page.go:45 marks the job 'with failures' when Job.Failed() (cacheadmin.go:64-71). Clearing again is allowed: Start only refuses while s.job.Running (cacheadmin.go:139-141, 181-185). Test TestAFailedTierIsShownAndClearingAgainIsAllowed (cacheadmin_test.go:259-284) covers both."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "cacheadmin.go:158 logs 'cache admin: %s started clearing %s' with the admin email (by) and the scope label, before the clear starts. cacheadmin.go:175 logs at the end 'cache admin: cleared %s for %s in %s: %s' with the label, the admin and the duration and each tier's result (r.String()). Both lines are checked in TestClearEverythingClearsCardsAndImagesAndShowsEachTier and TestAFailedTierIsShownAndClearingAgainIsAllowed (cacheadmin_test.go:176, 271)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "418ea4cb-bc17-45a7-9e94-8891acc2432c",
+      "title": "Serve the admin page in hosted mode",
+      "checks": [
+        {
+          "at": "2026-11-04T16:04:04Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "418ea4cb-bc17-45a7-9e94-8891acc2432c",
+            "title": "Serve the admin page in hosted mode",
+            "criteria": [
+              "An account named in the admin setting can sign in, open the admin page and clear everything. Afterwards the stand-in Spaces holds no card data or image objects, and the next import shows its cards.",
+              "Clearing one set by code, and by id, removes only that set's data and images, and the stand-in DigitalOcean API records the purge when the token is set.",
+              "An account not in the setting, and a signed-out browser, are refused on the page and on a direct clear request, and the stand-in Spaces still holds the same objects.",
+              "With a game open on the board, clearing everything leaves the game showing and playable.",
+              "Without the shared store, the admin page still clears memory and disk. Without the token, clears say the CDN was not purged. A token without the shared store is logged as ignored.",
+              "The start-up log names the number of admins (never their emails or the token), and a clean start logs no warning.",
+              "Desktop and dev builds serve no admin page, whatever is in their environment."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_admin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Admin sign-in is gated by hostauth.RequireAdmin (internal/hostauth/admin.go:27-58) and hostedHandler mounts /admin and /admin/ (cmd/tcgreplay/hosted.go:187-188). POST /admin/clear calls Service.Start with all=true (internal/cacheadmin/handler.go:34-57, cacheadmin.go:123-178). Everything-scope clears run spacesStore.Clear over the tcgdex/ prefix (internal/cards/spacesstore.go:14, 63-77) and ImageCache.Clear over all images (internal/cards/images.go:889-1017). The next import refetches: cleared in-memory entries are marked cleared and refetched (internal/cards/cards.go:74-115, cards/fresh.go). cmd/tcgreplay/hosted_admin_test.go:212-280 (TestHostedAdminClearsEverything) asserts the bucket has no tcgdex/ or images/ keys and that the next new_game refetches cards from the source. The test was not re-run here; the verification summary reports it passing."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Scope{Set} is resolved from a code or id by Client.SetID (internal/cards/clear.go:21-60, normCode shared with Resolve at cards.go:342-359). Scope.Key and Scope.Image limit a set clear to sets/\u003cid\u003e, cards/\u003cid\u003e- and images whose third segment is the set id (internal/cards/scope.go:33-50); spacesStore.Clear and diskStore.Clear apply the same rule (spacesstore.go:63-77, store.go:131-156). The CDN purge is sent as images/\u003clang\u003e/\u003cserie\u003e/\u003cset\u003e/* (images.go:930-953, 972-986), and spaces.NewCDN is wired only when the token is set (cmd/tcgreplay/hosted.go:122-131). cmd/tcgreplay/hosted_admin_test.go:282-313 runs the clear by 'MEG' and by 'me01', checks the remaining bucket keys, and checks h.cdn.Purges() == [[images/en/me/me01/*]]. Purges are recorded by spacestest/cdn.go:89."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "RequireAdmin refuses a signed-out request with 401 on any non-GET (internal/hostauth/admin.go:31-40), and a signed-in non-admin with 403 and a 'Not an admin' page (admin.go:41-49). IsAdmin requires a verified email in the admin set (admin.go:12-14; google.go verified() at lines 136-146 and 186-189). The clear never runs on those paths because the middleware returns before next.ServeHTTP. cmd/tcgreplay/hosted_admin_test.go:315-355 (TestHostedAdminRefusesEveryoneElse) asserts the page and the clear are refused, the bucket keys are unchanged, there are zero '?delete' POSTs and no CDN purges, and no clear was started."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Clear does not touch games or the game lock. It marks in-memory cards cleared, and Cached still returns the old copy for them (internal/cards/cards.go:74-115 and 498-520; cards.go Card() at 448-470 keeps the old copy if the source fails). cmd/tcgreplay/hosted_admin_test.go:246-261 checks after 'clear everything' that every open-game card still resolves via h.db.Cached, and that a move and card_text still work on the open game."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Without the shared store, hostedCardDB returns images=nil (cmd/tcgreplay/hosted.go:258-268). hostedAdmin then leaves Images nil (hosted.go:139-153), and Service.Start skips the image clear when Images is nil (cacheadmin.go:164-166). Cards.Clear clears the disk store and memory (cards.go:74-115; diskStore.Clear in store.go:131-156). Without the token, the CDN tier reports ErrCDNNotConfigured, rendered as 'CDN not purged (no TCGREPLAY_SPACES_CDN_TOKEN)' (page.go:76-79; images.go:972-975). A token without the shared store is logged as ignored by the ignored() helper on every non-shared branch (hosted.go:90-110). Tests are at cmd/tcgreplay/hosted_admin_test.go:357-392."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The start-up line appends adminText(a.AdminCount()) and prints only a count (cmd/tcgreplay/hosted.go:365; adminText at hosted.go:31-38 gives '%d cache admins' or 'no cache admins'). AdminCount is len of the de-duplicated, trimmed, lower-cased set (hostauth/admin.go:17; hostauth.go:113-120), and blanks from an empty TCGREPLAY_ADMINS are dropped. Nothing logs the admin emails or the CDN token at start-up (hostedCardDB logs only fixed text; hosted.go:90-131). The 'ignored' and 'CDN purge on clear: off' lines are logged only in the conditions above, and no clean-start path logs 'warning'. cmd/tcgreplay/hosted_admin_test.go:403-432 (TestRunHostedLogsTheAdminCount) checks the count, no email, and no warning."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "The admin routes are mounted only in hostedHandler (cmd/tcgreplay/hosted.go:179-190), which only runHosted and the hosted test harness call. The desktop board is served by webui.New(...).Handler() (hosted_admin_test.go:438-439 and internal/webui/server.go), which has no admin route. hostedAuth, the only reader of TCGREPLAY_ADMINS (hosted.go:130), is not used by the desktop path. cmd/tcgreplay/hosted_admin_test.go:434-452 (TestDesktopServesNoAdminPage) sets TCGREPLAY_ADMINS and checks GET /admin and POST /admin/clear serve no admin page. Note for the caller: the diff also touches many files outside this item's listed scope (internal/cards, internal/hostauth, internal/spaces, internal/spaces/spacestest, internal/webui, web/e2e, web/src), and adds new untracked packages (internal/cacheadmin, internal/cards/clear.go, scope.go, internal/hostauth/admin.go, internal/spaces/cdn.go). That is a scope question, not a criterion, and it is not judged here."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "5cbe1f40-8024-4f6b-96ba-ca14b02c686c",
+      "title": "Declare and document the admin and CDN settings",
+      "checks": [
+        {
+          "at": "2026-11-04T16:06:23Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "5cbe1f40-8024-4f6b-96ba-ca14b02c686c",
+            "title": "Declare and document the admin and CDN settings",
+            "criteria": [
+              "The App Platform definition declares the admin list and, as an encrypted secret, the CDN token, each explained in a comment.",
+              "Running the container locally passes both settings through when they are exported.",
+              "The hosted settings table and operator setup describe the admin page, each setting and its default, and how to create the token with CDN read and update access.",
+              "No document still says hosted card data can only be refreshed by deleting objects by hand. The build context is unchanged, so the guides are still built in."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261104090640-a5a74fab-admin-cache-clearing/tcgreplay/.do/app.yaml lines 98-110: TCGREPLAY_ADMINS (lines 98-103, plain RUN_TIME env, comment explains the comma-separated Google emails, /admin access, and that unset means nobody) and TCGREPLAY_SPACES_CDN_TOKEN (lines 104-110, `type: SECRET`, comment explains the DigitalOcean token with CDN read and update access, what it purges, and the unset behaviour). The criterion only requires the CDN token to be encrypted, and it is. The header comment at lines 16-18 also mentions the admin page."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Makefile lines 67-74 (docker-run): the `docker run` command now ends `-e TCGREPLAY_ADMINS -e TCGREPLAY_SPACES_CDN_TOKEN $(IMAGE)`, so both variables are passed through from the exported shell environment. The Makefile header comment at lines 61-64 documents exporting them. Verification `make -n docker-run` passed."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Hosted settings table in 'TCG Review Playmat Design and Build Plan.md' lines 325-326: a row for TCGREPLAY_ADMINS (who may use /admin; default none, nobody can use the page) and a row for TCGREPLAY_SPACES_CDN_TOKEN (CDN read and update token; default none, clears do not purge the CDN, ignored without the four SPACES settings). The admin page is described at line 89 (who may open /admin, the clear scopes, the job, the logging). Operator setup step 8 (line 338) says to create the token under API → Tokens with custom scopes `cdn:read` and `cdn:update` only, and to set it encrypted. Scope note: the goal's scope list names only .do/app.yaml and /admin, but the plan doc is one of the docs the criteria name, so I did not treat its edits as out of scope."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The old wording 'delete the bucket's tcgdex/ objects' and 'delete its images/ objects' is gone from the plan doc. Operator steps 6 and 7 (lines 336-337) now point to `/admin` (step 8) instead. A search of the *.md files and the plan doc found no remaining statement that hosted card data can only be refreshed by deleting objects by hand; the remaining 'delete' hits are about clears deleting copies, or are unrelated. The .dockerignore in the worktree still excludes .spektacular, skills, .claude and .agents but does not drop internal/guides, and .dockerignore is not in the git status list, so the build context is unchanged. Dockerfile changes are comment-only."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "a55ed943-0356-44b5-aa9c-483c222ec1fe",
+      "title": "Update the card cache knowledge entries",
+      "checks": [
+        {
+          "at": "2026-11-04T16:07:52Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a55ed943-0356-44b5-aa9c-483c222ec1fe",
+            "title": "Update the card cache knowledge entries",
+            "criteria": [
+              "A reader of the card cache entry learns that admins clear the hosted cache from the admin page, everything or one set by code or id, across memory, disk, the shared store and image copies, and that this replaces deleting objects by hand.",
+              "The entry explains that games already open keep their cards through a clear, and that cleared data is fetched again from the card source.",
+              "A reader of the board card info entry learns that copied images carry a content version in their address, so changed art reaches browsers despite the long cache lifetime, and that an open board shows cleared data after a reload."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcgdex-cache-never-expires.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/board-card-info-per-page-load.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "knowledge-tcgdex-cache-never-expires.md lines 81-96 say that to force fresh data an admin clears the cache from /admin (TCGREPLAY_ADMINS, internal/cacheadmin). The clear covers everything or one set, named by decklist code (MEG) or TCGdex id (me01). It reaches memory, the disk store, Spaces tcgdex/ and the images/ copies, and the entry says this replaces deleting bucket objects by hand (line 83)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "knowledge-tcgdex-cache-never-expires.md lines 98-101: 'Open games keep their cards: a clear marks memory entries cleared rather than dropping them. Cached still returns a cleared copy ... Card, Resolve and ByName treat it as a miss and fetch from TCGdex at once, keeping the old copy only if TCGdex fails.' This covers both that open games keep cards and that cleared data is fetched again from the card source."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "knowledge-board-card-info-per-page-load.md lines 29-36: a CDN copy's address carries a content version (image_version, 12-hex hash of the two objects' ETags), loaded as \u003cimage\u003e/\u003csize\u003e?v=\u003cimage_version\u003e. Copies are served with Cache-Control max-age=604800, and the version is what makes changed art reach browsers. Lines 37-39: after an admin clears the card cache, an open board keeps its loaded data and image addresses and shows the fresh data and art after a reload."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "a533b58b-cd2a-483c-8038-e8a3291c8a3d",
+      "title": "Name the admins and create the CDN purge token",
+      "checks": [
+        {
+          "at": "2026-11-04T16:08:42Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a533b58b-cd2a-483c-8038-e8a3291c8a3d",
+            "title": "Name the admins and create the CDN purge token",
+            "criteria": [
+              "The hosted playmat's App Platform component has the admin list set to the admins' Google account emails, and the CDN token set as an encrypted value.",
+              "After a redeploy, the start-up log reports the expected number of admins and CDN purging on, with no warning.",
+              "The Spaces access key in use can list and delete objects in the bucket."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The repo can only declare the keys, not hold their values. /home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261104090640-a5a74fab-admin-cache-clearing/tcgreplay/.do/app.yaml (diff lines 20-32) adds TCGREPLAY_ADMINS (RUN_TIME, no value, no type) and TCGREPLAY_SPACES_CDN_TOKEN (RUN_TIME, type SECRET, no value). No admin email or token value appears anywhere in the diff or the status. The live App Platform component settings cannot be read from here, so this is for the operator to set in the DigitalOcean control panel (design doc step 8, diff line 110)."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The code emits the expected start-up text: hosted.go diff line 262 logs adminText(a.AdminCount()) ('N cache admins'), and diff line 241 logs 'card images: CDN purge on clear: on' when the token is set. AdminCount filters empty entries (hostauth/hostauth.go:116-120), so an unset or blank TCGREPLAY_ADMINS gives 0 rather than 1. No deployment log was available, so the redeploy result and the absence of any warning cannot be confirmed from the files."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "No code in the diff checks the access key's permissions, and no test runs against real Spaces. The requirement appears only as documentation: design doc step 8 (diff line 110) says the step-6 key must be able to list and delete objects, and the internal/spaces delete code (spaces/delete_test.go is new) is exercised only by tests against the stub. Whether the live key can list and delete in the bucket can only be checked against DigitalOcean, which this environment does not reach."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T16:09:28Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "a533b58b-cd2a-483c-8038-e8a3291c8a3d",
+            "title": "Name the admins and create the CDN purge token",
+            "criteria": [
+              "The hosted playmat's App Platform component has the admin list set to the admins' Google account emails, and the CDN token set as an encrypted value.",
+              "After a redeploy, the start-up log reports the expected number of admins and CDN purging on, with no warning.",
+              "The Spaces access key in use can list and delete objects in the bucket."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The repo side is in place: .do/app.yaml:102-103 declares TCGREPLAY_ADMINS with no value (comment at lines 98-101 says to set it in the control panel), and .do/app.yaml:108-110 declares TCGREPLAY_SPACES_CDN_TOKEN as type SECRET. Neither line shows an actual value. The admin list and the encrypted CDN token exist only in the App Platform control panel for the playmat component, which is not in any file here (the goal says it is not available in this environment). Nothing in the repo can show they were set. The operator must confirm it in App Platform Settings \u003e playmat \u003e Environment Variables."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The start-up log is produced by a redeploy, and no deployment log is in the repo or the diff. Searched the code root for the admin start-up log line and the CDN start-up message; the only code paths are in internal/cacheadmin/cacheadmin.go and internal/cacheadmin/page.go (the CDN-off line 'CDN not purged (no TCGREPLAY_SPACES_CDN_TOKEN)' at page.go:79). The expected admin count and the absence of a warning depend on the live deployment, so this can only be checked by the operator after a redeploy and by reading the App Platform runtime logs."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Whether the Spaces access key in use can list and delete objects is a property of the DigitalOcean account and the live key, which no file in the repo or the staged diff records. The repo's tests use fakes (internal/spaces/delete_test.go, internal/spaces/spacestest/cdn.go), which prove only the client's behaviour, not the key's permissions. The check needs a real list and delete against the bucket with the key in use, which the operator must perform."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-04T16:10:05Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "a533b58b-cd2a-483c-8038-e8a3291c8a3d",
+            "title": "Name the admins and create the CDN purge token",
+            "criteria": [
+              "The hosted playmat's App Platform component has the admin list set to the admins' Google account emails, and the CDN token set as an encrypted value.",
+              "After a redeploy, the start-up log reports the expected number of admins and CDN purging on, with no warning.",
+              "The Spaces access key in use can list and delete objects in the bucket."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The repo can only declare the settings. .do/app.yaml in the staged diff (hunk starting line 16) adds TCGREPLAY_ADMINS as RUN_TIME with no type, and TCGREPLAY_SPACES_CDN_TOKEN as RUN_TIME type SECRET, which is the encrypted form. Those are declarations only. The live App Platform component's values (the admin emails and the token) are not in the repo, and no command here can read them. Judged from files, the declaration is correct; the operator still has to set the values in the control panel."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The code emits the expected start-up lines, so the log content can be checked against the source. In cmd/tcgreplay/hosted.go, the startup log line (diff around line 262) ends with adminText(a.AdminCount()), which yields '%d cache admins' or 'no cache admins (TCGREPLAY_ADMINS)'. The CDN state is logged as 'card images: CDN purge on clear: on' or 'off (no TCGREPLAY_SPACES_CDN_TOKEN)' (diff lines 241-243). There is a warning path, 'TCGREPLAY_SPACES_CDN_TOKEN ignored without the shared store' (diff line 206), which fires if the token is set without the Spaces settings. Whether a real redeploy logs the expected admin count and CDN on with no warning is not in any file here and needs the deployment log."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Nothing in the repo or the diff records the access key's permissions. Whether the Spaces key can list and delete objects is a DigitalOcean account setting, and no credentials or bucket access are available in this environment. The code does call list and delete paths (internal/spaces/delete_test.go and spacestest/cdn.go are new), but passing tests against a fake do not show that the live key has those rights."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-04T16:10:05Z",
+          "round": 1,
+          "decision": "skip",
+          "reason": "human task left for the operator (needs the DigitalOcean control panel and App Platform settings); orchestrator reports it to the user"
+        }
+      ],
+      "attempts": 3,
+      "state": "skipped"
+    }
+  ]
+}

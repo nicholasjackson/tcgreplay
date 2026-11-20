@@ -445,8 +445,8 @@ func TestConnectorAnonymousRefused(t *testing.T) {
 	}
 }
 
-// TestRegisterRedirects shows a client may register Claude's callback
-// addresses or a loopback address on any port, and is refused with
+// TestRegisterRedirects shows a client may register Claude's or ChatGPT's
+// callback addresses or a loopback address on any port, and is refused with
 // invalid_redirect_uri for any other address or none; a public client gets
 // no secret.
 func TestRegisterRedirects(t *testing.T) {
@@ -458,6 +458,17 @@ func TestRegisterRedirects(t *testing.T) {
 		{[]string{"https://claude.ai/api/mcp/auth_callback"}, true},
 		{[]string{"https://claude.com/api/mcp/auth_callback"}, true},
 		{[]string{"https://claude.ai/api/mcp/auth_callback", "https://claude.com/api/mcp/auth_callback"}, true},
+		{[]string{"https://chatgpt.com/connector_platform_oauth_redirect"}, true},
+		{[]string{"https://chatgpt.com/connector/oauth/abc123_XYZ-9"}, true},
+		{[]string{"https://chatgpt.com/connector/oauth/"}, false},
+		{[]string{"https://chatgpt.com/connector/oauth/a/b"}, false},
+		{[]string{"https://chatgpt.com/connector/oauth/abc?x=1"}, false},
+		{[]string{"https://chatgpt.com/connector/oauth/abc#frag"}, false},
+		{[]string{"https://chatgpt.com/connector/oauth/.."}, false},
+		{[]string{"https://chatgpt.com/connector/oauth/abc%2Fdef"}, false},
+		{[]string{"http://chatgpt.com/connector_platform_oauth_redirect"}, false},
+		{[]string{"https://chatgpt.com.evil.example/connector/oauth/abc"}, false},
+		{[]string{"https://chatgpt.com/other"}, false},
 		{[]string{"http://localhost:1234/cb"}, true},
 		{[]string{"http://127.0.0.1:5555/callback"}, true},
 		{[]string{"http://[::1]:9/x"}, true},

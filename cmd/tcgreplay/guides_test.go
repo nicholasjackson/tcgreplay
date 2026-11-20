@@ -14,7 +14,7 @@ import (
 // as the stdio caller does, and returns a client session on it.
 func desktopSession(t *testing.T) *mcp.ClientSession {
 	t.Helper()
-	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "")
+	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "", nil)
 	st, ct := mcp.NewInMemoryTransports()
 	if _, err := srv.Connect(context.Background(), st, nil); err != nil {
 		t.Fatal(err)
@@ -81,8 +81,8 @@ func TestHostedGuidesMatchDesktop(t *testing.T) {
 
 	want := servedGuides(t, desktop)
 	names := guideNames(t, want["guide list"])
-	if len(names) != 6 {
-		t.Fatalf("desktop lists %d guides %v, want 6", len(names), names)
+	if len(names) != 7 {
+		t.Fatalf("desktop lists %d guides %v, want 7", len(names), names)
 	}
 	for _, name := range names {
 		if want["guide "+name] == "" || want["prompt "+name+" text"] == "" {

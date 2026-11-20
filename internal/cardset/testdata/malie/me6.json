@@ -1,0 +1,713 @@
+[
+  {
+    "name": "Heracross",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "001/103",
+      "numerator": "001",
+      "denominator": "103",
+      "numeric": 1
+    },
+    "stage": "BASIC",
+    "hp": 130,
+    "types": [
+      "GRASS"
+    ],
+    "weakness": {
+      "types": [
+        "FIRE"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 3,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Spike Draw",
+        "text": "Draw 2 cards.",
+        "cost": [
+          "GRASS"
+        ],
+        "damage": {
+          "amount": 20
+        }
+      },
+      {
+        "kind": "ATTACK",
+        "name": "High Horsepower",
+        "text": "This Pokémon also does 30 damage to itself.",
+        "cost": [
+          "GRASS",
+          "GRASS",
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 130
+        }
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_1",
+        "longFormID": "Heracross_me6_1_std_Common_NonFoil_None",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_001_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Heracross",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "001/103",
+      "numerator": "001",
+      "denominator": "103",
+      "numeric": 1
+    },
+    "stage": "BASIC",
+    "hp": 130,
+    "types": [
+      "GRASS"
+    ],
+    "weakness": {
+      "types": [
+        "FIRE"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 3,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Spike Draw",
+        "text": "Draw 2 cards.",
+        "cost": [
+          "GRASS"
+        ],
+        "damage": {
+          "amount": 20
+        }
+      },
+      {
+        "kind": "ATTACK",
+        "name": "High Horsepower",
+        "text": "This Pokémon also does 30 damage to itself.",
+        "cost": [
+          "GRASS",
+          "GRASS",
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 130
+        }
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_1_ph",
+        "longFormID": "Heracross_me6_1_ph_Common_FlatSilver_Reverse",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_001_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Masquerain",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "003/103",
+      "numerator": "003",
+      "denominator": "103",
+      "numeric": 3
+    },
+    "stage": "STAGE1",
+    "stage_text": "Evolves from Surskit",
+    "hp": 110,
+    "types": [
+      "GRASS"
+    ],
+    "weakness": {
+      "types": [
+        "FIRE"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 1,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Frightening Pattern",
+        "text": "During your opponent's next turn, the Defending Pokémon can't use attacks.",
+        "cost": [
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 30
+        }
+      },
+      {
+        "kind": "ATTACK",
+        "name": "Bug Out",
+        "text": "Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards.",
+        "cost": [
+          "GRASS"
+        ],
+        "damage": {
+          "amount": 50,
+          "suffix": "×"
+        }
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_3",
+        "longFormID": "Masquerain_me6_3_std_Common_NonFoil_None",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_003_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Masquerain",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "003/103",
+      "numerator": "003",
+      "denominator": "103",
+      "numeric": 3
+    },
+    "stage": "STAGE1",
+    "stage_text": "Evolves from Surskit",
+    "hp": 110,
+    "types": [
+      "GRASS"
+    ],
+    "weakness": {
+      "types": [
+        "FIRE"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 1,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Frightening Pattern",
+        "text": "During your opponent's next turn, the Defending Pokémon can't use attacks.",
+        "cost": [
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 30
+        }
+      },
+      {
+        "kind": "ATTACK",
+        "name": "Bug Out",
+        "text": "Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards.",
+        "cost": [
+          "GRASS"
+        ],
+        "damage": {
+          "amount": 50,
+          "suffix": "×"
+        }
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_3_ph",
+        "longFormID": "Masquerain_me6_3_ph_Common_FlatSilver_Reverse",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_003_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Meowscarada ex",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "014/103",
+      "numerator": "014",
+      "denominator": "103",
+      "numeric": 14
+    },
+    "tags": [
+      "EX_LOWER"
+    ],
+    "stage": "STAGE2",
+    "stage_text": "Evolves from Floragato",
+    "hp": 320,
+    "types": [
+      "GRASS"
+    ],
+    "weakness": {
+      "types": [
+        "FIRE"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 2,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Magical Bullet",
+        "text": "This attack also does 120 damage to 1 of your opponent's Benched Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        "cost": [
+          "GRASS",
+          "GRASS"
+        ],
+        "damage": {
+          "amount": 120
+        }
+      },
+      {
+        "kind": "RULE_BOX",
+        "name": "Pokémon ex rule",
+        "text": "When your Pokémon ex is Knocked Out, your opponent takes 2 Prize cards."
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_14",
+        "longFormID": "Meowscaradaex_me6_14_std_DoubleRare_SunPillar_Holo_CastAndCure_SouthernCross",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_014_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Heat Rotom ex",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "023/103",
+      "numerator": "023",
+      "denominator": "103",
+      "numeric": 23
+    },
+    "tags": [
+      "EX_LOWER"
+    ],
+    "stage": "BASIC",
+    "hp": 190,
+    "types": [
+      "FIRE"
+    ],
+    "weakness": {
+      "types": [
+        "WATER"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 1,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Rewarm",
+        "text": "This attack does 30 damage for each Basic {R} Energy card in your discard pile. Then, shuffle those cards into your deck.",
+        "cost": [
+          "COLORLESS",
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 30,
+          "suffix": "×"
+        }
+      },
+      {
+        "kind": "ATTACK",
+        "name": "Strong Flare",
+        "text": "Discard 2 Energy from this Pokémon.",
+        "cost": [
+          "FIRE",
+          "FIRE",
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 170
+        }
+      },
+      {
+        "kind": "RULE_BOX",
+        "name": "Pokémon ex rule",
+        "text": "When your Pokémon ex is Knocked Out, your opponent takes 2 Prize cards."
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_23",
+        "longFormID": "HeatRotomex_me6_23_std_DoubleRare_SunPillar_Holo_CastAndCure_SouthernCross",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_023_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Darkrai",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "063/103",
+      "numerator": "063",
+      "denominator": "103",
+      "numeric": 63
+    },
+    "stage": "BASIC",
+    "hp": 120,
+    "types": [
+      "DARKNESS"
+    ],
+    "weakness": {
+      "types": [
+        "GRASS"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 2,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Shadow-Clad",
+        "text": "Search your deck for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then, shuffle your deck.",
+        "cost": [
+          "DARKNESS"
+        ]
+      },
+      {
+        "kind": "ATTACK",
+        "name": "Dark Cutter",
+        "cost": [
+          "DARKNESS",
+          "DARKNESS",
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 110
+        }
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_63",
+        "longFormID": "Darkrai_me6_63_std_Uncommon_NonFoil_None",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_063_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Darkrai",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "063/103",
+      "numerator": "063",
+      "denominator": "103",
+      "numeric": 63
+    },
+    "stage": "BASIC",
+    "hp": 120,
+    "types": [
+      "DARKNESS"
+    ],
+    "weakness": {
+      "types": [
+        "GRASS"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 2,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Shadow-Clad",
+        "text": "Search your deck for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then, shuffle your deck.",
+        "cost": [
+          "DARKNESS"
+        ]
+      },
+      {
+        "kind": "ATTACK",
+        "name": "Dark Cutter",
+        "cost": [
+          "DARKNESS",
+          "DARKNESS",
+          "COLORLESS"
+        ],
+        "damage": {
+          "amount": 110
+        }
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_63_ph",
+        "longFormID": "Darkrai_me6_63_ph_Uncommon_FlatSilver_Reverse",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_063_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Azurill",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "080/103",
+      "numerator": "080",
+      "denominator": "103",
+      "numeric": 80
+    },
+    "stage": "BASIC",
+    "hp": 30,
+    "types": [
+      "COLORLESS"
+    ],
+    "weakness": {
+      "types": [
+        "FIGHTING"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 0,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Bouncy-Bounce Charge",
+        "text": "Search your deck for an Energy card and attach it to 1 of your Benched Pokémon. Then, shuffle your deck.",
+        "cost": [
+          "FREE"
+        ]
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_80",
+        "longFormID": "Azurill_me6_80_std_Common_NonFoil_None",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_080_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Azurill",
+    "card_type": "POKEMON",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "080/103",
+      "numerator": "080",
+      "denominator": "103",
+      "numeric": 80
+    },
+    "stage": "BASIC",
+    "hp": 30,
+    "types": [
+      "COLORLESS"
+    ],
+    "weakness": {
+      "types": [
+        "FIGHTING"
+      ],
+      "operator": "×",
+      "amount": 2
+    },
+    "retreat": 0,
+    "text": [
+      {
+        "kind": "ATTACK",
+        "name": "Bouncy-Bounce Charge",
+        "text": "Search your deck for an Energy card and attach it to 1 of your Benched Pokémon. Then, shuffle your deck.",
+        "cost": [
+          "FREE"
+        ]
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_80_ph",
+        "longFormID": "Azurill_me6_80_ph_Common_FlatSilver_Reverse",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_080_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Aarune",
+    "card_type": "TRAINER",
+    "subtype": "SUPPORTER",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "089/103",
+      "numerator": "089",
+      "denominator": "103",
+      "numeric": 89
+    },
+    "text": [
+      {
+        "kind": "TEXT_BOX",
+        "text": "Search your deck for up to 3 in any combination of Supporter and Stadium cards, reveal them, and put them into your hand. Then, shuffle your deck."
+      },
+      {
+        "kind": "REMINDER",
+        "text": "You may play only 1 Supporter card during your turn."
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_89",
+        "longFormID": "Aarune_me6_89_std_Uncommon_NonFoil_None",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_089_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Aarune",
+    "card_type": "TRAINER",
+    "subtype": "SUPPORTER",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "089/103",
+      "numerator": "089",
+      "denominator": "103",
+      "numeric": 89
+    },
+    "text": [
+      {
+        "kind": "TEXT_BOX",
+        "text": "Search your deck for up to 3 in any combination of Supporter and Stadium cards, reveal them, and put them into your hand. Then, shuffle your deck."
+      },
+      {
+        "kind": "REMINDER",
+        "text": "You may play only 1 Supporter card during your turn."
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_89_ph",
+        "longFormID": "Aarune_me6_89_ph_Uncommon_FlatSilver_Reverse",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_089_std.jpg"
+        }
+      }
+    }
+  },
+  {
+    "name": "Bubbly {W} Energy",
+    "card_type": "ENERGY",
+    "subtype": "SPECIAL",
+    "regulation_mark": "J",
+    "collector_number": {
+      "full": "132/103",
+      "numerator": "132",
+      "denominator": "103",
+      "numeric": 132
+    },
+    "text": [
+      {
+        "kind": "TEXT_BOX",
+        "text": "As long as this card is attached to a Pokémon, it provides {W} Energy.\n \nThe {W} Pokémon this card is attached to recovers from all Special Conditions and can't be affected by any Special Conditions."
+      }
+    ],
+    "ext": {
+      "tcgl": {
+        "cardID": "me6_132",
+        "longFormID": "BubblyWEnergy_me6_132_std_UltraRare_SunPillar_Etched",
+        "key": "me6"
+      }
+    },
+    "images": {
+      "tcgl": {
+        "jpg": {
+          "front": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/me6/me6_en_132_std.jpg"
+        }
+      }
+    }
+  }
+]

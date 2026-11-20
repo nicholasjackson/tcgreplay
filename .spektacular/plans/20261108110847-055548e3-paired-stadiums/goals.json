@@ -1,0 +1,977 @@
+{
+  "plan": "20261108110847-055548e3-paired-stadiums",
+  "items": [
+    {
+      "item": "ba448b36-faa3-4065-b50d-62412c2bec0f",
+      "title": "Pair mark in card data",
+      "checks": [
+        {
+          "at": "2026-11-08T18:59:32Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "ba448b36-faa3-4065-b50d-62412c2bec0f",
+            "title": "Pair mark in card data",
+            "criteria": [
+              "A print marked as played as a pair becomes a runtime card with the mark, and an unmarked print becomes one without it.",
+              "A correction can set the mark on a print, and the import keeps it on every re-import.",
+              "A marked card's text is its data text alone, with no line generated from the mark, and an unmarked card's text is unchanged.",
+              "Existing built sets are unchanged, byte for byte, by the new field."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/format.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/card.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/corrections.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/playedAsPair"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/format_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/corrections_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/api/card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cards_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cards/cardstest/cardstest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/lock_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/cardset/format.go:78 adds Print.PlayedAsPair with json tag playedAsPair,omitempty; internal/cardset/card.go:47 copies p.PlayedAsPair into the runtime cards.Card, so a marked print yields a marked card and an unmarked print yields false. internal/cardset/format_test.go:109-148 (TestPairMark) checks both directions and a round trip."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/cardset/corrections.go applyCorrection (lines 116-157) sets any path through the print's JSON form and decodes strictly into Print, so /playedAsPair with value true is accepted now that the field exists. internal/cardset/import.go:213-219 reads corrections/\u003cid\u003e.json and applies them on every fresh build, so the mark is kept on re-import. corrections_test.go:59-63 covers the correction, and corrections_test.go:209 and 229 cover the import path with a true value on tst-002."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/cards/cards.go:144-174 (Text) never references PlayedAsPair (grep finds no use in Text); the mark only appears in the struct at cards.go:98-102. internal/cards/cards_test.go:7-19 asserts a marked card's Text equals the unmarked text and equals the expected plain string. Unmarked output is unchanged since no code path was altered."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "format.go:78 uses omitempty, so an unmarked print serialises no playedAsPair key. format_test.go:505-507 asserts a set with no marked print writes no playedAsPair, and format_test.go:537-539 asserts removing the mark restores the original bytes. A grep outside internal/ finds no playedAsPair in any cardsets file. The other format.go hunk only realigns struct tags (gofmt), which does not change output."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "4053fd2f-5557-402a-82f2-637258dc41d2",
+      "title": "Stadium spot holds a pair",
+      "checks": [
+        {
+          "at": "2026-11-08T19:08:20Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "4053fd2f-5557-402a-82f2-637258dc41d2",
+            "title": "Stadium spot holds a pair",
+            "criteria": [
+              "Two cards moved into an empty Stadium spot together occupy it as one Stadium, and every card is still in exactly one place.",
+              "A card can join a spot holding exactly one card as its pair, and a plain move into an occupied spot is still refused.",
+              "A pair moved out of the spot in one step puts each half on its owner's side.",
+              "The board view shows the Stadium with its second half nested in it, and existing readers of the Stadium still see the first half.",
+              "Every existing battle log, game record and saved game still replays to the same board."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/state.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/types.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/events.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/apply.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/invariants.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/view.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "stadium.iid/name/def"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/reads.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/ui.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/verbs.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/handlers.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/importer_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/webtest_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "b.stadium.iid/def"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/state/apply_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "turns_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "stadium.pair.iid"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/state/apply.go:458-508 (applyPairMove) moves both halves in one event; the into-Stadium branch (apply.go:489-496) requires an empty spot and the second half joins with As=AsPair. internal/state/apply_test.go:68-85 (TestStadiumPairPlacedInOneEvent) checks the Stadium holds both IIDs, Find returns the Stadium for each, neither is still in hand, and s.Check() is clean. invariants.go:43 adds every Stadium entry to Locations(), so the one-place check covers both halves."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "apply.go:186-196: As=AsPair is accepted only when the spot holds exactly one other card (lone check, apply.go:190), and a plain move (As==\"\") into an occupied spot is refused with 'stadium is occupied by ... discard it first' (apply.go:194-195). apply_test.go:87-129 (TestStadiumPairRole) covers joins a lone card, refused onto an empty spot, refused onto a pair, plain move into occupied refused, and pair into occupied refused."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "apply.go:497-500: the second half's To.Seat is cleared so each card resolves to its own owner via applyMove (apply.go:149-156, which defaults the seat to card.Owner and rejects a mismatch). apply_test.go:131-158 (TestStadiumPairMovedOut) moves p1-1 and p2-1 out of the spot in one event to Discard and to Hand and checks each lands in its owner's pile."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "state/view.go:62-66 adds StadiumView embedding CardView plus Pair *CardView; view.go:192-198 fills Stadium from Stadium[0] and nests Stadium[1] as Pair. Because CardView is embedded, the first half keeps iid/name/def at the top level. apply_test.go:185-209 (TestStadiumPairView) checks the exact JSON for the single case and the nested pair case. web/src/lib/actions.js:50 (findCard) also resolves b.stadium.pair. The Svelte Strip.svelte still renders only b.stadium, which the criterion does not require."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "No saved State JSON is persisted: a grep of non-test Go code finds no json decode of State. Saved games and records are event or battle-log replays. MovePayload.Pair is omitempty (events.go:411-413), so existing events encode and decode unchanged (apply_test.go:211-231). The single-card paths keep their behaviour; the importer passes As=\"\" for Stadium moves (importer/handlers.go:98-107), and the stadium-discard loop sets lastStadium only from index 0, which is unchanged for a single card. Caveat: apply.go:187-188 now refuses any As other than pair on a Stadium move. Before, the state ignored it. The Move escape hatch (verbs.go:724-735) passes the caller's as through, so a previously saved Move to the Stadium with a role would now fail to replay. Nothing in the importer or the web client produces that shape, so I could not confirm such an event exists."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "dcf69aa9-ae33-4b60-b152-19246998167e",
+      "title": "Play, replace and discard Stadium pairs",
+      "checks": [
+        {
+          "at": "2026-11-08T19:17:18Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "dcf69aa9-ae33-4b60-b152-19246998167e",
+            "title": "Play, replace and discard Stadium pairs",
+            "criteria": [
+              "Playing two different prints of a pair-played Stadium together puts both in the Stadium spot as one Stadium, in one action.",
+              "Playing one half alone, and then the other, completes the pair, and one undo removes both when the second joined the first's play.",
+              "Playing a different Stadium over a pair puts both halves in their owner's discard pile. Undoing it returns both to the Stadium spot, and the log shows one line for the pair's move.",
+              "Discarding a pair from the Stadium spot moves both halves in one logged action, and undoing it returns both.",
+              "A lone half, a pair of two identical prints, and a Stadium played while one of the same name is in play each show a warning while the action is still carried out. The lone-half and identical-print warnings last only while the spot holds them.",
+              "Removing the mark from the test Stadium makes it behave as an ordinary Stadium, with no program change.",
+              "Completing a pair is not reported as playing a second Stadium that turn."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/verbs.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.card"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "g.open"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/reads.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/game_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/game/stadium_pair_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "applied_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/game/verbs.go PlayTrainerWith/playPair (diff hunk @@ -423 and +479): given two halves, playPair calls replaceStadium and then emits one EvMove with IID and Pair set into the Stadium zone, so both halves land in one action. internal/game/stadium_pair_test.go:152-172 TestStadiumPairPlayedTogether checks one action, one move event with Pair set, the spot holding both halves, and the log line."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Completion joins the open action: internal/game/game.go runLocked 'rejoin' branch (diff @@ -348/-367) and the joinOpen hook in verbs.go PlayTrainerWith (open.Source == g.st.Stadium[0], completesPair). Partner moves with As=AsPair (verbs.go Move, completesPair branch). stadium_pair_test.go:188-209 TestStadiumPairCompletedInSameAction checks second.ActionID == first.ActionID and that one Undo(1) returns both to hand."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "verbs.go replaceStadium uses movePair for a two-card spot, emitting one paired MovePayload to each owner's discard. state/apply.go applyPairMove applies both halves. stadium_pair_test.go:242-280 TestStadiumReplacesPair checks both halves in p1 discard, one action, exactly one log line 'p2 moved ... Twin Peak + ... Twin Peak stadium → p1:discard', and that Undo restores both to the spot."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "verbs.go Move: a Stadium-spot pair leaving the spot is moved with movePair (diff @@ -730 hunk, 'len(st) == 2 \u0026\u0026 slices.Contains(st, iid)'), one event. stadium_pair_test.go:284-314 TestStadiumPairDiscardedTogether runs both halves ('first' and 'second') and checks one action, one paired move, one log line, and that Undo returns both to the spot."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Warnings are advisory and returned alongside the action: lone half and identical-print warnings come from game/reads.go stadiumWarnings (diff @@ -429), which reads g.st.Stadium, so they last only while the spot holds them. Same-name warning is appended to t.warn in verbs.go sameStadiumWarning, called from PlayTrainerWith and playPair before replacement. stadium_pair_test.go:148 (lonePeak), 186-209 and 333-347 (lone-half warning shown and then gone once replaced), 316-331 (identical-print warning shown and then gone), 349-364 (same-name warning in result.Warnings and the action still replaces the spot)."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "The mark is card data: internal/cards/cardstest/cardstest.go tst-10/tst-11 carry PlayedAsPair: true; cards.go Card.PlayedAsPair drives behaviour only. No program branch on the card name exists in the diff. stadium_pair_test.go:366-387 TestStadiumPairRuleIsData sets PlayedAsPair=false on both prints and checks no lone-half warning, the second Stadium replaces the first in a separate action, and the same-name warning appears."
+            },
+            {
+              "criterion": 7,
+              "verdict": "met",
+              "evidence": "internal/game/reads.go turnWarnings (diff @@ -465): a Stadium counts toward 'Stadiums this turn' only if playsStadium(e) is true, and playsStadium returns false when mv.As == state.AsPair (the completion move). stadium_pair_test.go:213-238 TestStadiumPairCompletedLater asserts neither result nor standing warnings contain 'Stadiums this turn' after completion; TestStadiumPairOverSameNameWarns:361 confirms two real pairs still count as two Stadiums."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "8bcd43bb-ce27-43e9-8a8a-5a0c35885e50",
+      "title": "Assistant plays Stadium pairs",
+      "checks": [
+        {
+          "at": "2026-11-08T19:20:10Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "8bcd43bb-ce27-43e9-8a8a-5a0c35885e50",
+            "title": "Assistant plays Stadium pairs",
+            "criteria": [
+              "The assistant can play both halves of a pair-played Stadium in one play action.",
+              "The card text the assistant reads for a pair-played Stadium includes the pair rule, taken from the card's data.",
+              "The assistant's playing instructions explain how to play a pair.",
+              "Playing a single Trainer with the tool works exactly as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/chatgpt-tool-discovery.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/guides/play-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "conventions/skills-text-and-packaging.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "stadium.pair"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The play_trainer tool takes an optional pair_iid (server.go PlayTrainerArg, ~line 573, and the register call ~line 586), which calls g.PlayTrainerWith(seat, actor, iid, pair). verbs.go PlayTrainerWith routes a non-empty pair to playPair, which emits one EvMove with MovePayload.Pair set (verbs.go ~line 417). pair_test.go TestPlayTrainerPair plays tst-10 with pair_iid tst-11 and asserts the stadium holds both halves and the log has a single '→ stadium' line."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "card_text (server.go ~580-600) quotes the catalogue's Effect text for the card. The Twin Peak fixture at internal/cards/cardstest/cardstest.go:27-28 carries the pair rule in its Effect ('You cannot play this card by itself. You must combine 2 different Twin Peak from your hand to play as 1 Stadium card.'). pair_test.go TestCardTextPairRule asserts card_text returns that data text and that no line is added for the PlayedAsPair mark. Caveat: the rule is sourced from fixture data, not the real Delta Reign Legendary Stadium print, but the path (catalogue Effect, not a hand-written line) is the data path the criterion describes."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "server.go:73 (the instructions block) says a Stadium whose card_text says it is played as a pair goes down with play_trainer naming both halves (iid and pair_iid), and the play_trainer tool description at server.go ~line 586 says the same and that playing one half onto a lone half completes the pair. internal/guides/play-game.md:496 adds a 'Stadium pairs' bullet covering both-halves play, the lone-half warning, completion by the partner alone, and a Stadium played over a pair."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "PlayTrainer (verbs.go ~line 337) now delegates to PlayTrainerWith with pair \"\", so the single path runs the same validation, the same Stadium replacement (replaceStadium with one card = the old t.move to owner discard) and the same move. completesPair requires PlayedAsPair, so ordinary Stadiums are unaffected. TestPlayTrainerSingle (pair_test.go:128-142) plays Ultra Ball and checks it reaches the discard with the same 'p1:hand → p1:discard' log line. One deliberate visible change: playing a Stadium whose name matches one already in play now adds an advisory warning ('a Stadium named X is already in play', verbs.go sameStadiumWarning). Warnings are advisory and do not block, so the play itself is unchanged, but the output for that case is new."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "db242fa7-8da4-45b4-854d-2be909c1ecab",
+      "title": "Board shows and plays Stadium pairs",
+      "checks": [
+        {
+          "at": "2026-11-08T19:36:13Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "db242fa7-8da4-45b4-854d-2be909c1ecab",
+            "title": "Board shows and plays Stadium pairs",
+            "criteria": [
+              "On desktop and phone widths, the board shows both halves of a Stadium pair in the Stadium spot, and either can be opened in the zoom.",
+              "Dragging the second half onto a lone first half completes the pair.",
+              "The single-half warning shows while the first half is alone and is gone once the pair is complete.",
+              "A single Stadium still shows and plays as before, including replacing one Stadium with another by dragging."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/actions.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/components/Strip.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "b.stadium.pair"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".pair"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/playwright-touch-tests.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".theirs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/app.css"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/actions.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/webtest/webtest.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "webtest_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/drag.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/phone.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/smoke.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/components/Strip.svelte:41-47 renders both halves in the Stadium region when b.stadium.pair is set (`\u003cCard card={b.stadium} ...\u003e` and `\u003cCard card={b.stadium.pair} ...\u003e`), sized sm on phone and lg on desktop. Card.svelte:39-45 opens the zoom (app.zoom = card) on a mouse click for any non-hidden card, and each half is a full card view with its own iid. internal/state/view.go:182-190 projects Stadium[0] and Stadium[1] into StadiumView.Pair. web/e2e/drag.spec.js:~1013-1031 ('each half of a Stadium pair opens in the zoom') clicks each half and checks .zoom .meta contains its iid; web/e2e/phone.spec.js:~1041-1056 checks both halves are in viewport and clear of the Active on the phone board. The drag.spec tests run across the phone, tablet and desktop projects per the reported 7 pair tests."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "web/src/lib/actions.js:107-111: a hand card dropped on the stadium zone with type Stadium sends play_trainer. internal/webui/actions.go (play_trainer case) calls PlayTrainerWith(iid, pair=\"\"). internal/game/verbs.go PlayTrainerWith: spec.joinOpen joins the open action of the first half (open.Source == Stadium[0]) when completesPair holds; in PlayTrainer the Stadium branch calls t.move(iid, Stadium, state.AsPair) when completesPair is true, and Move() (verbs.go ~line 832) also sets AsPair for a stadium move that completes a pair. applyMove (internal/state/apply.go) appends the second half to Stadium. web/e2e/drag.spec.js:~988-1011 drags the second half onto the lone first half and expects the 'moved ... as pair' timeline line and both halves visible. internal/webui/pair_test.go TestPlayTrainerPairAction covers the server-side play-in-turn path."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/game/reads.go stadiumWarnings (~line 273-285) returns '\u003cName\u003e (\u003ciid\u003e) is played as a pair: play a second, different \u003cName\u003e with it' while the Stadium spot holds one card whose PlayedAsPair is true; it returns nothing when the spot holds two halves (the two-copies-of-one-print warning only applies to a pair of the same def). turnWarnings prepends these, and Warnings() feeds the board. web/e2e/drag.spec.js:~988-1011 checks the warning (via the header .warn title on desktop/tablet and the Menu dropdown on phone) contains 'is played as a pair' after the first half and does not contain it after the pair completes."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Strip.svelte:48-49 keeps the single-card branch `{:else if b.stadium}` unchanged, so a lone non-pair Stadium still renders one card. Game logic: verbs.go PlayTrainerWith/replaceStadium (case 1) moves the old single Stadium to its owner's discard via t.move, then the new card moves in; completesPair requires PlayedAsPair so a non-pair Stadium never joins. applyMove (apply.go ~line 186-193) still rejects a second non-pair Stadium unless it replaces the same iid. internal/game/game_test.go:~341-342 TestStadiumReplacesAndEffectsExpire was updated to compare the slice to [p2-18] and still checks the replaced Stadium goes to the owner's discard. actions.js:110-112 still sends play_trainer for a hand Stadium dropped on the spot, so replacement by drag is preserved. Reported go test and playwright runs pass; I did not run them."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "ef13bcef-35f2-46e9-955c-d4333ef954e9",
+      "title": "Mark Delta Reign's Legendary Stadiums",
+      "checks": [
+        {
+          "at": "2026-11-08T19:39:18Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "ef13bcef-35f2-46e9-955c-d4333ef954e9",
+            "title": "Mark Delta Reign's Legendary Stadiums",
+            "criteria": [
+              "Every Delta Reign print of Legendary Pyroduct, Summit and Trench is marked as played as a pair in the built set, and its English text includes the pair rule.",
+              "The marks come from recorded corrections with reasons, and survive a re-import.",
+              "Delta Reign's report has nothing open, and the set check passes over every committed set.",
+              "No other Delta Reign card changes."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/corrections/me06.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/sets/me06.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/text/en/effect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/new-set-tcgdex-data-incomplete.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/reports/me06.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cardset/committed_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "In the built set cardsets/sets/me06.json, all six Legendary Pyroduct, Summit and Trench prints (effects at lines 5026, 5050, 5074, 5098, 5122, 5146) read 'You cannot play this card by itself. You must combine 2 different Legendary \u003cname\u003e from your hand to play as 1 Stadium card.' The staged diff adds \"playedAsPair\": true to six Stadium print blocks in that file (hunks at 5009, 5032, 5055, 5078, 5101, 5124). TestCommittedDeltaReign in internal/cardset/committed_test.go (diff lines 107-130) requires the mark and the rule on every Legendary Stadium and expects exactly six."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The marks are recorded as six /playedAsPair corrections with non-empty reasons in cardsets/corrections/me06.json (lines 267-302, card me06-094 to me06-099, value true). The /text/en/effect corrections for the same six cards (lines 231-266) also carry reasons. The staged diff adds TestImportAppliesCorrections coverage for a /playedAsPair correction (corrections_test.go), and TestCommittedDeltaReign counts the reasoned marks. The verification summary reports a re-import with 0 changed and a byte-identical built set, which I could not re-run; that is the only evidence for the re-import part."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cardsets/reports/me06.json line 9 has summary \"open\": 0. Its 36 item statuses all read \"corrected\" or \"acknowledged\" (positive-match count 36 equals the total status count of 36, so none is open). The verification summary reports 'tcgreplay sets check' as 'all card sets check out'. TestCommittedSets runs the same guard over all committed sets. The report is unchanged in the diff, so it was already clean."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The staged diff for cardsets/sets/me06.json has only six added lines, each \"playedAsPair\": true on the Legendary Stadium prints; no other me06 field changes. The corrections diff for me06.json only appends the six /playedAsPair entries and the six effect entries, with no edits to existing entries. The Go changes in internal/ (format.go, card.go, cards.go) use omitempty, so they add no bytes to other cards."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "1ac769ec-378c-4977-86d6-b4dfbf31b8bc",
+      "title": "Supply a real Stadium pair battle log",
+      "checks": [
+        {
+          "at": "2026-11-08T19:41:46Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "1ac769ec-378c-4977-86d6-b4dfbf31b8bc",
+            "title": "Supply a real Stadium pair battle log",
+            "criteria": [
+              "A real TCG Live battle log that plays a Legendary Stadium pair, and its decklist, are available to the implementer, or the user has confirmed none is available yet."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The run's working-context file records the user's answer under '## User answer (via orchestrator, 2026-11-08)': 'Option 2, defer: the maintainer confirms no real TCG Live battle log with a Legendary Stadium pair is available yet.' (/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/workflows/implement-20261108110847-055548e3-paired-stadiums.md:30-31). The second branch of the criterion is therefore satisfied. The first branch is not: a search of the code root's testdata/ found no file containing 'Legendary' (Grep returned no matches), and the 13 logs in testdata/logs/ plus testdata/decks/ contain no Legendary Stadium pair. The confirmation reaches me relayed through the orchestrator, not as a direct user message, so its provenance is secondhand, but the file is the run's designated record of the user's answers. The staged diff (/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/tmp/20261108110847-055548e3-paired-stadiums/goal-check/tcgreplay.diff) touches no testdata or log files, so it stays within scope."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "34004346-c1aa-404f-92d0-7875ce7f8773",
+      "title": "Import battle logs with a Stadium pair",
+      "checks": [
+        {
+          "at": "2026-11-08T19:43:38Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "34004346-c1aa-404f-92d0-7875ce7f8773",
+            "title": "Import battle logs with a Stadium pair",
+            "criteria": [
+              "Importing the real battle log succeeds with no problems reported, and the board then shows the pair in the Stadium spot (or both halves in the discard where the log replaces it).",
+              "Every existing battle log in the test corpus imports exactly as before, for every seed.",
+              "If no real log was available, the requirement is recorded as deferred to a follow-up, and the importer still imports every existing log."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/trace_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/handlers.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "architecture/importer-determinism.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "handlers.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "parse.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcg-live-log-card-codes.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/replay.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/importer.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/importer_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "No real Stadium pair battle log exists. A grep for legendary or pair across the worktree's testdata/ returned no files. The staged diff has no testdata/ or log changes and no pair-log import handler. The working-context (.spektacular/workflows/implement-20261108110847-055548e3-paired-stadiums.md, lines 28-33 and 36-37) records the user's decision to defer this, with no real TCG Live log available. The criterion can be met later once a real log is supplied, so it is not_met rather than impossible."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The importer changes are type-only fixes for the Stadium slice in internal/importer/handlers.go:95-107 and :498-505. The replace loop over slices.Clone(r.st.Stadium) behaves the same as the old single-card move for a 0- or 1-card spot, and firstOf (handlers.go:505, defined near the end of the file) returns the same card for a single card. The only test change is importer_test.go:358-359, which is a compile fix for the slice type. No file under testdata/, trace_test.go, importer.go, replay.go, parse.go, or the architecture and gotcha docs appears in the staged diff, so the corpus and oracle are untouched. The verification summary shows TestCorpus and TestCorpusSeeds PASS. I did not rerun the tests."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "No real log was available, and the working-context (.spektacular/workflows/implement-20261108110847-055548e3-paired-stadiums.md:36-38) records 'Import logs with a pair: deferred, no real TCG Live log available' with a follow-up spec to propose. The importer still imports every existing log: the diff contains no importer behaviour change beyond the single-card-equivalent compile fixes, and TestCorpus and TestCorpusSeeds pass. Caveat: the working-context says the deferral was also to go into the changelog and test plan. Those store files are not in the code diff and I did not open them, so only the working-context entry is confirmed here."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T19:44:52Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "34004346-c1aa-404f-92d0-7875ce7f8773",
+            "title": "Import battle logs with a Stadium pair",
+            "criteria": [
+              "Importing the real battle log succeeds with no problems reported, and the board then shows the pair in the Stadium spot (or both halves in the discard where the log replaces it).",
+              "Every existing battle log in the test corpus imports exactly as before, for every seed.",
+              "If no real log was available, the requirement is recorded as deferred to a follow-up, and the importer still imports every existing log."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/trace_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/handlers.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "architecture/importer-determinism.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "handlers.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "parse.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcg-live-log-card-codes.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/replay.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/importer.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/importer_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "No real TCG Live log with a Legendary Stadium pair exists in the corpus. A grep of testdata/logs for \"Legendary (Pyroduct|Summit|Trench)\" returns no matches. The working context (.spektacular/workflows/implement-20261108110847-055548e3-paired-stadiums.md, lines 36-37) records the importer task as deferred on the user's decision. The importer diff (internal/importer/handlers.go hunks at lines 95-107 and 500-505) only adds the Stadium-slice compile fixes and has no pair-import handling, so nothing in the files shows a real pair log importing with no problems or the pair on the board."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/importer/handlers.go:95-107 keeps single-Stadium behaviour unchanged: the new loop over slices.Clone(r.st.Stadium) runs once for a lone card, and lastStadium is set to the first card, which is the only card. The attack-discard check at handlers.go:505 uses firstOf(r.st.Stadium), which returns the same card for a lone Stadium. internal/importer/importer_test.go:355-359 is updated only for the slice type. TestCorpus (importer_test.go:61-) checks every corpus log for problems, warnings and expected turns. TestCorpusSeeds (importer_test.go:222-252) checks seeds 2-25 for problems and observed counts, and both pass per the verification summary. testdata/index.json is not in the staged status, so the oracle is unchanged. Caveat: the tests check problems and observed counts, not a byte-for-byte diff against pre-change output; the 'exactly as before' claim rests on the code reading plus those tests."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The working context records the deferral: .spektacular/workflows/implement-20261108110847-055548e3-paired-stadiums.md lines 30-38 say the maintainer confirmed no real log is available, the importer task was deferred, and 'Import logs with a pair: deferred, no real TCG Live log available' is to be recorded in the changelog and test plan, with a follow-up spec proposed. The changelog and test plan are store files that I did not read, so I cannot confirm that entry was written there. The importer still imports every existing log: handlers.go and importer_test.go changes are the compile fixes only, and TestCorpus and TestCorpusSeeds pass."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-08T19:52:35Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "34004346-c1aa-404f-92d0-7875ce7f8773",
+            "title": "Import battle logs with a Stadium pair",
+            "criteria": [
+              "Importing the real battle log succeeds with no problems reported, and the board then shows the pair in the Stadium spot (or both halves in the discard where the log replaces it).",
+              "Every existing battle log in the test corpus imports exactly as before, for every seed.",
+              "If no real log was available, the requirement is recorded as deferred to a follow-up, and the importer still imports every existing log."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/trace_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/handlers.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "architecture/importer-determinism.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "handlers.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "parse.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/tcg-live-log-card-codes.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/replay.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/importer.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/index.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/importer/importer_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "No real Stadium-pair battle log exists in the corpus. A glob of testdata/logs/ shows only the 2026-10 real logs plus testdata/logs/synthetic_2026-11-08_ledjo23_legendary-summit-pair.txt, and testdata/index.json labels that file synthetic (note: 'SYNTHETIC, NOT A REAL TCG LIVE LOG'). No real log is imported to show the pair in the Stadium spot. Criterion 3 governs the path actually taken."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The testdata/index.json diff only appends one entry (the synthetic log) and a description sentence; no existing entry's expected or observed values change. The importer_test.go diff only adapts the Stadium field to a slice (importer_test.go ~355) and adds new tests; no expected values change. TestCorpus (importer_test.go:61-139) fails on any problem, any warning, or any report mismatch for every indexed log, and TestCorpusSeeds (importer_test.go:222) covers many seeds. No existing log plays the same-named Stadium twice back to back (grep of 'to the Stadium spot' in testdata/logs shows Gravity Mountain, N's Castle, Battle Cage and Risky Ruins only in non-consecutive positions), so the new playStadium join path is not reached by existing logs. Verification reports these tests pass."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "The deferral is recorded in the work itself: internal/importer/handlers.go ~781-783 says the pair-line shapes are 'an assumed shape: no real log yet' and 'no real TCG Live log with a pair has been seen yet'; testdata/index.json's synthetic entry note says 'Replace it with, or check it against, the first real one'. The synthetic log is not presented as real. The importer still imports every existing log (see criterion 2). Caveat: no tracked follow-up item is visible in the repo itself; I did not read the run's workflow record, since store files are off-limits to me as a reviewer, so if the follow-up is recorded only there, that is where to confirm it."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-08T19:52:44Z",
+          "round": 1,
+          "decision": "accept",
+          "reason": "User (via orchestrator): build against a synthetic log and leave the real-log criterion unticked, since no real TCG Live log with a Legendary Stadium pair exists; verify against the first real one as a manual follow-up"
+        }
+      ],
+      "attempts": 3,
+      "state": "accepted_shortfall"
+    },
+    {
+      "item": "e53f2613-04cd-468b-96c9-5169e90a2592",
+      "title": "Pair play documentation",
+      "checks": [
+        {
+          "at": "2026-11-08T19:55:58Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "e53f2613-04cd-468b-96c9-5169e90a2592",
+            "title": "Pair play documentation",
+            "criteria": [
+              "The player-facing documentation describes playing a pair-played Stadium on the board, including completing a lone half.",
+              "The design documentation describes how the assistant plays a pair and how the game records it.",
+              "The card-set guide describes marking a card as played as a pair, with an example correction, and says a marked print must also carry its printed pair rule in its effect text, recorded by correction if the sources lack it."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/workflows/play-game.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cardsets/README.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/playedAsPair"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/text/en/effect"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "README.md"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "site/src/content/docs/workflows/play-game.md (diff hunk @@ -13,4 +13,6 @@, the 'Stadiums played as a pair' paragraph) is the player-facing board guide. It says a pair is played on the board by dragging one half onto the Stadium spot and then the other half onto it, that both show as one Stadium, that a warning shows until the second half joins, and that playing another Stadium over the pair discards both halves and undo restores both. Completing a lone half is covered by the 'second half joins' sentence. The drop path matches web/src/lib/actions.js dropOnZone (the stadium branch comment about completing a pair), and web/src/components/Strip.svelte renders both halves. README.md has no pair content, but the criterion is met by the site page."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "'TCG Review Playmat Design and Build Plan.md' (diff): the stadium row at line 10 ('Up to two cards: a Stadium, or the two halves of a Stadium played as a pair') records the state; the move row at line 19 defines the pair field and the as: 'pair' join; the verbs row at line 31 ('Stadium pairs') states the assistant plays a pair with play_trainer(iid, pair_iid) in one action, that one half completes a lone half while it is open, and that a replacement sends both halves to discard in one event; the UI section at line 39 and the importer section at line 47 cover the rest. Scope note: this file is not in the goal's Scope list, but the pointers name it as the design documentation, so I judged it as the intended target."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "cardsets/README.md (diff @@ -136,6 +142,26 @@): the new section gives an example correction at lines 145-153 that sets {\"card\": \"me06-096\", \"path\": \"/playedAsPair\", \"value\": true, ...} with a reason, and lines 157-162 state that a print marked playedAsPair must also carry its printed pair rule in its effect text, recorded as a /text/en/effect correction when the sources lack it (as for Delta Reign). Lines 59-63 also describe the mark. The corrections file cardsets/corrections/me06.json (diff @@ -263,6 +263,42 @@) carries the matching /playedAsPair entries, and the /text/en/effect pair-rule corrections for Pyroduct, Summit and Trench sit above them in the same file."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    }
+  ]
+}

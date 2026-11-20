@@ -1,0 +1,779 @@
+{
+  "format": 1,
+  "set": {
+    "id": "2024sv",
+    "serie": "mc",
+    "releaseDate": "2024-12-04",
+    "abbreviation": "MCD24",
+    "text": {
+      "en": {
+        "name": "McDonald's Collection 2024"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "2024sv-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "100+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charizard",
+          "evolveFrom": "Charmeleon",
+          "attacks": [
+            {
+              "name": "Royal Blaze",
+              "effect": "This attack does 50 more damage for each Leon card in your discard pile."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Battle Sense",
+              "effect": "Once during your turn, you may look at the top 3 cards of your deck and put 1 of them into your hand. Discard the other cards."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ]
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pikachu",
+          "attacks": [
+            {
+              "name": "Charge",
+              "effect": "Search your deck for a Basic Lightning Energy card and attach it to this Pokémon. Then, shuffle your deck."
+            },
+            {
+              "name": "Pika Punch"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "90"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Miraidon",
+          "attacks": [
+            {
+              "name": "Sharp Fang"
+            },
+            {
+              "name": "Lightning Laser",
+              "effect": "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20x"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Jigglypuff",
+          "attacks": [
+            {
+              "name": "Pound"
+            },
+            {
+              "name": "Let's All Rollout",
+              "effect": "This attack does 20 more damage for each of your Benched Pokémon that has the Let's Rollout Attack."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hatenna",
+          "attacks": [
+            {
+              "name": "Stampede"
+            },
+            {
+              "name": "Magical Shot"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragapult",
+          "evolveFrom": "Drakloak",
+          "attacks": [
+            {
+              "name": "Dragon Launcher",
+              "effect": "Discard a number of your Benched Dreepy up to the number of your opponent's Pokémon in play. Then, for each Dreepy you discarded in this way, choose 1 of your opponent's Pokémon and do 100 damage to it. You can't choose the same Pokémon more than once. This damage isn't affected by Weakness or Resistance"
+            },
+            {
+              "name": "Spooky Shot"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "180"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Quagsire",
+          "evolveFrom": "Wooper",
+          "attacks": [
+            {
+              "name": "Beat"
+            },
+            {
+              "name": "Fickle Impact",
+              "effect": "If you have exactly 2, 4, or 6 Prize cards remaining, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-8",
+      "localId": "8",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "190"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Koraidon",
+          "attacks": [
+            {
+              "name": "Claw Clash"
+            },
+            {
+              "name": "Wild Impact",
+              "effect": "Discard 3 Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-9",
+      "localId": "9",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Umbreon",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Blindside",
+              "effect": "This attack does 60 damage to 1 of your opponent's Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Moon Mirage",
+              "effect": "Your opponent's Active Pokémon is now Confused."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-10",
+      "localId": "10",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "160"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hydreigon",
+          "evolveFrom": "Zweilous",
+          "attacks": [
+            {
+              "name": "Dark Cutter"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Tri Howl",
+              "effect": "Once during your turn, you may look at the top 3 cards of your deck and attach any number of Energy cards you find there to your Pokémon in any way you like. Discard the other cards."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-11",
+      "localId": "11",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "70+"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Roaring Moon",
+          "attacks": [
+            {
+              "name": "Vengeance Fletching",
+              "effect": "This attack does 10 more damage for each Ancient card in your discard pile."
+            },
+            {
+              "name": "Speed Wing"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-12",
+      "localId": "12",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "180"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragonite",
+          "evolveFrom": "Dragonair",
+          "attacks": [
+            {
+              "name": "Dragon Pulse",
+              "effect": "Discard the top 2 cards of your deck."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Jet Cruise",
+              "effect": "Your Pokémon in play have no Retreat Cost."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-13",
+      "localId": "13",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "30x"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Eevee",
+          "attacks": [
+            {
+              "name": "Continuous Steps",
+              "effect": "Flip a coin until you get tails. This attack does 30 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-14",
+      "localId": "14",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Rayquaza",
+          "attacks": [
+            {
+              "name": "Jaw Lock",
+              "effect": "During your opponent's next turn, the Defending Pokémon can't retreat."
+            },
+            {
+              "name": "Power Blast",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2024sv-15",
+      "localId": "15",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Drampa",
+          "attacks": [
+            {
+              "name": "Gentle Slap"
+            },
+            {
+              "name": "Raging Cannon",
+              "effect": "If all your Benched Pokémon have at least 1 damage counter on them, this attack does 120 more damage."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

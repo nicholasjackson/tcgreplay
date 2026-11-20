@@ -184,6 +184,8 @@ const (
 	AsPokemon = "pokemon"
 	AsEnergy  = "energy"
 	AsTool    = "tool"
+	// AsPair joins the lone card in the Stadium spot as its pair.
+	AsPair = "pair"
 )
 
 // Special Conditions.

@@ -1,0 +1,5507 @@
+{
+  "format": 1,
+  "set": {
+    "id": "sv06.5",
+    "serie": "sv",
+    "releaseDate": "2024-08-02",
+    "abbreviation": "SFA",
+    "text": {
+      "en": {
+        "name": "Shrouded Fable"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "sv06.5-001",
+      "localId": "001",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/001"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_001_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Joltik",
+          "attacks": [
+            {
+              "name": "Splashing Dodge",
+              "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-002",
+      "localId": "002",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Colorless"
+          ],
+          "damage": "50+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/002"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_002_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Galvantula",
+          "evolveFrom": "Joltik",
+          "attacks": [
+            {
+              "name": "Shocking Web",
+              "effect": "If this Pokémon has any {L} Energy attached, this attack does 80 more damage."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Compound Eyes",
+              "effect": "Attacks used by this Pokémon do 50 more damage to your opponent's Active Pokémon that has an Ability (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-003",
+      "localId": "003",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/003"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_003_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Rowlet",
+          "attacks": [
+            {
+              "name": "Add On",
+              "effect": "Draw a card."
+            },
+            {
+              "name": "Leafage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-004",
+      "localId": "004",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20×"
+        },
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/004"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_004_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dartrix",
+          "evolveFrom": "Rowlet",
+          "attacks": [
+            {
+              "name": "United Wings",
+              "effect": "This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack."
+            },
+            {
+              "name": "Cutting Wind"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-005",
+      "localId": "005",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Grass"
+          ],
+          "damage": "170"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/005"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_005_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Decidueye",
+          "evolveFrom": "Dartrix",
+          "attacks": [
+            {
+              "name": "Stock Up on Feathers",
+              "effect": "Draw cards until you have 7 cards in your hand."
+            },
+            {
+              "name": "Power Shot",
+              "effect": "Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-006",
+      "localId": "006",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "220"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/006"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_006_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tapu Bulu",
+          "attacks": [
+            {
+              "name": "Wood Hammer",
+              "effect": "This Pokémon also does 30 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-007",
+      "localId": "007",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/007"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_007_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Houndour",
+          "attacks": [
+            {
+              "name": "Gnaw"
+            },
+            {
+              "name": "Rear Kick"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-008",
+      "localId": "008",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/008"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_008_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Houndoom",
+          "evolveFrom": "Houndour",
+          "attacks": [
+            {
+              "name": "Bite"
+            },
+            {
+              "name": "Snarl",
+              "effect": "During your opponent's next turn, attacks used by the Defending Pokémon do 100 less damage (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-009",
+      "localId": "009",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/009"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_009_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Iron Moth",
+          "attacks": [
+            {
+              "name": "Suction",
+              "effect": "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon."
+            },
+            {
+              "name": "Anachronism Repulsor",
+              "effect": "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-010",
+      "localId": "010",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/010"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_010_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Horsea",
+          "attacks": [
+            {
+              "name": "Hold Still",
+              "effect": "Heal 30 damage from this Pokémon."
+            },
+            {
+              "name": "Razor Fin"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-011",
+      "localId": "011",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/011"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_011_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Seadra",
+          "evolveFrom": "Horsea",
+          "attacks": [
+            {
+              "name": "Call for Backup",
+              "effect": "Search your deck for up to 3 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck."
+            },
+            {
+              "name": "Sharp Fin"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-012",
+      "localId": "012",
+      "category": "Pokemon",
+      "hp": 310,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/012"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_012_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kingdra ex",
+          "evolveFrom": "Seadra",
+          "attacks": [
+            {
+              "name": "King's Order",
+              "effect": "Put up to 3 {W} Pokémon from your discard pile onto your Bench."
+            },
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 50 more damage for each {W} Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-013",
+      "localId": "013",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/013"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_013_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sneasel",
+          "attacks": [
+            {
+              "name": "Cut"
+            },
+            {
+              "name": "Beset",
+              "effect": "During your opponent's next turn, the Defending Pokémon can't retreat."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-014",
+      "localId": "014",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "40"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "70"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/014"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_014_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Weavile",
+          "evolveFrom": "Sneasel",
+          "attacks": [
+            {
+              "name": "Slash"
+            },
+            {
+              "name": "Hail Claw",
+              "effect": "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-015",
+      "localId": "015",
+      "category": "Pokemon",
+      "hp": 280,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Metal"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Metal"
+          ],
+          "damage": "250"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/015"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_015_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Revavroom ex",
+          "evolveFrom": "Varoom",
+          "attacks": [
+            {
+              "name": "Accelerator Flash",
+              "effect": "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 120 more damage."
+            },
+            {
+              "name": "Shattering Speed",
+              "effect": "Discard this Pokémon and all attached cards."
+            }
+          ],
+          "effect": "As long as this Pokémon is on your Bench, prevent all damage done to this Pokémon by attacks (both yours and your opponent’s)."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-016",
+      "localId": "016",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/016"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_016_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Drowzee",
+          "attacks": [
+            {
+              "name": "Eerie Gaze",
+              "effect": "Your opponent reveals their hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-017",
+      "localId": "017",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/017"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_017_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hypno",
+          "evolveFrom": "Drowzee",
+          "attacks": [
+            {
+              "name": "Daydream",
+              "effect": "During your opponent's next turn, if they attach an Energy card from their hand to the Defending Pokémon, their turn ends."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-018",
+      "localId": "018",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/018"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_018_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Duskull",
+          "attacks": [
+            {
+              "name": "Come and Get You",
+              "effect": "Put up to 3 Duskull from your discard pile onto your Bench."
+            },
+            {
+              "name": "Mumble"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-019",
+      "localId": "019",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/019"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_019_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dusclops",
+          "evolveFrom": "Duskull",
+          "attacks": [
+            {
+              "name": "Will-O-Wisp"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Cursed Blast",
+              "effect": "Once during your turn, you may put 5 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-020",
+      "localId": "020",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "150"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/020"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_020_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dusknoir",
+          "evolveFrom": "Dusclops",
+          "attacks": [
+            {
+              "name": "Shadow Bind",
+              "effect": "During your opponent's next turn, the Defending Pokémon can't retreat."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Cursed Blast",
+              "effect": "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-021",
+      "localId": "021",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "80+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/021"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_021_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cresselia",
+          "attacks": [
+            {
+              "name": "Healing Pirouette",
+              "effect": "Heal 20 damage from each of your Pokémon."
+            },
+            {
+              "name": "Crescent Purge",
+              "effect": "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-022",
+      "localId": "022",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "90"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/022"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_022_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Sylveon",
+          "evolveFrom": "Eevee",
+          "attacks": [
+            {
+              "name": "Mystical Return",
+              "effect": "Flip a coin. If heads, choose 1 of your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards into their deck."
+            },
+            {
+              "name": "Disarming Voice",
+              "effect": "Your opponent's Active Pokémon is now Confused."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-023",
+      "localId": "023",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "20+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/023"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_023_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Croagunk",
+          "attacks": [
+            {
+              "name": "Light Punch"
+            },
+            {
+              "name": "Frog Hop",
+              "effect": "Flip a coin. If heads, this attack does 20 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-024",
+      "localId": "024",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "90+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/024"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_024_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Toxicroak",
+          "evolveFrom": "Croagunk",
+          "attacks": [
+            {
+              "name": "Corkscrew Punch"
+            },
+            {
+              "name": "Clean Hit",
+              "effect": "If your opponent's Active Pokémon is an Evolution Pokémon, this attack does 90 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-025",
+      "localId": "025",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "100+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 4,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/025"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_025_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Bloodmoon Ursaluna",
+          "attacks": [
+            {
+              "name": "Mad Bite",
+              "effect": "This attack does 30 more damage for each damage counter on your opponent's Active Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Battle-Hardened",
+              "effect": "When you play this Pokémon from your hand onto your Bench during your turn, you may attach up to 2 Basic {F} Energy cards from your hand to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-026",
+      "localId": "026",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "130"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/026"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_026_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Slither Wing",
+          "attacks": [
+            {
+              "name": "Iron Smasher",
+              "effect": "If your opponent has any Future Pokémon in play, this attack does 120 more damage."
+            },
+            {
+              "name": "Smashing Wing",
+              "effect": "Discard 2 Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-027",
+      "localId": "027",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/027"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_027_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zubat",
+          "attacks": [
+            {
+              "name": "Lead",
+              "effect": "Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck."
+            },
+            {
+              "name": "Darkness Fang"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-028",
+      "localId": "028",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/028"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_028_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Golbat",
+          "evolveFrom": "Zubat",
+          "attacks": [
+            {
+              "name": "Speed Dive"
+            },
+            {
+              "name": "Pitch-Black Blade",
+              "effect": "During your next turn, this Pokémon can't attack."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-029",
+      "localId": "029",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/029"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_029_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Crobat",
+          "evolveFrom": "Golbat",
+          "attacks": [
+            {
+              "name": "Poison Fang",
+              "effect": "Your opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, put 2 damage counters on that Pokémon instead of 1."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Shadowy Envoy",
+              "effect": "Once during your turn, if you played Janine's Secret Art from your hand this turn, you may draw cards until you have 8 cards in your hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-030",
+      "localId": "030",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/030"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_030_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Absol",
+          "attacks": [
+            {
+              "name": "Darkfall",
+              "effect": "If you have at least 3 {D} Energy in play, this attack does 50 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-031",
+      "localId": "031",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "20×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/031"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_031_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zorua",
+          "attacks": [
+            {
+              "name": "Stampede"
+            },
+            {
+              "name": "Double Scratch",
+              "effect": "Flip 2 coins. This attack does 20 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-032",
+      "localId": "032",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60×"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "110"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/032"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_032_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zoroark",
+          "evolveFrom": "Zorua",
+          "attacks": [
+            {
+              "name": "Illusory Hijacking",
+              "effect": "This attack does 60 damage for each of your opponent's Pokémon ex and Pokémon V in play."
+            },
+            {
+              "name": "Claw Slash"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-033",
+      "localId": "033",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/033"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_033_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Inkay",
+          "attacks": [
+            {
+              "name": "Mischievous Tentacles",
+              "effect": "Look at the top card of your opponent's deck. You may have your opponent shuffle their deck."
+            },
+            {
+              "name": "Peck"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-034",
+      "localId": "034",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "90"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/034"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_034_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Malamar",
+          "evolveFrom": "Inkay",
+          "attacks": [
+            {
+              "name": "Colluding Tentacles",
+              "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, this attack does 120 damage to the new Active Pokémon. If you didn't play Xerosic's Machinations from your hand during this turn, this attack does nothing."
+            },
+            {
+              "name": "Spinning Attack"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-035",
+      "localId": "035",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/035"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_035_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Yveltal",
+          "attacks": [
+            {
+              "name": "Corrosive Winds",
+              "effect": "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it."
+            },
+            {
+              "name": "Destructive Beam",
+              "effect": "Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-036",
+      "localId": "036",
+      "category": "Pokemon",
+      "hp": 250,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "130+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/036"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_036_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Okidogi ex",
+          "attacks": [
+            {
+              "name": "Poisonous Musculature",
+              "effect": "Search your deck for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned."
+            },
+            {
+              "name": "Chain-Crazed",
+              "effect": "If this Pokémon is Poisoned, this attack does 130 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-037",
+      "localId": "037",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "190"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/037"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_037_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Munkidori ex",
+          "attacks": [
+            {
+              "name": "Dirty Headbutt",
+              "effect": "During your next turn, this Pokémon can't use Dirty Headbutt."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Oh No You Don't",
+              "effect": "If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, and if you have any Pecharunt ex in play, your opponent takes 1 fewer Prize card."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-038",
+      "localId": "038",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/038"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_038_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fezandipiti ex",
+          "attacks": [
+            {
+              "name": "Cruel Arrow",
+              "effect": "This attack does 100 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Flip the Script",
+              "effect": "Once during your turn, if any of your Pokémon were Knocked Out during your opponent's last turn, you may draw 3 cards. You can't use more than 1 Flip the Script Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-039",
+      "localId": "039",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "60×"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/039"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_039_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pecharunt ex",
+          "attacks": [
+            {
+              "name": "Irritated Outburst",
+              "effect": "This attack does 60 damage for each Prize card your opponent has taken."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Subjugating Chains",
+              "effect": "Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-040",
+      "localId": "040",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Grass",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/040"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_040_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Genesect",
+          "attacks": [
+            {
+              "name": "Magnetic Blast"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "ACE Nullifier",
+              "effect": "If this Pokémon has a Pokémon Tool attached, your opponent can't play any ACE SPEC cards from their hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-041",
+      "localId": "041",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Grass",
+          "value": "-30"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/041"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_041_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cufant",
+          "attacks": [
+            {
+              "name": "Tackle"
+            },
+            {
+              "name": "Confront"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-042",
+      "localId": "042",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "130+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Grass",
+          "value": "-30"
+        }
+      ],
+      "retreat": 4,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/042"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_042_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Copperajah",
+          "evolveFrom": "Cufant",
+          "attacks": [
+            {
+              "name": "Nasal Lariat",
+              "effect": "You may do 100 more damage. If you do, during your next turn, this Pokémon can't attack."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Massive Body",
+              "effect": "As long as this Pokémon is in the Active Spot, your opponent can't play any Stadium cards from their hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-043",
+      "localId": "043",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Metal"
+          ]
+        },
+        {
+          "cost": [
+            "Metal",
+            "Metal"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Grass",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/043"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_043_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Varoom",
+          "attacks": [
+            {
+              "name": "Rigidify",
+              "effect": "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)."
+            },
+            {
+              "name": "Headbutt Bounce"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-044",
+      "localId": "044",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Metal"
+          ],
+          "damage": "30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/044"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_044_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Axew",
+          "attacks": [
+            {
+              "name": "Scratch"
+            },
+            {
+              "name": "Sharp Fang"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-045",
+      "localId": "045",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Metal"
+          ],
+          "damage": "80"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/045"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_045_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fraxure",
+          "evolveFrom": "Axew",
+          "attacks": [
+            {
+              "name": "Dragon Pulse",
+              "effect": "Discard the top card of your deck."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Unnerve",
+              "effect": "Whenever your opponent plays an Item or Supporter card from their hand, prevent all effects of that card done to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-046",
+      "localId": "046",
+      "category": "Pokemon",
+      "hp": 170,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Metal"
+          ],
+          "damage": "230"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/046"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_046_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Haxorus",
+          "evolveFrom": "Fraxure",
+          "attacks": [
+            {
+              "name": "Bring Down the Axe",
+              "effect": "If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out."
+            },
+            {
+              "name": "Dragon Pulse",
+              "effect": "Discard the top 3 cards of your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-047",
+      "localId": "047",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Metal",
+            "Metal",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/047"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_047_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kyurem",
+          "attacks": [
+            {
+              "name": "Trifrost",
+              "effect": "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Plasma Bane",
+              "effect": "If your opponent has any cards in their discard pile that have \"Colress\" in the name, this Pokémon can use the Trifrost attack for {C}."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-048",
+      "localId": "048",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/048"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_048_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Meowth",
+          "attacks": [
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 20 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-049",
+      "localId": "049",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50×"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/049"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_049_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Persian",
+          "evolveFrom": "Meowth",
+          "attacks": [
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 50 damage for each heads."
+            },
+            {
+              "name": "Slashing Claw"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-050",
+      "localId": "050",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/050"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_050_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Eevee",
+          "attacks": [
+            {
+              "name": "Colorful Catch",
+              "effect": "Search your deck for up to 3 Basic Energy cards of different types, reveal them, and put them into your hand. Then, shuffle your deck."
+            },
+            {
+              "name": "Headbutt"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-051",
+      "localId": "051",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/051"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_051_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Furfrou",
+          "attacks": [
+            {
+              "name": "Energy Assist",
+              "effect": "Attach a Basic Energy card from your discard pile to 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-052",
+      "localId": "052",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/052"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_052_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Stufful",
+          "attacks": [
+            {
+              "name": "Take Down",
+              "effect": "This Pokémon also does 10 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-053",
+      "localId": "053",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "130"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/053"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_053_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Bewear",
+          "evolveFrom": "Stufful",
+          "attacks": [
+            {
+              "name": "Power Charger",
+              "effect": "Search your deck for a Basic Energy card and attach it to this Pokémon. Then, shuffle your deck."
+            },
+            {
+              "name": "Hammer In"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-054",
+      "localId": "054",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/054"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_054_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Academy at Night",
+          "effect": "Once during each player's turn, that player may put a card from their hand on top of their deck."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-055",
+      "localId": "055",
+      "category": "Trainer",
+      "trainerType": "Tool",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/055"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_055_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Binding Mochi",
+          "effect": "Attacks used by the Poisoned Pokémon this card is attached to do 40 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-056",
+      "localId": "056",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/056"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_056_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cassiopeia",
+          "effect": "You can use this card only when it is the last card in your hand.\n\nSearch your deck for up to 2 cards and put them into your hand. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-057",
+      "localId": "057",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/057"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_057_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Colress's Tenacity",
+          "effect": "Search your deck for a Stadium card and an Energy card, reveal them, and put them into your hand. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-058",
+      "localId": "058",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/058"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_058_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dangerous Laser",
+          "effect": "Your opponent's Active Pokémon is now Burned and Confused."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-059",
+      "localId": "059",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/059"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_059_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Janine's Secret Art",
+          "effect": "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a Basic {D} Energy card and attach it to that Pokémon. Then, shuffle your deck. If you attached Energy to your Active Pokémon in this way, it is now Poisoned."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-060",
+      "localId": "060",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/060"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_060_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Neutralization Zone",
+          "effect": "Prevent all damage done to Pokémon that don't have a Rule Box (both yours and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)\n\nThis card can't be put into your hand or deck from the discard pile."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-061",
+      "localId": "061",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/061"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_061_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Night Stretcher",
+          "effect": "Put a Pokémon or a Basic Energy card from your discard pile into your hand."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-062",
+      "localId": "062",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/062"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_062_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Poké Vital A",
+          "effect": "Heal 150 damage from 1 of your Pokémon.\n\nThis card can't be put into your hand or deck from the discard pile."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-063",
+      "localId": "063",
+      "category": "Trainer",
+      "trainerType": "Tool",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/063"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_063_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Powerglass",
+          "effect": "At the end of your turn (after your attack), if the Pokémon this card is attached to is in the Active Spot, you may attach a Basic Energy card from your discard pile to it."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-064",
+      "localId": "064",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/064"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_064_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Xerosic's Machinations",
+          "effect": "Your opponent discards cards from their hand until they have 3 cards in their hand."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-065",
+      "localId": "065",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Grass"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Grass",
+            "Grass",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "220"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/065"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_065_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Tapu Bulu",
+          "attacks": [
+            {
+              "name": "Wood Hammer",
+              "effect": "This Pokémon also does 30 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-066",
+      "localId": "066",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/066"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_066_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Houndoom",
+          "evolveFrom": "Houndour",
+          "attacks": [
+            {
+              "name": "Bite"
+            },
+            {
+              "name": "Snarl",
+              "effect": "During your opponent's next turn, attacks used by the Defending Pokémon do 100 less damage (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-067",
+      "localId": "067",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/067"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_067_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Horsea",
+          "attacks": [
+            {
+              "name": "Hold Still",
+              "effect": "Heal 30 damage from this Pokémon."
+            },
+            {
+              "name": "Razor Fin"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-068",
+      "localId": "068",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/068"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_068_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Duskull",
+          "attacks": [
+            {
+              "name": "Come and Get You",
+              "effect": "Put up to 3 Duskull from your discard pile onto your Bench."
+            },
+            {
+              "name": "Mumble"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-069",
+      "localId": "069",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "50"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/069"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_069_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dusclops",
+          "evolveFrom": "Duskull",
+          "attacks": [
+            {
+              "name": "Will-O-Wisp"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Cursed Blast",
+              "effect": "Once during your turn, you may put 5 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-070",
+      "localId": "070",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "150"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/070"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_070_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dusknoir",
+          "evolveFrom": "Dusclops",
+          "attacks": [
+            {
+              "name": "Shadow Bind",
+              "effect": "During your opponent's next turn, the Defending Pokémon can't retreat."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Cursed Blast",
+              "effect": "Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-071",
+      "localId": "071",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ]
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Psychic",
+            "Psychic"
+          ],
+          "damage": "80+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/071"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_071_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cresselia",
+          "attacks": [
+            {
+              "name": "Healing Pirouette",
+              "effect": "Heal 20 damage from each of your Pokémon."
+            },
+            {
+              "name": "Crescent Purge",
+              "effect": "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-072",
+      "localId": "072",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Darkness",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-30"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/072"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_072_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Munkidori",
+          "attacks": [
+            {
+              "name": "Mind Bend",
+              "effect": "Your opponent's Active Pokémon is now Confused."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Adrena-Brain",
+              "effect": "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-073",
+      "localId": "073",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Psychic"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic"
+          ],
+          "damage": "30×"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/073"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_073_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fezandipiti",
+          "attacks": [
+            {
+              "name": "Energy Feather",
+              "effect": "This attack does 30 damage for each Energy attached to this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Adrena-Pheromone",
+              "effect": "If this Pokémon has any {D} Energy attached and is damaged by an attack, flip a coin. If heads, prevent that damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-074",
+      "localId": "074",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting"
+          ],
+          "damage": "70"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Psychic",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/074"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_074_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Okidogi",
+          "attacks": [
+            {
+              "name": "Good Punch"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Adrena-Power",
+              "effect": "If this Pokémon has any {D} Energy attached, it gets +100 HP, and the attacks it uses do 100 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-075",
+      "localId": "075",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "20×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/075"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_075_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zorua",
+          "attacks": [
+            {
+              "name": "Stampede"
+            },
+            {
+              "name": "Double Scratch",
+              "effect": "Flip 2 coins. This attack does 20 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-076",
+      "localId": "076",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Metal"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fire",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Grass",
+          "value": "-30"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/076"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_076_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cufant",
+          "attacks": [
+            {
+              "name": "Tackle"
+            },
+            {
+              "name": "Confront"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-077",
+      "localId": "077",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Metal"
+          ],
+          "damage": "80"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "retreat": 2,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/077"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_077_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fraxure",
+          "evolveFrom": "Axew",
+          "attacks": [
+            {
+              "name": "Dragon Pulse",
+              "effect": "Discard the top card of your deck."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Unnerve",
+              "effect": "Whenever your opponent plays an Item or Supporter card from their hand, prevent all effects of that card done to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-078",
+      "localId": "078",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50×"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/078"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_078_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Persian",
+          "evolveFrom": "Meowth",
+          "attacks": [
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 50 damage for each heads."
+            },
+            {
+              "name": "Slashing Claw"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-079",
+      "localId": "079",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "130"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/079"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_079_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Bewear",
+          "evolveFrom": "Stufful",
+          "attacks": [
+            {
+              "name": "Power Charger",
+              "effect": "Search your deck for a Basic Energy card and attach it to this Pokémon. Then, shuffle your deck."
+            },
+            {
+              "name": "Hammer In"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-080",
+      "localId": "080",
+      "category": "Pokemon",
+      "hp": 310,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "50+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/080"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_080_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kingdra ex",
+          "evolveFrom": "Seadra",
+          "attacks": [
+            {
+              "name": "King's Order",
+              "effect": "Put up to 3 {W} Pokémon from your discard pile onto your Bench."
+            },
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 50 more damage for each {W} Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-081",
+      "localId": "081",
+      "category": "Pokemon",
+      "hp": 280,
+      "types": [
+        "Lightning"
+      ],
+      "stage": "Stage1",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Metal"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Metal",
+            "Metal",
+            "Metal"
+          ],
+          "damage": "250"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/081"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_081_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Revavroom ex",
+          "evolveFrom": "Varoom",
+          "attacks": [
+            {
+              "name": "Accelerator Flash",
+              "effect": "If this Pokémon moved from your Bench to the Active Spot this turn, this attack does 120 more damage."
+            },
+            {
+              "name": "Shattering Speed",
+              "effect": "Discard this Pokémon and all attached cards."
+            }
+          ],
+          "effect": "As long as this Pokémon is on your Bench, prevent all damage done to this Pokémon by attacks (both yours and your opponent’s)."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-082",
+      "localId": "082",
+      "category": "Pokemon",
+      "hp": 250,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "130+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/082"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_082_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Okidogi ex",
+          "attacks": [
+            {
+              "name": "Poisonous Musculature",
+              "effect": "Search your deck for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned."
+            },
+            {
+              "name": "Chain-Crazed",
+              "effect": "If this Pokémon is Poisoned, this attack does 130 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-083",
+      "localId": "083",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "190"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/083"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_083_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Munkidori ex",
+          "attacks": [
+            {
+              "name": "Dirty Headbutt",
+              "effect": "During your next turn, this Pokémon can't use Dirty Headbutt."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Oh No You Don't",
+              "effect": "If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, and if you have any Pecharunt ex in play, your opponent takes 1 fewer Prize card."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-084",
+      "localId": "084",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/084"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_084_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fezandipiti ex",
+          "attacks": [
+            {
+              "name": "Cruel Arrow",
+              "effect": "This attack does 100 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Flip the Script",
+              "effect": "Once during your turn, if any of your Pokémon were Knocked Out during your opponent's last turn, you may draw 3 cards. You can't use more than 1 Flip the Script Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-085",
+      "localId": "085",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "60×"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/085"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_085_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pecharunt ex",
+          "attacks": [
+            {
+              "name": "Irritated Outburst",
+              "effect": "This attack does 60 damage for each Prize card your opponent has taken."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Subjugating Chains",
+              "effect": "Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-086",
+      "localId": "086",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/086"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_086_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cassiopeia",
+          "effect": "You can use this card only when it is the last card in your hand.\n\nSearch your deck for up to 2 cards and put them into your hand. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-087",
+      "localId": "087",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/087"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_087_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Colress's Tenacity",
+          "effect": "Search your deck for a Stadium card and an Energy card, reveal them, and put them into your hand. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-088",
+      "localId": "088",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/088"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_088_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Janine's Secret Art",
+          "effect": "Choose up to 2 of your {D} Pokémon. For each of those Pokémon, search your deck for a Basic {D} Energy card and attach it to that Pokémon. Then, shuffle your deck. If you attached Energy to your Active Pokémon in this way, it is now Poisoned."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-089",
+      "localId": "089",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/089"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_089_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Xerosic's Machinations",
+          "effect": "Your opponent discards cards from their hand until they have 3 cards in their hand."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-090",
+      "localId": "090",
+      "category": "Pokemon",
+      "hp": 250,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "130+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/090"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_090_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Okidogi ex",
+          "attacks": [
+            {
+              "name": "Poisonous Musculature",
+              "effect": "Search your deck for up to 2 Basic {D} Energy cards and attach them to this Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned."
+            },
+            {
+              "name": "Chain-Crazed",
+              "effect": "If this Pokémon is Poisoned, this attack does 130 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-091",
+      "localId": "091",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "190"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/091"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_091_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Munkidori ex",
+          "attacks": [
+            {
+              "name": "Dirty Headbutt",
+              "effect": "During your next turn, this Pokémon can't use Dirty Headbutt."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Oh No You Don't",
+              "effect": "If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, and if you have any Pecharunt ex in play, your opponent takes 1 fewer Prize card."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-092",
+      "localId": "092",
+      "category": "Pokemon",
+      "hp": 210,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/092"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_092_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fezandipiti ex",
+          "attacks": [
+            {
+              "name": "Cruel Arrow",
+              "effect": "This attack does 100 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Flip the Script",
+              "effect": "Once during your turn, if any of your Pokémon were Knocked Out during your opponent's last turn, you may draw 3 cards. You can't use more than 1 Flip the Script Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-093",
+      "localId": "093",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "60×"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/093"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_093_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pecharunt ex",
+          "attacks": [
+            {
+              "name": "Irritated Outburst",
+              "effect": "This attack does 60 damage for each Prize card your opponent has taken."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Subjugating Chains",
+              "effect": "Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-094",
+      "localId": "094",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/094"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_094_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Cassiopeia",
+          "effect": "You can use this card only when it is the last card in your hand.\n\nSearch your deck for up to 2 cards and put them into your hand. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-095",
+      "localId": "095",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Basic",
+      "suffix": "ex",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness"
+          ],
+          "damage": "60×"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/095"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_095_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Pecharunt ex",
+          "attacks": [
+            {
+              "name": "Irritated Outburst",
+              "effect": "This attack does 60 damage for each Prize card your opponent has taken."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Subjugating Chains",
+              "effect": "Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sv06.5-096",
+      "localId": "096",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "regulationMark": "G",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/096"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_096_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Earthen Vessel",
+          "effect": "You can use this card only if you discard another card from your hand.\n\nSearch your deck for up to 2 Basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-097",
+      "localId": "097",
+      "category": "Trainer",
+      "trainerType": "Tool",
+      "regulationMark": "H",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/097"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_097_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Powerglass",
+          "effect": "At the end of your turn (after your attack), if the Pokémon this card is attached to is in the Active Spot, you may attach a Basic Energy card from your discard pile to it."
+        }
+      }
+    },
+    {
+      "id": "sv06.5-098",
+      "localId": "098",
+      "category": "Energy",
+      "types": [
+        "Darkness"
+      ],
+      "energyType": "Normal",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/098"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_098_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Basic Darkness Energy"
+        }
+      }
+    },
+    {
+      "id": "sv06.5-099",
+      "localId": "099",
+      "category": "Energy",
+      "types": [
+        "Metal"
+      ],
+      "energyType": "Normal",
+      "images": [
+        {
+          "source": "tcgdex",
+          "url": "https://assets.tcgdex.net/en/sv/sv06.5/099"
+        },
+        {
+          "source": "malie",
+          "url": "https://cdn.malie.io/file/malie-io/tcgl/cards/jpg/en/sv6-5/sv6-5_en_099_std.jpg"
+        }
+      ],
+      "sources": [
+        "malie",
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Basic Metal Energy"
+        }
+      }
+    }
+  ]
+}

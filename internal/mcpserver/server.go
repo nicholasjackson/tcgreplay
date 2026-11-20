@@ -35,6 +35,11 @@ type Server struct {
 	// so that waiting is not activity on the game. Nil falls back to
 	// Resolve.
 	ResolveQuiet func(ctx context.Context, extra *mcp.RequestExtra) (m *game.Manager, board string, err error)
+	// Account, if set (hosted mode), returns the ID of the account a
+	// request acts for, read from the request's token on every call; an
+	// error refuses the call with its message. It is what get_account
+	// answers. Nil (the desktop) means get_account is not offered.
+	Account func(ctx context.Context, extra *mcp.RequestExtra) (id string, err error)
 }
 
 const actor = state.ActorClaude
@@ -50,8 +55,9 @@ func (s *Server) MCP() *mcp.Server {
 	srv := mcp.NewServer(&mcp.Implementation{Name: "tcgreplay", Version: s.Version}, &mcp.ServerOptions{
 		Instructions: s.instructions(),
 		InitializedHandler: func(_ context.Context, req *mcp.InitializedRequest) {
-			// With a resolver the label is set on each call's own manager.
-			if s.Resolve != nil {
+			// With a resolver the label is set on each call's own manager;
+			// with no manager (the moved server, see Moved) there is none.
+			if s.Resolve != nil || s.M == nil {
 				return
 			}
 			if p := req.Session.InitializeParams(); p != nil && p.ClientInfo != nil {
@@ -61,19 +67,32 @@ func (s *Server) MCP() *mcp.Server {
 	})
 	s.register(srv)
 	s.registerGuides(srv)
+	if s.Account != nil {
+		s.registerAccount(srv)
+	}
+	srv.AddReceivingMiddleware(explicitLabels())
 	return srv
 }
 
-const instructions = `Virtual Pokémon TCG playmat. It is a playmat, not a rules engine: you police legality, the server only checks that cards are where you say they are.
+// instructions is the server instructions' text before the guide list.
+// Its opening paragraph stands alone within the first 512 bytes, because
+// some clients (ChatGPT) are only guaranteed to read that much: what TCG
+// Replay is, the iid rule and where the guides are. The rules follow.
+const instructions = openingInstructions + `
 
-- Reference cards by iid (e.g. "p2-12"), never by name. get_state lists iids.
 - Locations: "active", "bench:N" (0-based), "hand", "deck", "deck:top", "deck:bottom", "discard", "lost", "prizes:N", "stadium". Prefix a seat to target the other side: "p1:active".
 - In play mode you act as your own seat and only on your turn (promoting after a knockout is allowed any time). In review mode either seat may act at any time (pass seat; it defaults to the seat whose turn it is), though only the turn in progress can be ended.
 - play_trainer, use_ability and attack open a compound action: following verbs join it until end_action, another opener, or end_turn. attach, bench, evolve and retreat join only if the card's text mentions doing so; otherwise they stand alone and close it. Effects on the opponent's side (the switch of Boss's Orders, Iono's draws) join it when you pass the opponent's seat.
+- A Stadium whose card_text says it is played as a pair goes down with play_trainer naming both halves (iid and pair_iid); the playmat keeps the two as one Stadium.
 - Every write returns the events and a delta, so you rarely need to re-read the board. Warnings are advisory, never blocking.
 - Turns count both players: turn N is the first player's Nth turn and the second player's Nth turn. Logs show "T<N> <seat>"; always name the seat with a turn.
 - Quote card text from card_text, not memory.
-- After handing the player a turn (your end_turn in play mode, or a drill or line for them to play in review mode), call wait_for_turn and do what its result's next says, calling it again until the turn ends. Never ask the player to say "your turn" or "done"; on a check-in ask only "Still playing?".`
+- After handing the player a turn (your end_turn in play mode, or a drill or line for them to play in review mode), call wait_for_turn and do what its result's next says, calling it again until the turn ends. Never ask the player to say "your turn" or "done"; on a check-in ask only "Still playing?".
+- During the player's turn the playmat applies shuffle-hand-and-draw cards (Judge, Iono and the like) to your side itself; wait_for_turn stops only when your seat has a decision (a promotion or a card it cannot apply), and its next says what to do.`
+
+// openingInstructions is the instructions' opening paragraph, which must
+// fit in 512 bytes and make sense on its own (see TestInstructionsOpening).
+const openingInstructions = `TCG Replay is a virtual Pokémon TCG playmat for importing, reviewing, replaying and playing games with the player. It is a playmat, not a rules engine: you police legality, and the server only checks that cards are where you say they are. Refer to every card by its instance ID (iid, such as "p2-12"), never by name; get_state lists the iids. Coaching workflows have guides: read the matching guide with the guide tool before you start one, or call guide with no name to list them.`
 
 // boardInstruction is added to the instructions when results carry a board link.
 const boardInstruction = "\n- Results of import_log, new_game and set_opponent_deck carry a board link: give it to the player so they can watch and act on the live board."
@@ -154,12 +173,17 @@ func (s *Server) board(ctx context.Context) string {
 }
 
 // AssistantName turns an MCP client's name ("claude-code",
-// "codex-mcp-client", "gemini-cli-mcp-client") into a name for the playmat.
+// "codex-mcp-client", "gemini-cli-mcp-client", "openai-mcp") into a name for
+// the playmat. ChatGPT connects as "openai-mcp"; Codex is checked first so
+// its client keeps its own name.
 func AssistantName(client string) string {
 	c := strings.ToLower(client)
-	for _, known := range []string{"Claude", "Codex", "Gemini"} {
-		if strings.Contains(c, strings.ToLower(known)) {
-			return known
+	for _, known := range []struct{ match, name string }{
+		{"claude", "Claude"}, {"codex", "Codex"}, {"gemini", "Gemini"},
+		{"chatgpt", "ChatGPT"}, {"openai", "ChatGPT"},
+	} {
+		if strings.Contains(c, known.match) {
+			return known.name
 		}
 	}
 	return client
@@ -182,26 +206,27 @@ func out(v any) (*mcp.CallToolResult, any, error) {
 // running h; a failure to find it comes back as a tool error, so the
 // assistant can tell the user. Tools that need no game, such as guide, are
 // registered beside it (see registerGuides).
-func add[In any](s *Server, srv *mcp.Server, name, desc string, h func(context.Context, In) (any, error)) {
-	addWith(s, srv, name, desc, s.Resolve, true, h)
+func add[In any](s *Server, srv *mcp.Server, name, title, desc string, h func(context.Context, In) (any, error)) {
+	addWith(s, srv, name, title, desc, s.Resolve, true, h)
 }
 
 // addQuiet is add for a tool whose calls are not activity on the game: it
 // binds with ResolveQuiet when set, else Resolve, and is not one of the
 // assistant's moves.
-func addQuiet[In any](s *Server, srv *mcp.Server, name, desc string, h func(context.Context, In) (any, error)) {
+func addQuiet[In any](s *Server, srv *mcp.Server, name, title, desc string, h func(context.Context, In) (any, error)) {
 	resolve := s.ResolveQuiet
 	if resolve == nil {
 		resolve = s.Resolve
 	}
-	addWith(s, srv, name, desc, resolve, false, h)
+	addWith(s, srv, name, title, desc, resolve, false, h)
 }
 
-// addWith registers a tool bound with resolve. When moves is set, each
+// addWith registers a tool, with its title and description, bound with
+// resolve. When moves is set, each
 // call counts as one of the assistant's moves, which keeps its acting
 // lock from releasing itself.
-func addWith[In any](s *Server, srv *mcp.Server, name, desc string, resolve func(context.Context, *mcp.RequestExtra) (*game.Manager, string, error), moves bool, h func(context.Context, In) (any, error)) {
-	mcp.AddTool(srv, &mcp.Tool{Name: name, Description: desc}, func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error) {
+func addWith[In any](s *Server, srv *mcp.Server, name, title, desc string, resolve func(context.Context, *mcp.RequestExtra) (*game.Manager, string, error), moves bool, h func(context.Context, In) (any, error)) {
+	mcp.AddTool(srv, s.tool(name, title, desc), func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error) {
 		ctx, err := s.bindWith(ctx, req, resolve)
 		if err != nil {
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}}}, nil, nil
@@ -220,6 +245,12 @@ func addWith[In any](s *Server, srv *mcp.Server, name, desc string, resolve func
 // SeatArg lets review mode choose the acting seat.
 type SeatArg struct {
 	Seat string `json:"seat,omitempty" jsonschema:"acting seat, review mode only; defaults to the seat whose turn it is"`
+}
+
+// EndTurnArg is end_turn's input.
+type EndTurnArg struct {
+	Seat  string `json:"seat,omitempty" jsonschema:"seat whose turn ends (review mode); default the turn in progress"`
+	Force bool   `json:"force,omitempty" jsonschema:"end the turn even though an Active Spot is empty or prize cards are owed, when a card's effect allows it"`
 }
 
 // acting resolves the seat a verb acts for.
@@ -282,8 +313,8 @@ type (
 	NewGame struct {
 		DeckP1 string `json:"deck_p1" jsonschema:"p1 decklist in Pokémon TCG Live export format"`
 		DeckP2 string `json:"deck_p2" jsonschema:"p2 decklist in Pokémon TCG Live export format"`
-		NameP1 string `json:"name_p1,omitempty"`
-		NameP2 string `json:"name_p2,omitempty"`
+		NameP1 string `json:"name_p1,omitempty" jsonschema:"p1 player's display name on the board, e.g. Ash; optional"`
+		NameP2 string `json:"name_p2,omitempty" jsonschema:"p2 player's display name on the board; optional"`
 		ID     string `json:"id,omitempty" jsonschema:"game id; generated if empty"`
 	}
 	ImportLog struct {
@@ -332,11 +363,16 @@ type (
 	}
 	IIDArg struct {
 		SeatArg
-		IID string `json:"iid"`
+		IID string `json:"iid" jsonschema:"iid of the Basic Pokémon in hand, e.g. p2-12"`
+	}
+	PlayTrainerArg struct {
+		SeatArg
+		IID  string `json:"iid" jsonschema:"iid of the Item, Supporter or Stadium in hand, e.g. p2-12"`
+		Pair string `json:"pair_iid,omitempty" jsonschema:"For a Stadium played as a pair: the second, different print to play together with iid"`
 	}
 	BenchArg struct {
 		SeatArg
-		IID  string `json:"iid"`
+		IID  string `json:"iid" jsonschema:"iid of the Pokémon in hand to bench, e.g. p2-12"`
 		Slot *int   `json:"slot,omitempty" jsonschema:"bench slot, 0-based; first empty slot if omitted"`
 	}
 	StartGame struct {
@@ -349,7 +385,7 @@ type (
 	}
 	Attach struct {
 		SeatArg
-		IID    string `json:"iid"`
+		IID    string `json:"iid" jsonschema:"iid of the Energy or Tool in hand, e.g. p2-12"`
 		Target string `json:"target" jsonschema:"active or bench:N"`
 		As     string `json:"as,omitempty" jsonschema:"energy or tool; inferred from the card if omitted"`
 	}
@@ -369,7 +405,7 @@ type (
 	}
 	Attack struct {
 		SeatArg
-		Name   string `json:"name"`
+		Name   string `json:"name" jsonschema:"attack name as printed on the card"`
 		Target string `json:"target,omitempty" jsonschema:"defaults to the opponent's active; a bare location means the opponent's side, prefix your seat for your own"`
 		Damage int    `json:"damage" jsonschema:"damage to put on the target after Weakness and Resistance"`
 	}
@@ -383,13 +419,13 @@ type (
 	}
 	Condition struct {
 		SeatArg
-		Target    string `json:"target"`
+		Target    string `json:"target" jsonschema:"[seat:]active or [seat:]bench:N, e.g. active or p1:bench:1; your own side if no seat prefix"`
 		Condition string `json:"condition" jsonschema:"asleep, burned, confused, paralyzed, poisoned, or all (with clear)"`
-		Clear     bool   `json:"clear,omitempty"`
+		Clear     bool   `json:"clear,omitempty" jsonschema:"remove the condition instead of adding it"`
 	}
 	Damage struct {
 		SeatArg
-		Target string `json:"target"`
+		Target string `json:"target" jsonschema:"[seat:]active or [seat:]bench:N, e.g. active or p1:bench:1; your own side if no seat prefix"`
 		Amount int    `json:"amount" jsonschema:"damage to add (10 per counter); negative heals"`
 	}
 	Search struct {
@@ -399,31 +435,31 @@ type (
 	}
 	LookTop struct {
 		SeatArg
-		N     int    `json:"n"`
-		Whose string `json:"whose,omitempty"`
+		N     int    `json:"n" jsonschema:"how many cards to look at from the top"`
+		Whose string `json:"whose,omitempty" jsonschema:"whose deck, p1 or p2; default the acting seat"`
 	}
 	Shuffle struct {
 		SeatArg
-		Whose string `json:"whose,omitempty"`
+		Whose string `json:"whose,omitempty" jsonschema:"whose deck to shuffle, p1 or p2; default the acting seat"`
 	}
 	Coin struct {
 		SeatArg
-		N int `json:"n,omitempty"`
+		N int `json:"n,omitempty" jsonschema:"coins to flip, default 1"`
 	}
 	Move struct {
 		SeatArg
-		IID  string `json:"iid"`
+		IID  string `json:"iid" jsonschema:"iid of the card to move, e.g. p2-12"`
 		To   string `json:"to" jsonschema:"destination location; the card always stays on its owner's side"`
 		Face string `json:"face,omitempty" jsonschema:"up or down"`
 		As   string `json:"as,omitempty" jsonschema:"role in an occupied stack: pokemon, energy or tool"`
 	}
 	Reveal struct {
 		SeatArg
-		IIDs []string `json:"iids"`
+		IIDs []string `json:"iids" jsonschema:"iids of the cards to reveal, e.g. p1-3"`
 	}
 	AddEffect struct {
 		SeatArg
-		Text      string `json:"text"`
+		Text      string `json:"text" jsonschema:"what the effect does, in words, e.g. Items locked"`
 		On        string `json:"on,omitempty" jsonschema:"seat affected"`
 		Source    string `json:"source,omitempty" jsonschema:"iid of the card causing it"`
 		UntilTurn int    `json:"until_turn,omitempty" jsonschema:"expires at the end of this turn (turns count both players: turn 3 is each player's third turn); 0 means until removed"`
@@ -431,7 +467,7 @@ type (
 	}
 	EffectID struct {
 		SeatArg
-		ID string `json:"id"`
+		ID string `json:"id" jsonschema:"id of the lingering effect, as get_state lists it"`
 	}
 	Rewind struct {
 		EventID int    `json:"event_id" jsonschema:"the new branch's head: state as it was right after this event"`
@@ -440,67 +476,58 @@ type (
 		DrawsLikeMain bool `json:"draws_like_main,omitempty" jsonschema:"repeat main's draws on this branch: each draw takes the card main drew at the same point (same game turn, same order in the turn) while it is in the deck, even after a shuffle"`
 	}
 	Checkout struct {
-		Branch        string `json:"branch"`
+		Branch        string `json:"branch" jsonschema:"name of an existing branch, e.g. main; list_branches lists them"`
 		DrawsLikeMain *bool  `json:"draws_like_main,omitempty" jsonschema:"set whether this branch repeats main's draws; unchanged if omitted"`
 	}
 	Annotate struct {
-		EventID int    `json:"event_id"`
-		Text    string `json:"text"`
+		EventID int    `json:"event_id" jsonschema:"id of the event the note belongs to, from get_log"`
+		Text    string `json:"text" jsonschema:"the coaching note, shown on the timeline and as a toast"`
 	}
 )
 
 func (s *Server) register(srv *mcp.Server) {
-	add(s, srv, "ping", "Check the server is alive.", func(ctx context.Context, _ Empty) (any, error) {
+	add(s, srv, "ping", "Check the server is running", "Use this when you need to check the playmat server is alive, e.g. after a connection error. Do not use it to check on a game (get_state).", func(ctx context.Context, _ Empty) (any, error) {
 		return "pong", nil
 	})
 
 	// Game management.
-	add(s, srv, "new_game", "Start a new game from two TCG Live decklists. Loads, shuffles and draws opening hands; then place actives (place_active, bench), mulligan if needed, and start_game.", func(ctx context.Context, in NewGame) (any, error) {
+	add(s, srv, "new_game", "Start a new game", "Use this when the player wants to play a fresh game against you (read the play-game guide first). Do not use it for a game they already played; use import_log. Starts a new game from two TCG Live decklists. Loads, shuffles and draws opening hands, mulliganing any hand with no Basic Pokémon automatically: the warnings say how many times and how many extra cards the other player may draw (ask them, then draw). Then place actives (place_active, bench) and start_game, which refuses until both players have an Active Pokémon.", func(ctx context.Context, in NewGame) (any, error) {
 		names := map[state.Seat]string{state.P1: in.NameP1, state.P2: in.NameP2}
 		g, res, err := s.m(ctx).New(ctx, game.NewGameRequest{ID: in.ID, DeckP1: in.DeckP1, DeckP2: in.DeckP2, Names: names})
 		if err != nil {
 			return nil, err
-		}
-		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
-			res.Warnings = append(res.Warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
 		}
 		if res, err = s.redact(g, res); err != nil {
 			return nil, err
 		}
 		return s.withBoard(ctx, map[string]any{"game": g.ID, "result": compact(res)}), nil
 	})
-	add(s, srv, "import_log", "Import a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact. Pass opp_deck, a likely 60-card list for the opponent's archetype, so both decks are complete: cards the log never names (prizes, hand, deck) are dealt at random from what the list has left. Without it they stay unknown; set_opponent_deck can add a list later. Returns the game summary, report.observed (the minimum count of each opponent card the log proves), problems and warnings. Also restores a game from its record: pass the record as log, alone. The result's record holds the log, both lists, the player's name and the seed: give it to the player to keep; importing it later rebuilds the identical game (branches and notes are not kept).", func(ctx context.Context, in ImportLog) (any, error) {
+	add(s, srv, "import_log", "Import a TCG Live game", "Use this when the user pastes or attaches a Pokémon TCG Live battle log (Setup, \"<name>'s Turn\", \"<name> drew a card.\", \"<name> took a Prize card.\") or a saved game record, or asks to look at, review or analyse a game they played, even if they do not mention TCG Replay: import it here rather than reading the log yourself, and read the import-game guide first. Do not use it to start a fresh game (new_game). It needs the player's decklist (deck): if you do not have it, ask the player to paste the list they played (exported from the TCG Live deck editor) and import once they do; do not review the game from the log text instead. Imports a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact. Pass opp_deck, a likely 60-card list for the opponent's archetype, so both decks are complete: cards the log never names (prizes, hand, deck) are dealt at random from what the list has left. Without it they stay unknown; set_opponent_deck can add a list later. Returns the game summary, report.observed (the minimum count of each opponent card the log proves), problems and warnings. Also restores a game from its record: pass the record as log, alone. The result's record holds the log, both lists, the player's name and the seed: give it to the player to keep; importing it later rebuilds the identical game (branches and notes are not kept).", func(ctx context.Context, in ImportLog) (any, error) {
 		res, err := s.m(ctx).Import(ctx, game.ImportRequest{ID: in.ID, Log: in.Log, Deck: in.Deck, OppDeck: in.OppDeck, Me: in.Me})
 		if err != nil {
 			return nil, err
 		}
 		g := res.Game
 		warnings := res.Warnings
-		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
-			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
-		}
 		return s.withBoard(ctx, map[string]any{"game": g.ID, "head": g.Head(), "mode": g.Mode(), "report": res.Report, "warnings": warnings, "record": res.Record}), nil
 	})
-	add(s, srv, "set_opponent_deck", "Rebuild the current imported game with an assumed opponent list: same log and seed, so the player's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game; refuses when it has branches unless discard_branches is set (ask the player first: the branches are lost). Returns the updated record.", func(ctx context.Context, in OppDeck) (any, error) {
+	add(s, srv, "set_opponent_deck", "Set the opponent's likely deck", "Use this when an imported game's opponent cards show as unknown or the player wants another assumed opponent list. Do not use it to try one hand at a position (sample_hidden). Rebuilds the current imported game with an assumed opponent list: same log and seed, so the player's side is unchanged, and every opponent card the log never names is dealt at random from what the list has left. The list is reconciled with what the log proves (counts raised, missing cards added) and warnings say what changed. Replaces the game; refuses when it has branches unless discard_branches is set (ask the player first: the branches are lost). Returns the updated record.", func(ctx context.Context, in OppDeck) (any, error) {
 		res, err := s.m(ctx).SetOpponentDeck(ctx, in.Deck, in.DiscardBranches)
 		if err != nil {
 			return nil, err
 		}
 		g := res.Game
 		warnings := res.Warnings
-		if errs := g.PrefetchCards(ctx); len(errs) > 0 {
-			warnings = append(warnings, fmt.Sprintf("%d card definitions could not be fetched", len(errs)))
-		}
 		return s.withBoard(ctx, map[string]any{"game": g.ID, "head": g.Head(), "observed": res.Report.Observed, "problems": res.Report.Problems, "warnings": warnings, "record": res.Record}), nil
 	})
-	add(s, srv, "get_record", "The current game's record: the battle log, the player's name, both decklists and the seed, as JSON the player can keep in a note and later pass to import_log to restore the identical game. Games started with new_game have none.", func(ctx context.Context, _ Empty) (any, error) {
+	add(s, srv, "get_record", "Get the game record", "Use this when the player wants to keep an imported game to restore later. Do not use it to read the board (get_state) or moves (get_log). Returns the current game's record: the battle log, the player's name, both decklists and the seed, as JSON the player can keep in a note and later pass to import_log to restore the identical game. Games started with new_game have none.", func(ctx context.Context, _ Empty) (any, error) {
 		rec, err := s.m(ctx).Record()
 		if err != nil {
 			return nil, err
 		}
 		return rec, nil
 	})
-	add(s, srv, "set_mode", "Switch between play mode (you act only as your seat; no reveal view) and review mode (act for either seat; reveal view allowed).", func(ctx context.Context, in Mode) (any, error) {
+	add(s, srv, "set_mode", "Switch play or review mode", "Use this when you need to switch between play mode (you act only as your seat; no reveal view) and review mode (act for either seat; reveal view allowed). Do not use it to move through the game (rewind, checkout).", func(ctx context.Context, in Mode) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -512,7 +539,7 @@ func (s *Server) register(srv *mcp.Server) {
 	})
 
 	// Reading.
-	add(s, srv, "get_state", "Read the board through a view. Hidden cards show only their iid.", func(ctx context.Context, in GetState) (any, error) {
+	add(s, srv, "get_state", "Read the board", "Use this when you need the current board through a view: zones, iids, damage, conditions, effects and the open action. Hidden cards show only their iid. Do not use it for earlier moves (get_log), or after every write: writes return a delta.", func(ctx context.Context, in GetState) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -530,7 +557,7 @@ func (s *Server) register(srv *mcp.Server) {
 			"board": v,
 		}, nil
 	})
-	add(s, srv, "get_log", "Read events on the current branch as text lines, redacted for the view.", func(ctx context.Context, in GetLog) (any, error) {
+	add(s, srv, "get_log", "Read the game log", "Use this when you need the current branch's events as text lines, redacted for the view, e.g. what happened in a turn or event ids to rewind to or annotate. Do not use it for the current position (get_state).", func(ctx context.Context, in GetLog) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -557,7 +584,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return b.String(), nil
 	})
-	add(s, srv, "get_warnings", "Invariant violations and soft rule warnings for the current turn.", func(ctx context.Context, _ Empty) (any, error) {
+	add(s, srv, "get_warnings", "Check rule warnings", "Use this when you want the current turn's invariant violations and soft rule warnings, e.g. before end_turn. Do not use it as a rules engine: warnings are advisory and you police legality.", func(ctx context.Context, _ Empty) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -568,7 +595,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return w, nil
 	})
-	add(s, srv, "card_text", "Card text from the TCGdex cache. Quote this rather than memory.", func(ctx context.Context, in CardText) (any, error) {
+	add(s, srv, "card_text", "Look up card text", "Use this when you need a card's text from the published card sets, by TCGdex id or iid. Quote this rather than memory. Do not use it to find where a card is (get_state).", func(ctx context.Context, in CardText) (any, error) {
 		def := strings.TrimSpace(in.Card)
 		if g, err := s.m(ctx).Current(); err == nil {
 			if c, ok := g.State().Cards[state.IID(def)]; ok {
@@ -578,10 +605,13 @@ func (s *Server) register(srv *mcp.Server) {
 				def = c.Def
 			}
 		}
-		if s.m(ctx).DB == nil {
+		// The open game's own snapshot, so its card text never changes
+		// under it; the current catalogue with no game open.
+		db := s.m(ctx).CardDB()
+		if db == nil {
 			return nil, errors.New("no card database")
 		}
-		c, err := s.m(ctx).DB.Card(ctx, def)
+		c, err := db.Card(ctx, def)
 		if err != nil {
 			return nil, err
 		}
@@ -589,15 +619,15 @@ func (s *Server) register(srv *mcp.Server) {
 	})
 
 	// Setup verbs.
-	add(s, srv, "mulligan", "Shuffle your hand into your deck and draw a new hand of 7.", func(ctx context.Context, in SeatArg) (any, error) {
+	add(s, srv, "mulligan", "Mulligan a hand", "Use this when a seat must shuffle its hand into its deck and draw a new hand of 7 during setup (new_game already mulligans hands with no Basic Pokémon). Do not use it after the game starts; use move, shuffle and draw.", func(ctx context.Context, in SeatArg) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.Mulligan(seat, actor) })
 	})
-	add(s, srv, "place_active", "Put a Basic Pokémon from hand into your empty Active Spot.", func(ctx context.Context, in IIDArg) (any, error) {
+	add(s, srv, "place_active", "Place the starting Active Pokémon", "Use this when setting up, to put a Basic Pokémon from hand into your empty Active Spot. Do not use it to promote after a knockout (switch) or to bench (bench).", func(ctx context.Context, in IIDArg) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			return g.PlaceActive(seat, actor, iid(in.IID))
 		})
 	})
-	add(s, srv, "start_game", "Deal prizes to both seats and start turn 1; the first player draws.", func(ctx context.Context, in StartGame) (any, error) {
+	add(s, srv, "start_game", "Start the first turn", "Use this when setup is done: deal prizes to both seats and start turn 1; the first player draws. Do not use it to open a game (new_game comes first).", func(ctx context.Context, in StartGame) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -606,10 +636,10 @@ func (s *Server) register(srv *mcp.Server) {
 	})
 
 	// Turn verbs.
-	add(s, srv, "draw", "Draw n cards (default 1).", func(ctx context.Context, in Draw) (any, error) {
+	add(s, srv, "draw", "Draw cards", "Use this when a card makes a seat draw n cards (default 1). Do not use it for the turn's opening draw (start_game and end_turn make it), prizes (take_prize) or a chosen deck card (search_deck, then move).", func(ctx context.Context, in Draw) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.Draw(seat, actor, max(in.N, 1)) })
 	})
-	add(s, srv, "bench", "Put a Pokémon from hand onto the bench.", func(ctx context.Context, in BenchArg) (any, error) {
+	add(s, srv, "bench", "Bench a Pokémon", "Use this when a seat puts a Pokémon from hand onto the bench. Do not use it to evolve (evolve), for the starting Active (place_active), or for a card not in hand (move).", func(ctx context.Context, in BenchArg) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			slot := -1
 			if in.Slot != nil {
@@ -618,7 +648,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Bench(seat, actor, iid(in.IID), slot)
 		})
 	})
-	add(s, srv, "evolve", "Evolve a Pokémon in play with a card from hand. Clears Special Conditions.", func(ctx context.Context, in Evolve) (any, error) {
+	add(s, srv, "evolve", "Evolve a Pokémon", "Use this when a seat evolves a Pokémon in play with a card from hand. Clears Special Conditions. Do not use it to put a Basic into play (bench, place_active).", func(ctx context.Context, in Evolve) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			l, err := parseLoc(in.Target, seat)
 			if err != nil {
@@ -627,7 +657,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Evolve(seat, actor, iid(in.IID), l)
 		})
 	})
-	add(s, srv, "attach", "Attach an Energy or Tool from hand to one of your Pokémon.", func(ctx context.Context, in Attach) (any, error) {
+	add(s, srv, "attach", "Attach Energy or a Tool", "Use this when a seat attaches an Energy or Tool from hand to one of its own Pokémon. Do not use it for a card from the discard pile or deck, or onto the opponent's Pokémon; use move with as.", func(ctx context.Context, in Attach) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			l, err := parseLoc(in.Target, seat)
 			if err != nil {
@@ -636,12 +666,12 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Attach(seat, actor, iid(in.IID), l, in.As)
 		})
 	})
-	add(s, srv, "play_trainer", "Play an Item, Supporter or Stadium from hand (Tools use attach). Opens a compound action; follow with the verbs that resolve it, then end_action.", func(ctx context.Context, in IIDArg) (any, error) {
+	add(s, srv, "play_trainer", "Play a Trainer card", "Use this when a seat plays an Item, Supporter or Stadium from hand (Tools use attach). Opens a compound action; follow with the verbs that resolve it, then end_action. For a Stadium played as a pair (its card text says so), pass the second print as pair_iid; playing one half onto a lone half completes the pair. Do not use it for an Ability (use_ability).", func(ctx context.Context, in PlayTrainerArg) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
-			return g.PlayTrainer(seat, actor, iid(in.IID))
+			return g.PlayTrainerWith(seat, actor, iid(in.IID), iid(in.Pair))
 		})
 	})
-	add(s, srv, "use_ability", "Declare an Ability. Opens a compound action; follow with the verbs that resolve it, then end_action.", func(ctx context.Context, in Ability) (any, error) {
+	add(s, srv, "use_ability", "Use an Ability", "Use this when a seat declares an Ability. Opens a compound action; follow with the verbs that resolve it, then end_action. Do not use it for attacks (attack).", func(ctx context.Context, in Ability) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			l, err := parseLoc(in.Slot, seat)
 			if err != nil {
@@ -650,7 +680,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.UseAbility(seat, actor, l, in.Name)
 		})
 	})
-	add(s, srv, "retreat", "Discard Energy for the Retreat Cost and switch the Active Pokémon with a benched one. Clears Special Conditions.", func(ctx context.Context, in Retreat) (any, error) {
+	add(s, srv, "retreat", "Retreat the Active Pokémon", "Use this when a seat retreats: discard Energy for the Retreat Cost and switch the Active Pokémon with a benched one. Clears Special Conditions. Do not use it for a free switch or a promotion; use switch.", func(ctx context.Context, in Retreat) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			es := make([]state.IID, len(in.Energy))
 			for i, e := range in.Energy {
@@ -659,10 +689,10 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Retreat(seat, actor, in.ToSlot, es)
 		})
 	})
-	add(s, srv, "switch", "Switch the Active Pokémon with a benched one without paying a cost (e.g. Switch, Boss's Orders on yourself), or promote into an empty Active Spot after a knockout.", func(ctx context.Context, in Switch) (any, error) {
+	add(s, srv, "switch", "Switch the Active Pokémon", "Use this when a card switches the Active Pokémon with a benched one without paying a cost (e.g. Switch, Boss's Orders on yourself), or to promote into an empty Active Spot after a knockout. Do not use it for a retreat that pays the Retreat Cost (retreat).", func(ctx context.Context, in Switch) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.Switch(seat, actor, in.ToSlot) })
 	})
-	add(s, srv, "attack", "Declare an attack and put damage on the target. Opens a compound action for side effects; then knock_out, take_prize and end_turn as needed.", func(ctx context.Context, in Attack) (any, error) {
+	add(s, srv, "attack", "Declare an attack", "Use this when a seat declares an attack and puts damage on the target. Opens a compound action for side effects; then knock_out, take_prize and end_turn as needed. Do not use it for damage counters from an effect or Checkup (place_damage).", func(ctx context.Context, in Attack) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			target := in.Target
 			if target == "" {
@@ -675,7 +705,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Attack(seat, actor, in.Name, l, in.Damage)
 		})
 	})
-	add(s, srv, "knock_out", "Move every card of a Pokémon to its owner's discard pile.", func(ctx context.Context, in TargetArg) (any, error) {
+	add(s, srv, "knock_out", "Knock Out a Pokémon", "Use this when a Pokémon is Knocked Out: moves every card of it to its owner's discard pile; then take_prize and switch. Do not use it to discard one card (move).", func(ctx context.Context, in TargetArg) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			l, err := parseLoc(in.Target, seat)
 			if err != nil {
@@ -684,7 +714,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.KnockOut(seat, actor, l)
 		})
 	})
-	add(s, srv, "take_prize", "Take one of your prize cards into hand.", func(ctx context.Context, in TakePrize) (any, error) {
+	add(s, srv, "take_prize", "Take a prize card", "Use this when a seat takes one of its prize cards into hand, one call per prize. Do not use it to draw (draw).", func(ctx context.Context, in TakePrize) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			slot := -1
 			if in.Slot != nil {
@@ -693,7 +723,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.TakePrize(seat, actor, slot)
 		})
 	})
-	add(s, srv, "set_condition", "Add or clear a Special Condition.", func(ctx context.Context, in Condition) (any, error) {
+	add(s, srv, "set_condition", "Set a Special Condition", "Use this when a Pokémon gains or loses a Special Condition (add or clear). Do not use it for Poison or Burn damage (place_damage) or after evolve or retreat, which clear conditions.", func(ctx context.Context, in Condition) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			l, err := parseLoc(in.Target, seat)
 			if err != nil {
@@ -702,7 +732,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.SetCondition(seat, actor, l, strings.ToLower(in.Condition), !in.Clear)
 		})
 	})
-	add(s, srv, "place_damage", "Add damage to a Pokémon (negative heals), e.g. damage counters from an effect or Pokémon Checkup.", func(ctx context.Context, in Damage) (any, error) {
+	add(s, srv, "place_damage", "Place damage counters", "Use this when an effect or Pokémon Checkup adds damage to a Pokémon (negative heals). Heal or place any amount in one call: to heal all of it, pass minus its current damage, never one call per 10. Do not use it for an attack's damage to its target (attack).", func(ctx context.Context, in Damage) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			l, err := parseLoc(in.Target, seat)
 			if err != nil {
@@ -711,27 +741,32 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.PlaceDamage(seat, actor, l, in.Amount)
 		})
 	})
-	add(s, srv, "end_turn", "End your turn. The opponent's turn starts and they draw a card.", func(ctx context.Context, in SeatArg) (any, error) {
-		r, err := s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.EndTurn(seat, actor) })
+	add(s, srv, "end_turn", "End the turn", "Use this when the acting seat ends its turn. The opponent's turn starts and they draw a card. Refused while a player with a Benched Pokémon has an empty Active Spot (promote first) or while prize cards are owed for this turn's Knock Outs (take them first); force overrides both when an effect changes the rules. Do not use it to close a compound action (end_action). In play mode, call wait_for_turn next.", func(ctx context.Context, in EndTurnArg) (any, error) {
+		r, err := s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
+			return g.EndTurnWith(seat, actor, game.EndTurnOptions{Force: in.Force})
+		})
 		if err == nil {
 			s.m(ctx).AssistantDone()
 		}
 		return r, err
 	})
-	add(s, srv, "end_action", "Close the open compound action.", func(ctx context.Context, _ Empty) (any, error) {
+	add(s, srv, "end_action", "Close the open action", "Use this when the verbs resolving play_trainer, use_ability or attack are done: closes the open compound action. Do not use it to end the turn (end_turn).", func(ctx context.Context, _ Empty) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
 		}
-		if id := g.EndAction(); id != "" {
+		if id, warn := g.EndActionChecked(); id != "" {
+			if len(warn) > 0 {
+				return map[string]any{"closed": id, "warnings": warn}, nil
+			}
 			return "closed " + id, nil
 		}
 		return "no open action", nil
 	})
-	addQuiet(s, srv, "wait_for_turn", "After you hand the player a turn (end_turn in play mode; a drill or a line for them to play in review mode), call this and act on the result. Each call returns within about 30 seconds.", s.waitForTurn)
+	addQuiet(s, srv, "wait_for_turn", "Wait for the player's turn", "Use this when you have handed the player a turn (end_turn in play mode; a drill, a practice turn or a line for them to play in review mode): call this in the same reply and act on the result. Never end your reply to wait for the player: until you call this, nothing sees their moves. Each call returns within about 15 seconds; outcome still_waiting means the player is still playing, so call it again. Cards like Judge or Iono happen on your side by themselves and are listed in applied; outcome decide means your seat must act now (promote or answer a card), then call this again. Do not use it before handing over a turn.", s.waitForTurn)
 
 	// Deck and randomness.
-	add(s, srv, "search_deck", "List a deck's cards sorted by category and name (never in true order). Then move or bench what you take, and shuffle.", func(ctx context.Context, in Search) (any, error) {
+	add(s, srv, "search_deck", "Search a deck", "Use this when a card lets a seat search a deck: lists its cards sorted by category and name (never in true order). Then move or bench what you take, and shuffle. Do not use it to see the top cards in order (look_top).", func(ctx context.Context, in Search) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -746,7 +781,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return g.SearchDeck(whose, in.Filter, "search_deck", string(actor))
 	})
-	add(s, srv, "look_top", "Look at the top n cards of a deck, top first.", func(ctx context.Context, in LookTop) (any, error) {
+	add(s, srv, "look_top", "Look at the top of a deck", "Use this when a card lets a seat look at the top n cards of a deck, top first. Do not use it to search the whole deck (search_deck).", func(ctx context.Context, in LookTop) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -761,7 +796,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return g.LookTop(whose, in.N, "look_top", string(actor))
 	})
-	add(s, srv, "shuffle", "Shuffle a deck (yours by default).", func(ctx context.Context, in Shuffle) (any, error) {
+	add(s, srv, "shuffle", "Shuffle a deck", "Use this when a card or search ends with shuffling a deck (yours by default). Do not use it to shuffle a hand in; move the cards to the deck first.", func(ctx context.Context, in Shuffle) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			whose := seat
 			if in.Whose != "" {
@@ -770,12 +805,12 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Shuffle(seat, actor, whose)
 		})
 	})
-	add(s, srv, "coin_flip", "Flip n coins (default 1). Results are recorded.", func(ctx context.Context, in Coin) (any, error) {
+	add(s, srv, "coin_flip", "Flip coins", "Use this when a card calls for coin flips: flips n coins (default 1); results are recorded. Do not use it to replay a flip from an imported log; act on the logged result.", func(ctx context.Context, in Coin) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.CoinFlip(seat, actor, in.N) })
 	})
 
 	// Escape hatches.
-	add(s, srv, "move", "Escape hatch: move any card to any location on its owner's side.", func(ctx context.Context, in Move) (any, error) {
+	add(s, srv, "move", "Move a card", "Use this when no specific verb fits: an escape hatch to move any card to any location on its owner's side (deck to hand, discard to deck, Lost Zone, Energy from discard onto a Pokémon). Do not use it when draw, bench, attach, evolve, retreat, switch, play_trainer, knock_out or take_prize fits; they record the play properly.", func(ctx context.Context, in Move) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			l, err := parseLoc(in.To, seat)
 			if err != nil {
@@ -784,7 +819,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Move(seat, actor, iid(in.IID), l, in.Face, in.As)
 		})
 	})
-	add(s, srv, "reveal", "Reveal cards to both players.", func(ctx context.Context, in Reveal) (any, error) {
+	add(s, srv, "reveal", "Reveal cards", "Use this when a card makes a seat reveal cards to both players. Do not use it to look privately (look_top, search_deck).", func(ctx context.Context, in Reveal) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			ids := make([]state.IID, len(in.IIDs))
 			for i, x := range in.IIDs {
@@ -793,7 +828,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.Reveal(seat, actor, ids)
 		})
 	})
-	add(s, srv, "add_effect", "Record a lingering effect, e.g. 'Items locked' on p1 until the end of p1's turn 3 (until_turn 3, until_seat p1).", func(ctx context.Context, in AddEffect) (any, error) {
+	add(s, srv, "add_effect", "Record a lingering effect", "Use this when a card leaves a lingering effect to record, e.g. 'Items locked' on p1 until the end of p1's turn 3 (until_turn 3, until_seat p1). Do not use it for Special Conditions (set_condition) or damage (place_damage).", func(ctx context.Context, in AddEffect) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			on := seat.Other()
 			if in.On != "" {
@@ -802,19 +837,19 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.AddEffect(seat, actor, in.Text, on, iid(in.Source), in.UntilTurn, state.Seat(strings.ToLower(in.UntilSeat)))
 		})
 	})
-	add(s, srv, "remove_effect", "Remove a lingering effect.", func(ctx context.Context, in EffectID) (any, error) {
+	add(s, srv, "remove_effect", "Remove a lingering effect", "Use this when a lingering effect ends early or was a mistake: removes it (get_state lists effect ids). Do not use it for one with until_turn, which expires by itself.", func(ctx context.Context, in EffectID) (any, error) {
 		return s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) { return g.RemoveEffect(seat, actor, in.ID) })
 	})
 
 	// Branches.
-	add(s, srv, "list_branches", "List branches with their head events.", func(ctx context.Context, _ Empty) (any, error) {
+	add(s, srv, "list_branches", "List branches", "Use this when you need the game's branches with their head events (main is the real game). Do not use it to read a branch's moves (get_log).", func(ctx context.Context, _ Empty) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
 		}
 		return g.Branches(), nil
 	})
-	add(s, srv, "rewind", "Create a new branch whose head is event_id and check it out. Nothing is deleted; the old branch keeps its head. Pass draws_like_main to replay the real game's draws on the branch.", func(ctx context.Context, in Rewind) (any, error) {
+	add(s, srv, "rewind", "Rewind to an earlier point", "Use this when you want the board at an earlier event, to replay a turn or test a line. Creates a new branch whose head is event_id and checks it out. Nothing is deleted; the old branch keeps its head. Pass draws_like_main to replay the real game's draws on the branch. Do not use it to take back your last moves (undo) or to return to an existing branch (checkout).", func(ctx context.Context, in Rewind) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -827,11 +862,11 @@ func (s *Server) register(srv *mcp.Server) {
 			if err := g.SetDrawsLikeMain(true); err != nil {
 				return nil, err
 			}
-			return fmt.Sprintf("on branch %s at event %d; draws repeat main's", name, in.EventID), nil
+			return fmt.Sprintf("on branch %s at event %d; draws repeat main's", name, in.EventID) + handOffHint(g), nil
 		}
-		return fmt.Sprintf("on branch %s at event %d", name, in.EventID), nil
+		return fmt.Sprintf("on branch %s at event %d", name, in.EventID) + handOffHint(g), nil
 	})
-	add(s, srv, "undo", "Step the current branch back over its last n moves (default 1); its head moves to just before them. The events stay in the log. Only moves made on the playmat can be undone, never the imported game itself.", func(ctx context.Context, in Undo) (any, error) {
+	add(s, srv, "undo", "Undo moves", "Use this when you want to take back moves made on the playmat: steps the current branch back over its last n moves (default 1); its head moves to just before them. The events stay in the log. Only moves made on the playmat can be undone, never the imported game itself. Do not use it to go back in an imported game (rewind).", func(ctx context.Context, in Undo) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -842,7 +877,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return fmt.Sprintf("branch %s now at event %d", g.Branch(), head), nil
 	})
-	add(s, srv, "checkout", "Switch to an existing branch.", func(ctx context.Context, in Checkout) (any, error) {
+	add(s, srv, "checkout", "Switch to a branch", "Use this when you want to switch to an existing branch, such as main after trying a line. Do not use it to make a new branch (rewind) or to swap Pokémon (switch).", func(ctx context.Context, in Checkout) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -855,11 +890,11 @@ func (s *Server) register(srv *mcp.Server) {
 				return nil, err
 			}
 		}
-		return fmt.Sprintf("on branch %s at event %d", in.Branch, g.Head()), nil
+		return fmt.Sprintf("on branch %s at event %d", in.Branch, g.Head()) + handOffHint(g), nil
 	})
 
 	// Opponent inference.
-	add(s, srv, "get_profile", "What is known and assumed about a seat's list: the stored assumed list (with the minimum counts the whole log proves) and seen_so_far, the most copies of each card the player had seen at once by the current head. Use it to propose a list for sample_hidden.", func(ctx context.Context, in ProfileArg) (any, error) {
+	add(s, srv, "get_profile", "Read what is known of a deck", "Use this when you build or check an assumed list for a seat, e.g. to propose a list for sample_hidden. Returns what is known and assumed: the stored assumed list (with the minimum counts the whole log proves) and seen_so_far, the most copies of each card the player had seen at once by the current head. Do not use it to change cards (sample_hidden, set_opponent_deck).", func(ctx context.Context, in ProfileArg) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -870,7 +905,7 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return g.Profile(seat)
 	})
-	add(s, srv, "sample_hidden", "Give the opponent's hidden cards (hand, deck order, prizes) plausible identities at the head of the current branch, to test a line against what they might hold. Cards the player can see keep their identities, and cards they saw that are now hidden stay out of the prizes. Rewind first, then sample; to try several hands, rewind to the same event again for each. Review mode only. Returns the sampled hand and prizes.", func(ctx context.Context, in Sample) (any, error) {
+	add(s, srv, "sample_hidden", "Sample the opponent's hidden cards", "Use this when you want to test a line against what the opponent might hold: gives their hidden cards (hand, deck order, prizes) plausible identities at the head of the current branch. Cards the player can see keep their identities, and cards they saw that are now hidden stay out of the prizes. Rewind first, then sample; to try several hands, rewind to the same event again for each. Review mode only. Returns the sampled hand and prizes. Do not use it to set the game's opponent list (set_opponent_deck).", func(ctx context.Context, in Sample) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -892,7 +927,7 @@ func (s *Server) register(srv *mcp.Server) {
 	})
 
 	// Coaching.
-	add(s, srv, "annotate", "Attach a coaching note to an event; it shows on the timeline and as a toast.", func(ctx context.Context, in Annotate) (any, error) {
+	add(s, srv, "annotate", "Add a coaching note", "Use this when you want to attach a coaching note to an event; it shows on the timeline and as a toast. Do not use it for card effects (add_effect).", func(ctx context.Context, in Annotate) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -902,6 +937,17 @@ func (s *Server) register(srv *mcp.Server) {
 		}
 		return "noted", nil
 	})
+}
+
+// handOffHint is added to a review-mode branch move that leaves a turn in
+// progress: assistants that ask the player to play it tend to end their
+// reply there, and then nothing sees the player's moves.
+func handOffHint(g *game.Game) string {
+	seat := g.State().Current
+	if g.Mode() != game.ModeReview || seat == "" {
+		return ""
+	}
+	return fmt.Sprintf(". It is %s's turn. If you hand this turn to the player to play on the board, ask for their play and call wait_for_turn with seat %s in this same reply, then keep calling it as its next says; do not end your reply to wait for them.", seat, seat)
 }
 
 // otherSeat parses a seat argument, defaulting to the seat opposite the player.

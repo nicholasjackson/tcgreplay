@@ -1,0 +1,5 @@
+- Changes to the playmat itself (its sign-in, limits, tools or board) are out of scope; the site only describes it.
+- Accounts, comments, a blog, newsletters, search, versioned docs and translations.
+- An API reference or contribution guide.
+- A custom domain, unless Google's consent-screen verification requires one.
+- Replacing the project logo (cards with a Poké Ball). The site uses it until the user decides whether it suits a public site.

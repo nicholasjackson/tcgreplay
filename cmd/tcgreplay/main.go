@@ -13,6 +13,12 @@
 // Hosted mode requires Google sign-in for both, keeps one game per
 // signed-in account and drops games left idle (-idle-timeout); the desktop
 // modes never ask for sign-in and keep one game.
+//
+// tcgreplay sets builds card sets into the project ahead of time, for the
+// maintainer: sets import <set> fetches and merges a set, sets check checks
+// the built sets, and sets publish publishes them to the bucket the
+// playmat loads card data from (see internal/cardset). It never starts the
+// playmat.
 package main
 
 import (
@@ -20,17 +26,19 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/nicholasjackson/tcgreplay/internal/cards"
+	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
@@ -40,13 +48,35 @@ import (
 var version = "dev"
 
 type config struct {
+	// cacheDir holds the local copy of published card sets; offline uses
+	// that copy alone.
 	dataDir, cacheDir, seat, uiAddr string
 	offline                         bool
+	// cardsetsURL is where card sets are published (an https address or a
+	// directory); "" means none, so only the local copy is used.
+	// cardsetsInterval is how often a running playmat checks it.
+	cardsetsURL      string
+	cardsetsInterval time.Duration
 	// The rest are for hosted mode only.
 	publicURL, listen string
+	// movedFrom is a comma-separated list of old host names the playmat
+	// has moved from (see movedGuard).
+	movedFrom string
+	// webAnalyticsToken is the Cloudflare Web Analytics site token, hosted
+	// mode only; empty means no visitor counting (see hostedAnalytics).
+	webAnalyticsToken string
 	// googleClientID is the Google OAuth client users sign in with (its
 	// secret is read from the environment only).
 	googleClientID string
+	// openAIChallenge is OpenAI's domain-verification token, served at
+	// /.well-known/openai-apps-challenge; empty means that path is not
+	// found. Read from TCGREPLAY_OPENAI_CHALLENGE only, never a flag, so
+	// it never shows in a process listing.
+	openAIChallenge string
+	// reviewer is the Google email of the one reviewer account, admitted
+	// past the user cap (see usergames.Config.Reviewer). Read from
+	// TCGREPLAY_REVIEWER only, never a flag, and never logged.
+	reviewer string
 	// rateLimit is requests a minute per account; maxUsers is places:
 	// signed-in accounts served at once. 0 turns either off.
 	rateLimit, maxUsers int
@@ -62,12 +92,23 @@ type config struct {
 	timingErr error
 	// now, if set, is the per-account registry's clock (tests).
 	now func() time.Time
+	// events, if set, is where hosted mode writes its records (tests);
+	// nil means standard output.
+	events io.Writer
+	// imageBase, if set, is the card image source's prefix (tests).
+	imageBase string
+	// cdnAPI, if set, is the DigitalOcean API base the CDN purge client
+	// calls (tests).
+	cdnAPI string
 }
 
 // args renders the config as flags for spawning the daemon. Unset wait
 // timings are left out, so the daemon uses its defaults.
 func (c config) args() []string {
-	args := []string{"-data", c.dataDir, "-cache", c.cacheDir, "-seat", c.seat, "-ui-addr", c.uiAddr, fmt.Sprintf("-offline=%t", c.offline)}
+	args := []string{"-data", c.dataDir, "-cache", c.cacheDir, "-seat", c.seat, "-ui-addr", c.uiAddr, fmt.Sprintf("-offline=%t", c.offline), "-cardsets-url", c.cardsetsURL}
+	if c.cardsetsInterval != 0 {
+		args = append(args, "-cardsets-interval", c.cardsetsInterval.String())
+	}
 	for _, t := range []struct {
 		flag string
 		d    time.Duration
@@ -80,8 +121,13 @@ func (c config) args() []string {
 }
 
 // maxWaitCap keeps every wait_for_turn call well inside the one-minute
-// limit of clients and proxies.
+// limit of clients and proxies (ChatGPT's tool calls must return within
+// 60 seconds).
 const maxWaitCap = 50 * time.Second
+
+// defaultWaitCap is the wait cap when neither -wait-cap nor
+// TCGREPLAY_WAIT_CAP sets one.
+const defaultWaitCap = 15 * time.Second
 
 // validTiming checks the turn wait's settings: the cap must be above 0 and
 // at most 50s, and the check-in and lock-release times must not be
@@ -118,11 +164,18 @@ func envWait(key string, def time.Duration) (time.Duration, error) {
 }
 
 func main() {
+	// sets is the one subcommand, dispatched before the playmat's flags.
+	if len(os.Args) > 1 && os.Args[1] == "sets" {
+		os.Exit(runSets(os.Args[2:]))
+	}
 	var c config
 	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for the playmat's log and daemon files")
-	flag.StringVar(&c.cacheDir, "cache", cards.DefaultCacheDir(), "directory for the TCGdex cache")
+	flag.StringVar(&c.cacheDir, "cache", catalog.DefaultCacheDir(), "directory for the local copy of published card sets")
 	flag.StringVar(&c.seat, "seat", "p2", "seat Claude plays")
-	flag.BoolVar(&c.offline, "offline", false, "use only cached card data")
+	flag.BoolVar(&c.offline, "offline", false, "use only the local copy of published card sets")
+	flag.StringVar(&c.cardsetsURL, "cardsets-url", envOr("TCGREPLAY_CARDSETS_URL", defaultCardsetsURL), "where card sets are published: an https address or a directory (default $TCGREPLAY_CARDSETS_URL, else the project's CDN)")
+	interval, intervalErr := envWait("TCGREPLAY_CARDSETS_INTERVAL", catalog.DefaultInterval)
+	flag.DurationVar(&c.cardsetsInterval, "cardsets-interval", interval, "how often a running playmat checks for published card sets, from 10s to 10m (default $TCGREPLAY_CARDSETS_INTERVAL, else 5m)")
 	flag.StringVar(&c.uiAddr, "ui-addr", "127.0.0.1:7777", "address for the playmat UI; empty disables it")
 	noDaemon := flag.Bool("no-daemon", false, "serve MCP over stdio in-process instead of relaying to the daemon")
 	daemon := flag.Bool("daemon", false, "run the shared daemon (normally started by the shim)")
@@ -132,26 +185,31 @@ func main() {
 	hosted := flag.Bool("hosted", false, "serve MCP over HTTP at /mcp and the playmat on one address, for a container")
 	flag.StringVar(&c.listen, "listen", "", "with -hosted, the address to listen on (default :$PORT, else :8080)")
 	flag.StringVar(&c.publicURL, "public-url", os.Getenv("TCGREPLAY_PUBLIC_URL"), "with -hosted, the public address the playmat is reached at (default $TCGREPLAY_PUBLIC_URL)")
+	flag.StringVar(&c.movedFrom, "moved-from", os.Getenv("TCGREPLAY_MOVED_FROM"), "with -hosted, comma-separated old host names the playmat has moved from: their /mcp tells assistants the new address and every other path redirects to the public URL (default $TCGREPLAY_MOVED_FROM)")
+	flag.StringVar(&c.webAnalyticsToken, "web-analytics-token", os.Getenv("TCGREPLAY_WEB_ANALYTICS_TOKEN"), "with -hosted, the Cloudflare Web Analytics site token; pages are counted only with it, for the public address, once the privacy page describes counting (default $TCGREPLAY_WEB_ANALYTICS_TOKEN)")
 	flag.StringVar(&c.googleClientID, "google-client-id", os.Getenv("TCGREPLAY_GOOGLE_CLIENT_ID"), "with -hosted, the Google OAuth client users sign in with (default $TCGREPLAY_GOOGLE_CLIENT_ID; the secret is read from $TCGREPLAY_GOOGLE_CLIENT_SECRET)")
 	flag.IntVar(&c.rateLimit, "rate-limit", envInt("TCGREPLAY_RATE_LIMIT", 300), "with -hosted, requests a minute one account may make; 0 for no limit (default $TCGREPLAY_RATE_LIMIT, else 300)")
 	flag.IntVar(&c.maxUsers, "max-users", envInt("TCGREPLAY_MAX_USERS", 10), "with -hosted, signed-in Google accounts served at once (a place is freed when an account's game goes idle or its last sign-in ends); 0 for no cap (default $TCGREPLAY_MAX_USERS, else 10)")
 	idle, idleErr := envDuration("TCGREPLAY_IDLE_TIMEOUT", 60*time.Minute)
 	flag.DurationVar(&c.idleTimeout, "idle-timeout", idle, "with -hosted, how long an account's game may go without activity before it is dropped, e.g. 2m or 1h; 0 never drops (default $TCGREPLAY_IDLE_TIMEOUT, else 60m)")
-	waitCap, capErr := envWait("TCGREPLAY_WAIT_CAP", 30*time.Second)
-	flag.DurationVar(&c.timing.WaitCap, "wait-cap", waitCap, "longest a single wait_for_turn call waits before reporting it is still waiting; above 0 and at most 50s (default $TCGREPLAY_WAIT_CAP, else 30s)")
+	waitCap, capErr := envWait("TCGREPLAY_WAIT_CAP", defaultWaitCap)
+	flag.DurationVar(&c.timing.WaitCap, "wait-cap", waitCap, "longest a single wait_for_turn call waits before reporting it is still waiting; above 0 and at most 50s (default $TCGREPLAY_WAIT_CAP, else 15s)")
 	checkIn, checkErr := envWait("TCGREPLAY_CHECK_IN", 5*time.Minute)
 	flag.DurationVar(&c.timing.CheckIn, "check-in", checkIn, "how long the player may leave the board untouched on their turn before the assistant asks \"Still playing?\" (default $TCGREPLAY_CHECK_IN, else 5m)")
 	lockRelease, lockErr := envWait("TCGREPLAY_LOCK_RELEASE", 2*time.Minute)
 	flag.DurationVar(&c.timing.LockRelease, "lock-release", lockRelease, "how long the assistant may go without a move before the board unlocks by itself (default $TCGREPLAY_LOCK_RELEASE, else 2m)")
 	flag.Parse()
-	// The binary has no subcommands: refuse any leftover word, so a removed
-	// one (such as install) fails instead of starting the shim.
+	// sets (dispatched above) is the only subcommand: refuse any other
+	// leftover word, so a removed one (such as install) fails instead of
+	// starting the shim.
 	if flag.NArg() > 0 {
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", flag.Arg(0))
 		flag.Usage()
 		os.Exit(2)
 	}
 	c.idleErr = idleErr
+	c.openAIChallenge = strings.TrimSpace(os.Getenv("TCGREPLAY_OPENAI_CHALLENGE"))
+	c.reviewer = strings.TrimSpace(os.Getenv("TCGREPLAY_REVIEWER"))
 	// A flag overrides the environment, even an invalid value there.
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
@@ -163,8 +221,14 @@ func main() {
 			checkErr = nil
 		case "lock-release":
 			lockErr = nil
+		case "cardsets-interval":
+			intervalErr = nil
 		}
 	})
+	if err := validCardsetsInterval(c.cardsetsInterval, intervalErr); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	c.timingErr = errors.Join(capErr, checkErr, lockErr)
 	if err := validTiming(c); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -212,25 +276,72 @@ func main() {
 	}
 }
 
-// newServer builds the game manager and MCP server. boardURL is the board
-// link added to game-opening results in hosted mode; the desktop passes "".
-func newServer(c config, boardURL string) (*game.Manager, *mcp.Server) {
-	m := game.NewManager(c.dataDir, newCardDB(c))
+// newServer builds the game manager and MCP server over the card source
+// src (nil: no card data). boardURL is the board link added to
+// game-opening results in hosted mode; the desktop passes "".
+func newServer(c config, boardURL string, src game.CardSource) (*game.Manager, *mcp.Server) {
+	m := game.NewManager(c.dataDir, src)
 	m.Timing = c.timing
 	claude := state.Seat(c.seat)
 	return m, (&mcpserver.Server{M: m, ClaudeSeat: claude, Version: version, BoardURL: boardURL}).MCP()
 }
 
-// newCardDB returns the TCGdex card database for the config's cache.
-func newCardDB(c config) *cards.Client {
-	db := cards.NewClient(c.cacheDir)
-	db.Offline = c.offline
-	return db
+// defaultCardsetsURL is where the project publishes card sets: the
+// manifest and set files in the playmat's Spaces bucket, through its CDN.
+const defaultCardsetsURL = "https://tcgreplay.ams3.cdn.digitaloceanspaces.com/cardsets/"
+
+// startupWait bounds how long a playmat waits at start for the published
+// card sets before serving, so an early game does not pin an empty
+// catalogue and an outage does not stop the playmat starting.
+const startupWait = 30 * time.Second
+
+// Bounds of -cardsets-interval: a publish must reach a running playmat
+// within 10 minutes.
+const (
+	minCardsetsInterval = 10 * time.Second
+	maxCardsetsInterval = 10 * time.Minute
+)
+
+// validCardsetsInterval checks the check interval: from 10s to 10m. envErr
+// is an invalid TCGREPLAY_CARDSETS_INTERVAL whose flag was not given.
+func validCardsetsInterval(d time.Duration, envErr error) error {
+	if envErr != nil {
+		return envErr
+	}
+	if d < minCardsetsInterval || d > maxCardsetsInterval {
+		return fmt.Errorf("-cardsets-interval %s: must be from %s to %s", d, minCardsetsInterval, maxCardsetsInterval)
+	}
+	return nil
+}
+
+// envOr is the environment variable key, or def when it is unset.
+func envOr(key, def string) string {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		return v
+	}
+	return def
+}
+
+// newCatalog builds the card catalogue loader for the config: published
+// sets at cardsetsURL, the local copy under the cache directory, checked
+// every cardsetsInterval. The caller starts and runs it.
+func newCatalog(c config) *catalog.Loader {
+	return &catalog.Loader{Base: c.cardsetsURL, CacheDir: c.cacheDir, Offline: c.offline, Interval: c.cardsetsInterval}
+}
+
+// startCatalog loads the catalogue, waiting up to wait for the published
+// sets (0: the local copy only, checking in the background), and keeps it
+// up to date in the background until ctx ends.
+func startCatalog(ctx context.Context, c config, wait time.Duration) *catalog.Loader {
+	l := newCatalog(c)
+	l.Start(ctx, wait)
+	go l.Run(ctx)
+	return l
 }
 
 func runInProcess(ctx context.Context, c config) error {
-	m, srv := newServer(c, "")
-	log.Printf("tcgreplay %s in-process: data %s, cache %s, claude plays %s, %s", version, c.dataDir, c.cacheDir, c.seat, timingText(c.timing))
+	m, srv := newServer(c, "", startCatalog(ctx, c, startupWait))
+	log.Printf("tcgreplay %s in-process: data %s, card sets %s (local copy in %s), claude plays %s, %s", version, c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, timingText(c.timing))
 	if c.uiAddr != "" {
 		startUI(ctx, m, state.Seat(c.seat).Other(), c.uiAddr)
 	}

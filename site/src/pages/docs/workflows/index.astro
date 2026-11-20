@@ -1,0 +1,32 @@
+---
+// Lists every coaching workflow the playmat offers, in the playmat's own
+// order, with the one-line description from its guide.
+import Docs from '../../../layouts/Docs.astro';
+import { pairWorkflows } from '../../../lib/workflows';
+
+const workflows = await pairWorkflows();
+---
+<Docs title="Coaching workflows" description="Every coaching workflow the tcgreplay playmat offers, with example prompts.">
+  <h1>Coaching workflows</h1>
+  <p>
+    The playmat has a built-in guide for each of these. You don't need to name it: ask in your own words, like the
+    example prompts on each page, and your assistant follows the right guide.
+  </p>
+  <ol class="workflows" data-workflows>
+    {workflows.map((w) => (
+      <li data-guide={w.name}>
+        <a href={`/docs/workflows/${w.name}`}>{w.page.title}</a>
+        <p class="guide-line"><span class="guide-name">{w.name}</span> {w.description}</p>
+      </li>
+    ))}
+  </ol>
+  <p>You can also <a href="/docs/rewind">rewind a game and try another line</a> at any point.</p>
+</Docs>
+
+<style>
+  .workflows { padding-left: 1.4rem; }
+  .workflows li { margin: 0.9rem 0; }
+  .workflows a { font-weight: 700; font-size: 1.05rem; }
+  .guide-line { margin: 0.2rem 0 0; color: var(--muted); }
+  .guide-name { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85em; margin-right: 0.3rem; }
+</style>

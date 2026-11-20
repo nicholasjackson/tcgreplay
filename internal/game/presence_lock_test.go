@@ -20,11 +20,12 @@ func eventually(t *testing.T, what string, within time.Duration, cond func() boo
 	}
 }
 
-// wantPresence checks the lock and the board's opponent status.
+// wantPresence checks whether a hold is set and the board's opponent
+// status.
 func wantPresence(t *testing.T, m *Manager, when string, locked bool, opponent string) {
 	t.Helper()
-	if got := m.Locked(); got != locked {
-		t.Errorf("%s: Locked() = %v, want %v", when, got, locked)
+	if got := m.Hold() != HoldNone; got != locked {
+		t.Errorf("%s: Hold() = %q, want a hold %v", when, m.Hold(), locked)
 	}
 	if got := m.Opponent(); got != opponent {
 		t.Errorf("%s: Opponent() = %q, want %q", when, got, opponent)
@@ -60,32 +61,44 @@ func lockByTurnEnded(t *testing.T, m *Manager, g *Game) {
 func TestOutcomesSetActingLock(t *testing.T) {
 	p2Active := state.Loc{Seat: state.P2, Zone: state.Active}
 	for _, tt := range []struct {
-		name string
-		kind string
-		act  func(t *testing.T, g *Game, judge state.IID)
+		name   string
+		kind   string
+		action string
+		act    func(t *testing.T, g *Game, judge state.IID)
 	}{
-		{"turn ended", WaitTurnEnded, func(t *testing.T, g *Game, _ state.IID) {
+		{"turn ended", WaitTurnEnded, "", func(t *testing.T, g *Game, _ state.IID) {
 			must(t)(g.EndTurn(state.P1, state.ActorHuman))
 		}},
-		{"respond", WaitRespond, func(t *testing.T, g *Game, judge state.IID) {
-			must(t)(g.PlayTrainer(state.P1, state.ActorHuman, judge))
+		{"answer card", WaitDecide, DecideAnswerCard, func(t *testing.T, g *Game, eri state.IID) {
+			must(t)(g.PlayTrainer(state.P1, state.ActorHuman, eri))
 		}},
-		{"promote", WaitPromote, func(t *testing.T, g *Game, _ state.IID) {
+		{"promote", WaitDecide, DecidePromote, func(t *testing.T, g *Game, _ state.IID) {
 			must(t)(g.KnockOut(state.P1, state.ActorHuman, p2Active))
 		}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			m, g, judge, _ := respondGame(t)
+			m, g, _, _ := respondGame(t)
+			eri := eriCard(t, m, g) // stops the wait: the playmat does not apply it
 			m.Timing = Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute, LockRelease: time.Minute}
 			wantPresence(t, m, "before any wait", false, "")
 			done := startWait(t, context.Background(), m, WaitRequest{Seat: state.P1})
 			wantPresence(t, m, "while the wait is in flight", false, "waiting")
-			tt.act(t, g, judge)
+			tt.act(t, g, eri)
 			r := recv(t, done, time.Second)
-			if r.err != nil || r.out.Kind != tt.kind {
-				t.Fatalf("got %+v, %v; want %s", r.out, r.err, tt.kind)
+			if r.err != nil || r.out.Kind != tt.kind || r.out.Action != tt.action {
+				t.Fatalf("got %+v, %v; want %s %s", r.out, r.err, tt.kind, tt.action)
 			}
-			wantPresence(t, m, "after "+tt.kind, true, "acting")
+			status, hold := "acting", HoldFull
+			if tt.kind == WaitDecide {
+				status, hold = "deciding", HoldDecision
+			}
+			wantPresence(t, m, "after "+tt.kind, true, status)
+			if got := m.Hold(); got != hold {
+				t.Errorf("after %s: Hold() = %q, want %q", tt.kind, got, hold)
+			}
+			if got := m.Decision(); got != tt.action {
+				t.Errorf("after %s: Decision() = %q, want %q", tt.kind, got, tt.action)
+			}
 		})
 	}
 }
@@ -99,7 +112,7 @@ func TestQuietOutcomesDoNotLock(t *testing.T) {
 		if o := waitNow(t, m, WaitRequest{Seat: state.P1}); o.Kind != WaitStillWaiting {
 			t.Fatalf("kind %q, want still_waiting", o.Kind)
 		}
-		if m.Locked() {
+		if m.Hold() != HoldNone {
 			t.Error("still_waiting locked the board")
 		}
 	})
@@ -130,15 +143,16 @@ func TestQuietOutcomesDoNotLock(t *testing.T) {
 // unlocks the board.
 func TestWaitingAgainReleasesLock(t *testing.T) {
 	t.Run("next wait", func(t *testing.T) {
-		m, g, judge, _ := respondGame(t)
+		m, g, _, _ := respondGame(t)
+		eri := eriCard(t, m, g)
 		m.Timing = Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute, LockRelease: time.Minute}
 		done := startWait(t, context.Background(), m, WaitRequest{Seat: state.P1})
-		must(t)(g.PlayTrainer(state.P1, state.ActorHuman, judge))
+		must(t)(g.PlayTrainer(state.P1, state.ActorHuman, eri))
 		r := recv(t, done, time.Second)
-		if r.out.Kind != WaitRespond {
-			t.Fatalf("got %+v, want respond", r.out)
+		if r.out.Kind != WaitDecide || r.out.Action != DecideAnswerCard {
+			t.Fatalf("got %+v, want decide/answer_card", r.out)
 		}
-		wantPresence(t, m, "answering the card", true, "acting")
+		wantPresence(t, m, "answering the card", true, "deciding")
 
 		ctx, cancel := context.WithCancel(context.Background())
 		done = startWait(t, ctx, m, WaitRequest{Seat: state.P1, Since: intp(r.out.Next)})
@@ -170,10 +184,10 @@ func TestLockReleasesItself(t *testing.T) {
 	m.Timing = Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute, LockRelease: release}
 	start := time.Now()
 	lockByTurnEnded(t, m, g)
-	if !m.Locked() {
+	if !(m.Hold() != HoldNone) {
 		t.Fatal("not locked after turn_ended")
 	}
-	eventually(t, "lock released", 2*time.Second, func() bool { return !m.Locked() })
+	eventually(t, "lock released", 2*time.Second, func() bool { return !(m.Hold() != HoldNone) })
 	if took := time.Since(start); took < release-5*time.Millisecond {
 		t.Errorf("lock released after %v, want at least %v", took, release)
 	}
@@ -197,13 +211,13 @@ func TestMovesKeepLock(t *testing.T) {
 	until := time.Now().Add(4 * release)
 	for time.Now().Before(until) {
 		time.Sleep(25 * time.Millisecond)
-		if !m.Locked() {
+		if !(m.Hold() != HoldNone) {
 			t.Fatalf("lock released while the assistant moved every 25ms (release %v)", release)
 		}
 		m.AssistantMoved(false)
 	}
 	stoppedAt := time.Now()
-	eventually(t, "lock released after the moves stopped", 2*time.Second, func() bool { return !m.Locked() })
+	eventually(t, "lock released after the moves stopped", 2*time.Second, func() bool { return !(m.Hold() != HoldNone) })
 	if took := time.Since(stoppedAt); took > release+400*time.Millisecond {
 		t.Errorf("released %v after the last move, want about %v", took, release)
 	}
@@ -448,4 +462,156 @@ func TestNoLockInReviewWithoutWait(t *testing.T) {
 		must(t)(g.Draw(state.P2, state.ActorClaude, 1))
 	}
 	wantPresence(t, m, "after the assistant's review moves", false, "")
+}
+
+// holdByKnockOut knocks out p2's Active (it has a Bench) under a wait, so
+// the wait asks the assistant to promote and sets a decision hold. It
+// returns the outcome.
+func holdByKnockOut(t *testing.T, m *Manager, g *Game) WaitOutcome {
+	t.Helper()
+	done := startWait(t, context.Background(), m, WaitRequest{Seat: state.P1})
+	must(t)(g.KnockOut(state.P1, state.ActorHuman, state.Loc{Seat: state.P2, Zone: state.Active}))
+	r := recv(t, done, time.Second)
+	if r.err != nil || r.out.Kind != WaitDecide || r.out.Action != DecidePromote {
+		t.Fatalf("knock-out: %+v, %v; want decide/promote", r.out, r.err)
+	}
+	return r.out
+}
+
+// TestDecisionHold: a decision stop sets a decision hold ("deciding"),
+// never a full one, naming the decision; the assistant's next wait ends
+// it. A decision hold left for the release time lapses to "stopped" and
+// keeps its decision readable until the next wait, which clears both.
+func TestDecisionHold(t *testing.T) {
+	t.Run("next wait ends it", func(t *testing.T) {
+		m, g, _, _ := respondGame(t)
+		m.Timing = Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute, LockRelease: time.Minute}
+		out := holdByKnockOut(t, m, g)
+		if m.Hold() != HoldDecision || m.Opponent() != "deciding" || m.Decision() != DecidePromote {
+			t.Fatalf("after the decision stop: hold %q, opponent %q, decision %q; want decision, deciding, promote", m.Hold(), m.Opponent(), m.Decision())
+		}
+		// The assistant's own moves while deciding keep the hold a
+		// decision hold.
+		m.AssistantMoved(false)
+		if m.Hold() != HoldDecision {
+			t.Errorf("a move while deciding changed the hold to %q", m.Hold())
+		}
+		must(t)(g.Switch(state.P2, state.ActorClaude, 0))
+		ctx, cancel := context.WithCancel(context.Background())
+		done := startWait(t, ctx, m, WaitRequest{Seat: state.P1, Since: intp(out.Next)})
+		if m.Hold() != HoldNone || m.Decision() != "" || m.Opponent() != "waiting" {
+			t.Errorf("waiting again: hold %q, decision %q, opponent %q; want none, none, waiting", m.Hold(), m.Decision(), m.Opponent())
+		}
+		cancel()
+		recv(t, done, time.Second)
+	})
+	t.Run("lapses", func(t *testing.T) {
+		m, g, _, _ := respondGame(t)
+		m.Timing = Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute, LockRelease: 40 * time.Millisecond}
+		out := holdByKnockOut(t, m, g)
+		eventually(t, "the decision hold lapsed", 2*time.Second, func() bool { return m.Opponent() == "stopped" })
+		if m.Hold() != HoldNone || m.Decision() != DecidePromote {
+			t.Fatalf("after the lapse: hold %q, decision %q; want none and promote", m.Hold(), m.Decision())
+		}
+		m.Timing.WaitCap = 30 * time.Millisecond
+		waitNow(t, m, WaitRequest{Seat: state.P1, Since: intp(out.Next)})
+		if m.Decision() != "" || m.Opponent() == "stopped" {
+			t.Errorf("after the next wait: decision %q, opponent %q; want both cleared", m.Decision(), m.Opponent())
+		}
+	})
+	t.Run("own turn is a full hold", func(t *testing.T) {
+		m, g := startedManager(t)
+		m.Timing = Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute, LockRelease: time.Minute}
+		lockByTurnEnded(t, m, g)
+		if m.Hold() != HoldFull || m.Opponent() != "acting" || m.Decision() != "" {
+			t.Fatalf("the assistant's turn: hold %q, opponent %q, decision %q; want full, acting, none", m.Hold(), m.Opponent(), m.Decision())
+		}
+		m.AssistantMoved(true)
+		if m.Hold() != HoldFull {
+			t.Errorf("an own-turn move: hold %q, want full", m.Hold())
+		}
+	})
+}
+
+// TestGameChangesClearDecisionHold: a mode switch, a branch move, an undo,
+// a new game and expiry each clear a decision hold and its decision, live
+// or lapsed.
+func TestGameChangesClearDecisionHold(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		change func(t *testing.T, m *Manager, g *Game)
+	}{
+		{"mode switch", func(t *testing.T, _ *Manager, g *Game) {
+			if err := g.SetMode(ModeReview); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{"branch move", func(t *testing.T, _ *Manager, g *Game) {
+			if _, err := g.Rewind(g.Head()-1, "alt"); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{"undo", func(t *testing.T, _ *Manager, g *Game) {
+			if _, err := g.Undo(1); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{"new game", func(t *testing.T, m *Manager, _ *Game) {
+			if _, _, err := m.New(context.Background(), NewGameRequest{ID: "t2", DeckP1: testDeck, DeckP2: testDeck}); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{"expired", func(t *testing.T, m *Manager, _ *Game) {
+			m.Expire("game expired after idling")
+		}},
+	} {
+		for _, lapsed := range []bool{false, true} {
+			name := tt.name + " deciding"
+			if lapsed {
+				name = tt.name + " lapsed"
+			}
+			t.Run(name, func(t *testing.T) {
+				m, g, _, _ := respondGame(t)
+				release := time.Minute
+				if lapsed {
+					release = 30 * time.Millisecond
+				}
+				m.Timing = Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute, LockRelease: release}
+				holdByKnockOut(t, m, g)
+				if lapsed {
+					eventually(t, "lapsed", 2*time.Second, func() bool { return m.Opponent() == "stopped" })
+				}
+				tt.change(t, m, g)
+				if m.Hold() != HoldNone || m.Decision() != "" || m.Opponent() != "" {
+					t.Errorf("after %s: hold %q, decision %q, opponent %q; want all cleared", tt.name, m.Hold(), m.Decision(), m.Opponent())
+				}
+			})
+		}
+	}
+}
+
+// TestOnPresenceHookOnDeciding: the board's presence hook runs when a
+// decision stop sets the deciding status.
+func TestOnPresenceHookOnDeciding(t *testing.T) {
+	m, g, _, _ := respondGame(t)
+	m.Timing = Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute, LockRelease: time.Minute}
+	statuses := make(chan string, 256)
+	m.OnPresence(func() {
+		select {
+		case statuses <- m.Opponent():
+		default:
+		}
+	})
+	holdByKnockOut(t, m, g)
+	deadline := time.After(time.Second)
+	for {
+		select {
+		case s := <-statuses:
+			if s == "deciding" {
+				return
+			}
+		case <-deadline:
+			t.Fatal("the hook did not run with the deciding status")
+		}
+	}
 }

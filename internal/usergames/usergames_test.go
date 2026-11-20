@@ -154,7 +154,7 @@ func TestLink(t *testing.T) {
 	e := use(t, r, alice)
 	public, _ := url.Parse("https://playmat.example.com")
 
-	want := "https://playmat.example.com/?board=" + Handle(alice.ID)
+	want := "https://playmat.example.com/board?board=" + Handle(alice.ID)
 	if got := e.Link(public); got != want {
 		t.Errorf("Link = %q, want %q", got, want)
 	}

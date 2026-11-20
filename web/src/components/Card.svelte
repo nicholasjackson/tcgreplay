@@ -1,7 +1,7 @@
 <script>
   // One card: art from TCGdex when known, a named text card otherwise, and
   // a card back when hidden.
-  import { app, cardInfo, pointerTypeOf } from '../lib/store.svelte.js';
+  import { app, cardInfo, imageSrc, nextImageStage, pointerTypeOf } from '../lib/store.svelte.js';
   import { draggable as dragSource } from '../lib/pointer.svelte.js';
 
   let {
@@ -23,7 +23,12 @@
   const lit = $derived(card && app.highlight.includes(card.iid));
   // The card an action is being played from fades while its target is chosen.
   const source = $derived(card && app.target?.card?.iid === card.iid);
-  let broken = $state(false);
+  // Which address the art is loaded from (see imageSrc); reset per card.
+  let stage = $state(0);
+  $effect(() => {
+    card?.def;
+    stage = 0;
+  });
 
   // energyType pulls the type out of names like "Basic Fighting Energy".
   function energyType(name) {
@@ -63,16 +68,18 @@
     onkeydown={(ev) => ev.key === 'Enter' && click(ev)}
     role="button"
     tabindex="-1"
-    title={card.hidden ? card.iid : unknown ? `Unknown card (${card.iid}): never revealed` : `${card.name} (${card.iid})`}
+    title={card.hidden ? (card.known ? `Known: ${card.known} (${card.iid})` : card.iid) : unknown ? `Unknown card (${card.iid}): never revealed` : `${card.name} (${card.iid})`}
   >
     {#if card.hidden}
       <div class="back-art"><span></span></div>
+      <!-- A revealed card in another player's hand stays face down, marked. -->
+      {#if card.known}<span class="known" aria-label="known: {card.known}">{card.known}</span>{/if}
     {:else if unknown}
       <div class="back-art unknown"><span>?</span></div>
-    {:else if info?.category === 'Energy' && (!info.image || broken)}
+    {:else if info?.category === 'Energy' && !imageSrc(info, 'low.webp', stage)}
       <div class="token" data-type={energyType(info.name)} title={info.name}>{energyType(info.name).slice(0, 1)}</div>
-    {:else if info?.image && !broken}
-      <img src="{info.image}/low.webp" alt={card.name} loading="lazy" draggable="false" onerror={() => (broken = true)} />
+    {:else if imageSrc(info, 'low.webp', stage)}
+      <img src={imageSrc(info, 'low.webp', stage)} alt={card.name} loading="lazy" draggable="false" onerror={() => (stage = nextImageStage(info, stage))} />
     {:else}
       <div class="text-card" data-cat={info?.category ?? ''}>
         <strong>{card.name || card.iid}</strong>
@@ -139,6 +146,22 @@
     border-radius: inherit;
     display: block;
     object-fit: cover;
+    pointer-events: none;
+  }
+  .known {
+    position: absolute;
+    left: 50%;
+    bottom: 6%;
+    translate: -50% 0;
+    max-width: 92%;
+    padding: 0.05em 0.45em;
+    border-radius: 1em;
+    background: var(--accent);
+    color: #111;
+    font: 700 max(9px, calc(var(--w, var(--cw)) * 0.11)) system-ui;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     pointer-events: none;
   }
   .back-art {

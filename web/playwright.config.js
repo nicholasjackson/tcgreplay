@@ -6,7 +6,13 @@ import { defineConfig, devices } from '@playwright/test';
 // The touch profiles take the iPhone and iPad sizes but run in Chromium's
 // touch emulation: Playwright's WebKit needs Ubuntu's libraries and does
 // not run on every developer's machine. Real iOS Safari is a manual check.
+// A second board server, with its own game, adds Cloudflare's
+// visitor-counting beacon to the board page as hosted mode does with a
+// token; only e2e/analytics.spec.js uses it, and it stubs or blocks
+// Cloudflare, so no test sends anything there.
 const addr = '127.0.0.1:7790';
+const analyticsAddr = '127.0.0.1:7789';
+const analyticsToken = '0123456789abcdef0123456789abcdef';
 
 export default defineConfig({
   testDir: './e2e',
@@ -38,11 +44,20 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 2560, height: 1440 } },
     },
   ],
-  webServer: {
-    command: `go run ./internal/webui/webtest/cmd/boardtest -addr ${addr}`,
-    cwd: '..',
-    url: `http://${addr}/`,
-    reuseExistingServer: false,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: `go run ./internal/webui/webtest/cmd/boardtest -addr ${addr}`,
+      cwd: '..',
+      url: `http://${addr}/`,
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+    {
+      command: `go run ./internal/webui/webtest/cmd/boardtest -addr ${analyticsAddr} -analytics-token ${analyticsToken}`,
+      cwd: '..',
+      url: `http://${analyticsAddr}/`,
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+  ],
 });

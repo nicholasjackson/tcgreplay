@@ -1,0 +1,40 @@
+---
+// What's new: every release that changed what players see, newest first,
+// from src/data/whats-new.yaml (lib/whats-new.ts), each saying whether
+// players need to refresh their assistant's connection.
+import Docs from '../../layouts/Docs.astro';
+import { whatsNew, changeHTML } from '../../lib/whats-new';
+
+const day = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', dateStyle: 'long' });
+const human = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
+---
+<Docs
+  title="What's new"
+  description="What changed in each tcgreplay update, and whether you need to refresh your assistant's connection."
+>
+  <h1>What's new</h1>
+  <p>
+    What changed in each update, newest first. When an update says a refresh is needed, <a href="/docs/connect#refresh">refresh your assistant's connection</a> to see new or changed tools.
+  </p>
+  <ol class="whats-new" data-whats-new>
+    {whatsNew.map((e) => (
+      <li data-entry data-date={e.date}>
+        <h2><time datetime={e.date}>{human(e.date)}</time> — {e.title}</h2>
+        {e.refresh ? (
+          <p data-refresh><strong>Refresh needed.</strong> <a href="/docs/connect#refresh">Refresh your assistant's connection</a> to see the changes.</p>
+        ) : (
+          <p data-refresh>No refresh needed.</p>
+        )}
+        <ul>
+          {e.changes.map((c) => <li set:html={changeHTML(c)} />)}
+        </ul>
+      </li>
+    ))}
+  </ol>
+</Docs>
+
+<style>
+  .whats-new { list-style: none; padding-left: 0; }
+  .whats-new > li { margin: 1.5rem 0; }
+  .whats-new h2 { font-size: 1.2rem; margin-bottom: 0.4rem; }
+</style>

@@ -81,7 +81,7 @@ type State struct {
 	First      Seat           `json:"first,omitempty"`
 	Cards      map[IID]*Card  `json:"cards"`
 	Sides      map[Seat]*Side `json:"sides"`
-	Stadium    IID            `json:"stadium,omitempty"`
+	Stadium    []IID          `json:"stadium,omitempty"` // at most 2: a Stadium, or the two halves of a pair, first played first
 	Effects    []Effect       `json:"effects,omitempty"`
 	Coins      []string       `json:"coins,omitempty"` // results of the latest flip
 	Known      map[IID]uint8  `json:"known,omitempty"` // bitmask of seats that know a hidden card
@@ -109,6 +109,7 @@ func (s *State) Clone() *State {
 	for k, v := range s.Sides {
 		c.Sides[k] = v.clone()
 	}
+	c.Stadium = slices.Clone(s.Stadium)
 	c.Effects = slices.Clone(s.Effects)
 	c.Coins = slices.Clone(s.Coins)
 	c.Known = maps.Clone(s.Known)
@@ -120,6 +121,37 @@ func seatBit(s Seat) uint8 {
 		return 1
 	}
 	return 2
+}
+
+// Winner reports who has won once play has started, and why: a player who
+// has taken all their prize cards wins, and a player with no Pokémon in
+// play (none to promote after a Knock Out) loses. "" while play goes on.
+// Running out of cards to draw is left to the players to call.
+func (s *State) Winner() (Seat, string) {
+	if s.Phase != PhasePlaying {
+		return "", ""
+	}
+	for _, seat := range Seats {
+		if side := s.Sides[seat]; side != nil && len(side.Prizes) > 0 && side.PrizesLeft() == 0 {
+			return seat, "took all their prize cards"
+		}
+	}
+	for _, seat := range Seats {
+		side := s.Sides[seat]
+		if side == nil || !side.Active.Empty() {
+			continue
+		}
+		benched := false
+		for _, b := range side.Bench {
+			if !b.Empty() {
+				benched = true
+			}
+		}
+		if !benched {
+			return seat.Other(), string(seat) + " has no Pokémon in play"
+		}
+	}
+	return "", ""
 }
 
 // KnownTo reports whether seat can see card iid where it currently is.
@@ -212,7 +244,7 @@ func (s *State) StackLocs(seat Seat) []Loc {
 // Find returns the location of card iid. For deck cards Pos is set to the
 // card's index; for stacks the role is not reported.
 func (s *State) Find(iid IID) (Loc, error) {
-	if s.Stadium == iid && iid != "" {
+	if iid != "" && slices.Contains(s.Stadium, iid) {
 		return Loc{Zone: Stadium}, nil
 	}
 	for _, seat := range Seats {

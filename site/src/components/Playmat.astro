@@ -1,0 +1,402 @@
+---
+// Playmat is the home page's scene of the playmat in action, drawn in the
+// board's own colours and its no-art card style (the text card, the card
+// back and the energy token, copied from web/src/components/Card.svelte).
+// It never shows card artwork or Pokémon logos: the cards are plain
+// stand-ins.
+//
+// Without script, and for visitors who ask for reduced motion, it is a still:
+// the last moment of the story (a battle log imported, the board filled,
+// the coach's suggestion, and the better line played). Otherwise a short
+// script steps data-beat through log, board, coach, rewind and line, and
+// starts again; CSS transitions on opacity and transform do the motion. It
+// pauses while the tab is hidden or the scene is off screen, and loads
+// nothing from the playmat or anywhere else.
+type Side = 'p1' | 'p2';
+type Card =
+  | { kind: 'text'; name: string; hp?: number; stage: string; cat?: 'Pokemon' | 'Trainer' }
+  | { kind: 'energy'; type: string }
+  | { kind: 'back' };
+
+const opponent: { active: Card; bench: Card[]; hand: number } = {
+  active: { kind: 'text', name: 'Rival attacker', hp: 280, stage: 'Stage 2' },
+  bench: [
+    { kind: 'text', name: 'Rival support', hp: 70, stage: 'Basic' },
+    { kind: 'text', name: 'Rival pivot', hp: 90, stage: 'Basic' },
+  ],
+  hand: 4,
+};
+const you: { active: Card; bench: Card[]; hand: Card[] } = {
+  active: { kind: 'text', name: 'Your attacker', hp: 130, stage: 'Stage 1' },
+  bench: [
+    { kind: 'text', name: 'Second attacker', hp: 130, stage: 'Stage 1' },
+    { kind: 'text', name: 'Support', hp: 70, stage: 'Basic' },
+    { kind: 'energy', type: 'Fighting' },
+  ],
+  hand: [
+    { kind: 'text', name: 'Draw card', stage: 'Supporter', cat: 'Trainer' },
+    { kind: 'text', name: 'Search card', stage: 'Item', cat: 'Trainer' },
+    { kind: 'energy', type: 'Fighting' },
+  ],
+};
+// The log as imported; the line marked `line` belongs to the better line
+// played after the rewind, and appears only then.
+const log: { text: string; line?: boolean }[] = [
+  { text: 'Turn 3 · Your turn' },
+  { text: 'You drew a card.' },
+  { text: 'You played Second attacker to your Bench.', line: true },
+  { text: 'You attached Fighting Energy to Your attacker.' },
+  { text: 'Your attacker used Strike on Rival attacker for 120 damage.' },
+];
+const coach = 'Turn 3: what if you bench a second attacker first?';
+const label =
+  'A playmat in the board’s colours with plain stand-in cards. A battle log sits beside the board, and the assistant suggests benching a second attacker on turn 3; the board shows that line played.';
+const sides: Side[] = ['p2', 'p1'];
+
+const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// render draws one card the way the board draws a card without artwork.
+function render(c: Card): string {
+  switch (c.kind) {
+    case 'back':
+      return '<div class="back-art"><span></span></div>';
+    case 'energy':
+      return `<div class="token" data-type="${esc(c.type)}" title="${esc(c.type)} Energy">${esc(c.type.slice(0, 1))}</div>`;
+    case 'text':
+      return `<div class="text-card" data-cat="${c.cat ?? 'Pokemon'}"><strong>${esc(c.name)}</strong>${
+        c.hp ? `<span class="hp">HP ${c.hp}</span>` : ''
+      }<small>${esc(c.stage)}</small></div>`;
+  }
+}
+---
+<figure class="scene" data-playmat data-beat="line">
+  <div class="stage" role="img" aria-label={label}>
+    <div class="mat">
+      <div class="turn" data-turn aria-hidden="true">Turn 3</div>
+      <div class="sweep" aria-hidden="true"></div>
+      {sides.map((side) => (
+        <div class:list={['side', side]}>
+          <span class="seat">{side === 'p1' ? 'You' : 'Rival'}</span>
+          {side === 'p2' && (
+            <>
+              <div class="row hand">
+                {Array.from({ length: opponent.hand }, (_, i) => (
+                  <div class="card" style={`--i:${i}`}><div class="back-art"><span></span></div></div>
+                ))}
+              </div>
+              <div class="row bench">
+                {opponent.bench.map((c, i) => <div class="card" style={`--i:${i + 4}`} set:html={render(c)} />)}
+              </div>
+              <div class="row active"><div class="card" style="--i:6" set:html={render(opponent.active)} /></div>
+            </>
+          )}
+          {side === 'p1' && (
+            <>
+              <div class="row active"><div class="card" style="--i:7" set:html={render(you.active)} /></div>
+              <div class="row bench">
+                {you.bench.map((c, i) =>
+                  i === 0 ? (
+                    <div class="card new" data-line style="--i:0" set:html={render(c)} />
+                  ) : (
+                    <div class="card" style={`--i:${i + 7}`} set:html={render(c)} />
+                  ),
+                )}
+              </div>
+              <div class="row hand">
+                {you.hand.map((c, i) => <div class="card" style={`--i:${i + 10}`} set:html={render(c)} />)}
+              </div>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+    <aside class="panel">
+      <div class="log" aria-hidden="true">
+        <span class="panel-title">Battle log</span>
+        <ol>
+          {log.map((l, i) => <li style={`--i:${i}`} data-log={l.line ? 'line' : undefined}>{l.text}</li>)}
+        </ol>
+      </div>
+      <div class="coach" aria-hidden="true">
+        <span class="panel-title">Coach</span>
+        <p>{coach}</p>
+      </div>
+    </aside>
+  </div>
+  <figcaption aria-live="off">Paste a game and the assistant replays it, coaches you, and rewinds to try a better line.</figcaption>
+</figure>
+
+<script>
+  // Steps the scene through its beats. With reduced motion asked for, it
+  // never starts and the still (the last beat) stays.
+  const beats: [string, number][] = [
+    ['log', 2800],
+    ['board', 2800],
+    ['coach', 3000],
+    ['rewind', 2200],
+    ['line', 3600],
+  ];
+  const turnAt: Record<string, string> = { log: 'Turn 7', board: 'Turn 7', coach: 'Turn 7', rewind: 'Turn 3', line: 'Turn 3' };
+  const scene = document.querySelector<HTMLElement>('[data-playmat]');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (scene && !reduce.matches) {
+    const turn = scene.querySelector<HTMLElement>('[data-turn]');
+    const seen: string[] = [];
+    let at = -1;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let onScreen = true;
+
+    const show = (i: number) => {
+      at = i;
+      const [beat] = beats[i];
+      if (beat === 'log') {
+        // Start over from an empty board, without animating the reset.
+        scene.classList.add('resetting');
+        scene.dataset.beat = beat;
+        void scene.offsetWidth;
+        requestAnimationFrame(() => scene.classList.remove('resetting'));
+      } else {
+        scene.dataset.beat = beat;
+      }
+      if (turn) turn.textContent = turnAt[beat];
+      seen.push(beat);
+      scene.dataset.beatSeen = seen.slice(-20).join(' ');
+    };
+    const schedule = () => {
+      clearTimeout(timer);
+      if (document.hidden || !onScreen || reduce.matches) return;
+      timer = setTimeout(() => {
+        show((at + 1) % beats.length);
+        schedule();
+      }, beats[at][1]);
+    };
+    const stop = () => clearTimeout(timer);
+
+    show(0);
+    schedule();
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : schedule()));
+    new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      onScreen ? schedule() : stop();
+    }).observe(scene);
+    reduce.addEventListener('change', () => {
+      if (!reduce.matches) return schedule();
+      stop();
+      scene.dataset.beat = 'line';
+      if (turn) turn.textContent = turnAt.line;
+    });
+  }
+</script>
+
+<style>
+  .scene {
+    margin: 0;
+    width: 100%;
+    max-width: 40rem;
+  }
+  .stage {
+    --w: clamp(30px, 6.4vw, 46px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 0.62fr);
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 10px;
+    background: var(--felt);
+    border: 1px solid var(--line);
+    color: #e8efe9;
+    font-size: 0.75rem;
+    line-height: 1.3;
+    overflow: hidden;
+  }
+  .mat {
+    position: relative;
+    display: grid;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .turn {
+    position: absolute;
+    top: 50%;
+    right: 0.25rem;
+    transform: translateY(-50%);
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--strip);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+    z-index: 1;
+  }
+  .side {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--slot-line);
+  }
+  .side.p1 { box-shadow: inset 0 -3px 0 var(--p1); }
+  .side.p2 { box-shadow: inset 0 3px 0 var(--p2); }
+  .seat {
+    position: absolute;
+    left: 0.4rem;
+    top: 0.25rem;
+    font-weight: 700;
+  }
+  .p1 .seat { color: var(--p1); top: auto; bottom: 0.3rem; }
+  .p2 .seat { color: var(--p2); }
+  .row {
+    display: flex;
+    gap: calc(var(--w) * 0.12);
+    justify-content: center;
+    min-height: calc(var(--w) * 1.4);
+  }
+  .row.hand { --w: calc(clamp(30px, 6.4vw, 46px) * 0.72); min-height: calc(var(--w) * 1.4); }
+  .card {
+    width: var(--w);
+    aspect-ratio: 63 / 88;
+    border-radius: calc(var(--w) * 0.08);
+    flex: none;
+  }
+  .card.new { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* The board's no-art card look (web/src/components/Card.svelte). */
+  .card :global(.back-art) {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: radial-gradient(circle at 50% 50%, #e9eef3 0 13%, #232a33 13% 17%, transparent 17%),
+      linear-gradient(#c8312b 0 47%, #232a33 47% 53%, #2a5bd7 53%);
+    border: calc(var(--w) * 0.05) solid #1d3f9e;
+    box-sizing: border-box;
+  }
+  .card :global(.text-card) {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    box-sizing: border-box;
+    padding: 6%;
+    display: flex;
+    flex-direction: column;
+    gap: 4%;
+    background: linear-gradient(160deg, #f4efe0, #d9d0b5);
+    color: #222;
+    font-size: calc(var(--w) * 0.15);
+    line-height: 1.15;
+    overflow: hidden;
+    border: calc(var(--w) * 0.04) solid #c9a43c;
+  }
+  .card :global(.text-card[data-cat='Trainer']) { border-color: #8a8f99; background: linear-gradient(160deg, #eef1f4, #cfd5dc); }
+  .card :global(.text-card strong) { overflow-wrap: anywhere; }
+  .card :global(.text-card .hp) { font-weight: 700; color: #a22; }
+  .card :global(.text-card small) { opacity: 0.7; font-size: 0.9em; }
+  .card :global(.token) {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    display: grid;
+    place-items: center;
+    font: 800 calc(var(--w) * 0.5) / 1 system-ui;
+    color: #fff;
+    text-shadow: 0 1px 2px #0009;
+    background: radial-gradient(circle at 50% 45%, var(--ec) 0 38%, #fff 39% 44%, var(--ec) 45%);
+    --ec: #888;
+  }
+  .card :global(.token[data-type='Fighting']) { --ec: #b5562b; }
+
+  .panel {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .log, .coach {
+    border-radius: 8px;
+    padding: 0.4rem 0.5rem;
+    min-width: 0;
+  }
+  .log { background: var(--strip); border: 1px solid #ffffff1f; }
+  .log ol { position: relative; list-style: none; margin: 0.25rem 0 0; padding: 0; display: grid; gap: 0.2rem; }
+  .log li { overflow-wrap: anywhere; }
+  .log li:first-child { color: var(--accent); font-weight: 700; }
+  /* The board's dark note colour in both schemes: the scene is always on the felt. */
+  .coach { background: #2c3a52; border: 1px solid var(--accent); color: #e8efe9; }
+  .coach p { margin: 0.2rem 0 0; }
+  .panel-title { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.65rem; opacity: 0.8; }
+  figcaption { margin-top: 0.4rem; color: var(--muted); font-size: 0.9rem; }
+
+  /* The beats. The default (no script, reduced motion) is the last beat,
+     "line": everything shown. Earlier beats hide what hasn't happened yet.
+     Motion is opacity and transform only. */
+  .card,
+  .coach,
+  .log li,
+  .turn {
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .card { transition-delay: calc(var(--i, 0) * 90ms); }
+  .log li { transition-delay: calc(var(--i, 0) * 320ms); }
+  .sweep {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: linear-gradient(90deg, transparent, #000a 35%, #000a 65%, transparent);
+    opacity: 0;
+    transform: translateX(-100%);
+    transition: opacity 0.5s ease, transform 0.9s ease;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .scene.resetting *,
+  .scene.resetting *::before {
+    transition: none !important;
+  }
+  /* Before the board fills: nothing on it, the log arriving line by line. */
+  .scene[data-beat='log'] .card,
+  .scene.resetting .card {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.9);
+  }
+  .scene.resetting .log li {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  /* The coach speaks from the coach beat on. */
+  .scene:is([data-beat='log'], [data-beat='board']) .coach,
+  .scene.resetting .coach {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  /* The better line, and its log line, appear only after the rewind. */
+  .scene:not([data-beat='line']) [data-line],
+  .scene:not([data-beat='line']) .log li[data-log='line'] {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.9);
+  }
+  /* Until then its log line takes no room, so the log reads as played. */
+  .scene:not([data-beat='line']) .log li[data-log='line'] { position: absolute; visibility: hidden; transition-delay: 0s; }
+  .scene[data-beat='line'] [data-line] { transition-delay: 0.3s; }
+  /* The rewind: a sweep across the board and the turn counter ticking back. */
+  .scene[data-beat='rewind'] .sweep {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .scene[data-beat='rewind'] .turn { transform: translateY(-50%) scale(1.25); }
+  .scene[data-beat='rewind'] .coach { opacity: 0.6; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene *,
+    .scene *::before,
+    .scene *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  @media (max-width: 34rem) {
+    .stage { grid-template-columns: minmax(0, 1fr); --w: clamp(30px, 10vw, 46px); }
+    .row.hand { --w: calc(clamp(30px, 10vw, 46px) * 0.72); }
+    .panel { grid-template-rows: auto auto; }
+  }
+</style>

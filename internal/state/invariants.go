@@ -40,7 +40,7 @@ func (s *State) Locations() []struct {
 			add(Loc{Seat: seat, Zone: Bench, Slot: i}, b.Cards()...)
 		}
 	}
-	add(Loc{Zone: Stadium}, s.Stadium)
+	add(Loc{Zone: Stadium}, s.Stadium...)
 	return out
 }
 
@@ -90,6 +90,9 @@ func (s *State) Check() []string {
 				problems = append(problems, fmt.Sprintf("%s has attachments but no Pokémon", l))
 			}
 		}
+	}
+	if len(s.Stadium) > 2 {
+		problems = append(problems, fmt.Sprintf("the Stadium spot holds %d cards, more than a pair", len(s.Stadium)))
 	}
 	return problems
 }

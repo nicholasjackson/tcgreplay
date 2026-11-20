@@ -1,0 +1,56 @@
+{
+  "corrections": [
+    {
+      "card": "dpp-DP03",
+      "path": "/text/en/attacks/0/name",
+      "value": "Peck",
+      "reason": "TCGdex has no name for this print; copied from an identical reprint of Piplup (same name, stage, HP, attack costs and damage): dp1-93, pop6-15, pop8-15"
+    },
+    {
+      "card": "dpp-DP13",
+      "path": "/text/en/attacks/0/name",
+      "value": "Splash About",
+      "reason": "TCGdex has no name for this print; copied from an identical reprint of Buizel (same name, stage, HP, attack costs and damage): dp1-72, tk-dp-m-1"
+    },
+    {
+      "card": "dpp-DP53",
+      "path": "/attacks",
+      "value": [
+        {
+          "cost": [
+            "Grass",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "reason": "TCGdex lists no attacks for this print; copied from an identical reprint of Arceus (same name, HP and Abilities): dpp-DP56"
+    },
+    {
+      "card": "dpp-DP53",
+      "path": "/text/en/attacks",
+      "value": [
+        {
+          "name": "Meteor Blast",
+          "effect": "Flip a coin. If tails, this attack's base damage is 50 instead of 100."
+        }
+      ],
+      "reason": "Attack text of the identical reprint dpp-DP56"
+    }
+  ],
+  "acknowledged": [
+    {
+      "card": "dpp-DP03",
+      "kind": "missing-name",
+      "field": "/text/en/attacks/1/name",
+      "reason": "Unverified: TCGdex has no name for this print, and its reprints disagree; the printed card has not been checked. Left for the maintainer (decision of 2026-11-08 to skip image reading for the older sets)."
+    },
+    {
+      "card": "dpp-DP31",
+      "kind": "no-attacks",
+      "field": "/attacks",
+      "reason": "Unverified: TCGdex has no attacks for this print, and no identical reprint gives it; the printed card has not been checked. Left for the maintainer (decision of 2026-11-08 to skip image reading for the older sets)."
+    }
+  ]
+}

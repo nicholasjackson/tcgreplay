@@ -24,6 +24,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/oauth2"
 
+	"github.com/nicholasjackson/tcgreplay/internal/appspec"
+	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth/hostauthtest"
@@ -49,6 +51,29 @@ func TestHostedListen(t *testing.T) {
 			}
 		})
 	}
+}
+
+// testPlayerIDKey is the player-ID key every hosted test runs with, unless
+// it sets its own: hosted mode will not start without one.
+const testPlayerIDKey = "hosted-test-player-id-key-0123456789abcdef"
+
+// The test accounts' player IDs under testPlayerIDKey, worked out
+// independently of the playmat (Python's hmac and hashlib).
+const (
+	oneID = "p_6cef43a09af39824" // one@example.com, the fake Google's default
+	twoID = "p_d97ba80702c001d7" // two@example.com
+	aID   = "p_5dcd8e0b62c99125" // a@example.com
+	bID   = "p_a4c089ac177be2f8" // b@example.com
+)
+
+// TestMain gives every test, and the main-binary helper processes they
+// start, the player-ID key hosted mode needs.
+func TestMain(m *testing.M) {
+	// Only when unset: a helper process given an empty key must keep it.
+	if _, ok := os.LookupEnv("TCGREPLAY_PLAYER_ID_KEY"); !ok {
+		os.Setenv("TCGREPLAY_PLAYER_ID_KEY", testPlayerIDKey)
+	}
+	os.Exit(m.Run())
 }
 
 // captureLog redirects the standard logger for the rest of the test.
@@ -174,7 +199,8 @@ func TestHostedHandlerServesMCPAndBoard(t *testing.T) {
 		t.Fatalf("ping tool: %q, want pong", out)
 	}
 
-	// The same tools and input schemas as a desktop (in-memory) client sees.
+	// The same tools and input schemas as a desktop (in-memory) client
+	// sees, plus get_account, which only the hosted playmat offers.
 	desktop := (&mcpserver.Server{M: game.NewManager(t.TempDir(), nil), Version: "test"}).MCP()
 	st, ct := mcp.NewInMemoryTransports()
 	if _, err := desktop.Connect(context.Background(), st, nil); err != nil {
@@ -205,15 +231,18 @@ func TestHostedHandlerServesMCPAndBoard(t *testing.T) {
 		}
 	}
 	for name := range overHTTP {
-		if _, ok := inMem[name]; !ok {
+		if _, ok := inMem[name]; !ok && name != "get_account" {
 			t.Errorf("tool %s only over HTTP", name)
 		}
+	}
+	if _, ok := overHTTP["get_account"]; !ok {
+		t.Error("hosted playmat does not offer get_account")
 	}
 
 	// The board's routes on the same address, signed in.
 	cookie := h.cookie(t)
-	if resp, body := getWith(t, ts.URL+"/", cookie, nil); resp.StatusCode != http.StatusOK || !strings.Contains(body, "<title>tcgreplay</title>") {
-		t.Fatalf("index: %d %q", resp.StatusCode, body)
+	if resp, body := getWith(t, ts.URL+"/board", cookie, nil); resp.StatusCode != http.StatusOK || !strings.Contains(body, "<title>tcgreplay</title>") {
+		t.Fatalf("board page: %d %q", resp.StatusCode, body)
 	}
 	// The board's card handler answers (its own 404), not the mux's.
 	if resp, body := getWith(t, ts.URL+"/api/card", cookie, nil); resp.StatusCode != http.StatusNotFound || !strings.Contains(body, "unknown card") {
@@ -410,7 +439,7 @@ func TestRunHostedServesAndShutsDown(t *testing.T) {
 		t.Fatal("still serving after shutdown")
 	}
 	out := logs.String()
-	for _, want := range []string{"https://play.example.com", "Google sign-in", "stopped"} {
+	for _, want := range []string{"https://play.example.com", "no moved hosts", "Google sign-in", "stopped"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("log %q does not mention %q", out, want)
 		}
@@ -436,6 +465,78 @@ func TestRunHostedRejectsBadPublicURL(t *testing.T) {
 				t.Fatalf("runHosted with public URL %q did not stop", raw)
 			}
 			// Nothing was left listening on the port.
+			ln, err := net.Listen("tcp", "127.0.0.1:"+port)
+			if err != nil {
+				t.Fatalf("port %s in use after a rejected start: %v", port, err)
+			}
+			ln.Close()
+		})
+	}
+}
+
+// TestParseMovedHosts: -moved-from is a comma-separated list of bare host
+// names; blanks are skipped and case is ignored, and a scheme, path, port,
+// user, space or the public address's own host is refused.
+func TestParseMovedHosts(t *testing.T) {
+	public := &url.URL{Scheme: "https", Host: "tcgreplay.app"}
+	for _, tt := range []struct {
+		raw  string
+		want []string
+		err  string
+	}{
+		{raw: "", want: nil},
+		{raw: " , ", want: nil},
+		{raw: "tcgreplay.demo.gs", want: []string{"tcgreplay.demo.gs"}},
+		{raw: " Old.Example ,, older.example,", want: []string{"old.example", "older.example"}},
+		{raw: "https://tcgreplay.demo.gs", err: "host name only"},
+		{raw: "tcgreplay.demo.gs/mcp", err: "host name only"},
+		{raw: "tcgreplay.demo.gs:443", err: "host name only"},
+		{raw: "user@tcgreplay.demo.gs", err: "host name only"},
+		{raw: "old example", err: "host name only"},
+		{raw: "old.example, TCGREPLAY.app", err: "public address"},
+	} {
+		got, err := parseMovedHosts(tt.raw, public)
+		if tt.err != "" {
+			if err == nil || !strings.Contains(err.Error(), tt.err) {
+				t.Errorf("parseMovedHosts(%q) = %v, %v; want an error containing %q", tt.raw, got, err, tt.err)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("parseMovedHosts(%q): %v", tt.raw, err)
+			continue
+		}
+		if len(got) != len(tt.want) {
+			t.Errorf("parseMovedHosts(%q) = %v, want %v", tt.raw, got, tt.want)
+		}
+		for _, h := range tt.want {
+			if !got[h] {
+				t.Errorf("parseMovedHosts(%q) = %v, missing %q", tt.raw, got, h)
+			}
+		}
+	}
+}
+
+// TestRunHostedRejectsBadMovedFrom: a malformed moved host, or one equal
+// to the public host, stops start-up with an error naming it, before
+// anything listens.
+func TestRunHostedRejectsBadMovedFrom(t *testing.T) {
+	captureLog(t)
+	port := freePort(t)
+	for _, raw := range []string{"https://old.example", "old.example:8080", "play.example.com"} {
+		t.Run(raw, func(t *testing.T) {
+			c := hostedConfig(t, "127.0.0.1:"+port, "https://play.example.com")
+			c.movedFrom = raw
+			done := make(chan error, 1)
+			go func() { done <- runHosted(context.Background(), c) }()
+			select {
+			case err := <-done:
+				if err == nil || !strings.Contains(err.Error(), raw) {
+					t.Fatalf("runHosted with moved host %q: %v, want an error naming it", raw, err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatalf("runHosted with moved host %q did not stop", raw)
+			}
 			ln, err := net.Listen("tcp", "127.0.0.1:"+port)
 			if err != nil {
 				t.Fatalf("port %s in use after a rejected start: %v", port, err)
@@ -577,6 +678,11 @@ type hostedServer struct {
 	reg *usergames.Registry
 	// public is the address it is configured to be reached at.
 	public string
+	// cat is the card catalogue its games pin their cards from.
+	cat *catalog.Loader
+	// events holds the records it wrote (nil when the config named its
+	// own writer).
+	events *syncBuffer
 }
 
 // connect signs a connector in as g's current account, the way claude.ai
@@ -649,23 +755,18 @@ func startHosted(t *testing.T, public string) *hostedServer {
 // first.
 func startHostedWith(t *testing.T, public string, mod func(*config)) *hostedServer {
 	t.Helper()
-	u, err := hostedPublicURL(public, ":8080")
-	if err != nil {
-		t.Fatal(err)
-	}
 	g := hostauthtest.NewGoogle(t)
 	t.Setenv("TCGREPLAY_GOOGLE_CLIENT_SECRET", g.ClientSecret)
 	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true, googleClientID: g.ClientID}
 	if mod != nil {
 		mod(&c)
 	}
-	reg, srv, a, err := newHosted(c, u, g.Endpoint())
-	if err != nil {
-		t.Fatal(err)
-	}
-	ts := httptest.NewServer(hostedHandler(srv, reg, a))
-	t.Cleanup(ts.Close)
-	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String()}
+	// The catalogue is built from the config as runHosted builds it:
+	// offline with an empty cache it holds no card data and fetches
+	// nothing.
+	loader := newCatalog(c)
+	loader.Start(context.Background(), 5*time.Second)
+	return serveHosted(t, public, c, g, loader)
 }
 
 // callTool calls a tool with arguments and returns its text, failing the
@@ -742,8 +843,8 @@ func hasCard(cards []state.CardView, iid state.IID) bool {
 func TestHostedBoardLinks(t *testing.T) {
 	deck, logText := readTestdata(t, testDeckPath), readTestdata(t, testLogPath)
 	for _, tt := range []struct{ public, want string }{
-		{testPublic, "https://playmat.example/?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
-		{"https://other.example", "https://other.example/?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
+		{testPublic, "https://playmat.example/board?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
+		{"https://other.example", "https://other.example/board?board=" + usergames.Handle(hostauthtest.DefaultAccount.ID)},
 	} {
 		t.Run(tt.public, func(t *testing.T) {
 			cs := startHosted(t, tt.public).connect(t)
@@ -915,9 +1016,9 @@ func TestHostedBoardAcceptsPublicAddress(t *testing.T) {
 	ts := h.ts
 	cookie := h.cookie(t)
 
-	resp, body := getWith(t, ts.URL+"/", cookie, func(r *http.Request) { r.Host = "playmat.example" })
+	resp, body := getWith(t, ts.URL+"/board", cookie, func(r *http.Request) { r.Host = "playmat.example" })
 	if resp.StatusCode != http.StatusOK || !strings.Contains(body, "<title>tcgreplay</title>") {
-		t.Fatalf("GET / with Host playmat.example: %d %q", resp.StatusCode, body)
+		t.Fatalf("GET /board with Host playmat.example: %d %q", resp.StatusCode, body)
 	}
 
 	if _, _, err := dialBoard(t, ts, testPublic, cookie); err != nil {
@@ -934,7 +1035,7 @@ func TestHostedBoardAcceptsPublicAddress(t *testing.T) {
 // TestDesktopServerHasNoBoardLinks: the desktop callers pass no public
 // address, so game-opening results carry no board link.
 func TestDesktopServerHasNoBoardLinks(t *testing.T) {
-	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "")
+	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "", nil)
 	st, ct := mcp.NewInMemoryTransports()
 	if _, err := srv.Connect(context.Background(), st, nil); err != nil {
 		t.Fatal(err)
@@ -1006,7 +1107,7 @@ func TestHostedAuthNeedsCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("TCGREPLAY_GOOGLE_CLIENT_SECRET", tt.secret)
-			a, err := hostedAuth(config{googleClientID: tt.id}, public, oauth2.Endpoint{}, nil)
+			a, err := hostedAuth(config{googleClientID: tt.id}, public, oauth2.Endpoint{}, nil, nil)
 			if tt.ok {
 				if err != nil || a == nil {
 					t.Fatalf("hostedAuth with credentials: %v, %v", a, err)
@@ -1187,8 +1288,9 @@ func TestHostedHealthz(t *testing.T) {
 }
 
 // TestAppSpecHealthCheckAndSecrets: the App Platform definition checks
-// health at /healthz and declares the Google credentials as secrets, with
-// no value in the file.
+// health at /healthz and declares the Google credentials, the player-ID
+// key, OpenAI's domain-verification token and the reviewer's email as
+// secrets, with no value in the file.
 func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 	lines := strings.Split(readTestdata(t, "../../.do/app.yaml"), "\n")
 	var health bool
@@ -1207,8 +1309,8 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 		t.Error("app.yaml has no health_check with http_path: /healthz")
 	}
 
-	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET"} {
-		f := appEnvFields(lines, key)
+	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET", "TCGREPLAY_PLAYER_ID_KEY", "TCGREPLAY_OPENAI_CHALLENGE", "TCGREPLAY_REVIEWER"} {
+		f := appspec.EnvFields(strings.Join(lines, "\n"), key)
 		if f == nil {
 			t.Errorf("app.yaml declares no %s", key)
 			continue
@@ -1222,31 +1324,6 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 	}
 }
 
-// appEnvFields returns the settings of app.yaml's env entry for key, or nil
-// if the file declares none.
-func appEnvFields(lines []string, key string) map[string]string {
-	for i, l := range lines {
-		if strings.TrimSpace(l) != "- key: "+key {
-			continue
-		}
-		out := map[string]string{}
-		indent := len(l) - len(strings.TrimLeft(l, " ")) + 2
-		for _, next := range lines[i+1:] {
-			trimmed := strings.TrimSpace(next)
-			if trimmed == "" || strings.HasPrefix(trimmed, "#") {
-				continue
-			}
-			if len(next)-len(strings.TrimLeft(next, " ")) != indent || strings.HasPrefix(trimmed, "-") {
-				break
-			}
-			k, v, _ := strings.Cut(trimmed, ":")
-			out[k] = strings.TrimSpace(v)
-		}
-		return out
-	}
-	return nil
-}
-
 // TestAppSpecIdleTimeoutAndSingleInstance: the App Platform definition sets
 // the idle drop to 60 minutes as a plain run-time setting (not a secret),
 // and runs exactly one instance, since every account's game lives in that
@@ -1254,7 +1331,7 @@ func appEnvFields(lines []string, key string) map[string]string {
 func TestAppSpecIdleTimeoutAndSingleInstance(t *testing.T) {
 	lines := strings.Split(readTestdata(t, "../../.do/app.yaml"), "\n")
 
-	f := appEnvFields(lines, "TCGREPLAY_IDLE_TIMEOUT")
+	f := appspec.EnvFields(strings.Join(lines, "\n"), "TCGREPLAY_IDLE_TIMEOUT")
 	if f == nil {
 		t.Fatal("app.yaml declares no TCGREPLAY_IDLE_TIMEOUT")
 	}
@@ -1284,7 +1361,7 @@ func TestAppSpecIdleTimeoutAndSingleInstance(t *testing.T) {
 // following it lands on the board page it asked for, signed in.
 func TestHostedBoardSignInReturnsToPage(t *testing.T) {
 	h := startHosted(t, testPublic)
-	for path, next := range map[string]string{"/": "%2F", "/?x=1": "%2F%3Fx%3D1"} {
+	for path, next := range map[string]string{"/board": "%2Fboard", "/board?x=1": "%2Fboard%3Fx%3D1"} {
 		resp, _ := getWith(t, h.ts.URL+path, nil, nil)
 		if want := "/auth/login?next=" + next; resp.StatusCode != http.StatusFound || resp.Header.Get("Location") != want {
 			t.Errorf("GET %s signed out: %d to %q, want 302 to %s", path, resp.StatusCode, resp.Header.Get("Location"), want)
@@ -1292,7 +1369,7 @@ func TestHostedBoardSignInReturnsToPage(t *testing.T) {
 	}
 
 	browser := hostauthtest.Browser(t, h.public, h.ts.URL)
-	resp, err := browser.Get(h.public + "/?x=1")
+	resp, err := browser.Get(h.public + "/board?x=1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1303,8 +1380,8 @@ func TestHostedBoardSignInReturnsToPage(t *testing.T) {
 	}
 	// The test browser serves the public host from the test server, so the
 	// final request names the test server; its path is what counts.
-	if got := resp.Request.URL.RequestURI(); got != "/?x=1" {
-		t.Errorf("sign-in ended at %s, want /?x=1", got)
+	if got := resp.Request.URL.RequestURI(); got != "/board?x=1" {
+		t.Errorf("sign-in ended at %s, want /board?x=1", got)
 	}
 	if len(h.g.Prompts()) != 1 {
 		t.Errorf("Google asked %d times, want once", len(h.g.Prompts()))
@@ -1385,9 +1462,9 @@ func TestHostedSignOutClosesBoard(t *testing.T) {
 	}
 	t.Logf("live connection closed %v after sign-out", time.Since(start))
 
-	resp, _ = getWith(t, h.ts.URL+"/", cookie, nil)
-	if resp.StatusCode != http.StatusFound || resp.Header.Get("Location") != "/auth/login?next=%2F" {
-		t.Errorf("GET / after sign-out: %d to %q, want 302 to sign-in", resp.StatusCode, resp.Header.Get("Location"))
+	resp, _ = getWith(t, h.ts.URL+"/board", cookie, nil)
+	if resp.StatusCode != http.StatusFound || resp.Header.Get("Location") != "/auth/login?next=%2Fboard" {
+		t.Errorf("GET /board after sign-out: %d to %q, want 302 to sign-in", resp.StatusCode, resp.Header.Get("Location"))
 	}
 	if _, resp, err := dialBoard(t, h.ts, testPublic, cookie); err == nil || resp == nil || resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("live connection after sign-out: %v (response %v), want 401", err, resp)
@@ -1523,7 +1600,7 @@ func TestHostedRateLimitSetting(t *testing.T) {
 // TestDesktopServerHasNoLimit: the desktop MCP server counts nothing, so
 // more calls than the hosted default never get refused.
 func TestDesktopServerHasNoLimit(t *testing.T) {
-	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "")
+	_, srv := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true}, "", nil)
 	st, ct := mcp.NewInMemoryTransports()
 	if _, err := srv.Connect(context.Background(), st, nil); err != nil {
 		t.Fatal(err)

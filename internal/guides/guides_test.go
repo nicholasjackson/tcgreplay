@@ -9,8 +9,8 @@ import (
 	"testing"
 )
 
-// The six guides, in the order players meet them.
-var wantNames = []string{"import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
+// The seven guides, in the order players meet them.
+var wantNames = []string{"play-game", "import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
 
 // rawGuides returns every embedded guide file's contents, keyed by file name.
 func rawGuides(t *testing.T) map[string]string {
@@ -224,14 +224,26 @@ func TestGetUnknownListsTheGuides(t *testing.T) {
 // One rule or step per guide that moving it from a skill must not drop.
 func TestGuidesKeepTheirRules(t *testing.T) {
 	anchors := map[string][]string{
-		"import-game":   {"Read the log first", "Triage"},
+		"play-game": {"A `decide` outcome means your seat must act now",
+			"The playmat carries out your side of shuffle-hand-and-draw cards the player uses"},
+		"import-game": {"Read the log first", "Triage", "Analyse this game turn by turn",
+			"Practise a critical decision", "wait for the player to pick"},
 		"opponent-deck": {"Name the archetype"},
-		"review-game": {"Ask before judging", "Put the board where you are talking", "Test the alternative",
-			"call `wait_for_turn` with their seat, answer any card that asks your side to act, and read their moves from the result when the turn ends",
+		"review-game": {"Rate decisions, not outcomes", "Put the board where you are talking", "Test the alternative",
+			"In one reply, go through every one of the player's turns in game order",
+			"ask which they would like to practise", "do not start practising until they pick",
+			"in that same reply, call `wait_for_turn` with their seat straight away",
+			"until it reports the turn ended, then read their moves from the result",
+			"Never ask them to say they are done or to end their turn.",
+			"acting on any `decide` outcome",
+			"lists them in `applied`: do not do them again",
 			"after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended"},
 		"replay-drill": {"Set it up without the answer",
-			"call `wait_for_turn` with their seat and do what each result's `next` says",
-			"When it reports the turn ended, go straight to Compare. Never ask them to say they are done."},
+			"Then, in the same reply, call `wait_for_turn` with their seat straight away. Do not end your reply to wait for an answer first.",
+			"keep calling `wait_for_turn` until it reports the turn ended; then go straight to Compare",
+			"A move on the board that does not end the turn is not a cue to post: keep waiting. Never ask them to say they are done or to end their turn.",
+			"acting on any `decide` outcome",
+			"lists them in `applied`: do not do them again"},
 		"before-you-move": {"The three questions"},
 		"numbers-drill":   {"Damage order"},
 	}
@@ -266,6 +278,19 @@ func TestRepoHoldsNoCoachingSkills(t *testing.T) {
 		p := filepath.Join(root, link, "skills", "spek-implement", "SKILL.md")
 		if _, err := os.Stat(p); err != nil {
 			t.Errorf("%s: %v", p, err)
+		}
+	}
+}
+
+// TestNoGuideSaysAnswerEveryCard: no guide tells the assistant that the
+// wait stops for every card or to answer each card: the playmat applies
+// shuffle-and-draw cards itself, and the wait stops only for decisions.
+func TestNoGuideSaysAnswerEveryCard(t *testing.T) {
+	for _, g := range List() {
+		for _, bad := range []string{"answering any card", "`respond` or `promote`", "respond` outcome", "check every card", "stops for every card"} {
+			if strings.Contains(g.Text, bad) {
+				t.Errorf("guide %s says %q", g.Name, bad)
+			}
 		}
 	}
 }

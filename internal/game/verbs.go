@@ -1,13 +1,13 @@
 package game
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
+	"github.com/nicholasjackson/tcgreplay/internal/store"
 )
 
 // Opening hand size.
@@ -50,8 +50,61 @@ func (g *Game) Setup(cardsList []state.Card, opts Options) (*Result, error) {
 				return err
 			}
 		}
+		// A hand with no Basic Pokémon is a mulligan: reveal it, shuffle it
+		// back and draw again, until there is one. Each one lets the other
+		// player draw a card if they choose.
+		mulligans := map[state.Seat]int{}
+		for _, seat := range state.Seats {
+			for t.noBasic(seat) && mulligans[seat] < maxMulligans {
+				mulligans[seat]++
+				if err := t.mulligan(seat); err != nil {
+					return err
+				}
+			}
+			if t.noBasic(seat) {
+				t.warn = append(t.warn, fmt.Sprintf("%s still has no Basic Pokémon after %d mulligans: check the deck list", seat, mulligans[seat]))
+			}
+		}
+		for _, seat := range state.Seats {
+			if n := mulligans[seat]; n > 0 {
+				t.warn = append(t.warn, fmt.Sprintf("%s mulliganed %d time%s (no Basic Pokémon). %s may draw up to %d extra card%s: ask them, then use draw.", seat, n, plural(n), seat.Other(), n, plural(n)))
+			}
+		}
 		return nil
 	})
+}
+
+// maxMulligans stops automatic mulligans for a deck with no Basic
+// Pokémon at all.
+const maxMulligans = 10
+
+// noBasic reports whether seat's hand has no Basic Pokémon. A hand of
+// cards whose definitions are unknown is never taken for one with none.
+func (t *tx) noBasic(seat state.Seat) bool {
+	for _, iid := range t.st.Sides[seat].Hand {
+		c := t.g.card(t.st, iid)
+		if c == nil || c.IsBasic() {
+			return false
+		}
+	}
+	return true
+}
+
+// mulligan reveals seat's hand, shuffles it back and draws a new one.
+func (t *tx) mulligan(seat state.Seat) error {
+	hand := slices.Clone(t.st.Sides[seat].Hand)
+	if err := t.emit(seat, state.EvReveal, state.RevealPayload{IIDs: hand, To: state.Seats}); err != nil {
+		return err
+	}
+	for _, iid := range hand {
+		if err := t.move(iid, loc(seat, state.Deck), "", ""); err != nil {
+			return err
+		}
+	}
+	if err := t.shuffle(seat); err != nil {
+		return err
+	}
+	return t.draw(seat, HandSize)
 }
 
 // Mulligan shuffles seat's hand back and draws a new one.
@@ -60,15 +113,7 @@ func (g *Game) Mulligan(seat state.Seat, actor state.Actor) (*Result, error) {
 		if t.st.Phase != state.PhaseSetup {
 			t.warn = append(t.warn, "mulligan outside setup")
 		}
-		for _, iid := range slices.Clone(t.st.Sides[seat].Hand) {
-			if err := t.move(iid, loc(seat, state.Deck), "", ""); err != nil {
-				return err
-			}
-		}
-		if err := t.shuffle(seat); err != nil {
-			return err
-		}
-		return t.draw(seat, HandSize)
+		return t.mulligan(seat)
 	})
 }
 
@@ -124,11 +169,19 @@ func (g *Game) StartGame(first state.Seat, actor state.Actor) (*Result, error) {
 		if t.st.Phase != state.PhaseSetup {
 			return fmt.Errorf("the game has already started")
 		}
+		// Prizes are dealt only once both players have an Active Pokémon:
+		// a hand with no Basic must be mulliganed first.
+		for _, seat := range state.Seats {
+			if !t.st.Sides[seat].Active.Empty() {
+				continue
+			}
+			if t.noBasic(seat) {
+				return fmt.Errorf("%s has no Basic Pokémon in hand: mulligan first, then place an Active Pokémon", seat)
+			}
+			return fmt.Errorf("%s has no Active Pokémon: place one with place_active first", seat)
+		}
 		for _, seat := range state.Seats {
 			side := t.st.Sides[seat]
-			if side.Active.Empty() {
-				t.warn = append(t.warn, fmt.Sprintf("%s has no Active Pokémon", seat))
-			}
 			if side.PrizesLeft() > 0 {
 				continue
 			}
@@ -151,8 +204,25 @@ func (g *Game) StartGame(first state.Seat, actor state.Actor) (*Result, error) {
 	})
 }
 
+// EndTurnOptions relax EndTurn's checks.
+type EndTurnOptions struct {
+	// IgnorePrizes ends the turn even though prize cards are owed for this
+	// turn's Knock Outs (for players practising without the reminder).
+	IgnorePrizes bool
+	// Force ends the turn whatever the checks say.
+	Force bool
+}
+
 // EndTurn ends seat's turn and starts the opponent's, who draws a card.
 func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
+	return g.EndTurnWith(seat, actor, EndTurnOptions{})
+}
+
+// EndTurnWith is EndTurn with its checks relaxed by opts. It refuses while
+// a player with a Benched Pokémon has an empty Active Spot (they must
+// promote first) and while prize cards are owed for this turn's Knock
+// Outs.
+func (g *Game) EndTurnWith(seat state.Seat, actor state.Actor, opts EndTurnOptions) (*Result, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	// Even in review mode, where the turn lock is lifted, only the turn
@@ -160,6 +230,22 @@ func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 	if g.st.Phase == state.PhasePlaying && g.st.TurnOpen && g.st.Current != seat {
 		return nil, fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, state.Round(g.st.Turn), seat)
 	}
+	if g.st.Phase == state.PhasePlaying && !opts.Force {
+		if winner, _ := g.st.Winner(); winner == "" {
+			for _, s := range state.Seats {
+				side := g.st.Sides[s]
+				if side.Active.Empty() && slices.ContainsFunc(side.Bench, func(b *state.Stack) bool { return !b.Empty() }) {
+					return nil, fmt.Errorf("%s has no Active Pokémon: they must promote a Benched Pokémon (switch) before the turn ends", s)
+				}
+			}
+			if !opts.IgnorePrizes {
+				for _, o := range g.prizesOwedLocked() {
+					return nil, fmt.Errorf("%s is owed %d prize card%s for this turn's Knock Outs and took %d: take them (take_prize) before ending the turn", o.seat, o.owed, plural(o.owed), o.taken)
+				}
+			}
+		}
+	}
+	closing := g.unpaidLocked()
 	g.open = nil
 	g.responder = ""
 	res, err := g.runLocked(seat, actor, actionSpec{label: "End turn", kind: "turn"}, func(t *tx) error {
@@ -185,9 +271,73 @@ func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 	}
 	res.Events = append(res.Events, res2.Events...)
 	res.Delta = append(res.Delta, res2.Delta...)
-	res.Warnings = append(res.Warnings, res2.Warnings...)
+	res.Warnings = append(append(closing, res.Warnings...), res2.Warnings...)
 	g.notify(res)
 	return res, nil
+}
+
+type prizeDebt struct {
+	seat        state.Seat
+	owed, taken int
+}
+
+// prizesOwedLocked lists the players still owed prize cards for Knock
+// Outs during the turn in progress: each Knock Out owes its Pokémon's
+// prize value (see prizeValue) to the other player, and each prize card
+// taken this turn pays one. The caller holds g.mu.
+func (g *Game) prizesOwedLocked() []prizeDebt {
+	path, err := g.log.PathTo(g.log.Head())
+	if err != nil {
+		return nil
+	}
+	start := 0
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i].Type == state.EvTurn {
+			if p, err := path[i].Decode(); err == nil && p.(*state.TurnPayload).Phase == "start" {
+				start = i
+				break
+			}
+		}
+	}
+	owed, taken := map[state.Seat]int{}, map[state.Seat]int{}
+	ko := map[string]int{} // knock-out action -> its highest prize value
+	koSeat := map[string]state.Seat{}
+	for i := start; i < len(path); i++ {
+		e := &path[i]
+		if e.Type != state.EvMove {
+			continue
+		}
+		p, err := e.Decode()
+		if err != nil {
+			continue
+		}
+		mv := p.(*state.MovePayload)
+		if mv.From == nil {
+			continue
+		}
+		if mv.From.Zone == state.Prizes {
+			taken[mv.From.Seat]++
+			continue
+		}
+		if g.isKnockoutMove(e, mv) {
+			if v := prizeValue(g.st.Cards[mv.IID].Name); v > ko[e.Action] {
+				ko[e.Action] = v
+			}
+			koSeat[e.Action] = mv.From.Seat.Other()
+		}
+	}
+	for a, v := range ko {
+		owed[koSeat[a]] += v
+	}
+	var out []prizeDebt
+	for _, s := range state.Seats {
+		// Never more than the prizes left to take.
+		o := min(owed[s], taken[s]+g.st.Sides[s].PrizesLeft())
+		if taken[s] < o {
+			out = append(out, prizeDebt{seat: s, owed: o, taken: taken[s]})
+		}
+	}
+	return out
 }
 
 // Draw draws n cards.
@@ -263,16 +413,44 @@ func (g *Game) Attach(seat state.Seat, actor state.Actor, iid state.IID, target 
 				t.warn = append(t.warn, fmt.Sprintf("%s already has a Tool", t.st.Name(st.Top())))
 			}
 		}
+		// An attack or Ability that attaches "from your discard pile" (Aura
+		// Jab) takes the card from there, not the hand.
+		if o := t.g.open; o != nil && t.action == o.ID && t.g.openText != nil &&
+			strings.Contains(strings.ToLower(*t.g.openText), "from your discard pile") {
+			t.warn = append(t.warn, fmt.Sprintf("%s attaches cards from the discard pile, but %s came from the hand. Move a card from the discard pile onto the Pokémon instead (move with as energy).", o.Label, t.st.Name(iid)))
+		}
 		return t.move(iid, target, role, "")
 	})
 }
 
 // PlayTrainer plays a Trainer from hand and opens a compound action. Items
-// and Supporters go to the discard; a Stadium replaces the current one.
+// and Supporters go to the discard; a Stadium replaces the current one, or
+// completes a lone half of a pair (see PlayTrainerWith).
 func (g *Game) PlayTrainer(seat state.Seat, actor state.Actor, iid state.IID) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: g.nameOf(iid), kind: "trainer", source: iid, opener: true}, func(t *tx) error {
+	return g.PlayTrainerWith(seat, actor, iid, "")
+}
+
+// PlayTrainerWith is PlayTrainer with an optional second card: the other
+// half of a Stadium played as a pair. Given both halves, it plays them
+// together into the Stadium spot in one move, replacing whatever is there.
+// Given one half of a pair-played Stadium while the spot holds a lone half
+// of the same name and owner, it completes the pair, joining that half's
+// play while it is still open. Pair rules come from the cards' pair mark;
+// mismatches warn and never block.
+func (g *Game) PlayTrainerWith(seat state.Seat, actor state.Actor, iid, pair state.IID) (*Result, error) {
+	spec := actionSpec{label: g.nameOf(iid), kind: "trainer", source: iid, opener: true}
+	if pair == "" {
+		spec.joinOpen = func(open *store.Action) bool {
+			return open.Kind == "trainer" && len(g.st.Stadium) == 1 && open.Source == g.st.Stadium[0] &&
+				inHand(g.st, seat, iid) == nil && g.completesPair(g.st, seat, iid)
+		}
+	}
+	return g.run(seat, actor, spec, func(t *tx) error {
 		if err := inHand(t.st, seat, iid); err != nil {
 			return err
+		}
+		if pair != "" {
+			return t.playPair(seat, iid, pair)
 		}
 		c := t.g.card(t.st, iid)
 		if c != nil {
@@ -285,16 +463,97 @@ func (g *Game) PlayTrainer(seat state.Seat, actor state.Actor, iid state.IID) (*
 			return fmt.Errorf("%s is a Pokémon Tool; use attach", c.Name)
 		}
 		if c != nil && c.TrainerType == "Stadium" {
-			if old := t.st.Stadium; old != "" {
-				owner := t.st.Cards[old].Owner
-				if err := t.move(old, loc(owner, state.Discard), "", ""); err != nil {
-					return err
-				}
+			if t.g.completesPair(t.st, seat, iid) {
+				return t.move(iid, state.Loc{Zone: state.Stadium}, state.AsPair, "")
+			}
+			t.sameStadiumWarning(c.Name)
+			if err := t.replaceStadium(); err != nil {
+				return err
 			}
 			return t.move(iid, state.Loc{Zone: state.Stadium}, "", "")
 		}
-		return t.move(iid, loc(seat, state.Discard), "", "")
+		if err := t.move(iid, loc(seat, state.Discard), "", ""); err != nil {
+			return err
+		}
+		return t.opponentPart(t.st.Name(iid))
 	})
+}
+
+// playPair plays two halves of a Stadium together in one move.
+func (t *tx) playPair(seat state.Seat, iid, pair state.IID) error {
+	if pair == iid {
+		return fmt.Errorf("a pair is two cards; %s was given twice", iid)
+	}
+	if err := inHand(t.st, seat, pair); err != nil {
+		return err
+	}
+	c, pc := t.g.card(t.st, iid), t.g.card(t.st, pair)
+	for _, x := range []*cards.Card{c, pc} {
+		if x != nil && (x.Category != "Trainer" || x.TrainerType != "Stadium") {
+			return fmt.Errorf("only a Stadium is played as a pair; %s is not a Stadium", x.Name)
+		}
+	}
+	if c != nil {
+		t.effect = &c.Effect
+	}
+	if c != nil && pc != nil && (!cards.SameName(c.Name, pc.Name) || !c.PlayedAsPair || !pc.PlayedAsPair) {
+		t.warn = append(t.warn, fmt.Sprintf("%s and %s are not two halves of one pair-played Stadium", c.Name, pc.Name))
+	}
+	t.sameStadiumWarning(t.st.Name(iid))
+	if err := t.replaceStadium(); err != nil {
+		return err
+	}
+	from, err := t.st.Find(iid)
+	if err != nil {
+		return err
+	}
+	return t.emit(t.seat, state.EvMove, state.MovePayload{IID: iid, Pair: pair, From: &from, To: state.Loc{Zone: state.Stadium}})
+}
+
+// replaceStadium sends whatever is in the Stadium spot to its owner's
+// discard: a pair in one move.
+func (t *tx) replaceStadium() error {
+	switch st := t.st.Stadium; len(st) {
+	case 0:
+		return nil
+	case 1:
+		return t.move(st[0], loc(t.st.Cards[st[0]].Owner, state.Discard), "", "")
+	default:
+		return t.movePair(st[0], st[1], loc(t.st.Cards[st[0]].Owner, state.Discard))
+	}
+}
+
+// movePair moves both halves of the Stadium pair in one event, each to its
+// owner's side of to's zone.
+func (t *tx) movePair(iid, pair state.IID, to state.Loc) error {
+	from, err := t.st.Find(iid)
+	if err != nil {
+		return err
+	}
+	return t.emit(t.seat, state.EvMove, state.MovePayload{IID: iid, Pair: pair, From: &from, To: to})
+}
+
+// sameStadiumWarning warns when a Stadium of the same name is in play.
+func (t *tx) sameStadiumWarning(name string) {
+	for _, iid := range t.st.Stadium {
+		if cards.SameName(t.st.Name(iid), name) {
+			t.warn = append(t.warn, fmt.Sprintf("a Stadium named %s is already in play", name))
+			return
+		}
+	}
+}
+
+// completesPair reports whether playing iid on its own completes a pair:
+// iid is a pair-played Stadium and the spot holds one other card of the
+// same name owned by seat.
+func (g *Game) completesPair(st *state.State, seat state.Seat, iid state.IID) bool {
+	if len(st.Stadium) != 1 || st.Stadium[0] == iid {
+		return false
+	}
+	lone := st.Stadium[0]
+	c := g.card(st, iid)
+	return c != nil && c.PlayedAsPair && c.TrainerType == "Stadium" &&
+		st.Cards[lone].Owner == seat && cards.SameName(st.Name(lone), c.Name)
 }
 
 // UseAbility opens a compound action for an Ability of the Pokémon at slot,
@@ -310,7 +569,8 @@ func (g *Game) UseAbility(seat state.Seat, actor state.Actor, slot state.Loc, na
 		return nil, fmt.Errorf("no Pokémon in %s", slot)
 	}
 	top := st.Top()
-	return g.run(seat, actor, actionSpec{label: fmt.Sprintf("%s: %s", g.nameOf(top), name), kind: "ability", source: top, opener: true}, func(t *tx) error {
+	label := fmt.Sprintf("%s: %s", g.nameOf(top), name)
+	return g.run(seat, actor, actionSpec{label: label, kind: "ability", source: top, opener: true}, func(t *tx) error {
 		if slot.Seat != seat {
 			t.warn = append(t.warn, "using an Ability of the opponent's Pokémon")
 		}
@@ -322,7 +582,10 @@ func (g *Game) UseAbility(seat state.Seat, actor state.Actor, slot state.Loc, na
 				t.effect = &c.Abilities[i].Effect
 			}
 		}
-		return t.emit(seat, state.EvDeclare, state.DeclarePayload{Kind: "ability", Name: name, At: slot})
+		if err := t.emit(seat, state.EvDeclare, state.DeclarePayload{Kind: "ability", Name: name, At: slot}); err != nil {
+			return err
+		}
+		return t.opponentPart(label)
 	})
 }
 
@@ -418,10 +681,12 @@ func (g *Game) Attack(seat state.Seat, actor state.Actor, name string, target st
 		if err := t.emit(seat, state.EvDeclare, state.DeclarePayload{Kind: "attack", Name: name, At: loc(seat, state.Active)}); err != nil {
 			return err
 		}
-		if damage == 0 {
-			return nil
+		if damage > 0 {
+			if err := t.addDamage(target, damage); err != nil {
+				return err
+			}
 		}
-		return t.addDamage(target, damage)
+		return t.opponentPart(label)
 	})
 }
 
@@ -474,13 +739,39 @@ func (g *Game) KnockOut(seat state.Seat, actor state.Actor, target state.Loc) (*
 		if st.Empty() {
 			return fmt.Errorf("no Pokémon in %s", target)
 		}
+		name := t.st.Name(st.Top())
 		for _, iid := range st.Cards() {
 			if err := t.move(iid, loc(target.Seat, state.Discard), "", ""); err != nil {
 				return err
 			}
 		}
+		// A reminder, not a rule: effects can change how many are taken.
+		n := prizeValue(name)
+		t.warn = append(t.warn, fmt.Sprintf("Knocked Out: %s takes %d prize card%s for %s.", target.Seat.Other(), n, plural(n), name))
 		return nil
 	})
+}
+
+// prizeValue is how many prize cards a Knock Out of the named Pokémon
+// usually gives: 3 for a Mega Evolution ex or a VMAX, 2 for any other ex,
+// V, VSTAR, GX or EX, else 1.
+func prizeValue(name string) int {
+	switch {
+	case strings.HasPrefix(name, "Mega ") && strings.HasSuffix(name, " ex"),
+		strings.HasSuffix(name, " VMAX"), strings.HasSuffix(name, " V-UNION"):
+		return 3
+	case strings.HasSuffix(name, " ex"), strings.HasSuffix(name, " EX"), strings.HasSuffix(name, " GX"),
+		strings.HasSuffix(name, " V"), strings.HasSuffix(name, " VSTAR"):
+		return 2
+	}
+	return 1
+}
+
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }
 
 // TakePrize moves a prize card to seat's hand. slot < 0 takes the first
@@ -499,9 +790,6 @@ func (g *Game) TakePrize(seat state.Seat, actor state.Actor, slot int) (*Result,
 		}
 		if err := t.move(prizes[slot], loc(seat, state.Hand), "", ""); err != nil {
 			return err
-		}
-		if t.st.Sides[seat].PrizesLeft() == 0 {
-			t.warn = append(t.warn, fmt.Sprintf("%s has taken their last prize card and wins", seat))
 		}
 		return nil
 	})
@@ -542,6 +830,18 @@ func (g *Game) Move(seat state.Seat, actor state.Actor, iid state.IID, to state.
 		}
 		if to.Zone != state.Stadium {
 			to.Seat = c.Owner
+		}
+		// A Stadium pair leaves the spot together, as a Pokémon leaves with
+		// its attachments; a lone half's partner joins it as its pair.
+		if st := t.st.Stadium; len(st) == 2 && slices.Contains(st, iid) && to.Zone != state.Stadium {
+			other := st[0]
+			if other == iid {
+				other = st[1]
+			}
+			return t.movePair(iid, other, to)
+		}
+		if to.Zone == state.Stadium && as == "" && t.g.completesPair(t.st, c.Owner, iid) {
+			as = state.AsPair
 		}
 		if ok, err := t.moveStack(iid, to, as); ok || err != nil {
 			return err
@@ -634,26 +934,4 @@ func (g *Game) nameOf(iid state.IID) string {
 		return string(iid)
 	}
 	return g.st.Name(iid)
-}
-
-// PrefetchCards loads every card definition in the game into the cache.
-func (g *Game) PrefetchCards(ctx context.Context) []error {
-	g.mu.Lock()
-	defs := map[string]bool{}
-	for _, c := range g.st.Cards {
-		if c.Def != "" {
-			defs[c.Def] = true
-		}
-	}
-	g.mu.Unlock()
-	var errs []error
-	for d := range defs {
-		if g.db == nil {
-			break
-		}
-		if _, err := g.db.Card(ctx, d); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return errs
 }

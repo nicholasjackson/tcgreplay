@@ -1,0 +1,3575 @@
+{
+  "format": 1,
+  "set": {
+    "id": "sm7.5",
+    "serie": "sm",
+    "releaseDate": "2018-09-07",
+    "abbreviation": "DRM",
+    "tcgOnline": "DRM",
+    "text": {
+      "en": {
+        "name": "Dragon Majesty"
+      }
+    }
+  },
+  "prints": [
+    {
+      "id": "sm7.5-1",
+      "localId": "1",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charmander",
+          "attacks": [
+            {
+              "name": "Fire Fang",
+              "effect": "Your opponent’s Active Pokémon is now Burned."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-2",
+      "localId": "2",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charmeleon",
+          "evolveFrom": "Charmander",
+          "attacks": [
+            {
+              "name": "Flamethrower",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Burning Fighter",
+              "effect": "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may discard the top 5 cards of your deck. If any of those cards are Fire Energy cards, attach them to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-3",
+      "localId": "3",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "130"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Charizard",
+          "evolveFrom": "Charmeleon",
+          "attacks": [
+            {
+              "name": "Fiery Blast",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Resolute Flame",
+              "effect": "This Pokémon’s attacks do 30 more damage to your opponent’s Active Pokémon for each of their Pokémon-GX and Pokémon-EX in play."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-4",
+      "localId": "4",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Torchic",
+          "attacks": [
+            {
+              "name": "Singe",
+              "effect": "Flip a coin. If heads, your opponent’s Active Pokémon is now Burned."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-5",
+      "localId": "5",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Combusken",
+          "evolveFrom": "Torchic",
+          "attacks": [
+            {
+              "name": "Lunge",
+              "effect": "Flip a coin. If tails, this attack does nothing."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Natural Cure",
+              "effect": "Whenever you attach an Energy card from your hand to this Pokémon, remove all Special Conditions from it."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-6",
+      "localId": "6",
+      "category": "Pokemon",
+      "hp": 150,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "90"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Blaziken",
+          "evolveFrom": "Combusken",
+          "attacks": [
+            {
+              "name": "Fire Stream",
+              "effect": "Discard a Fire Energy from this Pokémon. This attack does 20 damage to each of your opponent’s Benched Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Firestarter",
+              "effect": "Once during your turn (before your attack), you may attach a Fire Energy card from your discard pile to 1 of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-7",
+      "localId": "7",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "20×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Victini ◇",
+          "attacks": [
+            {
+              "name": "Infinity",
+              "effect": "This attack does 20 damage for each basic Energy card in your discard pile. Then, shuffle those cards into your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-8",
+      "localId": "8",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Darumaka",
+          "attacks": [
+            {
+              "name": "Damage Rush",
+              "effect": "Flip a coin until you get tails. This attack does 30 more damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-9",
+      "localId": "9",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "30+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Darmanitan",
+          "evolveFrom": "Darumaka",
+          "attacks": [
+            {
+              "name": "Heat Assist",
+              "effect": "Attach up to 3 Fire Energy cards from your hand to your Pokémon in any way you like."
+            },
+            {
+              "name": "Darmani-Hands",
+              "effect": "Flip 4 coins. This attack does 50 more damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-10",
+      "localId": "10",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire"
+          ],
+          "damage": "120"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Heatmor",
+          "attacks": [
+            {
+              "name": "Singe",
+              "effect": "Your opponent’s Active Pokémon is now Burned."
+            },
+            {
+              "name": "Charring Breath",
+              "effect": "If your opponent’s Active Pokémon isn’t Burned, this attack does nothing."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-11",
+      "localId": "11",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Fire"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "180"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Reshiram GX",
+          "attacks": [
+            {
+              "name": "Flame Charge",
+              "effect": "Search your deck for up to 2 Fire Energy cards and attach them to this Pokémon. Then, shuffle your deck."
+            },
+            {
+              "name": "Scorching Column",
+              "effect": "Your opponent’s Active Pokémon is now Burned."
+            },
+            {
+              "name": "Vermilion GX",
+              "effect": "You may attach up to 5 Fire Energy cards from your hand to your Pokémon in any way you like. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-12",
+      "localId": "12",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "10×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Litten",
+          "attacks": [
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 10 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-13",
+      "localId": "13",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Salandit",
+          "attacks": [
+            {
+              "name": "Call for Family",
+              "effect": "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck."
+            },
+            {
+              "name": "Dig Claws"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-14",
+      "localId": "14",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Fire"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Salazzle",
+          "evolveFrom": "Salandit",
+          "attacks": [
+            {
+              "name": "Ring of Fire",
+              "effect": "Your opponent’s Active Pokémon is now Burned. It can’t retreat during your opponent’s next turn."
+            },
+            {
+              "name": "Flamethrower",
+              "effect": "Discard an Energy from this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-15",
+      "localId": "15",
+      "category": "Pokemon",
+      "hp": 40,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Horsea",
+          "attacks": [
+            {
+              "name": "Splatter",
+              "effect": "This attack does 20 damage to 1 of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-16",
+      "localId": "16",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Horsea",
+          "attacks": [
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 10 more damage times the amount of Water Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-17",
+      "localId": "17",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Seadra",
+          "evolveFrom": "Horsea",
+          "attacks": [
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 20 more damage times the amount of Water Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-18",
+      "localId": "18",
+      "category": "Pokemon",
+      "hp": 230,
+      "types": [
+        "Water"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10+"
+        },
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Water"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kingdra GX",
+          "evolveFrom": "Seadra",
+          "attacks": [
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 50 more damage times the amount of Water Energy attached to this Pokémon."
+            },
+            {
+              "name": "Reverse Thrust",
+              "effect": "Switch this Pokémon with 1 of your Benched Pokémon."
+            },
+            {
+              "name": "Maelstrom GX",
+              "effect": "This attack does 40 damage to each of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.) (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-19",
+      "localId": "19",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Magikarp",
+          "attacks": [
+            {
+              "name": "Water Splash",
+              "effect": "Flip a coin. If heads, this attack does 10 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-20",
+      "localId": "20",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "160"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 4,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Gyarados",
+          "evolveFrom": "Magikarp",
+          "attacks": [
+            {
+              "name": "Wild Tail",
+              "effect": "You may discard any Stadium card in play."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Commotion",
+              "effect": "If this Pokémon is your Active Pokémon and is damaged by an opponent’s attack (even if this Pokémon is Knocked Out), put 2 damage counters on each of your Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-21",
+      "localId": "21",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lapras",
+          "attacks": [
+            {
+              "name": "Aqua Bullet",
+              "effect": "This attack does 20 damage to 1 of your opponent’s Benched Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            },
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 10 more damage times the amount of Water Energy attached to this Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-22",
+      "localId": "22",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Totodile",
+          "attacks": [
+            {
+              "name": "Leer",
+              "effect": "Flip a coin. If heads, your opponent’s Active Pokémon is now Paralyzed."
+            },
+            {
+              "name": "Fury Swipes",
+              "effect": "Flip 3 coins. This attack does 10 damage for each heads."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-23",
+      "localId": "23",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "90"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Croconaw",
+          "evolveFrom": "Totodile",
+          "attacks": [
+            {
+              "name": "Tackle"
+            },
+            {
+              "name": "Sweep Away",
+              "effect": "Discard the top 3 cards of your deck."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-24",
+      "localId": "24",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "10+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Feraligatr",
+          "evolveFrom": "Croconaw",
+          "attacks": [
+            {
+              "name": "Riptide",
+              "effect": "This attack does 20 more damage for each Water Energy card in your discard pile. Then, shuffle those cards into your deck."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Downpour",
+              "effect": "As often as you like during your turn (before your attack), you may discard a Water Energy card from your hand."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-25",
+      "localId": "25",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Wooper",
+          "attacks": [
+            {
+              "name": "Ram"
+            },
+            {
+              "name": "Rain Splash"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-26",
+      "localId": "26",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60+"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Quagsire",
+          "evolveFrom": "Wooper",
+          "attacks": [
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 20 more damage times the amount of Water Energy attached to this Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Wash Out",
+              "effect": "As often as you like during your turn (before your attack), you may move a Water Energy from 1 of your Benched Pokémon to your Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-27",
+      "localId": "27",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Corsola",
+          "attacks": [
+            {
+              "name": "Bubble Shoot",
+              "effect": "This attack does 20 damage times the amount of Water Energy attached to this Pokémon to 1 of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-28",
+      "localId": "28",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "10"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Feebas",
+          "attacks": [
+            {
+              "name": "Rain Splash"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Submerge",
+              "effect": "As long as this Pokémon is on your Bench, prevent all damage done to this Pokémon by attacks (both yours and your opponent’s)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-29",
+      "localId": "29",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Water"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Water"
+          ],
+          "damage": "40"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Milotic",
+          "evolveFrom": "Feebas",
+          "attacks": [
+            {
+              "name": "Aurora Wave",
+              "effect": "Your opponent’s Active Pokémon is now Confused."
+            },
+            {
+              "name": "Aqua Split",
+              "effect": "This attack does 40 damage to 2 of your opponent’s Benched Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-30",
+      "localId": "30",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Water"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Phione",
+          "attacks": [
+            {
+              "name": "Water Pulse",
+              "effect": "Your opponent’s Active Pokémon is now Asleep."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Murmurs of the Sea",
+              "effect": "Your Water Pokémon can’t be Confused. If those Pokémon are already Confused, remove that Special Condition."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-31",
+      "localId": "31",
+      "category": "Pokemon",
+      "hp": 30,
+      "types": [
+        "Water"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Wishiwashi",
+          "attacks": [
+            {
+              "name": "Water Gun"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Meet Up",
+              "effect": "Your Wishiwashi-GX in play get +20 HP, and their attacks do 20 more damage to your opponent’s Active Pokémon (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-32",
+      "localId": "32",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Fighting"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Trapinch",
+          "attacks": [
+            {
+              "name": "Mini Earthquake",
+              "effect": "This attack does 10 damage to each of your Benched Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-33",
+      "localId": "33",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Darkness"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Darkness",
+            "Darkness",
+            "Colorless"
+          ],
+          "damage": "120"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Psychic",
+          "value": "-20"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hydreigon",
+          "evolveFrom": "Zweilous",
+          "attacks": [
+            {
+              "name": "Dark Destruction",
+              "effect": "You may discard an Energy from this Pokémon. If you do, discard an Energy from your opponent’s Active Pokémon."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Weed Out",
+              "effect": "Once during your turn (before your attack), you may choose 3 of your Benched Pokémon. Then, discard your other Benched Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-34",
+      "localId": "34",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ],
+          "damage": "10"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dratini",
+          "attacks": [
+            {
+              "name": "Wrap",
+              "effect": "Flip a coin. If heads, your opponent’s Active Pokémon is now Paralyzed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-35",
+      "localId": "35",
+      "category": "Pokemon",
+      "hp": 70,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Water",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dratini",
+          "attacks": [
+            {
+              "name": "Tail Whap"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-36",
+      "localId": "36",
+      "category": "Pokemon",
+      "hp": 100,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60×"
+        },
+        {
+          "cost": [
+            "Water",
+            "Lightning",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragonair",
+          "evolveFrom": "Dratini",
+          "attacks": [
+            {
+              "name": "Dragon Tail",
+              "effect": "Flip 2 coins. This attack does 60 damage for each heads."
+            },
+            {
+              "name": "Waterfall"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-37",
+      "localId": "37",
+      "category": "Pokemon",
+      "hp": 250,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ],
+          "damage": "70"
+        },
+        {
+          "cost": [
+            "Water",
+            "Lightning",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "200"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragonite GX",
+          "evolveFrom": "Dragonair",
+          "attacks": [
+            {
+              "name": "Dragon Claw"
+            },
+            {
+              "name": "Giga Impact",
+              "effect": "This Pokémon can’t attack during your next turn."
+            },
+            {
+              "name": "Dragonporter GX",
+              "effect": "Put 3 Dragon Pokémon from your discard pile onto your Bench. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-38",
+      "localId": "38",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "50"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Vibrava",
+          "evolveFrom": "Trapinch",
+          "attacks": [
+            {
+              "name": "Sonic Edge",
+              "effect": "This attack’s damage isn’t affected by any effects on your opponent’s Active Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-39",
+      "localId": "39",
+      "category": "Pokemon",
+      "hp": 140,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "110"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Flygon",
+          "evolveFrom": "Vibrava",
+          "attacks": [
+            {
+              "name": "Sand Tomb",
+              "effect": "The Defending Pokémon can’t retreat during your opponent’s next turn."
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Dragon Guard",
+              "effect": "Prevent all effects of your opponent’s attacks, except damage, done to your Dragon Pokémon. (Existing effects are not removed.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-40",
+      "localId": "40",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Altaria",
+          "evolveFrom": "Swablu",
+          "attacks": [
+            {
+              "name": "Pierce"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Fight Song",
+              "effect": "Your Dragon Pokémon’s attacks do 20 more damage to your opponent’s Active Pokémon (before applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-41",
+      "localId": "41",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Water",
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Altaria GX",
+          "evolveFrom": "Swablu",
+          "attacks": [
+            {
+              "name": "Bright Tone",
+              "effect": "During your opponent’s next turn, prevent all damage done to this Pokémon by attacks from Pokémon-GX and Pokémon-EX."
+            },
+            {
+              "name": "Sonic Edge",
+              "effect": "This attack’s damage isn’t affected by any effects on your opponent’s Active Pokémon."
+            },
+            {
+              "name": "Euphoria GX",
+              "effect": "Your opponent’s Active Pokémon is now Asleep. Heal all damage from all of your Pokémon. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-42",
+      "localId": "42",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Water"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Bagon",
+          "attacks": [
+            {
+              "name": "Risky Kick",
+              "effect": "Flip a coin. If tails, this attack does nothing."
+            },
+            {
+              "name": "Dragon Eye",
+              "effect": "Your opponent’s Active Pokémon is now Asleep."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-43",
+      "localId": "43",
+      "category": "Pokemon",
+      "hp": 80,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Shelgon",
+          "evolveFrom": "Bagon",
+          "attacks": [
+            {
+              "name": "Rollout"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Energy Guard",
+              "effect": "If this Pokémon has any basic Energy attached to it, it takes 20 less damage from attacks (after applying Weakness and Resistance)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-44",
+      "localId": "44",
+      "category": "Pokemon",
+      "hp": 250,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "200"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Salamence GX",
+          "evolveFrom": "Shelgon",
+          "attacks": [
+            {
+              "name": "Bright Flame",
+              "effect": "Discard 2 Energy from this Pokémon."
+            },
+            {
+              "name": "Flame Jet GX",
+              "effect": "This attack does 120 damage to 1 of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.) (You can’t use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Dragon Lift",
+              "effect": "Your Pokémon in play have no Retreat Cost, except Pokémon-GX and Pokémon-EX."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-45",
+      "localId": "45",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Druddigon",
+          "attacks": [
+            {
+              "name": "Dragon Claw"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Rough Skin",
+              "effect": "If this Pokémon is your Active Pokémon and is damaged by an opponent’s attack (even if this Pokémon is Knocked Out), put 3 damage counters on the Attacking Pokémon."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-46",
+      "localId": "46",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "70"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Lightning",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "150"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zekrom",
+          "attacks": [
+            {
+              "name": "Shred",
+              "effect": "This attack’s damage isn’t affected by any effects on your opponent’s Active Pokémon."
+            },
+            {
+              "name": "Bolt Strike",
+              "effect": "Flip a coin. If tails, this Pokémon does 50 damage to itself."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-47",
+      "localId": "47",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Water",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "100"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kyurem",
+          "attacks": [
+            {
+              "name": "Outrage",
+              "effect": "This attack does 10 more damage for each damage counter on this Pokémon."
+            },
+            {
+              "name": "Frost Spear",
+              "effect": "This attack does 20 damage to 1 of your opponent’s Benched Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-48",
+      "localId": "48",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "40"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "80+"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "200"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "White Kyurem GX",
+          "attacks": [
+            {
+              "name": "Shred",
+              "effect": "This attack’s damage isn’t affected by any effects on your opponent’s Active Pokémon."
+            },
+            {
+              "name": "Raging Blade",
+              "effect": "If this Pokémon has any damage counters on it, this attack does 80 more damage."
+            },
+            {
+              "name": "Dragon Nova GX",
+              "effect": "Your opponent’s Active Pokémon is now Burned and Paralyzed. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-49",
+      "localId": "49",
+      "category": "Pokemon",
+      "hp": 130,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fighting"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zygarde",
+          "attacks": [
+            {
+              "name": "Rumble",
+              "effect": "The Defending Pokémon can’t retreat during your opponent’s next turn."
+            },
+            {
+              "name": "Raging Blade",
+              "effect": "If this Pokémon has any damage counters on it, this attack does 60 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-50",
+      "localId": "50",
+      "category": "Pokemon",
+      "hp": 110,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire"
+          ],
+          "damage": "50×"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Turtonator",
+          "attacks": [
+            {
+              "name": "Explosive Jet",
+              "effect": "Discard any amount of Fire Energy from your Pokémon. This attack does 50 damage for each card you discarded in this way."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-51",
+      "localId": "51",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "20"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "80"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Drampa",
+          "attacks": [
+            {
+              "name": "Dragon Wisdom",
+              "effect": "Attach a basic Energy card from your discard pile to 1 of your Dragon Pokémon."
+            },
+            {
+              "name": "Hyper Voice"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-52",
+      "localId": "52",
+      "category": "Pokemon",
+      "hp": 60,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ]
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Jangmo-o",
+          "attacks": [
+            {
+              "name": "Rigidify",
+              "effect": "During your opponent’s next turn, this Pokémon takes 20 less damage from attacks (after applying Weakness and Resistance)."
+            },
+            {
+              "name": "Dragon Claw"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-53",
+      "localId": "53",
+      "category": "Pokemon",
+      "hp": 90,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage1",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Lightning",
+            "Fighting",
+            "Colorless"
+          ],
+          "damage": "70"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Hakamo-o",
+          "evolveFrom": "Jangmo-o",
+          "attacks": [
+            {
+              "name": "Guard Press",
+              "effect": "During your opponent’s next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)."
+            },
+            {
+              "name": "Dragon Claw"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-54",
+      "localId": "54",
+      "category": "Pokemon",
+      "hp": 160,
+      "types": [
+        "Dragon"
+      ],
+      "stage": "Stage2",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning",
+            "Colorless"
+          ],
+          "damage": "60"
+        },
+        {
+          "cost": [
+            "Fighting",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "90+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kommo-o",
+          "evolveFrom": "Hakamo-o",
+          "attacks": [
+            {
+              "name": "Guard Press",
+              "effect": "During your opponent’s next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)."
+            },
+            {
+              "name": "Raging Uppercut",
+              "effect": "If this Pokémon has 8 or more damage counters on it, this attack does 120 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-55",
+      "localId": "55",
+      "category": "Pokemon",
+      "hp": 120,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "60+"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fighting",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kangaskhan",
+          "attacks": [
+            {
+              "name": "Fetch",
+              "effect": "Draw a card."
+            },
+            {
+              "name": "Headbutt"
+            },
+            {
+              "name": "One-Two Punch",
+              "effect": "Flip a coin. If heads, this attack does 30 more damage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-56",
+      "localId": "56",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "20"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Swablu",
+          "attacks": [
+            {
+              "name": "Collect",
+              "effect": "Draw a card."
+            },
+            {
+              "name": "Peck"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-57",
+      "localId": "57",
+      "category": "Pokemon",
+      "hp": 50,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Lightning",
+          "value": "×2"
+        }
+      ],
+      "resistances": [
+        {
+          "type": "Fighting",
+          "value": "-20"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Swablu",
+          "attacks": [
+            {
+              "name": "Sing",
+              "effect": "Your opponent’s Active Pokémon is now Asleep."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-58",
+      "localId": "58",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Blaine’s Last Stand",
+          "effect": "You can play this card only when it is the last card in your hand.\n\nDraw 2 cards for each Fire Pokémon you have in play."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-59",
+      "localId": "59",
+      "category": "Trainer",
+      "trainerType": "Tool",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragon Talon",
+          "effect": "If the Dragon Pokémon this card is attached to is your Active Pokémon and is damaged by an opponent’s attack (even if that Pokémon is Knocked Out), put 3 damage counters on the Attacking Pokémon."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-60",
+      "localId": "60",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fiery Flint",
+          "effect": "You can play this card only if you discard 2 other cards from your hand.\n\nSearch your deck for up to 4 Fire Energy cards, reveal them, and put them into your hand. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-61",
+      "localId": "61",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Lance ◇",
+          "effect": "You can play this card only if 1 of your Pokémon was Knocked Out during your opponent’s last turn.\n\nSearch your deck for up to 2 Dragon Pokémon and put them onto your Bench. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-62",
+      "localId": "62",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Switch Raft",
+          "effect": "Switch your Active Water Pokémon with 1 of your Benched Pokémon. If you do, heal 30 damage from the Pokémon you moved to your Bench."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-63",
+      "localId": "63",
+      "category": "Trainer",
+      "trainerType": "Stadium",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Wela Volcano Park",
+          "effect": "Whenever a player flips a coin for the Special Condition Burned between turns, that Special Condition isn’t removed even if the result is heads."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-64",
+      "localId": "64",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zinnia",
+          "effect": "You can play this card only if 1 of your Pokémon was Knocked Out during your opponent’s last turn.\n\nAttach up to 2 basic Energy cards from your hand to 1 of your Dragon Pokémon."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-65",
+      "localId": "65",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Fire"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "180"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Reshiram GX",
+          "attacks": [
+            {
+              "name": "Flame Charge",
+              "effect": "Search your deck for up to 2 Fire Energy cards and attach them to this Pokémon. Then, shuffle your deck."
+            },
+            {
+              "name": "Scorching Column",
+              "effect": "Your opponent’s Active Pokémon is now Burned."
+            },
+            {
+              "name": "Vermilion GX",
+              "effect": "You may attach up to 5 Fire Energy cards from your hand to your Pokémon in any way you like. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-66",
+      "localId": "66",
+      "category": "Pokemon",
+      "hp": 230,
+      "types": [
+        "Water"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "damage": "10+"
+        },
+        {
+          "cost": [
+            "Water"
+          ],
+          "damage": "30"
+        },
+        {
+          "cost": [
+            "Water"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Grass",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Kingdra GX",
+          "evolveFrom": "Seadra",
+          "attacks": [
+            {
+              "name": "Hydro Pump",
+              "effect": "This attack does 50 more damage times the amount of Water Energy attached to this Pokémon."
+            },
+            {
+              "name": "Reverse Thrust",
+              "effect": "Switch this Pokémon with 1 of your Benched Pokémon."
+            },
+            {
+              "name": "Maelstrom GX",
+              "effect": "This attack does 40 damage to each of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.) (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-67",
+      "localId": "67",
+      "category": "Pokemon",
+      "hp": 250,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Lightning"
+          ],
+          "damage": "70"
+        },
+        {
+          "cost": [
+            "Water",
+            "Lightning",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "200"
+        },
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragonite GX",
+          "evolveFrom": "Dragonair",
+          "attacks": [
+            {
+              "name": "Dragon Claw"
+            },
+            {
+              "name": "Giga Impact",
+              "effect": "This Pokémon can’t attack during your next turn."
+            },
+            {
+              "name": "Dragonporter GX",
+              "effect": "Put 3 Dragon Pokémon from your discard pile onto your Bench. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-68",
+      "localId": "68",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Water",
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Altaria GX",
+          "evolveFrom": "Swablu",
+          "attacks": [
+            {
+              "name": "Bright Tone",
+              "effect": "During your opponent’s next turn, prevent all damage done to this Pokémon by attacks from Pokémon-GX and Pokémon-EX."
+            },
+            {
+              "name": "Sonic Edge",
+              "effect": "This attack’s damage isn’t affected by any effects on your opponent’s Active Pokémon."
+            },
+            {
+              "name": "Euphoria GX",
+              "effect": "Your opponent’s Active Pokémon is now Asleep. Heal all damage from all of your Pokémon. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-69",
+      "localId": "69",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Blaine’s Last Stand",
+          "effect": "You can play this card only when it is the last card in your hand.\n\nDraw 2 cards for each Fire Pokémon you have in play."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-70",
+      "localId": "70",
+      "category": "Trainer",
+      "trainerType": "Supporter",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Zinnia",
+          "effect": "You can play this card only if 1 of your Pokémon was Knocked Out during your opponent’s last turn.\n\nAttach up to 2 basic Energy cards from your hand to 1 of your Dragon Pokémon."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-71",
+      "localId": "71",
+      "category": "Pokemon",
+      "hp": 180,
+      "types": [
+        "Fire"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ]
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Fire",
+            "Colorless"
+          ],
+          "damage": "180"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Water",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Reshiram GX",
+          "attacks": [
+            {
+              "name": "Flame Charge",
+              "effect": "Search your deck for up to 2 Fire Energy cards and attach them to this Pokémon. Then, shuffle your deck."
+            },
+            {
+              "name": "Scorching Column",
+              "effect": "Your opponent’s Active Pokémon is now Burned."
+            },
+            {
+              "name": "Vermilion GX",
+              "effect": "You may attach up to 5 Fire Energy cards from your hand to your Pokémon in any way you like. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-72",
+      "localId": "72",
+      "category": "Pokemon",
+      "hp": 200,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "50"
+        },
+        {
+          "cost": [
+            "Water",
+            "Fairy",
+            "Colorless"
+          ],
+          "damage": "110"
+        },
+        {
+          "cost": [
+            "Fairy",
+            "Colorless"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Altaria GX",
+          "evolveFrom": "Swablu",
+          "attacks": [
+            {
+              "name": "Bright Tone",
+              "effect": "During your opponent’s next turn, prevent all damage done to this Pokémon by attacks from Pokémon-GX and Pokémon-EX."
+            },
+            {
+              "name": "Sonic Edge",
+              "effect": "This attack’s damage isn’t affected by any effects on your opponent’s Active Pokémon."
+            },
+            {
+              "name": "Euphoria GX",
+              "effect": "Your opponent’s Active Pokémon is now Asleep. Heal all damage from all of your Pokémon. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-73",
+      "localId": "73",
+      "category": "Pokemon",
+      "hp": 250,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fire",
+            "Water",
+            "Colorless",
+            "Colorless"
+          ],
+          "damage": "200"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Colorless",
+            "Colorless"
+          ]
+        }
+      ],
+      "abilities": [
+        {
+          "type": "Ability"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Salamence GX",
+          "evolveFrom": "Shelgon",
+          "attacks": [
+            {
+              "name": "Bright Flame",
+              "effect": "Discard 2 Energy from this Pokémon."
+            },
+            {
+              "name": "Flame Jet GX",
+              "effect": "This attack does 120 damage to 1 of your opponent’s Pokémon. (Don’t apply Weakness and Resistance for Benched Pokémon.) (You can’t use more than 1 GX attack in a game.)"
+            }
+          ],
+          "abilities": [
+            {
+              "name": "Dragon Lift",
+              "effect": "Your Pokémon in play have no Retreat Cost, except Pokémon-GX and Pokémon-EX."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-74",
+      "localId": "74",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Fire"
+          ],
+          "damage": "40"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "80+"
+        },
+        {
+          "cost": [
+            "Fire",
+            "Fire",
+            "Water",
+            "Colorless"
+          ],
+          "damage": "200"
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 3,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "White Kyurem GX",
+          "attacks": [
+            {
+              "name": "Shred",
+              "effect": "This attack’s damage isn’t affected by any effects on your opponent’s Active Pokémon."
+            },
+            {
+              "name": "Raging Blade",
+              "effect": "If this Pokémon has any damage counters on it, this attack does 80 more damage."
+            },
+            {
+              "name": "Dragon Nova GX",
+              "effect": "Your opponent’s Active Pokémon is now Burned and Paralyzed. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "sm7.5-75",
+      "localId": "75",
+      "category": "Trainer",
+      "trainerType": "Tool",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Dragon Talon",
+          "effect": "If the Dragon Pokémon this card is attached to is your Active Pokémon and is damaged by an opponent’s attack (even if that Pokémon is Knocked Out), put 3 damage counters on the Attacking Pokémon."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-76",
+      "localId": "76",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Fiery Flint",
+          "effect": "You can play this card only if you discard 2 other cards from your hand.\n\nSearch your deck for up to 4 Fire Energy cards, reveal them, and put them into your hand. Then, shuffle your deck."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-77",
+      "localId": "77",
+      "category": "Trainer",
+      "trainerType": "Item",
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Switch Raft",
+          "effect": "Switch your Active Water Pokémon with 1 of your Benched Pokémon. If you do, heal 30 damage from the Pokémon you moved to your Bench."
+        }
+      }
+    },
+    {
+      "id": "sm7.5-78",
+      "localId": "78",
+      "category": "Pokemon",
+      "hp": 190,
+      "types": [
+        "Dragon"
+      ],
+      "suffix": "GX",
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Metal"
+          ],
+          "damage": "20+"
+        },
+        {
+          "cost": [
+            "Psychic",
+            "Metal"
+          ]
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Fairy",
+          "value": "×2"
+        }
+      ],
+      "retreat": 2,
+      "sources": [
+        "tcgdex"
+      ],
+      "text": {
+        "en": {
+          "name": "Ultra Necrozma GX",
+          "attacks": [
+            {
+              "name": "Photon Geyser",
+              "effect": "Discard all basic Psychic Energy from this Pokémon. This attack does 80 more damage for each card you discarded in this way."
+            },
+            {
+              "name": "Sky-Scorching Light GX",
+              "effect": "You can use this attack only if the total of both players’ remaining Prize cards is 6 or less. Put 6 damage counters on each of your opponent’s Pokémon. (You can’t use more than 1 GX attack in a game.)"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

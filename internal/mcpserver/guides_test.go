@@ -17,9 +17,9 @@ import (
 )
 
 // The six guides, in the order players meet them.
-var guideNames = []string{"import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
+var guideNames = []string{"play-game", "import-game", "opponent-deck", "review-game", "replay-drill", "before-you-move", "numbers-drill"}
 
-// TestGuideList: guide with no name lists the six guides in order, each with
+// TestGuideList: guide with no name lists the guides in order, each with
 // a one-line "use when".
 func TestGuideList(t *testing.T) {
 	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
@@ -94,8 +94,9 @@ func checkGuideInstructions(t *testing.T, ins string) {
 			t.Errorf("instructions do not list %s: want %q", g.Name, line)
 		}
 	}
-	if n := strings.Count(guideInstructions(), "\n"); n > 7 {
-		t.Errorf("guide block is %d lines, want at most 7", n)
+	// A heading and one line per guide.
+	if n, max := strings.Count(guideInstructions(), "\n"), len(guideNames)+1; n > max {
+		t.Errorf("guide block is %d lines, want at most %d", n, max)
 	}
 }
 
@@ -115,6 +116,60 @@ func TestGuideInstructions(t *testing.T) {
 			})
 		}
 	})
+}
+
+// sentenceEnd is a full stop that ends a sentence.
+var sentenceEnd = regexp.MustCompile(`\.[ \n]`)
+
+// TestInstructionsOpening: on the desktop and hosted, the first 512 bytes
+// of the instructions (all some clients are sure to read) say on their own
+// what TCG Replay is, that cards are referred to by instance ID and never
+// by name, and that the coaching guides are read with the guide tool, each
+// in a whole sentence that ends within those bytes.
+func TestInstructionsOpening(t *testing.T) {
+	servers := map[string]*Server{
+		"desktop": {Version: "test"},
+		"hosted":  {Version: "test", BoardURL: "https://playmat.example/"},
+	}
+	for name, s := range servers {
+		for _, tr := range transports {
+			t.Run(name+"/"+tr.name, func(t *testing.T) {
+				cs, _ := connectServer(t, tr, &Server{Version: s.Version, BoardURL: s.BoardURL})
+				ins := cs.InitializeResult().Instructions
+				if len(ins) < 512 {
+					t.Fatalf("instructions are only %d bytes", len(ins))
+				}
+				opening := ins[:512]
+				for _, need := range [][]string{
+					{"TCG Replay", "Pokémon TCG playmat"},
+					{"instance ID", "iid", "never by name"},
+					{"guides", "guide tool"},
+				} {
+					i := strings.Index(opening, need[0])
+					if i < 0 {
+						t.Errorf("first 512 bytes lack %q:\n%s", need[0], opening)
+						continue
+					}
+					// A sentence ends at a full stop followed by a space or
+					// a line break, within the 512 bytes.
+					end := -1
+					if m := sentenceEnd.FindStringIndex(opening[i:]); m != nil {
+						end = m[0]
+					}
+					if end < 0 {
+						t.Errorf("the sentence with %q does not end within 512 bytes", need[0])
+						continue
+					}
+					sentence := opening[strings.LastIndex(opening[:i], ". ")+1 : i+end+1]
+					for _, w := range need[1:] {
+						if !strings.Contains(sentence, w) {
+							t.Errorf("the sentence with %q lacks %q: %q", need[0], w, sentence)
+						}
+					}
+				}
+			})
+		}
+	}
 }
 
 // snakeWord matches a tool or argument name as guides write them.
@@ -287,6 +342,33 @@ func TestGuidePromptsAddNoTools(t *testing.T) {
 			}
 			if _, err := guides.Get(tool.Name); err == nil {
 				t.Errorf("tool %s is named after a guide", tool.Name)
+			}
+		}
+	})
+}
+
+// TestToolsSayWhenToUseThem: clients that pick an app from its tool
+// descriptions alone (ChatGPT) must learn from import_log that a pasted
+// battle log goes to the playmat, and from guide when each guide applies.
+func TestToolsSayWhenToUseThem(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, _ *game.Manager) {
+		res, err := cs.ListTools(context.Background(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		desc := map[string]string{}
+		for _, tool := range res.Tools {
+			desc[tool.Name] = tool.Description
+		}
+		imp := desc["import_log"]
+		for _, want := range []string{"Use this when the user pastes or attaches a Pokémon TCG Live battle log", "even if they do not mention TCG Replay", "rather than reading the log yourself", "import-game guide", "if you do not have it, ask the player to paste the list they played"} {
+			if !strings.Contains(imp, want) {
+				t.Errorf("import_log description lacks %q", want)
+			}
+		}
+		for _, g := range guides.List() {
+			if !strings.Contains(desc["guide"], g.Name+": "+g.Description) {
+				t.Errorf("guide description lacks %s's trigger", g.Name)
 			}
 		}
 	})

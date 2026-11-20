@@ -409,3 +409,30 @@ test('on the landscape mat each "N in hand" sits within one card width of its ha
     expect(count.x - last.right, seat).toBeLessThanOrEqual(cw);
   }
 });
+
+test('a Legendary Stadium pair takes a single Stadium\'s place on the landscape mat, inside its spot, moving nothing', async ({ page }, testInfo) => {
+  test.skip(!isWide(testInfo), 'the landscape mat');
+  const stadium = page.getByRole('region', { name: 'Stadium' });
+  await page.mouse.move(1, 1);
+  const single = await box(stadium.locator('.card').first());
+  const spot = await box(stadium);
+  const active = await box(region(page, 'p1 Active'));
+
+  const pair = ['p1-59', 'p1-60']; // the two prints of Twin Peak (webtest.TwinPeak)
+  for (const iid of pair) await act(page, 'move', { iid, to: 'hand' });
+  await act(page, 'play_trainer', { iid: pair[0], pair_iid: pair[1] });
+  const joined = stadium.getByRole('group', { name: 'Twin Peak (pair)' });
+  await expect(joined).toBeVisible();
+  await page.mouse.move(1, 1);
+
+  // As wide as the single Stadium it replaced, and inside the spot.
+  await expect.poll(async () => Math.abs((await box(joined)).width - single.width)).toBeLessThanOrEqual(2);
+  const j = await box(joined);
+  const after = await box(stadium);
+  expect(j.x, 'inside the spot (left)').toBeGreaterThanOrEqual(after.x - 1);
+  expect(j.right, 'inside the spot (right)').toBeLessThanOrEqual(after.right + 1);
+  // The spot and the Actives keep their places and sizes.
+  expect(Math.abs(after.width - spot.width), 'the spot keeps its width').toBeLessThanOrEqual(1);
+  const moved = await box(region(page, 'p1 Active'));
+  expect(Math.abs(moved.x - active.x) + Math.abs(moved.y - active.y), 'the Active stays put').toBeLessThanOrEqual(2);
+});

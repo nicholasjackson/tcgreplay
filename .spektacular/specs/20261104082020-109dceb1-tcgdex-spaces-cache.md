@@ -31,19 +31,19 @@ The hosted playmat keeps its cached card data in a shared store that lasts acros
 -->
 ## Requirements
 
-- [ ] **Cache survives restarts**
+- [x] **Cache survives restarts**
   When the shared store is configured, the hosted playmat must find card data it fetched before a restart or redeploy still cached afterwards, and must not refetch it from the card source while it is still fresh.
-- [ ] **Shared store is optional**
+- [x] **Shared store is optional**
   Without the shared store configured, the system must cache on local disk only, as today, and need no new settings or credentials. This covers desktop and dev builds.
-- [ ] **Shared store fills the local cache**
+- [x] **Shared store fills the local cache**
   Card data found only in the shared store must be served without contacting the card source, and then saved to the local disk cache.
-- [ ] **Fetched data is shared**
+- [x] **Fetched data is shared**
   Card data the system fetches from the card source must be saved to local disk and, when configured, to the shared store.
-- [ ] **Fetch age kept across copies**
+- [x] **Fetch age kept across copies**
   Card data restored from the shared store must keep the age it had when first fetched from the card source, so a copy or a restart never makes stale data look fresh.
-- [ ] **Shared store failures do not stop play**
+- [x] **Shared store failures do not stop play**
   If the shared store cannot be reached or rejects a request, the system must keep working using its local cache and the card source. It must log the failure, and must not show players an error because of it.
-- [ ] **Offline mode never contacts the shared store**
+- [x] **Offline mode never contacts the shared store**
   With offline mode on, the system must never contact the shared store.
 
 <!--
@@ -73,17 +73,17 @@ The hosted playmat keeps its cached card data in a shared store that lasts acros
 -->
 ## Acceptance Criteria
 
-- [ ] **Warm restart**
+- [x] **Warm restart**
   With the shared store configured, import a game, restart the playmat with an empty local disk cache, then import the same game again. The card source receives no requests for the set list, set card lists or cards involved, and the import gives the same result.
-- [ ] **No shared store, no change**
+- [x] **No shared store, no change**
   Started without shared store settings, the playmat starts, imports a game and shows card text and art. It writes cached data only to the local cache directory, and its logs show no error about missing shared store settings.
-- [ ] **Shared store fills local**
+- [x] **Shared store fills local**
   With the shared store configured and the local cache empty, looking up a card that is only in the shared store returns it without a request to the card source, and the card then exists in the local cache directory. A card in neither is fetched from the card source once, and afterwards exists both in the local cache directory and in the shared store.
-- [ ] **Shared store outage**
+- [x] **Shared store outage**
   With the shared store configured but unreachable or refusing its credentials, the playmat starts, imports a game and shows cards, fetching from the card source as needed. Its log records the shared store failure, and players see no error.
-- [ ] **Stale stays stale after a restart**
+- [x] **Stale stays stale after a restart**
   An entry in the shared store that is past its refresh age is still treated as stale after a restart with an empty local cache: the next lookup refreshes it from the card source.
-- [ ] **Offline skips the shared store**
+- [x] **Offline skips the shared store**
   In offline mode with the shared store configured, the playmat makes no requests to the shared store.
 
 <!--

@@ -63,8 +63,11 @@ func TestHostedUserCapSetting(t *testing.T) {
 	if code != http.StatusServiceUnavailable || !strings.Contains(body, "tcgreplay is busy") || !strings.Contains(body, "(1)") {
 		t.Errorf("second account's board sign-in at a cap of 1: %d %q, want 503 busy naming the cap", code, body)
 	}
-	if want := "refused sign-in for " + capSecond.Email; !strings.Contains(logs.String(), want) {
-		t.Errorf("log does not record %q:\n%s", want, logs)
+	if want := `"event":"sign_in_refused","player":"` + twoID + `"`; !strings.Contains(h.events.String(), want) {
+		t.Errorf("records lack %s:\n%s", want, h.events)
+	}
+	if strings.Contains(logs.String()+h.events.String(), capSecond.Email) {
+		t.Errorf("the refused account's email was logged or recorded")
 	}
 
 	h.g.SetAccount(hostauthtest.DefaultAccount)
@@ -113,5 +116,117 @@ func TestMainHostedUserCapSetting(t *testing.T) {
 				t.Errorf("start-up log does not say %q:\n%s", tt.want, out)
 			}
 		})
+	}
+}
+
+// capReviewer is the reviewer account the reviewer test signs in with; the
+// setting names it in another case.
+var capReviewer = hostauthtest.Account{ID: "sub-r", Email: "Reviewer@Example.com"}
+
+// Website example game the reviewer imports (as OpenAI's reviewer will,
+// from /docs/example).
+const (
+	siteExampleLog  = "../../site/src/content/example/battle-log.txt"
+	siteExampleDeck = "../../testdata/decks/mega-lucario-ex-v12.txt"
+)
+
+// TestHostedReviewerPastCap: at a cap of 1 held by another account, the
+// configured reviewer's connector signs in, imports the website's example
+// game and plays, and the reviewer's board sign-in succeeds; a third
+// account is still turned away with the busy page, as is an account with
+// the reviewer's address that Google has not verified. The reviewer's
+// place leaves the cap's one place to the first account, and neither the
+// logs nor the records name the reviewer.
+func TestHostedReviewerPastCap(t *testing.T) {
+	logs := captureLog(t)
+	h := startHostedWith(t, testPublic, func(c *config) { c.maxUsers = 1; c.reviewer = "reviewer@example.com" })
+	h.connect(t)
+
+	h.g.SetAccount(capReviewer)
+	cs := h.connect(t)
+	callObject(t, cs, "import_log", map[string]any{"log": readTestdata(t, siteExampleLog), "deck": readTestdata(t, siteExampleDeck), "id": "review-example"})
+	playSomeMoves(t, cs)
+	if code, body := h.boardSignIn(t); code != http.StatusOK {
+		t.Errorf("reviewer's board sign-in at the cap: %d %q, want 200", code, body)
+	}
+
+	h.g.SetAccount(capSecond)
+	if err := h.tryConnect(t); err == nil || !strings.Contains(err.Error(), "tcgreplay is busy") {
+		t.Errorf("third account's connector with the reviewer in: %v, want the busy page", err)
+	}
+	if code, body := h.boardSignIn(t); code != http.StatusServiceUnavailable || !strings.Contains(body, "tcgreplay is busy") {
+		t.Errorf("third account's board sign-in with the reviewer in: %d, want 503 busy", code)
+	}
+
+	// The reviewer's address, unverified, is any other account.
+	h.g.SetAccount(hostauthtest.Account{ID: "sub-impostor", Email: "reviewer@example.com"})
+	h.g.Claims = func(c map[string]any) { c["email_verified"] = false }
+	if err := h.tryConnect(t); err == nil || !strings.Contains(err.Error(), "tcgreplay is busy") {
+		t.Errorf("unverified reviewer address's connector at the cap: %v, want the busy page", err)
+	}
+	if code, _ := h.boardSignIn(t); code != http.StatusServiceUnavailable {
+		t.Errorf("unverified reviewer address's board sign-in at the cap: %d, want 503 busy", code)
+	}
+	h.g.Claims = nil
+
+	// The first account still holds the cap's one place, beside the reviewer.
+	h.g.SetAccount(hostauthtest.DefaultAccount)
+	if err := h.tryConnect(t); err != nil {
+		t.Errorf("first account connecting again with the reviewer in: %v", err)
+	}
+
+	out := strings.ToLower(logs.String() + h.events.String())
+	if strings.Contains(out, "reviewer@example.com") {
+		t.Error("the reviewer's address was logged or recorded")
+	}
+}
+
+// TestHostedReviewerUnsetKeepsTheCap: with no reviewer configured, the
+// account that would be the reviewer is turned away at a full cap.
+func TestHostedReviewerUnsetKeepsTheCap(t *testing.T) {
+	h := startHostedWith(t, testPublic, func(c *config) { c.maxUsers = 1 })
+	h.connect(t)
+	h.g.SetAccount(capReviewer)
+	if err := h.tryConnect(t); err == nil || !strings.Contains(err.Error(), "tcgreplay is busy") {
+		t.Errorf("reviewer account with no reviewer configured: %v, want the busy page", err)
+	}
+}
+
+func TestReviewerText(t *testing.T) {
+	if s := reviewerText(""); s != "no reviewer account (TCGREPLAY_REVIEWER)" {
+		t.Errorf("reviewerText(\"\") = %q", s)
+	}
+	if s := reviewerText("reviewer@example.com"); s != "reviewer account set" {
+		t.Errorf("reviewerText(email) = %q", s)
+	}
+}
+
+// TestHostedReviewerToolCallsPastCap: the reviewer is recognised on tool
+// calls too, from the verified flag its access token carries: at a cap of
+// 1, after the reviewer's place went idle and another account took the
+// one place, the reviewer's next tool call is still served, not refused
+// as busy, while a third account is still refused.
+func TestHostedReviewerToolCallsPastCap(t *testing.T) {
+	clock := &idleClock{t: time.Date(2026, 10, 18, 9, 0, 0, 0, time.UTC)}
+	h := startHostedWith(t, testPublic, func(c *config) {
+		c.maxUsers = 1
+		c.idleTimeout = 2 * time.Minute
+		c.now = clock.Now
+		c.reviewer = "reviewer@example.com"
+	})
+	h.g.SetAccount(capReviewer)
+	cs := h.connect(t)
+	clock.Advance(2*time.Minute + time.Second)
+	h.g.SetAccount(hostauthtest.DefaultAccount)
+	h.connect(t)
+
+	// With no game open the call answers "no game open"; refused, it would
+	// be the busy message instead.
+	if out, isErr := toolResult(t, cs, "get_state", map[string]any{}); isErr && strings.Contains(out, "busy") {
+		t.Errorf("reviewer's get_state with the one place held by another account was refused: %s", out)
+	}
+	h.g.SetAccount(capSecond)
+	if err := h.tryConnect(t); err == nil || !strings.Contains(err.Error(), "tcgreplay is busy") {
+		t.Errorf("third account's connector: %v, want the busy page", err)
 	}
 }

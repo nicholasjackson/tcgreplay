@@ -1,0 +1,39 @@
+/* The board's colour tokens, copied from web/src/app.css (the :root block
+   and its light variant) so the site looks like the playmat without the
+   board's own element rules. Keep in step with that file. */
+:root {
+  --bg: #17321f;
+  --felt: radial-gradient(ellipse at center, #22492d 0%, #17321f 70%, #10241a 100%);
+  --panel: #1c2421;
+  --strip: #0f1d16cc;
+  --input: #0f1512;
+  --text: #e8efe9;
+  --muted: #9bb0a2;
+  --line: #2f3b35;
+  --slot-line: #ffffff2e;
+  --drop: #e3b34133;
+  --accent: #e3b341;
+  --accent-glow: #e3b341aa;
+  --hover: #ffffff14;
+  --fresh: #e3b34122;
+  --note: #2c3a52;
+  --p1: #4fc3f7;
+  --p2: #ef5350;
+  --reveal: #e91e63;
+  --card-bg: #2a2f2c;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #2c5a3a;
+    --felt: radial-gradient(ellipse at center, #3a7a4e 0%, #2c5a3a 70%, #234a2f 100%);
+    --panel: #f4f6f4;
+    --input: #fff;
+    --text: #1d2420;
+    --muted: #5b6b61;
+    --line: #d5dcd7;
+    --hover: #0000000d;
+    --note: #e3ecfa;
+    color-scheme: light;
+  }
+}

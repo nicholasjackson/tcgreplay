@@ -1,0 +1,36 @@
+---
+// The ready-made example game: a real TCG Live game with the opponent's
+// name replaced by "Rival", and the decklist that was played, each with a
+// copy button.
+import Docs from '../../layouts/Docs.astro';
+import CopyBlock from '../../components/CopyBlock.astro';
+import Prompt from '../../components/Prompt.astro';
+import { example } from '../../lib/example';
+---
+<Docs
+  title="Example game"
+  description="A complete Pokémon TCG Live game and its decklist to copy, so you can try tcgreplay without a game of your own."
+>
+  <h1>Example game</h1>
+  <p>
+    No game of your own to hand? Use this one. It is a real game from Pokémon TCG Live: NicJackson playing Mega Lucario
+    ex against a Mew ex, Bronzong and Mega Lopunny ex deck, a close loss, 4 prizes to 6. The opponent's player name has
+    been replaced with <strong>Rival</strong>.
+  </p>
+  <ol>
+    <li>Copy the decklist and the battle log below.</li>
+    <li>Paste both into a chat with your assistant, with a prompt like this one:</li>
+  </ol>
+  <Prompt text="Here's a game from TCG Live and my decklist. Import it and review it with me." />
+  <p>
+    The assistant imports the game, says whether the import was complete, and gives you a link to the board. See
+    <a href="/docs/import">importing a game</a> for what to expect.
+  </p>
+
+  <h2>The decklist</h2>
+  <CopyBlock text={example.deck} label="Example decklist" tall />
+
+  <h2>The battle log</h2>
+  <p>Every line of the game, from setup to the result.</p>
+  <CopyBlock text={example.log} label="Example battle log" tall class="example-log" />
+</Docs>

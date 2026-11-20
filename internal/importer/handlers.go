@@ -90,19 +90,7 @@ func buildHandlers(a, b string) []handler {
 			return r.toBench(seat, iid)
 		}),
 		h(`{P} played (.+) to the Stadium spot\.`, func(r *replay, m []string, n, _ *Node) error {
-			seat := r.seat(m[1])
-			iid, err := r.take(seat, []state.Zone{state.Hand}, m[2])
-			if err != nil {
-				return err
-			}
-			if old := r.st.Stadium; old != "" {
-				owner := r.st.Cards[old].Owner
-				if err := r.move(seat, old, state.Loc{Seat: owner, Zone: state.Discard}, "", ""); err != nil {
-					return err
-				}
-				r.lastStadium = old
-			}
-			return r.move(seat, iid, state.Loc{Zone: state.Stadium}, "", "")
+			return r.playStadium(r.seat(m[1]), m[2], n)
 		}),
 		h(`{P} drew (\d+) cards and played them to the Bench\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[1])
@@ -185,6 +173,16 @@ func buildHandlers(a, b string) []handler {
 			}
 			return r.move(seat, iid, l, role, "")
 		}),
+		// TCG Live writes a Stadium pair as the second half attached to the
+		// first in hand, with no place, then the first played to the
+		// Stadium spot (see playStadium). Lines naming a place match the
+		// handler above first.
+		h(`{P} attached (.+) to (.+)\.`, func(r *replay, m []string, n, _ *Node) error {
+			if m[2] != m[3] {
+				return fmt.Errorf("%s attached to %s with no place: only the two halves of a Stadium pair are attached in hand", m[2], m[3])
+			}
+			return r.attachPairHalf(r.seat(m[1]), m[2], n)
+		}),
 		h(`{P} evolved (.+) to (.+) (in the Active Spot|on the Bench)\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
 			l, err := r.stackNamed(seat, m[2], zoneHint(m[4]))
@@ -247,9 +245,16 @@ func buildHandlers(a, b string) []handler {
 		}),
 		h(`{P}'s (.+) is now in the Active Spot\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[1])
+			retreated := r.pendingRetreat[seat]
 			r.pendingRetreat[seat] = false
-			if _, err := r.stackNamed(seat, m[2], "active"); err == nil {
-				return nil // already there, e.g. after a switch subline
+			// After a retreat the new Active comes from the Bench, even when
+			// it has the retreating Pokémon's name: a fresh N's Zoroark ex
+			// replacing a damaged one. The retreating one keeps its damage,
+			// Energy and Tools as it goes to the Bench.
+			if !retreated {
+				if _, err := r.stackNamed(seat, m[2], "active"); err == nil {
+					return nil // already there, e.g. after a switch subline
+				}
 			}
 			b, err := r.stackNamed(seat, m[2], "bench")
 			if err != nil {
@@ -482,19 +487,28 @@ func buildHandlers(a, b string) []handler {
 		// Hand and deck manipulation.
 		h(`{P} discarded (\d+) cards\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[1])
+			// A replaced Stadium pair's halves, listed under one line.
+			if r.consumeReplaced(seat, n.Bullets()) {
+				return nil
+			}
 			return r.handTo(seat, count(m[2]), n.Bullets(), state.Loc{Seat: seat, Zone: state.Discard})
 		}),
 		h(`{P} discarded (.+)\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
-			if r.lastStadium != "" && r.bound[r.lastStadium] == m[2] && r.st.Cards[r.lastStadium].Owner == seat {
-				r.lastStadium = "" // the replaced Stadium, already discarded
-				return nil
+			if r.consumeReplaced(seat, []string{m[2]}) {
+				return nil // the replaced Stadium, already discarded
 			}
 			// An attack that discards the Stadium in play (Ground Melter)
 			// names it under the attack line, with the Stadium's owner as
-			// the player. An Ability's discard (Trade) is from the hand.
-			if s := r.st.Stadium; s != "" && r.bound[s] == m[2] && r.st.Cards[s].Owner == seat && parent != nil && attackRe.MatchString(parent.Text) {
-				return r.move(seat, s, state.Loc{Seat: seat, Zone: state.Discard}, "", "")
+			// the player. An Ability's discard (Trade) is from the hand. A
+			// pair goes in one move; the other half's line is then done.
+			if s := firstOf(r.st.Stadium); s != "" && r.bound[s] == m[2] && r.st.Cards[s].Owner == seat && parent != nil && attackRe.MatchString(parent.Text) {
+				old := slices.Clone(r.st.Stadium)
+				if err := r.discardStadium(seat); err != nil {
+					return err
+				}
+				r.lastStadium = old[1:]
+				return nil
 			}
 			iid, err := r.take(seat, []state.Zone{state.Hand, state.Deck}, m[2])
 			if err != nil {
@@ -506,6 +520,10 @@ func buildHandlers(a, b string) []handler {
 			return r.shuffle(r.seat(m[1]))
 		}),
 		h(`{P} shuffled their hand\.`, noop),
+		// "Shuffle the other cards and put them on the bottom of your deck"
+		// (Mega Rayquaza ex's Ruler's Roar): the looked-at cards' order is
+		// hidden, so nothing changes. TCG Live can name the wrong player.
+		h(`{P} shuffled their cards\.`, noop),
 		h(`{P} shuffled (a|\d+) cards? into their deck\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
 			if parent != nil && shuffleFromDiscardRe.MatchString(parent.Text) {
@@ -913,4 +931,137 @@ func (r *replay) checkToolCredits(n *Node, actor state.Seat, defender state.Loc)
 			}
 		}
 	}
+}
+
+// firstOf returns the first card of a list, or "" for an empty one.
+func firstOf(xs []state.IID) state.IID {
+	if len(xs) == 0 {
+		return ""
+	}
+	return xs[0]
+}
+
+// pairHalf is a half of a Stadium pair waiting for its partner's play.
+type pairHalf struct {
+	iid  state.IID
+	line int
+}
+
+// attachPairHalf replays "<player> attached <name> to <name>." with no
+// place: TCG Live's first line of a Stadium pair, the second half joined
+// to the first in hand. It takes the half from the hand, with the line's
+// first card code, and holds it for the next line's Stadium play.
+func (r *replay) attachPairHalf(seat state.Seat, name string, n *Node) error {
+	iid, err := r.take(seat, []state.Zone{state.Hand}, name)
+	if err != nil {
+		return err
+	}
+	if cs := r.lineCodes[n.No]; len(cs) == 2 && strings.HasPrefix(cs[0].rest, name) && r.codes != nil && r.codes[iid] == "" {
+		r.codes[iid] = cs[0].code
+	}
+	if r.pairHalf == nil {
+		r.pairHalf = map[state.Seat]pairHalf{}
+	}
+	r.pairHalf[seat] = pairHalf{iid: iid, line: n.No}
+	return nil
+}
+
+// playStadium replays "<player> played <name> to the Stadium spot." A
+// Stadium pair is recognised from the log's own lines, never from card
+// data (knowledge architecture/importer-determinism.md): TCG Live writes
+// it as the second half attached to the first in hand (attachPairHalf),
+// then the first played to the Stadium spot, so a play right after such
+// a line by the same player of the same name plays both halves as one
+// Stadium (seen in testdata/logs/2026-11-09_gamespeer_mega-rayquaza-
+// talonflame.txt). Halves of the same print (the log's card codes say
+// so) still go down together, with a warning.
+func (r *replay) playStadium(seat state.Seat, name string, n *Node) error {
+	half, ok := r.pairHalf[seat]
+	delete(r.pairHalf, seat)
+	if !ok || r.bound[half.iid] != name || !r.headlineBefore(n, half.line) {
+		iid, err := r.take(seat, []state.Zone{state.Hand}, name)
+		if err != nil {
+			return err
+		}
+		if err := r.replaceStadium(seat); err != nil {
+			return err
+		}
+		return r.move(seat, iid, state.Loc{Zone: state.Stadium}, "", "")
+	}
+	iid, err := r.pick(seat, []state.Zone{state.Hand}, name, []state.IID{half.iid})
+	if err != nil {
+		return err
+	}
+	if err := r.bind(iid, name); err != nil {
+		return err
+	}
+	if c := r.codes[iid]; c != "" && c == r.codes[half.iid] {
+		r.rep.Warnings = append(r.rep.Warnings, fmt.Sprintf("line %d: the two halves of %s are the same print (%s); a pair needs two different prints", n.No, name, c))
+	}
+	if err := r.replaceStadium(seat); err != nil {
+		return err
+	}
+	from, err := r.st.Find(iid)
+	if err != nil {
+		return err
+	}
+	return r.emit(seat, state.EvMove, state.MovePayload{IID: iid, Pair: half.iid, From: &from, To: state.Loc{Zone: state.Stadium}})
+}
+
+// replaceStadium sends what is in the Stadium spot to its owner's discard,
+// a pair in one move, and remembers it so the "discarded" sublines that
+// follow are not replayed again.
+func (r *replay) replaceStadium(seat state.Seat) error {
+	old := slices.Clone(r.st.Stadium)
+	if err := r.discardStadium(seat); err != nil {
+		return err
+	}
+	r.lastStadium = old
+	return nil
+}
+
+// discardStadium moves what is in the Stadium spot to its owner's discard.
+func (r *replay) discardStadium(seat state.Seat) error {
+	switch st := r.st.Stadium; len(st) {
+	case 0:
+		return nil
+	case 1:
+		return r.move(seat, st[0], state.Loc{Seat: r.st.Cards[st[0]].Owner, Zone: state.Discard}, "", "")
+	default:
+		from, err := r.st.Find(st[0])
+		if err != nil {
+			return err
+		}
+		return r.emit(seat, state.EvMove, state.MovePayload{IID: st[0], Pair: st[1], From: &from, To: state.Loc{Seat: r.st.Cards[st[0]].Owner, Zone: state.Discard}})
+	}
+}
+
+// consumeReplaced reports whether names are seat's replaced Stadium cards
+// (lastStadium), already discarded, and marks them done.
+func (r *replay) consumeReplaced(seat state.Seat, names []string) bool {
+	if len(names) == 0 || len(names) > len(r.lastStadium) {
+		return false
+	}
+	left := slices.Clone(r.lastStadium)
+	for _, name := range names {
+		i := slices.IndexFunc(left, func(iid state.IID) bool {
+			return r.bound[iid] == name && r.st.Cards[iid].Owner == seat
+		})
+		if i < 0 {
+			return false
+		}
+		left = slices.Delete(left, i, i+1)
+	}
+	r.lastStadium = left
+	return true
+}
+
+// headlineBefore reports whether the headline before n is on line.
+func (r *replay) headlineBefore(n *Node, line int) bool {
+	for i := r.pos - 1; i >= 0; i-- {
+		if r.flat[i].Depth == 0 {
+			return r.flat[i].No == line
+		}
+	}
+	return false
 }

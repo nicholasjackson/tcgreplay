@@ -50,6 +50,45 @@ func Normalize(s string) string {
 	return logCodeRe.ReplaceAllString(s, "")
 }
 
+// lineCode is one card code on a log line and the text after it, which
+// starts with the card's name.
+type lineCode struct {
+	code, rest string
+}
+
+// lineCodes returns the card codes on each line of a log, keyed by line
+// number as Parse numbers lines; nil for a log without codes.
+func lineCodes(text string) map[int][]lineCode {
+	text = strings.NewReplacer("\u2019", "'", "\u2018", "'", "\r", "", "\ufeff", "").Replace(text)
+	var out map[int][]lineCode
+	for i, raw := range strings.Split(text, "\n") {
+		for _, m := range logCodeRe.FindAllStringSubmatchIndex(raw, -1) {
+			if out == nil {
+				out = map[int][]lineCode{}
+			}
+			out[i+1] = append(out[i+1], lineCode{code: raw[m[2]:m[3]], rest: raw[m[1]:]})
+		}
+	}
+	return out
+}
+
+// codeFor returns the one card code a line gives for name, or "" when it
+// gives none or several different ones (two prints of the card on one
+// line, as in a list of drawn cards).
+func codeFor(codes []lineCode, name string) string {
+	found := ""
+	for _, c := range codes {
+		if !strings.HasPrefix(c.rest, name) {
+			continue
+		}
+		if found != "" && found != c.code {
+			return ""
+		}
+		found = c.code
+	}
+	return found
+}
+
 // LogCodes returns the card codes the log gives for name, in order of
 // first appearance; nil for a log without codes.
 func LogCodes(text, name string) []string {

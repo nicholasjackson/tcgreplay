@@ -43,6 +43,28 @@ func TestValidTiming(t *testing.T) {
 	}
 }
 
+// TestWaitCapInsideToolCallLimit: a wait_for_turn call never blocks past
+// a client's tool-call limit (ChatGPT's is 60 seconds): the default cap
+// and the largest cap start-up accepts are both under 60s, the default is
+// accepted, and a 61s cap is refused at start-up.
+func TestWaitCapInsideToolCallLimit(t *testing.T) {
+	const limit = 60 * time.Second
+	if defaultWaitCap != 15*time.Second {
+		t.Errorf("default wait cap %s, want 15s", defaultWaitCap)
+	}
+	for name, d := range map[string]time.Duration{"default": defaultWaitCap, "largest accepted": maxWaitCap} {
+		if d >= limit {
+			t.Errorf("%s wait cap %s is not under %s", name, d, limit)
+		}
+	}
+	if err := validTiming(config{timing: game.Timing{WaitCap: defaultWaitCap}}); err != nil {
+		t.Errorf("default cap refused: %v", err)
+	}
+	if err := validTiming(config{timing: game.Timing{WaitCap: 61 * time.Second}}); err == nil {
+		t.Error("a 61s wait cap was accepted")
+	}
+}
+
 // TestConfigArgsCarryTiming: the daemon the shim spawns gets the wait
 // timings as flags; unset ones are left to its defaults.
 func TestConfigArgsCarryTiming(t *testing.T) {
@@ -68,7 +90,7 @@ func TestConfigArgsCarryTiming(t *testing.T) {
 // configured timings.
 func TestManagersUseTiming(t *testing.T) {
 	timing := game.Timing{WaitCap: 7 * time.Second, CheckIn: 4 * time.Minute, LockRelease: time.Minute}
-	m, _ := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true, timing: timing}, "")
+	m, _ := newServer(config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: true, timing: timing}, "", nil)
 	if m.Timing != timing {
 		t.Errorf("desktop manager timing %+v, want %+v", m.Timing, timing)
 	}
@@ -130,7 +152,7 @@ func TestMainTimingSettings(t *testing.T) {
 		env  []string
 		want string
 	}{
-		{"default", nil, "turn waits up to 30s a call, check-in after 5m0s, lock release after 2m0s"},
+		{"default", nil, "turn waits up to 15s a call, check-in after 5m0s, lock release after 2m0s"},
 		{"env", []string{"TCGREPLAY_WAIT_CAP=20s", "TCGREPLAY_CHECK_IN=10m", "TCGREPLAY_LOCK_RELEASE=1m"},
 			"turn waits up to 20s a call, check-in after 10m0s, lock release after 1m0s"},
 		{"flag over env", []string{"TCGREPLAY_WAIT_CAP=20s", "TCGREPLAY_CHECK_IN=10m", "TCGREPLAY_LOCK_RELEASE=1m",

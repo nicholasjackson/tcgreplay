@@ -1,7 +1,7 @@
 # Build the playmat UI into the Go package, then the binary.
 BIN := bin/tcgreplay
 
-.PHONY: build install web test dev dev-ui docker-build docker-run clean
+.PHONY: build install web site site-dev site-test test dev dev-ui docker-build docker-run plugin clean
 
 # Dev mode runs this checkout's build beside the installed one, with its
 # own data dir and UI port, so real games and the desktop app's daemon are
@@ -9,13 +9,17 @@ BIN := bin/tcgreplay
 DEV_DATA ?= .dev
 DEV_UI ?= 127.0.0.1:7778
 
+# GOTAGS: nodynamic keeps the WebP encoder from linking a system libwebp
+# dynamically, so the binary stays self-contained (see Dockerfile).
+GOTAGS := nodynamic
+
 build: web
-	go build -o $(BIN) ./cmd/tcgreplay
+	go build -tags $(GOTAGS) -o $(BIN) ./cmd/tcgreplay
 
 # install puts the binary where the Claude desktop app runs it from. Then
 # restart the app: its next launch replaces the daemon from the old build.
 install: web
-	go install ./cmd/tcgreplay
+	go install -tags $(GOTAGS) ./cmd/tcgreplay
 
 web: web/node_modules
 	cd web && npm run build
@@ -24,13 +28,34 @@ web/node_modules: web/package.json web/package-lock.json
 	cd web && npm ci
 	touch web/node_modules
 
+# site builds the public website (site/) into its Go package
+# (internal/site/dist/app), which the hosted playmat serves at / . It reads
+# the guides, the limits in .do/app.yaml and the example deck at build time.
+site: site/node_modules
+	cd site && npm run build
+
+site/node_modules: site/package.json site/package-lock.json
+	cd site && npm ci
+	touch site/node_modules
+
+# site-dev serves the website with live reload (Astro's dev server).
+site-dev: site/node_modules
+	cd site && npm run dev
+
+# site-test builds the website and runs its browser suite (site/e2e)
+# against the Go site handler.
+site-test: site
+	cd site && npm run test:e2e
+
 # test runs the Go checks, then builds the board and runs its browser
-# suite (web/e2e) by touch and by mouse against the board test server.
+# suite (web/e2e) by touch and by mouse against the board test server, then
+# builds the website and runs its browser suite (site-test).
 test:
 	go vet ./...
 	go test ./...
 	$(MAKE) web
 	cd web && npm run test:e2e
+	$(MAKE) site-test
 
 # dev builds and runs the dev daemon in the foreground, logging to the
 # terminal; the playmat is at http://$(DEV_UI)/. Claude Code reaches it
@@ -46,11 +71,25 @@ dev: build
 dev-ui: web/node_modules
 	cd web && TCGREPLAY_ADDR=$(DEV_UI) npm run dev
 
-# docker-build builds the hosted playmat's container image; docker-run
-# starts it on port 8080, with board links at PUBLIC_URL. Hosted mode needs
+# docker-build builds the hosted playmat's container image, with the board
+# and the website built in; docker-run starts it on port 8080, serving the
+# website at PUBLIC_URL and the board at PUBLIC_URL/board. Hosted mode needs
 # a Google sign-in client: export TCGREPLAY_GOOGLE_CLIENT_ID and
 # TCGREPLAY_GOOGLE_CLIENT_SECRET first (redirect URI
-# $(PUBLIC_URL)/auth/google/callback).
+# $(PUBLIC_URL)/auth/google/callback). Card sets load from the published
+# copy (TCGREPLAY_CARDSETS_URL, default the project's CDN; export it to use
+# another, such as a directory from `tcgreplay sets publish -to`, mounted
+# into the container), checked every TCGREPLAY_CARDSETS_INTERVAL. To copy
+# card images to a Spaces bucket, also export TCGREPLAY_SPACES_ENDPOINT,
+# TCGREPLAY_SPACES_BUCKET, TCGREPLAY_SPACES_KEY and TCGREPLAY_SPACES_SECRET
+# (optional). To use the admin page at /admin, export TCGREPLAY_ADMINS
+# (Google account emails), and TCGREPLAY_SPACES_CDN_TOKEN for image clears
+# to purge the CDN (both optional). TCGREPLAY_REVIEWER (the plugin
+# reviewer's Google email, let past the user cap) and
+# TCGREPLAY_OPENAI_CHALLENGE (OpenAI's domain-verification token, served at
+# /.well-known/openai-apps-challenge) are passed too, if exported (both
+# optional). TCGREPLAY_WEB_ANALYTICS_TOKEN is
+# deliberately not passed, so a local container run never counts visitors.
 IMAGE ?= tcgreplay
 PUBLIC_URL ?= http://localhost:8080
 
@@ -60,7 +99,20 @@ docker-build:
 docker-run:
 	docker run --rm -p 8080:8080 -e TCGREPLAY_PUBLIC_URL=$(PUBLIC_URL) \
 		-e TCGREPLAY_GOOGLE_CLIENT_ID -e TCGREPLAY_GOOGLE_CLIENT_SECRET \
-		-e TCGREPLAY_RATE_LIMIT -e TCGREPLAY_MAX_USERS $(IMAGE)
+		-e TCGREPLAY_RATE_LIMIT -e TCGREPLAY_MAX_USERS \
+		-e TCGREPLAY_CARDSETS_URL -e TCGREPLAY_CARDSETS_INTERVAL \
+		-e TCGREPLAY_SPACES_ENDPOINT -e TCGREPLAY_SPACES_BUCKET \
+		-e TCGREPLAY_SPACES_KEY -e TCGREPLAY_SPACES_SECRET \
+		-e TCGREPLAY_ADMINS -e TCGREPLAY_SPACES_CDN_TOKEN \
+		-e TCGREPLAY_REVIEWER -e TCGREPLAY_OPENAI_CHALLENGE $(IMAGE)
+
+# The ChatGPT plugin package for OpenAI's plugin dashboard: plugin.json,
+# mcp.json and the listing icon, built from plugin/ (the listing source,
+# release notes and icon), the public address in .do/app.yaml and the
+# fan-project notice in internal/notice/notice.json. Upload the ZIP in
+# OpenAI's plugin dashboard; plugin/SUBMITTING.md lists the steps.
+plugin:
+	go run ./cmd/tcgreplay-plugin -out bin/tcgreplay-plugin.zip
 
 clean:
-	rm -rf bin internal/webui/dist/app
+	rm -rf bin internal/webui/dist/app internal/site/dist/app

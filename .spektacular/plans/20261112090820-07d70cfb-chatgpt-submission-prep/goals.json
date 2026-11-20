@@ -1,0 +1,1249 @@
+{
+  "plan": "20261112090820-07d70cfb-chatgpt-submission-prep",
+  "items": [
+    {
+      "item": "25c14f80-304d-42f9-b352-359b925c0f5e",
+      "title": "Explicit labels on every tool",
+      "checks": [
+        {
+          "at": "2026-11-13T09:31:32Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "25c14f80-304d-42f9-b352-359b925c0f5e",
+            "title": "Explicit labels on every tool",
+            "criteria": [
+              "The tool list an assistant receives shows the read-only, destructive and open-world labels on every tool, each with an explicit true or false, on the desktop and on the hosted playmat.",
+              "The reads are marked read-only, only starting a new game, importing a game and rebuilding it with an opponent list are marked destructive, and no tool is marked as reaching outside the playmat.",
+              "In the hosted playmat every tool declares that it needs the player's sign-in; on the desktop none does.",
+              "Tool names, arguments and results are unchanged, so Claude connects and plays as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/annotations.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "mcp/shared.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "mcp/protocol.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/annotations_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "github.com/modelcontextprotocol/go-sdk/jsonrpc"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "notifications/initialized"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "tools/list"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/annotations.go:76-125: explicitLabels() wraps tools/list and labelledTools.MarshalJSON sets readOnlyHint, destructiveHint and openWorldHint on every tool as explicit bools (readOnlyTools[name], replacingTools[name], false). It is installed in MCP() at internal/mcpserver/server.go:65, which both the desktop (cmd/tcgreplay/main.go:270) and hosted (cmd/tcgreplay/hosted.go:306) servers call. Every tool is registered through mcp.AddTool with s.tool(...) (server.go:213, guides.go:30); a grep finds no other mcp.AddTool in internal/mcpserver. annotations_test.go TestToolLabelsExplicitOnTheWire checks the raw wire JSON for both servers over both transports. I did not run the tests; the reported run was green."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "annotations.go:15-28 readOnlyTools lists ping, get_record, get_state, get_log, get_warnings, card_text, wait_for_turn, search_deck, look_top, list_branches, get_profile, guide. annotations.go:33-37 replacingTools is exactly new_game, import_log, set_opponent_deck. annotations.go:125 sets openWorldHint false on every tool, and annotations.go:43-48 does the same in the Go struct. No tool is open-world."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "annotations.go:58-64 s.tool() sets t.Meta = mcp.Meta{\"securitySchemes\": [{\"type\":\"oauth2\"}]} only when s.Resolve != nil. cmd/tcgreplay/hosted.go:306 builds the hosted server with Resolve set, so every tool gets it, since all tools go through s.tool. The desktop server (main.go:270) has no Resolve, so no tool gets _meta. Tests: annotations_test.go TestToolSecuritySchemes. Caveat: the separate moved server (cmd/tcgreplay/moved.go:61) has no Resolve and so no sign-in declaration, but it is not the hosted playmat the criterion names."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "The diff changes no tool name, no input struct and no description string; guides.go:30 passes guideToolDescription() unchanged and server.go:213 and 358 pass the same desc. The only additions are annotations, _meta and an empty Title (\"\"), which is not a rename. annotations_test.go TestDesktopToolNamesUnchanged pins the 45 desktop names over both transports. The middleware passes every non-tools/list method through unchanged (annotations.go:80-82), and hosted middleware passes tools/list through (internal/hostauth/limit_test.go and usergames telemetry_test.go confirm pass-through behaviour)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "331b8154-0bf1-4408-ae2b-17fd6f374740",
+      "title": "Titles and descriptions for every tool",
+      "checks": [
+        {
+          "at": "2026-11-13T09:43:55Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "331b8154-0bf1-4408-ae2b-17fd6f374740",
+            "title": "Titles and descriptions for every tool",
+            "criteria": [
+              "Every tool in the list has a title, a description containing when to use it and when not to, and a description for every input.",
+              "A tool added later without a title, a label, either sentence or an input description makes the test suite fail, naming the tool and what is missing.",
+              "The size of the tool list after the change is measured, recorded and held under a ceiling by a test.",
+              "The existing guidance in descriptions (import rather than read the log, ask for a missing decklist, call the wait in the same reply, the guide triggers) is still there."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "guides_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "wait_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "pair_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "add_effect.text"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "annotate.text"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "attack.name"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "checkout.branch"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "coin_flip.n"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "look_top.n"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "look_top.whose"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "place_damage.target"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "remove_effect.id"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "reveal.iids"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "set_condition.clear"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "set_condition.target"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "shuffle.whose"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/annotations_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "metadata_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "server.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "All 45 tools in the desktop list have a title and a description with \"Use this when\" and \"Do not use\": server.go:474-882 (add calls, title is the 2nd argument), guides.go:30 and 62 (guide). Every input struct field has a jsonschema description: server.go:230-470 (SeatArg, EndTurnArg, NewGame, ImportLog, Sample, OppDeck, Undo, ProfileArg, Mode, GetState, GetLog, CardText, Draw, IIDArg, PlayTrainerArg, BenchArg, StartGame, Evolve, Attach, Ability, Retreat, Switch, Attack, TargetArg, TakePrize, Condition, Damage, Search, LookTop, Shuffle, Coin, Move, Reveal, AddEffect, EffectID, Rewind, Checkout, Annotate) and guides.go:15 (GuideArg). Empty has no fields. metadata_test.go:65-81 checks this over the wire for both servers and both transports."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "Title, sentence and input-description gaps are caught: metadata_test.go:23-49 reports a gap naming the tool and the missing piece, and TestToolMetadataComplete (metadata_test.go:65-81) fails on it. The label gap cannot fire on the live server. explicitLabels (annotations.go:61-74) is installed unconditionally by server.go:65, and labelledTools.MarshalJSON (annotations.go:83-123) sets readOnlyHint, destructiveHint and openWorldHint from readOnlyTools/replacingTools for every tool, whether or not it has Annotations. A tool added later with no Annotations therefore still lists explicit booleans, so the check at metadata_test.go:51-57 passes and the suite stays green. Only the synthetic case in TestToolGapsNamesWhatIsMissing (metadata_test.go:117-120) exercises a missing label, and that bypasses the middleware. The fix would be to check the tool's declared annotations before the middleware fills them in, or to fail when a tool has no annotations."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "metadata_test.go:149-157 records the measurement (2026-11-13: 45 tools, 37,217 bytes hosted, 35,057 desktop) and sets toolListCeiling = 41000. TestToolListSize (metadata_test.go:162-174) measures the hosted tools/list on both transports, logs the size and count, and fails over the ceiling. I did not re-run it, so the recorded byte counts are taken from the comment and the test's assertion."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Import rather than read the log: server.go:544 (\"import it here rather than reading the log yourself\"). Ask for a missing decklist: server.go:544 (\"ask the player to paste the list they played ... do not review the game from the log text instead\"). Call the wait in the same reply: server.go:756 (\"call this in the same reply and act on the result\"). Guide triggers: guides.go:60-67 appends each guide's name and description to the guide tool description, and guides.go:69-78 does the same for the instructions block. The diff changes only the wording around these sentences."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-13T09:46:06Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "331b8154-0bf1-4408-ae2b-17fd6f374740",
+            "title": "Titles and descriptions for every tool",
+            "criteria": [
+              "Every tool in the list has a title, a description containing when to use it and when not to, and a description for every input.",
+              "A tool added later without a title, a label, either sentence or an input description makes the test suite fail, naming the tool and what is missing.",
+              "The size of the tool list after the change is measured, recorded and held under a ceiling by a test.",
+              "The existing guidance in descriptions (import rather than read the log, ask for a missing decklist, call the wait in the same reply, the guide triggers) is still there."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "guides_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "wait_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "pair_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "add_effect.text"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "annotate.text"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "attack.name"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "checkout.branch"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "coin_flip.n"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "look_top.n"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "look_top.whose"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "place_damage.target"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "remove_effect.id"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "reveal.iids"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "set_condition.clear"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "set_condition.target"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "shuffle.whose"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/annotations_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "metadata_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "server.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "All 45 tools are registered through add/addQuiet/guide with a title and description (internal/mcpserver/server.go: 44 add/addQuiet calls with a title argument; guides.go:355 guide with title \"Read a coaching guide\"). Each description carries \"Use this when\" and \"Do not use\" (e.g. server.go:547 ping, :553 new_game, :774 wait_for_turn, :364 guide in guides.go). Every input struct field carries a jsonschema description (server.go:232, 339, 347, 361, 384, 403, 423, 432, 451; guides.go:15 GuideArg.Name). metadata_test.go:70-86 (TestToolMetadataComplete) asserts this over the desktop and hosted servers on both transports, and the verification summary reports the suite green. I did not run the tests myself."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "metadata_test.go:21-64 toolGaps reports, per tool, a gap string prefixed with the tool name for: no title, missing \"Use this when\", missing \"Do not use\", an input without a description (input %q), and a label that is not an explicit boolean. TestToolMetadataComplete (metadata_test.go:70) fails on any gap. TestToolAddedWithoutMetadataFails (metadata_test.go:187-219) registers a bare tool with mcp.AddTool through the real MCP() server over both transports and checks that the gaps name bare_tool with each missing item. TestToolGapsNamesWhatIsMissing (metadata_test.go:93-152) covers each case."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "metadata_test.go:154-162 records the measurement in a comment: 45 tools, 37,217 bytes hosted (35,057 desktop), measured 2026-11-13, with a const toolListCeiling = 41000. TestToolListSize (metadata_test.go:167-179) logs the tool count and byte size and fails with t.Errorf when the hosted tools/list exceeds the ceiling, over both transports. The ceiling is in bytes rather than a tool count, which still holds the size of the list under a limit. I did not run the test myself."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "import_log (server.go:562) keeps \"import it here rather than reading the log yourself\" and \"ask the player to paste the list ... do not review the game from the log text instead\". wait_for_turn (server.go:774) keeps \"call this in the same reply\". The guide trigger list still comes from guides.List() in guideToolDescription (guides.go:361-368), and the diff only adds a sentence to the front and a \"Do not use it for card text\" clause. annotations_test.go's TestDesktopToolNamesUnchanged also guards the 45 names."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "2c3dc8ab-2f02-4002-a853-580559f0d631",
+      "title": "Instructions that stand alone and waits inside the limit",
+      "checks": [
+        {
+          "at": "2026-11-13T09:50:19Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "2c3dc8ab-2f02-4002-a853-580559f0d631",
+            "title": "Instructions that stand alone and waits inside the limit",
+            "criteria": [
+              "The first 512 characters of the playmat's instructions name what the playmat is, the rule to reference cards by their instance IDs, and where to find the coaching guides, as complete sentences.",
+              "The turn loop, the guide list and the hosted board-link line are still in the instructions.",
+              "A wait for a turn that is not over returns in under 60 seconds with a result telling the assistant to call it again.",
+              "The playmat refuses to start with a wait limit that could exceed ChatGPT's one-minute limit."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/guides_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "wait_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "gotchas/flaky-guide-instructions-test.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/wait_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/timing_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "main_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/mcpserver/server.go:88 defines openingInstructions as the first paragraph of instructions (line 73 prepends it). Its first three sentences name the playmat (\"TCG Replay is a virtual Pokémon TCG playmat...\"), the iid rule (\"Refer to every card by its instance ID (iid, such as \\\"p2-12\\\"), never by name; get_state lists the iids.\") and the guides (\"Coaching workflows have guides: read the matching guide with the guide tool before you start one, or call guide with no name to list them.\"). Each is a complete sentence ending with a full stop. Counting characters, the paragraph ends at about 482 characters (about 483 bytes, since 'é' is two bytes), inside the 512-character window. TestInstructionsOpening in internal/mcpserver/guides_test.go:446 checks the same thing."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The turn loop is still in the instructions at server.go:83 (\"After handing the player a turn ... call wait_for_turn ... calling it again until the turn ends\"). The guide list is appended by s.instructions() at server.go:96 via guideInstructions() (guides.go:71-78), which lists each guide name and description. The board-link line is the boardInstruction constant (server.go:91), appended in hosted mode at server.go:100 when BoardURL is set. Side note, not a criterion: server.go:75 and server.go:76 are identical '- Locations:' bullets, so that line appears twice in the instructions text. Worth removing, but it does not affect this criterion."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/game/presence.go:732 starts a capTimer of t.WaitCap, and the wait loop's select (presence.go:863-872) returns WaitStillWaiting when it fires. The cap is 15s by default and at most 50s by validTiming (cmd/tcgreplay/main.go:130), so a call returns well under 60s. The cap timer is not reset between wakeups, so the call's total time is bounded. In internal/mcpserver/wait.go:112, KeepWaiting is true for still_waiting, and the default branch at wait.go:178 sets next to 'call wait_for_turn again now with since N, in this same reply'. internal/mcpserver/wait_test.go:252-254 (added in the diff) asserts KeepWaiting is true and next contains 'call wait_for_turn again'."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/main.go:117 sets maxWaitCap = 50s. validTiming (main.go:126-140) returns an error when WaitCap \u003c= 0 or WaitCap \u003e maxWaitCap. main() calls it at main.go:221-225 and exits with status 2 on error, so the playmat refuses to start. Any cap above 50s, including anything that could exceed 60s, is refused. cmd/tcgreplay/timing_test.go:42-63 (TestWaitCapInsideToolCallLimit) asserts that a 61s cap is refused, and that the default and the largest accepted cap are under 60s."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "85e6a6bd-8ac8-4567-8e39-06636494c9d5",
+      "title": "Tell ChatGPT who is signed in",
+      "checks": [
+        {
+          "at": "2026-11-19T09:02:11Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "85e6a6bd-8ac8-4567-8e39-06636494c9d5",
+            "title": "Tell ChatGPT who is signed in",
+            "criteria": [
+              "Connected to the hosted playmat, asking who is signed in returns the player's identifier in the form OpenAI's profile rules require, and the same player gets the same identifier on a second connection.",
+              "Two different players get different identifiers, and the answer comes even when the playmat is full.",
+              "The desktop playmat's tools are unchanged.",
+              "The privacy page says the assistant is given the player's Google account ID to tell accounts apart."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/privacy.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/account.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "annotations.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "guides.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/mcp.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted_account_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/mcpserver/server_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "demo.gs"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/privacy.spec.js"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "account.go:17-45 registers get_account with _meta openai/profile true, no input properties, and an output schema requiring a single string id with minLength 1 and pattern \\S. The id comes from s.Account, which is Registry.AccountID (internal/usergames/mcp.go, diff hunk +1224-1232), reading acct.ID from hostauth.AccountFromToken (oauth.go:467-473, UserID). That ID is Google's sub (hostauth.go:75, google.go:191). hosted_account_test.go:52-104 (TestHostedGetAccount) checks the schema and the profile marker, and that a second connection for the same account returns the same ID as the first (lines 97-99). I could not check OpenAI's profile rules themselves, so the 'form they require' part rests on the schema the code declares and the test that checks it."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "A different account gets a different ID: hosted_account_test.go:100-103 asserts userB's ID differs from DefaultAccount's. At the full cap, hosted_account_test.go:106-139 (TestHostedGetAccountAtFullCap) shows get_state refused as busy while get_account still returns userB.ID, and that asking takes no place. AccountID (usergames/mcp.go) touches no registry entry, and get_account is registered with mcp.AddTool outside the place-taking add/addWith path (account.go:23-24, 34-44)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Interpreting 'tools unchanged' as the set of tool names: the desktop list has exactly the 45 names in desktopToolNames (internal/mcpserver/annotations_test.go, diff hunk +502-515). TestDesktopToolNamesUnchanged (annotations_test.go, diff +517-539) compares against that list over both transports, and get_account is only added when Account is set (server.go, diff +67-69). Caveat: the descriptions, titles, jsonschema text and explicit-label encoding of the desktop tools all changed (server.go, guides.go, annotations.go). If 'unchanged' means identical definitions rather than names, this would not hold."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "site/src/pages/privacy.astro, diff hunk @@ -193 (around lines 195-196): the 'Your AI assistant' item now says the playmat tells it your \u003cspan data-assistant-id\u003eGoogle account ID (never your email address), so it can tell your accounts apart\u003c/span\u003e. site/e2e/privacy.spec.js (diff +137-141) asserts that text on [data-assistant-id]."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "1e610604-b888-471d-8128-8071a5b724b0",
+      "title": "Answer OpenAI's domain verification",
+      "checks": [
+        {
+          "at": "2026-11-19T09:06:24Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "1e610604-b888-471d-8128-8071a5b724b0",
+            "title": "Answer OpenAI's domain verification",
+            "criteria": [
+              "With the maintainer's token configured, `/.well-known/openai-apps-challenge` returns exactly that token as plain text, without signing in.",
+              "With no token configured, the address answers \"not found\", and nothing else on the playmat changes.",
+              "The token never appears in the playmat's logs or in the repository."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/.well-known/openai-apps-challenge"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_routes_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "text/plain"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted.go:252 registers mux.Handle(\"GET \"+openAIChallengePath, openAIChallengeHandler(challenge)) before the other routes; the handler (hosted.go:197-207) writes the trimmed token (main.go:207 TrimSpace of TCGREPLAY_OPENAI_CHALLENGE) with io.WriteString, Content-Type text/plain; charset=utf-8, Cache-Control no-store, and no newline. No auth wraps this route (a.Routes/RequireToken/RequireSession are not applied to it). hosted_routes_test.go TestOpenAIChallengeServed asserts 200, exact body, content type, no Set-Cookie. The env-driven path is covered by TestMainServesOpenAIChallengeFromEnv. The test was not re-run by me; the staged verification reports go test ./... passing."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "hosted.go:199-201: when token is empty, openAIChallengeHandler calls http.NotFound, a plain 404 that is not the website's page. The only route added to hostedHandler is that one line (hosted.go:252); the rest of the mux is unchanged. TestOpenAIChallengeNotSet (hosted_routes_test.go) asserts 404, body differs from the site's 404, and no Location header. The other diff hunks (annotations, get_account, wait cap, privacy page) belong to other items in the same working tree and are not this criterion's concern."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Logging: the only log that mentions the token is the start-up line at hosted.go:479, which calls challengeText(c.openAIChallenge) (hosted.go:211-217). That prints only the fixed strings 'OpenAI domain token set' or 'no OpenAI domain token (...)'; the value is never printed. config.args() does not carry the value (grep finds no openAIChallenge reference in args), and the value is env-only, not a flag (main.go:73-75, 207). Repository: .do/app.yaml:9-17 declares the key as type SECRET with no value. A repo-wide grep for openai-apps-challenge and openAIChallenge found no literal token; the only literal is the fake testChallenge constant \"oai-challenge-6f1d2c9a7b\" in hosted_routes_test.go, which is a test stand-in, not the maintainer's token. TestMainServesOpenAIChallengeFromEnv asserts the log does not contain the token."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "d2d1dcc6-fbb3-4803-b774-0eb565951b1f",
+      "title": "Let the reviewer in past the player limit",
+      "checks": [
+        {
+          "at": "2026-11-19T09:12:04Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "d2d1dcc6-fbb3-4803-b774-0eb565951b1f",
+            "title": "Let the reviewer in past the player limit",
+            "criteria": [
+              "With the player limit reached by other accounts, the reviewer account still signs in, imports the example game and plays, while another non-reviewer account is still turned away.",
+              "An account with the reviewer's address that Google has not verified is treated like any other account.",
+              "The reviewer's place does not reduce the places available to other players.",
+              "With no reviewer configured, the limit works exactly as before, and the reviewer's address never appears in the logs or the repository."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/oauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "seal.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/places_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/oauth_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "seal_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_cap_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/example/battle-log.txt"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "testdata/decks/mega-lucario-ex-v12.txt"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/usergames/usergames.go:118-136 (Use) lets the reviewer past a full cap (`(e == nil || !e.holds) \u0026\u0026 !reviewer \u0026\u0026 r.full()`), and Admit (line 142) and the board/MCP paths all go through Use. Sign-in reaches Admit at internal/hostauth/google.go:219. Non-reviewers still get hostauth.BusyError. cmd/tcgreplay/hosted_cap_test.go:218-260 (TestHostedReviewerPastCap) signs the reviewer in at cap 1, imports the site example battle-log.txt and mega-lucario deck, plays, passes the board sign-in, and checks a third account gets the busy page on connector and board."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "usergames.go:164-166 isReviewer requires acct.EmailVerified, so an unverified account with the reviewer's address is not matched. The flag is carried from Google claims (internal/hostauth/google.go:141-191) through tokens (store.go:406-409, oauth.go:457-474), so tool calls get the same answer. Tests: internal/usergames/places_test.go TestUnverifiedReviewerEmailIsRefused, and cmd/tcgreplay/hosted_cap_test.go:239-248 where an unverified reviewer-address account is refused at the cap."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "usergames.go:177-181 (full) counts only `e.holds \u0026\u0026 !e.reviewer`, so the reviewer's place never reduces the places available to others. The reviewer flag is set per Use (usergames.go:133). places_test.go TestReviewerPlaceNotCounted checks that with the reviewer in, A leaving lets C in and A can still take the one place while the reviewer holds one."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "With no reviewer, cfg.Reviewer is \"\" and isReviewer returns false (usergames.go:164-166), so Use behaves as before. cmd/tcgreplay/main.go reads TCGREPLAY_REVIEWER only from the environment (trimmed, no flag). The start-up log only prints reviewerText (\"reviewer account set\" / \"no reviewer account\"), hosted.go:115-122 and 171. The telemetry recorder records the reviewer as a hashed id via r.ids.ID(email) (internal/telemetry/recorder.go:147-155), not the address. .do/app.yaml:25-27 declares TCGREPLAY_REVIEWER as a SECRET with no value. The only reviewer addresses in code are reviewer@example.com / Reviewer@Example.com in *_test.go files. Tests TestHostedReviewerUnsetKeepsTheCap and TestNoReviewerConfigured cover the unset case, and TestHostedReviewerPastCap asserts the address is absent from logs and events. Note for the caller, not a verdict: the staged diff also changes files outside this item's listed scope (Makefile, internal/mcpserver/*, site/src/pages/privacy.astro, site/e2e/privacy.spec.js, cmd/tcgreplay/timing_test.go), which look like other tasks' work, so the scope rule is likely broken even though these four criteria are met."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "2c4138f0-bd43-4434-839a-1375d156661b",
+      "title": "Set the domain token and reviewer on the hosted playmat",
+      "checks": [
+        {
+          "at": "2026-11-19T09:14:00Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "2c4138f0-bd43-4434-839a-1375d156661b",
+            "title": "Set the domain token and reviewer on the hosted playmat",
+            "criteria": [
+              "The hosted playmat's settings hold the domain token and the reviewer's email, set in the console and not in the repository.",
+              "`https://tcgreplay.app/.well-known/openai-apps-challenge` returns exactly the token, and OpenAI's dashboard accepts the domain."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/.well-known/openai-apps-challenge"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The repo side is correct: .do/app.yaml:134-152 (diff hunk @@ -131,6 +131,25 @@) declares TCGREPLAY_OPENAI_CHALLENGE and TCGREPLAY_REVIEWER as type SECRET with no value, so no token or email is in the repository. Nothing in the files shows the values are set in the DigitalOcean App Platform console. The console is not readable from the repo, and the staged status and diff contain no record of it. The criterion needs the console state, so it is not met by the files."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The playmat code exists: cmd/tcgreplay/hosted.go in the diff (openAIChallengeHandler, registered at GET /.well-known/openai-apps-challenge, plain text, no-store, 404 when empty). The live response at https://tcgreplay.app/.well-known/openai-apps-challenge and OpenAI's dashboard acceptance cannot be checked from the files. This reviewer has only Read, Grep and Glob, with no network fetch, and the verification list records no command for this item. Nothing in the repo shows the token has been set in production or that OpenAI accepted the domain."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-19T09:14:46Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "2c4138f0-bd43-4434-839a-1375d156661b",
+            "title": "Set the domain token and reviewer on the hosted playmat",
+            "criteria": [
+              "The hosted playmat's settings hold the domain token and the reviewer's email, set in the console and not in the repository.",
+              "`https://tcgreplay.app/.well-known/openai-apps-challenge` returns exactly the token, and OpenAI's dashboard accepts the domain."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/.well-known/openai-apps-challenge"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The repo side is in place: .do/app.yaml:134-152 declares TCGREPLAY_OPENAI_CHALLENGE and TCGREPLAY_REVIEWER as scope RUN_TIME, type SECRET with no value, and the file's comments say the values are set in the control panel, encrypted. Nothing in the repo can show the values are actually set on the hosted playmat in App Platform's console, which is a human step, and I have no tool that can query it. The criterion therefore cannot be confirmed from the files. Before judging this met, someone with console access must confirm both keys hold values. The diff also shows no value for either key, which is correct for the no-secrets-in-repo part."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The code that serves the path exists: cmd/tcgreplay/hosted.go in the diff registers mux.Handle(\"GET \"+openAIChallengePath, openAIChallengeHandler(challenge)) and openAIChallengeHandler writes exactly the trimmed TCGREPLAY_OPENAI_CHALLENGE as text/plain with Cache-Control no-store, or a 404 when unset (main.go trims the env value). Tests TestOpenAIChallengeServed and TestMainServesOpenAIChallengeFromEnv cover it. But this criterion is about the live URL https://tcgreplay.app/.well-known/openai-apps-challenge returning exactly the token, and about OpenAI's dashboard accepting the domain. I had no way to fetch the live URL or reach the OpenAI dashboard (read-only, no shell), and no verification command was run. Nothing in the files proves the deployed endpoint returns the real token or that OpenAI accepted it. Also the code change only reaches the platform once the spec is applied with doctl apps update and the playmat is redeployed, and the files do not show that happened."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-19T09:15:24Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "2c4138f0-bd43-4434-839a-1375d156661b",
+            "title": "Set the domain token and reviewer on the hosted playmat",
+            "criteria": [
+              "The hosted playmat's settings hold the domain token and the reviewer's email, set in the console and not in the repository.",
+              "`https://tcgreplay.app/.well-known/openai-apps-challenge` returns exactly the token, and OpenAI's dashboard accepts the domain."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/.well-known/openai-apps-challenge"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The repo side is right: .do/app.yaml (diff hunk @@ -131,6 +131,25 @@, lines 134-152 of the working file) declares TCGREPLAY_OPENAI_CHALLENGE and TCGREPLAY_REVIEWER as scope RUN_TIME, type SECRET with no value, and I found no token or reviewer address anywhere in the file. But nothing in the files shows the values are set in the DigitalOcean App Platform console (Settings \u003e playmat \u003e Environment Variables). The goal has no verification command for this and the console is not readable from here, so the criterion is not shown as met. Still needed: someone with console access confirms both secrets are set there."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The code is in place: cmd/tcgreplay/hosted.go (diff hunk @@ -186,6 +187,43 @@) registers GET /.well-known/openai-apps-challenge via openAIChallengeHandler, which returns the configured token as text/plain with no-store and 404s when it is empty; main.go reads TCGREPLAY_OPENAI_CHALLENGE and trims it. But whether https://tcgreplay.app/.well-known/openai-apps-challenge returns exactly the token in production, and whether OpenAI's dashboard accepts the domain, depends on the live deployment and the OpenAI Platform dashboard. Neither is in the files, and I had no shell or network tool to fetch the URL. Not shown as met. Scope note: the staged diff also changes many files outside this item (Makefile, Go source and tests, site/ privacy files), which the goal's file scope and no-other-task rule do not allow for this item; that is for the caller to check, not a criterion verdict."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-19T09:15:33Z",
+          "round": 1,
+          "decision": "accept",
+          "reason": "deferred to the maintainer: live setup after deploy (OpenAI dashboard and DigitalOcean console), per the user; same handling as the observability and visitor-analytics human tasks in this epic"
+        }
+      ],
+      "attempts": 3,
+      "state": "accepted_shortfall"
+    },
+    {
+      "item": "c00d0a9f-069e-4abb-8b4b-8e3672c04e73",
+      "title": "A listing icon without Pokémon trademarks",
+      "checks": [
+        {
+          "at": "2026-11-19T09:17:42Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "c00d0a9f-069e-4abb-8b4b-8e3672c04e73",
+            "title": "A listing icon without Pokémon trademarks",
+            "criteria": [
+              "The project holds a square listing icon, at least 512 pixels across and well under 5 MB, with its editable source beside it.",
+              "The icon shows no Poké Ball, Pokémon name, logo or character.",
+              "The website and board icons are unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/assets/icon.svg"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/logo.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/assets/icon.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/icon.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/public/icon.png"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "plugin/assets/icon.png and plugin/assets/icon.svg are both untracked new files (tcgreplay.status lines 29-30). icon.svg:1 declares width=\"512\" height=\"512\" viewBox=\"0 0 512 512\", so the source is square. Its comment at icon.svg:5-6 gives the render command (rsvg-convert -w 512 -h 512). internal/plugin/icon_test.go:22-54 (TestListingIcon, untracked) asserts the PNG decodes as png, is square, is at least 512 px, is at most 1 MiB (well under 5 MiB), and that the SVG source exists beside it. The verify line for go test ./internal/plugin passes, so that test passes. I could not read the PNG's pixel dimensions or byte size directly with my tools; that rests on the passing test."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "I viewed plugin/assets/icon.png: it shows three fanned white-outlined plain cards, a cyan replay arrow with a play triangle on the front card, and a timeline strip with a dot. No Poké Ball, no text, no name, no logo and no character appear. icon.svg:1-37 contains only generic shapes, gradients and a title 'TCG Replay listing icon'. icon_test.go:48-53 also rejects the trademark words pokémon, pokemon, poké, poke ball, pokeball, pikachu and nintendo in the SVG source, and no match was reported."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "tcgreplay.status (the staged status for tcgreplay) lists no changes to docs/logo.png, docs/icon.png or site/public/icon.png, and the diff (tcgreplay.diff) contains no hunk touching them. The verify command 'git status --short docs/icon.png docs/logo.png site/public/icon.png' passes with no output. The only icon paths changed are plugin/assets/icon.svg and plugin/assets/icon.png, which the goal allows."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "b00b3652-908e-48ee-9efa-eadf069ceac9",
+      "title": "Build the plugin package",
+      "checks": [
+        {
+          "at": "2026-11-19T09:23:07Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "b00b3652-908e-48ee-9efa-eadf069ceac9",
+            "title": "Build the plugin package",
+            "criteria": [
+              "One command builds the plugin package, and building twice from the same sources gives the same contents.",
+              "The package shows the name \"TCG Replay\", connects to `https://tcgreplay.app/mcp` with the playmat's sign-in, and carries the icon, the description with the fan-project notice and credit, and the website, privacy, terms and support links.",
+              "The notice, credit, support link and address are taken from the project's existing sources, not typed into the listing.",
+              "A listing that breaks one of OpenAI's limits (lengths, number of prompts or test cases, link form, icon size or shape, secrets) is refused with a message naming the rule."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/plugin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay-plugin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/appspec"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/listing.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/appspec/appspec.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://host"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/plugin/plugin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/issues"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "notice.notice"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "mcp.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "assets/icon.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/plugin/plugin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../.do/app.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../internal/notice/notice.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../plugin/listing.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../plugin/release-notes.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "../../plugin/assets/icon.png"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/privacy"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/terms"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/mcp"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay-plugin/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "bin/tcgreplay-plugin.zip"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/notice/notice.json"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Makefile:110-115 adds a `plugin` target (added to .PHONY at Makefile:40) that runs `go run ./cmd/tcgreplay-plugin -out bin/tcgreplay-plugin.zip`. internal/plugin/plugin.go:87 fixes every ZIP entry's modification time (fixedTime), and writeZip (plugin.go:531-547) writes entries in a fixed order, so the same sources give the same bytes. internal/plugin/plugin_test.go:189-203 (TestBuildIsReproducible) asserts two builds are byte-identical, and the make plugin cmp check passed."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "plugin/listing.json:4 sets displayName \"TCG Replay\". plugin.go:225-233 derives the address from .do/app.yaml TCGREPLAY_PUBLIC_URL, which is https://tcgreplay.app (app.yaml:94-95). mcpServer is built as streamable-http at base+\"/mcp\" with oauth auth and dcr client mode (plugin.go:501-507). plugin.go:404 appends the notice and credit to the description. The icon is written at assets/icon.png (plugin.go:260). plugin.go:462-464 sets websiteURL, privacyPolicyURL (/privacy) and termsOfServiceURL (/terms), and plugin.go:464 sets supportURL from notice.json help.url. plugin_test.go:102-187 (TestBuildFromRealSources) checks each of these against the real sources."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "plugin/listing.json contains no URL, notice text or support link. plugin.go:287-307 (parseListing) runs checkSource, which refuses literal http(s) addresses (plugin.go:337-338), the notice text (plugin.go:340-341) and the support-link host (plugin.go:343-345) in the listing source. The values come from internal/notice/notice.json (notice, credit, help.url, lines 2-10) and .do/app.yaml TCGREPLAY_PUBLIC_URL (app.yaml:94-95). plugin_test.go:208-215 (TestListingSourceLeavesDerivedPartsToTheBuilder) asserts the listing spells out none of them."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Length limits: plugin.go:414-430 checks displayName, shortDescription (30), the 4000-character long description, and starter prompts (3 max, 128 chars each, plugin.go:431-435). Test cases: plugin.go:436-452 requires exactly 5 positive and 3 negative cases. Link form: checkLink (plugin.go:513-522) requires https and at most 1024 characters. Icon: checkIcon (plugin.go:381-399) requires a PNG, square, 48 to 4096 px and under 5 MiB. Secrets: forbiddenKeys (plugin.go:82) refuses clientSecret, test_credentials, password, apps, hooks and similar keys, and checkSource rejects them. Each refusal names the rule in its message. plugin_test.go:253-340 (TestBuildRefusesBrokenSources) covers each case and asserts the message names the rule."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "7745b70b-54b0-4f23-b667-05e4c9ab416b",
+      "title": "Write the review material",
+      "checks": [
+        {
+          "at": "2026-11-19T09:26:38Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "7745b70b-54b0-4f23-b667-05e4c9ab416b",
+            "title": "Write the review material",
+            "criteria": [
+              "The project contains five positive and three negative test cases (each with the prompt and the expected behaviour), release notes, the video script and a pointer to the sample battle log and decklist they use.",
+              "The positive cases together cover connecting, signing in with Google, importing the sample game, opening the board link, reviewing and replaying.",
+              "The negative cases cover requests the playmat should decline or hand back, and say what should happen.",
+              "The built package carries the test cases and release notes, and the release notes tell players already connected to refresh their connection.",
+              "No website page mentions the Plugin Directory."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/data/whats-new.yaml"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/listing.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app/docs/example"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/release-notes.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/demo-script.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/SUBMITTING.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "demo-script.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "chatgptDirectory.listed"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/plugin/plugin_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "plugin/listing.json lines 19-65 hold five positive and three negative test cases, each with description and prompt, and the positive cases also carry expected_behavior. plugin/release-notes.md exists (11 lines). plugin/demo-script.md is the video script. The sample log and decklist are pointed to by listing.json line 22 and demo-script.md lines 12-13 (\"Copy the decklist and the battle log from {public}/docs/example\" and https://tcgreplay.app/docs/example). The negative cases carry their expected behaviour in the description field, not in a separate expected_behavior field: negative 1 says the assistant asks for the decklist and imports nothing, negative 2 says TCG Replay is not used, negative 3 says it is not used for this."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "listing.json positive case 1 (lines 22-25) covers connecting and signing in with Google (\"On first use ChatGPT asks the reviewer to connect TCG Replay and sign in with Google\") and importing the game (import_log). Positive case 2 (lines 28-31) covers opening the board link signed in. Positive case 3 (lines 34-37) covers reviewing with the review-game guide and annotate. Positive case 4 (lines 40-44) covers replaying via rewind. Positive case 5 (lines 46-49) covers keeping and restoring the game via get_record and import_log. demo-script.md shots 1-6 walk the same five cases."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "listing.json negative cases (lines 52-65): (1) a battle log pasted without its decklist, where the assistant asks for the decklist and imports nothing and does not review from the log text; (2) banana bread recipe, where TCG Replay is not used; (3) live tournament results and card prices, where TCG Replay reaches nothing outside its playmat and is not used. Each states what should happen."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/plugin/plugin.go:195 and :498 write Publication{ReleaseNotes: notes} from plugin/release-notes.md into plugin.json, and the review test cases are carried in the same file. internal/plugin/plugin_test.go:139-159 asserts five positive and three negative cases and that release_notes equals plugin/release-notes.md. plugin/release-notes.md line 10 says: \"Already connected TCG Replay as a custom connection? Open Plugins → TCG Replay → Refresh, then start a new chat, to see the new tool descriptions.\" I did not run make plugin or inspect bin/tcgreplay-plugin.zip; the package contents rest on the plugin_test.go assertions and the reported passing test run."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Case-insensitive search for \"Plugin Directory\" over site/** and internal/site/** and internal/webui/** returned no files. The only matches in the code root are under .spektacular/ (epics and summary files, which are not website pages), and in the goal's own pointers. site/src returned no matches."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    }
+  ]
+}

@@ -17,6 +17,10 @@ type CardView struct {
 	Def    string `json:"def,omitempty"`
 	Hidden bool   `json:"hidden,omitempty"`
 	Basis  string `json:"basis,omitempty"`
+	// Known names a face-down card the viewer knows: one revealed from
+	// another player's hand. It stays face down there, and the knowledge
+	// lapses when the card leaves the hand.
+	Known string `json:"known,omitempty"`
 }
 
 // StackView is a Pokémon in play.
@@ -55,6 +59,13 @@ type SideView struct {
 	Bench      []*StackView `json:"bench"`
 }
 
+// StadiumView is the Stadium in play: its first card, and the second half
+// when the spot holds a pair.
+type StadiumView struct {
+	CardView
+	Pair *CardView `json:"pair,omitempty"`
+}
+
 // BoardView is a projection of the whole state.
 type BoardView struct {
 	View     View              `json:"view"`
@@ -65,10 +76,13 @@ type BoardView struct {
 	TurnOpen bool              `json:"turn_open"`
 	First    Seat              `json:"first,omitempty"`
 	Head     int               `json:"head"`
-	Stadium  *CardView         `json:"stadium,omitempty"`
+	Stadium  *StadiumView      `json:"stadium,omitempty"`
 	Effects  []EffectView      `json:"effects,omitempty"`
 	Coins    []string          `json:"last_coins,omitempty"`
 	Sides    map[Seat]SideView `json:"sides"`
+	// Winner and WinReason are set once the game is over (see Winner).
+	Winner    Seat   `json:"winner,omitempty"`
+	WinReason string `json:"win_reason,omitempty"`
 }
 
 // EffectView is a lingering effect as shown: UntilTurn is the combined turn
@@ -174,9 +188,13 @@ func (s *State) Project(view View, viewer Seat, hp HPFunc) BoardView {
 	if !reveal {
 		bv.Viewer = viewer
 	}
-	if s.Stadium != "" {
-		c := see(s.Stadium)
-		bv.Stadium = &c
+	bv.Winner, bv.WinReason = s.Winner()
+	if len(s.Stadium) > 0 {
+		bv.Stadium = &StadiumView{CardView: see(s.Stadium[0])}
+		if len(s.Stadium) > 1 {
+			c := see(s.Stadium[1])
+			bv.Stadium.Pair = &c
+		}
 	}
 	for _, seat := range Seats {
 		side := s.Sides[seat]
@@ -207,9 +225,15 @@ func (s *State) Project(view View, viewer Seat, hp HPFunc) BoardView {
 		// it; otherwise the count says enough.
 		for _, h := range side.Hand {
 			c := see(h)
-			if !c.Hidden {
-				sv.Hand = append(sv.Hand, c)
+			if c.Hidden {
+				continue
 			}
+			// A revealed card in another player's hand is known, not face
+			// up: it shows as a back marked with its name.
+			if !reveal && s.Cards[h].Owner != viewer {
+				c = CardView{IID: h, Hidden: true, Known: c.Name}
+			}
+			sv.Hand = append(sv.Hand, c)
 		}
 		for i, b := range side.Bench {
 			sv.Bench[i] = stack(benchSlot(i), b)

@@ -221,7 +221,7 @@ func TestGoogleSignIn(t *testing.T) {
 	if s == nil {
 		t.Fatal("session cookie names no session")
 	}
-	if s.account != (Account(hostauthtest.DefaultAccount)) {
+	if want := (Account{ID: hostauthtest.DefaultAccount.ID, Email: hostauthtest.DefaultAccount.Email, EmailVerified: true}); s.account != want {
 		t.Errorf("session is for %+v, want %+v", s.account, hostauthtest.DefaultAccount)
 	}
 	if got := h.g.Prompts(); len(got) != 1 || got[0] != "select_account" {
@@ -531,7 +531,7 @@ func TestFakeGoogleNamedAccount(t *testing.T) {
 	if s == nil {
 		t.Fatal("session cookie names no session")
 	}
-	if s.account != (Account{ID: "sub-2", Email: "two@example.com"}) {
+	if s.account != (Account{ID: "sub-2", Email: "two@example.com", EmailVerified: true}) {
 		t.Errorf("session is for %+v, want %+v", s.account, two)
 	}
 	if st := h.a.st.accounts["sub-2"]; st == nil || st.live != 1 || st.email != two.Email {

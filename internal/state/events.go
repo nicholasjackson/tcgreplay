@@ -94,16 +94,20 @@ type SetupPayload struct {
 	Profile json.RawMessage `json:"profile,omitempty"`
 }
 
-// MovePayload moves one card. From is recorded for readability and checked
-// against the card's real location.
+// MovePayload moves one card, or the two halves of a Stadium pair. From is
+// recorded for readability and checked against the card's real location.
 type MovePayload struct {
 	IID  IID  `json:"iid"`
 	From *Loc `json:"from,omitempty"`
 	To   Loc  `json:"to"`
 	// Face is "up" or "down"; it overrides the zone default for knowledge.
 	Face string `json:"face,omitempty"`
-	// As is the role in a stack: pokemon, energy or tool.
+	// As is the role in a stack (pokemon, energy or tool), or pair: the
+	// card joins the lone card in the Stadium spot as its pair.
 	As string `json:"as,omitempty"`
+	// Pair is the other half of a Stadium pair, moved with IID in this
+	// event to the same zone (each to its owner's side).
+	Pair IID `json:"pair,omitempty"`
 }
 
 // SwapPayload exchanges two stacks of the same seat (e.g. a retreat). If B

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
 // ErrRateLimited is the error an account over its request limit gets; its
@@ -83,7 +83,7 @@ func (a *Auth) allow(acct Account) error {
 	err := fmt.Errorf("%w: this account is limited to %d requests a minute; try again in %ds",
 		ErrRateLimited, a.cfg.RateLimit, int(math.Ceil(wait.Seconds())))
 	if logIt {
-		log.Printf("hostauth: rate limited %s: %v", acct.Email, err)
+		a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "rate", Message: err.Error()})
 	}
 	return err
 }

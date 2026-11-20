@@ -4,22 +4,30 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/oauth2"
 
+	"github.com/nicholasjackson/tcgreplay/internal/cacheadmin"
+	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
+	"github.com/nicholasjackson/tcgreplay/internal/site"
+	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
+	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 	"github.com/nicholasjackson/tcgreplay/internal/usergames"
+	"github.com/nicholasjackson/tcgreplay/internal/webanalytics"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
 
@@ -105,11 +113,12 @@ func envDuration(key string, def time.Duration) (time.Duration, error) {
 // TCGREPLAY_GOOGLE_CLIENT_SECRET, so it never shows in a process listing),
 // the signing key that keeps sign-ins across restarts (only from
 // TCGREPLAY_SIGNING_KEY, for the same reason), the request limit and the
-// public URL. places keeps the user cap (nil for
-// none). Hosted mode must not run open, so missing credentials are an
-// error. google is Google's endpoints; the zero value means the real
-// Google.
-func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostauth.Places) (*hostauth.Auth, error) {
+// public URL, and the cache admins (TCGREPLAY_ADMINS, a comma-separated
+// list of Google account emails). places keeps the user cap (nil for
+// none); rec records sign-ins and refusals. Hosted mode must not run open,
+// so missing credentials are an error. google is Google's endpoints; the
+// zero value means the real Google.
+func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostauth.Places, rec *telemetry.Recorder) (*hostauth.Auth, error) {
 	secret := os.Getenv("TCGREPLAY_GOOGLE_CLIENT_SECRET")
 	if c.googleClientID == "" || secret == "" {
 		return nil, errors.New("hosted mode needs Google sign-in: set TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET")
@@ -122,7 +131,51 @@ func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostau
 		RateLimit:      c.rateLimit,
 		Places:         places,
 		Google:         google,
+		Admins:         strings.Split(os.Getenv("TCGREPLAY_ADMINS"), ","),
+		Recorder:       rec,
 	})
+}
+
+// hostedRecorder builds hosted mode's recorder: one JSON record per line
+// on standard output (c.events in tests), naming players by an ID keyed
+// with TCGREPLAY_PLAYER_ID_KEY. The key is read only from the environment,
+// so it never shows in a process listing, and it is required: without the
+// same key on every start, a player's ID would change on every redeploy.
+func hostedRecorder(c config) (*telemetry.Recorder, error) {
+	ids, err := telemetry.NewIDs(os.Getenv("TCGREPLAY_PLAYER_ID_KEY"))
+	if err != nil {
+		return nil, fmt.Errorf("hosted mode needs a player-ID key: set TCGREPLAY_PLAYER_ID_KEY to a secret of at least %d characters (for example from openssl rand -base64 48)", telemetry.MinKey)
+	}
+	w := c.events
+	if w == nil {
+		w = os.Stdout
+	}
+	return telemetry.NewRecorder(w, ids, c.now), nil
+}
+
+// adminText describes the cache admins for the start-up log: how many,
+// never who.
+func adminText(n int) string {
+	if n == 0 {
+		return "no cache admins (TCGREPLAY_ADMINS)"
+	}
+	return fmt.Sprintf("%d cache admins", n)
+}
+
+// hostedAdmin builds the admin page's service over the card catalogue
+// and, when the shared store is on, the image cache. Admins are named by
+// rec's player IDs, and their actions recorded through it. The caller
+// runs it.
+func hostedAdmin(cat cacheadmin.Catalog, images *cards.ImageCache, rec *telemetry.Recorder) *cacheadmin.Service {
+	svc := &cacheadmin.Service{Catalog: cat, Recorder: rec}
+	if rec != nil {
+		svc.PlayerID = rec.ID
+	}
+	// A nil *ImageCache in the interface would not be nil.
+	if images != nil {
+		svc.Images = images
+	}
+	return svc
 }
 
 // signInText describes, for the start-up log, whether sign-ins outlast a
@@ -134,6 +187,43 @@ func signInText() string {
 	return "Google sign-in (kept across restarts)"
 }
 
+// openAIChallengePath is where OpenAI checks a plugin's domain for its
+// verification token.
+const openAIChallengePath = "/.well-known/openai-apps-challenge"
+
+// openAIChallengeHandler answers OpenAI's domain verification: exactly
+// token, as plain text with no newline, to anyone, never cached. With no
+// token it is not found (a plain 404, not the website's page).
+func openAIChallengeHandler(token string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if token == "" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		io.WriteString(w, token)
+	})
+}
+
+// challengeText describes the OpenAI domain token for the start-up log:
+// whether it is set, never its value.
+func challengeText(token string) string {
+	if token == "" {
+		return "no OpenAI domain token (TCGREPLAY_OPENAI_CHALLENGE)"
+	}
+	return "OpenAI domain token set"
+}
+
+// reviewerText describes the reviewer account for the start-up log:
+// whether one is set, never who.
+func reviewerText(email string) string {
+	if email == "" {
+		return "no reviewer account (TCGREPLAY_REVIEWER)"
+	}
+	return "reviewer account set"
+}
+
 // idleText describes the idle setting for the start-up log.
 func idleText(d time.Duration) string {
 	if d <= 0 {
@@ -142,22 +232,76 @@ func idleText(d time.Duration) string {
 	return fmt.Sprintf("idle games dropped after %s", d)
 }
 
-// hostedHandler serves MCP over Streamable HTTP at /mcp, every session
-// sharing srv, and the playmat on every other path, with a's sign-in in
-// front: its own routes (metadata, client registration, authorize, token,
-// Google's callback, /healthz) are open, /mcp needs an access token and
-// the board needs a session. The board goes through reg's front door to
-// the signed-in account's own board.
-func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth) http.Handler {
+// hostedHandler serves the hosted playmat's routes, with a's sign-in in
+// front:
+//   - a's own routes (metadata, client registration, authorize, token,
+//     Google's callback, /healthz) are open;
+//   - /.well-known/openai-apps-challenge is open: it answers OpenAI's
+//     domain verification with challenge, exactly, as plain text, and is
+//     not found when challenge is empty (see openAIChallengeHandler);
+//   - /mcp serves MCP over Streamable HTTP, every session sharing srv, and
+//     needs an access token;
+//   - /admin is the card sets and images admin page, admin, for admins only (see
+//     hostauth.RequireAdmin);
+//   - the board page is at /board and needs a session. It goes through
+//     reg's front door to the signed-in account's own board, which still
+//     sees itself at /. /board/ redirects to /board;
+//   - the board's own files (/assets/), live connection (/ws) and card
+//     lookups (/api/) stay at the root, where the built board asks for
+//     them, behind the same session;
+//   - every other path is the public website (package site): no sign-in,
+//     no cookies.
+//
+// counted wraps the pages people read, the website and the board page,
+// and nothing else: with visitor analytics on it adds Cloudflare's beacon
+// to them (see hostedAnalytics); otherwise it is the identity.
+func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service, counted func(http.Handler) http.Handler, challenge string) http.Handler {
 	mux := http.NewServeMux()
 	a.Routes(mux)
+	mux.Handle("GET "+openAIChallengePath, openAIChallengeHandler(challenge))
 	mux.Handle("/mcp", a.RequireToken(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
 		SessionTimeout: mcpSessionTimeout,
 		// Hosted mode is public; the request's Host is the proxy's business.
 		DisableLocalhostProtection: true,
 	})))
-	mux.Handle("/", a.RequireSession(reg.Board()))
+	adminPage := a.RequireAdmin(admin.Handler())
+	mux.Handle("/admin", adminPage)
+	mux.Handle("/admin/", adminPage)
+	board := reg.Board()
+	// The rewrite sits inside RequireSession so a signed-out page load
+	// returns to /board?…, not to /. counted sits outside it, so the
+	// sign-in redirect passes through untouched.
+	mux.Handle("GET /board", counted(a.RequireSession(atRoot(board))))
+	mux.Handle("GET /board/{$}", toBoard())
+	session := a.RequireSession(board)
+	mux.Handle("/assets/", session)
+	mux.Handle("/ws", session)
+	mux.Handle("/api/", session)
+	mux.Handle("/", counted(site.Handler()))
 	return mux
+}
+
+// atRoot hands next the request with its path set to /, keeping the
+// query, so the board's server and front door see their page load at the
+// root (with its ?board= handle) when the page is served at /board.
+func atRoot(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/"
+		r2.URL.RawPath = ""
+		next.ServeHTTP(w, r2)
+	})
+}
+
+// toBoard redirects /board/ to /board, keeping the query.
+func toBoard() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		target := "/board"
+		if r.URL.RawQuery != "" {
+			target += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, target, http.StatusMovedPermanently)
+	})
 }
 
 // newHosted builds the per-account game registry, the sign-in service and
@@ -168,38 +312,138 @@ func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth) h
 // live connections. The registry keeps the user cap, so a place follows
 // activity. Every MCP request and board action counts against its
 // account's request limit, and tool calls, board actions and board page
-// loads count as the account's activity. google is as for hostedAuth.
-func newHosted(c config, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
-	db := newCardDB(c)
+// loads count as the account's activity. src is the card catalogue every
+// account's games pin their snapshots from (a *catalog.Loader); images,
+// when not nil, is where every board loads card images from (see
+// hostedImages). google is as for hostedAuth.
+func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
 	human := state.Seat(c.seat).Other()
+	rec, err := hostedRecorder(c)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	var reg *usergames.Registry
 	var a *hostauth.Auth // set below, before any board is built
 	reg = usergames.New(usergames.Config{
 		NewManager: func() *game.Manager {
-			m := game.NewManager(c.dataDir, db)
+			m := game.NewManager(c.dataDir, src)
 			m.Timing = c.timing
 			return m
 		},
 		NewBoard: func(m *game.Manager) *webui.Server {
-			ui := webui.New(m, human)
-			ui.Public = public
-			ui.Limit = reg.BoardLimit(a.BoardLimit)
-			return ui
+			return hostedBoard(m, human, public, reg.BoardLimit(a.BoardLimit), reg.BoardError, images)
 		},
 		Public:   public,
 		Idle:     c.idleTimeout,
 		MaxUsers: c.maxUsers,
+		Reviewer: c.reviewer,
 		Now:      c.now,
+		Recorder: rec,
 	})
-	a, err := hostedAuth(c, public, google, reg)
+	a, err = hostedAuth(c, public, google, reg, rec)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	// BoardURL keeps the instructions' board-link line; each result's link
 	// comes from Resolve.
-	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet}).MCP()
-	srv.AddReceivingMiddleware(a.MCPMiddleware())
+	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/board", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet, Account: reg.AccountID}).MCP()
+	// One call, so the tool-call recorder runs inside the rate limit: a
+	// later AddReceivingMiddleware call would wrap outside it, and a
+	// refused request would be recorded as a tool call.
+	srv.AddReceivingMiddleware(a.MCPMiddleware(), reg.MCPMiddleware())
 	return reg, srv, a, nil
+}
+
+// hostedBoard builds one account's board server: on the public address,
+// with the account's request limit, telling onError of each failed board
+// action, and loading card images through images when it is not nil.
+func hostedBoard(m *game.Manager, human state.Seat, public *url.URL, limit func(context.Context) error, onError func(context.Context, string, error), images *cards.ImageCache) *webui.Server {
+	ui := webui.New(m, human)
+	ui.Public = public
+	ui.Limit = limit
+	ui.OnError = onError
+	// A nil *ImageCache in the interface would not be nil.
+	if images != nil {
+		ui.Images = images
+	}
+	return ui
+}
+
+// hostedImages builds hosted mode's card image cache. With all four
+// TCGREPLAY_SPACES_* settings present and the playmat online, card images
+// are copied to the bucket under images/ and boards load them from its
+// public (CDN) address; the caller runs the cache. It is nil otherwise,
+// and boards load images from their sources. Partial or invalid settings
+// are a warning, not an error: image copies are optional and must never
+// stop play. With TCGREPLAY_SPACES_CDN_TOKEN set too, an admin's image
+// clear also purges the bucket's CDN; the token is ignored without the
+// image cache. Card data never comes from these settings: it is published
+// separately (see -cardsets-url).
+func hostedImages(c config) *cards.ImageCache {
+	token := strings.TrimSpace(os.Getenv("TCGREPLAY_SPACES_CDN_TOKEN"))
+	ignored := func() {
+		if token != "" {
+			log.Printf("card images: TCGREPLAY_SPACES_CDN_TOKEN ignored without the shared store")
+		}
+	}
+	cfg, set, err := spaces.FromEnv(os.Getenv)
+	switch {
+	case !set:
+		log.Printf("card images: not copied, loaded from their sources (no TCGREPLAY_SPACES_* settings)")
+		ignored()
+		return nil
+	case err != nil:
+		log.Printf("warning: card images: %s; loading images from their sources", strings.ReplaceAll(err.Error(), "\n", "; "))
+		ignored()
+		return nil
+	case c.offline:
+		log.Printf("card images: offline, shared store %s not used", cfg)
+		ignored()
+		return nil
+	}
+	sc, err := spaces.New(cfg)
+	if err != nil {
+		log.Printf("warning: card images: %v; loading images from their sources", err)
+		ignored()
+		return nil
+	}
+	images := cards.NewImageCache(sc, cfg.PublicBase())
+	if c.imageBase != "" {
+		images.Source = c.imageBase
+	}
+	log.Printf("card images: copied from the card source to the shared store %s, served from %s/%s", cfg, images.Public, cards.ImagePrefix)
+	if token != "" {
+		cdn := spaces.NewCDN(cfg, token)
+		if c.cdnAPI != "" {
+			cdn.API = c.cdnAPI
+		}
+		images.CDN = cdn
+		log.Printf("card images: CDN purge on clear: on")
+	} else {
+		log.Printf("card images: CDN purge on clear: off (no TCGREPLAY_SPACES_CDN_TOKEN)")
+	}
+	return images
+}
+
+// privacyDescribesCounting reports whether the embedded privacy page
+// describes visitor counting; tests swap it, because the Go tests embed
+// whatever website happens to be built.
+var privacyDescribesCounting = site.DescribesVisitorCounting
+
+// hostedAnalytics decides whether visitor counting is on and returns the
+// wrapper for counted pages (the identity when it is off). Counting needs
+// a well-formed TCGREPLAY_WEB_ANALYTICS_TOKEN and an embedded privacy page
+// that describes it, and adds the beacon only for the public host. It logs
+// whether counting is on, or off and why, never the token. A bad token is
+// a warning, not an error: counting is optional and must never stop play.
+func hostedAnalytics(c config, public *url.URL) func(http.Handler) http.Handler {
+	wrap, status := webanalytics.Setup(webanalytics.Settings{
+		Token:            c.webAnalyticsToken,
+		Host:             public.Hostname(),
+		PrivacyDescribes: privacyDescribesCounting(),
+	})
+	log.Print(status)
+	return wrap
 }
 
 // runHosted serves MCP and the playmat over one plain-HTTP listener until
@@ -216,19 +460,35 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	reg, srv, a, err := newHosted(c, public, oauth2.Endpoint{})
+	moved, err := parseMovedHosts(c.movedFrom, public)
 	if err != nil {
 		return err
 	}
+	images := hostedImages(c)
+	loader := newCatalog(c)
+	reg, srv, a, err := newHosted(c, loader, images, public, oauth2.Endpoint{})
+	if err != nil {
+		return err
+	}
+	// Hosted starts with an empty disk on every deploy: wait (bounded) for
+	// the published card sets before serving, so the first games do not
+	// pin an empty catalogue.
+	loader.Start(ctx, startupWait)
+	go loader.Run(ctx)
 	go reg.Run(ctx)
+	if images != nil {
+		go images.Run(ctx)
+	}
+	admin := hostedAdmin(loader, images, reg.Recorder())
+	go admin.Run(ctx)
 
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, data %s, cache %s, claude plays %s, %s, %d requests a minute per account, %d users, %s, %s", version, ln.Addr(), public, c.dataDir, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, %s, %s, player IDs on", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()), challengeText(c.openAIChallenge), reviewerText(c.reviewer))
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
-	hs := &http.Server{Handler: hostedHandler(srv, reg, a), ReadHeaderTimeout: 10 * time.Second}
+	hs := &http.Server{Handler: movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin, hostedAnalytics(c, public), c.openAIChallenge)), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)

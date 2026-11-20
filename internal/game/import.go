@@ -47,7 +47,7 @@ type ImportResult struct {
 var nonID = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 // errNoDeck refuses a battle log imported without the owner's decklist.
-var errNoDeck = errors.New("a decklist is required to import a battle log: pass the player's list in TCG Live export format")
+var errNoDeck = errors.New("a decklist is required to import a battle log: pass the player's list in TCG Live export format as deck. If you do not have it, ask the player to paste the list they played (exported from the TCG Live deck editor; it starts with \"Pokémon:\" and ends with \"Total Cards: 60\"), then import again. Do not review the game from the log text instead.")
 
 // errRecordExtras refuses a record imported together with the values it
 // already holds.
@@ -71,8 +71,11 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 	if strings.TrimSpace(req.Deck) == "" {
 		return nil, errNoDeck
 	}
+	// One snapshot resolves the lists and the log and is the game's card
+	// database, so an import never mixes two versions of a set.
+	db := m.snapshot()
 	parse := func(text, who string) ([]deck.Entry, error) {
-		entries, w, err := m.ParseDeck(ctx, text, who)
+		entries, w, err := parseDeck(ctx, db, text, who)
 		warnings = append(warnings, w...)
 		return entries, err
 	}
@@ -85,7 +88,7 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 		return nil, err
 	}
 	opts := importer.Options{Me: req.Me, MyDeck: mine, OppDeck: theirs, Seed: req.Seed}
-	if m.DB != nil {
+	if db != nil {
 		opts.DefOf = func(name string, moves []string) string {
 			if id, ok := deck.BasicEnergyDef(name); ok {
 				return id
@@ -93,12 +96,34 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 			// A log with card codes names the exact print.
 			for _, code := range importer.LogCodes(req.Log, name) {
 				if id, ok := cards.LogCodeID(code); ok {
-					if c, err := m.DB.Card(ctx, id); err == nil && cards.SameName(c.Name, name) {
+					if c, err := db.Card(ctx, id); err == nil && cards.SameName(c.Name, name) {
 						return id
 					}
 				}
 			}
-			id, _ := m.DB.ByName(ctx, name, moves...)
+			id, _ := db.ByName(ctx, name, moves...)
+			return id
+		}
+		// Each copy the log names with a code gets that print, so the
+		// alternate arts a player used show as themselves rather than as
+		// the decklist's print of the name. Basic Energy keeps the
+		// decklist's print, whose art is borrowed (see cards.energyArt).
+		byCode := map[string]string{}
+		opts.DefOfCode = func(name, code string) string {
+			if _, ok := deck.BasicEnergyDef(name); ok {
+				return ""
+			}
+			key := code + "\x00" + name
+			if id, ok := byCode[key]; ok {
+				return id
+			}
+			id := ""
+			if cid, ok := cards.LogCodeID(code); ok {
+				if c, err := db.Card(ctx, cid); err == nil && cards.SameName(c.Name, name) {
+					id = cid
+				}
+			}
+			byCode[key] = id
 			return id
 		}
 	}
@@ -129,7 +154,7 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 			return nil, err
 		}
 	}
-	g, err := Load(req.ID, l, m.DB, m.rng())
+	g, err := Load(req.ID, l, db, m.rng())
 	if err != nil {
 		return nil, fmt.Errorf("imported events do not fold: %w", err)
 	}
@@ -144,6 +169,12 @@ func (m *Manager) Import(ctx context.Context, req ImportRequest) (*ImportResult,
 // ParseDeck parses a TCG Live export and resolves card definitions where
 // possible; unresolved cards come back as warnings. Empty text is no list.
 func (m *Manager) ParseDeck(ctx context.Context, text, who string) ([]deck.Entry, []string, error) {
+	return parseDeck(ctx, m.snapshot(), text, who)
+}
+
+// parseDeck is ParseDeck against the card database db (nil: resolve
+// nothing).
+func parseDeck(ctx context.Context, db cards.DB, text, who string) ([]deck.Entry, []string, error) {
 	if strings.TrimSpace(text) == "" {
 		return nil, nil, nil
 	}
@@ -152,8 +183,8 @@ func (m *Manager) ParseDeck(ctx context.Context, text, who string) ([]deck.Entry
 		return nil, nil, fmt.Errorf("%s decklist: %w", who, err)
 	}
 	var warnings []string
-	if m.DB != nil {
-		if err := l.Resolve(ctx, m.DB); err != nil {
+	if db != nil {
+		if err := l.Resolve(ctx, db); err != nil {
 			for _, e := range strings.Split(err.Error(), "\n") {
 				warnings = append(warnings, fmt.Sprintf("%s: %s", who, e))
 			}

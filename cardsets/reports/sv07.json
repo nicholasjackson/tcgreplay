@@ -1,0 +1,25 @@
+{
+  "set": "sv07",
+  "summary": {
+    "set": "sv07",
+    "prints": 175,
+    "added": 0,
+    "changed": 0,
+    "gone": 0,
+    "open": 0
+  },
+  "items": [
+    {
+      "card": "sv07-086",
+      "name": "Diancie",
+      "kind": "disagreement",
+      "field": "/text/en/attacks/0/effect",
+      "values": {
+        "malie": "This attack does 40 damage for each Special Energy card attached to all of your opponent's Pokémon.",
+        "tcgdex": "This attack does 40 damage for each Special Energy attached to all of your opponent's Pokémon."
+      },
+      "status": "acknowledged",
+      "reason": "Printed card (TCGdex image) reads 'for each Special Energy attached', as the built set holds; the TCG Live text adds 'card'"
+    }
+  ]
+}
