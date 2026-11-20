@@ -108,18 +108,20 @@
 <!-- The board, top to bottom: the opponent's name, hand and half, the
      strip, your half, hand and name. -->
 {#snippet board()}
-  {#if !phone || app.opponent}
+  <!-- Today's mat names each player in their player block; the landscape
+       mat in the corner and under the hand. -->
+  {#if app.wide || (phone && app.opponent)}
     <div class="seat-name top">
-      {#if !phone}{nameOf(app.claude)} · {app.claude}{/if}
+      {#if app.wide}{nameOf(app.claude)} · {app.claude}{/if}
       {#if app.opponent}<span class="opp-status {app.opponent}">{oppStatus[app.opponent]}</span>{/if}
     </div>
   {/if}
   {#if !phone}<Hand seat={app.claude} small />{/if}
-  <Side seat={app.claude} name={nameOf(app.claude)} mirrored />
+  <Side seat={app.claude} name={nameOf(app.claude)} mirrored status={!phone && !app.wide && app.opponent ? oppStatus[app.opponent] : ''} />
   <Strip />
   <Side seat={app.human} name={nameOf(app.human)} />
   <Hand seat={app.human} />
-  {#if !phone}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
+  {#if app.wide}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
 {/snippet}
 
 <svelte:window onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
@@ -127,7 +129,24 @@
 <div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone style:--fit="{fit}px">
   <header>
     {#if phone}
+      <!-- A phone's header: the connection, whose turn it is, the
+           warnings and ☰, which holds the rest. -->
       <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
+      {#if app.board}
+        {#if app.board.phase === 'setup'}
+          <strong class="whose">Setup</strong>
+        {:else}
+          <span class="turn-tag">T{app.board.turn}</span>
+          <strong class="whose">{app.board.current === app.human ? 'Your turn' : `${nameOf(app.board.current)}'s turn`}</strong>
+        {/if}
+      {/if}
+      <span class="spacer"></span>
+      {#if snap?.warnings?.length}
+        {@const n = snap.warnings.length}
+        <button class="warn" aria-label="{n} {n === 1 ? 'warning' : 'warnings'}" title={snap.warnings.join('\n')} onclick={() => (menuOpen = true)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z" /><path d="M12 10v4" /><path d="M12 17.5v.01" /></svg>{n}
+        </button>
+      {/if}
     {:else}
       <span class="brand"><img src={markUrl} alt="" /><strong>tcgreplay</strong></span>
     {/if}
@@ -400,33 +419,49 @@
     min-height: 0;
   }
   .app.phone main { justify-content: flex-start; overflow: hidden; border-radius: 0; }
-  /* No header bar on a phone: the dot and ☰ sit at the start of the
-     opponent's counters (CounterBar leaves room for them). */
-  .app.phone { position: relative; }
+  /* A phone's header: a slim light bar of the dot, the turn tag and whose
+     turn it is, then the warnings and ☰. */
   .app.phone header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 6;
-    min-height: 0;
-    gap: 6px;
-    padding: 2px 4px 2px 8px;
-    background: none;
-    border: 0;
+    flex-wrap: nowrap;
+    min-height: calc(var(--space-12) + var(--space-1));
+    gap: var(--space-2);
+    padding: 0 var(--space-2) 0 var(--space-4);
+    font-size: var(--fs-ui);
   }
-  .badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 4px;
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--warn-line);
-    background: var(--warn-bg);
-    color: var(--warn-ink);
-    font: var(--fw-num) var(--fs-num-s)/16px var(--font-mono);
+  .turn-tag {
+    padding: 3px 7px;
+    border-radius: var(--radius-xs);
+    background: var(--brand-navy);
+    color: var(--turn-tag-ink);
+    font: var(--fw-num) var(--fs-ui-s) var(--font-mono);
   }
+  .whose { font-size: var(--fs-ui-title); font-weight: var(--fw-ui-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* A short phone has no room for the bar: the dot and ☰ sit at the start
+     of the opponent's counters (CounterBar leaves room for them), the
+     warnings counted on ☰. */
+  .badge { display: none; }
+  @media (max-height: 739px) {
+    .app.phone { position: relative; }
+    .app.phone header { position: absolute; top: 0; left: 0; z-index: 6; min-height: 0; gap: 6px; padding: 2px 4px 2px 8px; background: none; border: 0; }
+    .app.phone header :is(.turn-tag, .whose, .spacer, .warn) { display: none; }
+    .app.phone .dropdown { right: auto; left: 0; }
+    .app.phone .badge {
+      display: block;
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--warn-line);
+      background: var(--warn-bg);
+      color: var(--warn-ink);
+      font: var(--fw-num) var(--fs-num-s)/16px var(--font-mono);
+    }
+  }
+  header button.warn { width: auto; gap: var(--space-1); padding: 0 var(--space-2); border-color: var(--warn-line); background: var(--warn-bg); color: var(--warn-ink); font-weight: 600; }
+  header button.warn:hover:not(:disabled) { border-color: var(--warn-line); background: var(--warn-bg); }
   .burger { position: relative; }
   .warning {
     margin: 2px 4px;
@@ -558,9 +593,8 @@
     box-shadow: var(--shadow-menu);
     font-size: max(var(--fs-ui), 0.677vw);
   }
-  /* On a phone ☰ sits at the left, so its menu opens rightwards, and
-     scrolls if it is taller than the screen. */
-  .app.phone .dropdown { right: auto; left: 0; max-height: calc(100dvh - 60px); overflow-y: auto; max-width: calc(100vw - 16px); }
+  /* On a phone the menu scrolls if it is taller than the screen. */
+  .app.phone .dropdown { max-height: calc(100dvh - 60px); overflow-y: auto; max-width: calc(100vw - 16px); }
   .dropdown button {
     display: flex;
     align-items: center;
@@ -606,6 +640,9 @@
   .body { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; padding: var(--gutter-y) var(--gutter); gap: var(--gutter); }
   .body.panel { grid-template-columns: 1fr var(--panel-col); }
   main { overflow: auto; display: flex; flex-direction: column; justify-content: center; font-size: var(--fs); border-radius: var(--radius-l); }
+  /* Today's mat keeps a margin of mat above the opponent's fanned hand and
+     below yours, whose turned cards reach past their rows. */
+  .app:not(.landscape, .phone) main { padding-block: var(--space-3); }
   aside {
     background: var(--panel);
     color: var(--ink);
@@ -634,11 +671,11 @@
     background: var(--panel); border: 1px solid var(--control-line); border-radius: var(--radius-s); color: var(--muted); cursor: pointer;
   }
   aside .dock:hover, aside .dock:focus-visible { color: var(--ink); background: var(--hover); border-color: var(--control-line); }
-  .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
-  .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: 999px; border: 1px solid var(--line); color: var(--text); }
+  .seat-name { text-align: center; color: var(--mat-muted); font-size: 0.85em; padding: 0.15em; }
+  .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: var(--radius-pill); border: 1px solid var(--mat-slot-line); color: var(--mat-ink); }
   .opp-status.acting { border-color: var(--accent); color: var(--accent); }
   .opp-status.deciding { border-color: var(--accent); color: var(--accent); border-style: dashed; }
-  .opp-status.stopped { border-color: var(--reveal); color: var(--reveal); }
+  .opp-status.stopped { border-color: var(--damage-ink); color: var(--damage-ink); }
   .landing { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .muted { color: var(--muted); }
   .overlay {

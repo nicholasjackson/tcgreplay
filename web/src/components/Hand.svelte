@@ -39,6 +39,39 @@
     return out;
   });
 
+  // kind is a card's kind, labelled on it in the hand: Pokémon, Item,
+  // Supporter, Tool, Stadium or Energy.
+  function kind(c) {
+    const info = cardInfo(c.def);
+    if (!info) return '';
+    if (info.category === 'Pokemon') return 'Pokémon';
+    if (info.category === 'Trainer') return info.trainer_type || 'Trainer';
+    return info.category || '';
+  }
+  const phone = $derived(app.layout === 'phone');
+  // hidden counts the cards past the right edge of the phone's sideways
+  // scrolling hand, for its "+n" hint.
+  let hidden = $state(0);
+  function offscreen(row) {
+    if (!phone) return;
+    const update = () => {
+      const edge = row.getBoundingClientRect().right;
+      hidden = [...row.querySelectorAll(':scope > .slot')].filter((c) => c.getBoundingClientRect().left >= edge - 8).length;
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(row);
+    const mo = new MutationObserver(update);
+    mo.observe(row, { childList: true });
+    row.addEventListener('scroll', update, { passive: true });
+    update();
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      row.removeEventListener('scroll', update);
+      hidden = 0;
+    };
+  }
+
   // The human's hand fans up from the bottom edge; the opponent's, at the
   // top, hangs down from it, so its cards also enlarge downward.
   function angle(i, n) {
@@ -55,15 +88,16 @@
   class="hand"
   class:small
   class:peek={app.wide && small}
-  class:phone={app.layout === 'phone'}
+  class:phone
   data-scroll-x
   {@attach dropZone('hand', (data) => dropOnZone(data, 'hand'))}
+  {@attach offscreen}
   role="list"
   aria-label="{seat} hand"
 >
   {#each groups as g, i (g.key)}
     <div class="slot" style:--a="{angle(i, groups.length)}deg" style:--y="{lift(i, groups.length)}px" role="listitem">
-      {#each g.cards as c (c.iid)}
+      {#each g.cards as c, j (c.iid)}
         <div class="copy">
           <Card
             card={c}
@@ -72,12 +106,14 @@
             from="{seat}:hand"
             onmenu={c.hidden ? null : (ev, type) => openSheet(ev, () => handMenu(c), type)}
           />
+          {#if !small && !c.hidden && j === g.cards.length - 1 && kind(c)}<span class="kind" aria-hidden="true">{kind(c)}</span>{/if}
         </div>
       {/each}
       {#if g.cards.length > 1}<span class="dup">×{g.cards.length}</span>{/if}
     </div>
   {/each}
   <span class="count">{side.hand_count} in hand</span>
+  {#if phone && hidden}<span class="more" aria-hidden="true">+{hidden}</span>{/if}
 </div>
 
 <style>
@@ -86,7 +122,7 @@
     justify-content: center;
     align-items: flex-end;
     padding: calc(var(--cw) * 0.2) 40px calc(var(--cw) * 0.08);
-    min-height: calc(var(--cw) * 1.4 + 24px);
+    min-height: calc(var(--cw) * 1.4 + 16px);
     position: relative;
     border-radius: 10px;
     transition: background 0.15s;
@@ -105,8 +141,8 @@
   .hand.phone {
     --cw: 64px;
     min-height: 0;
-    height: calc(64px * 1.4 + 16px);
-    padding: 6px 12px 10px;
+    height: calc(64px * 1.4 + 10px);
+    padding: 4px 12px 6px;
     overflow-y: hidden;
     align-items: center;
     margin-top: auto;
@@ -114,9 +150,10 @@
     position: sticky;
     bottom: 0;
     z-index: 4;
-    background: var(--felt);
+    background: var(--mat-surface);
   }
   .hand.phone .slot { transform: none; margin: 0 3px; }
+  .hand.phone .count { z-index: 3; padding: 1px var(--space-1); border-radius: var(--radius-xs); background: var(--mat-surface); }
   .slot {
     position: relative;
     display: flex;
@@ -137,24 +174,62 @@
   /* Copies of a card stack with a sliver of each showing. */
   .copy + .copy { margin-left: calc(var(--cw) * -0.82); }
   .small .copy + .copy { margin-left: calc(var(--cw) * -0.5); }
+  .copy { position: relative; }
+  /* Each card's kind, in mono capitals along its foot. */
+  .kind {
+    position: absolute;
+    left: 6%;
+    bottom: 5%;
+    z-index: 1;
+    max-width: 88%;
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-xs);
+    background: var(--mat-strip);
+    color: var(--mat-ink);
+    font: var(--fw-num) max(var(--fs-9), calc(var(--cw) * 0.11))/1 var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+  }
   .dup {
     position: absolute;
     top: -0.6em;
     right: -0.4em;
     z-index: 3;
     background: var(--accent);
-    color: var(--accent-label-ink);
-    border-radius: 1em;
+    color: var(--on-accent);
+    border-radius: var(--radius-pill);
     padding: 0.1em 0.5em;
-    font: 700 0.85em system-ui;
+    font: var(--fw-num) max(var(--fs-num-s), 0.85em) var(--font-mono);
     box-shadow: var(--shadow-badge);
   }
   .count {
     position: absolute;
     right: 12px;
     bottom: 4px;
-    font-size: 0.8em;
-    color: var(--muted);
+    font: var(--fw-ui) max(var(--fs-ui-s), 0.92em) var(--font-mono);
+    color: var(--mat-muted);
+  }
+  /* The phone hand's hint at the cards scrolled off to the right. */
+  .more {
+    position: sticky;
+    right: 0;
+    align-self: stretch;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 56px;
+    margin-left: -56px;
+    padding-right: var(--space-2);
+    background: linear-gradient(90deg, transparent, var(--mat-surface) 70%);
+    color: var(--mat-muted);
+    font: var(--fw-num) var(--fs-num-s) var(--font-mono);
+    pointer-events: none;
+    z-index: 2;
   }
   /* On the mat the count follows the hand's last card, not the board's
      edge. The phone keeps it in the strip's corner. */
