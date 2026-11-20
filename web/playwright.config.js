@@ -20,6 +20,10 @@ export default defineConfig({
   workers: 1,
   forbidOnly: !!process.env.CI,
   reporter: [['list']],
+  // Screenshot baselines (e2e/screenshots.spec.js) live per project under
+  // e2e/__screenshots__, Chromium only, taken on the developer's machine.
+  snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{arg}{ext}',
+  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.002, scale: 'css', animations: 'disabled', caret: 'hide' } },
   use: {
     baseURL: `http://${addr}`,
     trace: 'retain-on-failure',
