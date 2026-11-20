@@ -20,9 +20,10 @@ export default defineConfig({
   server: {
     host: lan || undefined,
     // The About panel imports the notice the website also shows
-    // (internal/notice/notice.json), outside this folder; the dev server
-    // may serve that folder too. The build reads it either way.
-    fs: { allow: ['.', '../internal/notice'] },
+    // (internal/notice/notice.json), and main.js the shared design tokens
+    // (internal/design/tokens.css), both outside this folder; the dev
+    // server may serve those folders too. The build reads them either way.
+    fs: { allow: ['.', '../internal/notice', '../internal/design'] },
     // `npm run dev` proxies to a running tcgreplay binary, at
     // TCGREPLAY_ADDR if set (make dev-ui points it at the dev daemon).
     proxy: {

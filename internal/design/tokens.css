@@ -1,6 +1,5 @@
-/* The board's colour tokens, copied from web/src/app.css (the :root block
-   and its light variant) so the site looks like the playmat without the
-   board's own element rules. Keep in step with that file. */
+/* Generated from internal/design/tokens.json by go generate ./internal/design.
+   Do not edit: change tokens.json and regenerate. */
 :root {
   --bg: #17321f;
   --felt: radial-gradient(ellipse at center, #22492d 0%, #17321f 70%, #10241a 100%);

@@ -13,4 +13,7 @@ export default defineConfig({
   build: { format: 'directory' },
   markdown: { syntaxHighlight: false },
   devToolbar: { enabled: false },
+  // Base.astro imports the shared design tokens from internal/design,
+  // outside this folder; the dev server may serve that folder too.
+  vite: { server: { fs: { allow: ['.', '../internal/design'] } } },
 });

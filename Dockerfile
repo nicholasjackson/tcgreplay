@@ -24,13 +24,14 @@
 # are copied into both UI build stages, so either build can read them.
 
 # Build the board UI into the Go package (see web/vite.config.js), with
-# the shared notice copied beside it for the board to read.
+# the shared notice and design tokens copied beside it for the board to read.
 FROM node:22 AS web
 WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
 COPY internal/notice /src/internal/notice
+COPY internal/design /src/internal/design
 RUN npm run build
 
 # Build the website into its Go package (see site/astro.config.mjs). The
@@ -44,6 +45,7 @@ RUN npm ci
 COPY site/ ./
 COPY internal/guides /src/internal/guides
 COPY internal/notice /src/internal/notice
+COPY internal/design /src/internal/design
 COPY .do/app.yaml /src/.do/app.yaml
 COPY testdata/decks /src/testdata/decks
 RUN npm run build
