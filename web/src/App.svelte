@@ -12,6 +12,7 @@
   import TargetBanner from './components/TargetBanner.svelte';
   import Modal from './components/Modal.svelte';
   import Zoom from './components/Zoom.svelte';
+  import markUrl from '../../internal/design/mark.svg';
 
   const snap = $derived(app.snap);
   const review = $derived(snap?.mode === 'review');
@@ -76,6 +77,9 @@
   function setMode(ev) {
     act('set_mode', { mode: ev.target.checked ? 'review' : 'play' });
   }
+  function pickMode(mode) {
+    act('set_mode', { mode });
+  }
   function setReveal(ev) {
     act('set_reveal', { reveal: ev.target.checked });
   }
@@ -122,29 +126,55 @@
 
 <div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone style:--fit="{fit}px">
   <header>
-    <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
-    {#if !phone}<strong>tcgreplay</strong>{/if}
+    {#if phone}
+      <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
+    {:else}
+      <span class="brand"><img src={markUrl} alt="" /><strong>tcgreplay</strong></span>
+    {/if}
     {#if snap && !phone}
       <span class="game">{snap.game}</span>
       <label class="branch">
-        branch
-        <select value={snap.branch} onchange={checkout}>
+        Branch
+        <select value={snap.branch} onchange={checkout} aria-label="branch">
           {#each snap.branches as b (b.name)}
-            <option value={b.name}>{b.name} (#{b.head})</option>
+            <option value={b.name}>{b.name} · #{b.head}</option>
           {/each}
         </select>
       </label>
-      <label class="toggle"><input type="checkbox" checked={review} onchange={setMode} /> Review mode</label>
+      <!-- Play or Review: a segmented switch over two radios, each named
+           for its mode. -->
+      <div class="mode" role="radiogroup" aria-label="Mode">
+        <label class:on={!review}><input type="radio" name="mode" aria-label="Play mode" checked={!review} onchange={() => pickMode('play')} />Play</label>
+        <label class:on={review}><input type="radio" name="mode" aria-label="Review mode" checked={review} onchange={() => pickMode('review')} />Review</label>
+      </div>
       {#if review}
         <label class="toggle reveal-toggle"><input type="checkbox" checked={app.reveal} onchange={setReveal} /> Reveal all</label>
       {/if}
     {/if}
-    {#if snap?.warnings?.length && !phone}
-      <span class="warn" title={snap.warnings.join('\n')}>⚠ {snap.warnings.length}</span>
+    {#if !phone}
+      <span class="spacer"></span>
+      {#if snap?.warnings?.length}
+        {@const n = snap.warnings.length}
+        <span class="warn" title={snap.warnings.join('\n')}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z" /><path d="M12 10v4" /><path d="M12 17.5v.01" /></svg>
+          {n}<span class:sr={app.layout === 'tablet'}> {n === 1 ? 'warning' : 'warnings'}</span>
+        </span>
+      {/if}
+      <span class="conn"><span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>{app.connected ? 'Live' : 'Reconnecting…'}</span>
+      {#if app.layout === 'tablet'}
+        <!-- On a touch screen the timeline hides and shows from the header,
+             as from ☰. -->
+        <button class="panel-toggle" aria-label="{app.panelOpen ? 'Hide' : 'Show'} timeline" aria-pressed={app.panelOpen} onclick={() => (app.panelOpen = !app.panelOpen)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            {#if app.panelAt === 'bottom'}<path d="M3 14h18" />{:else}<path d="M15 4v16" />{/if}
+          </svg>
+        </button>
+      {/if}
     {/if}
     <div class="more">
       <button class="burger" aria-label="Menu" aria-haspopup="menu" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
-        ☰{#if phone && snap?.warnings?.length}<span class="badge" aria-label="{snap.warnings.length} warnings">{snap.warnings.length}</span>{/if}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>{#if phone && snap?.warnings?.length}<span class="badge" aria-label="{snap.warnings.length} warnings">{snap.warnings.length}</span>{/if}
       </button>
       {#if menuOpen}
         <div class="backdrop" onclick={() => (menuOpen = false)} role="presentation"></div>
@@ -159,7 +189,7 @@
               Branch
               <select value={snap.branch} onchange={checkout} aria-label="branch">
                 {#each snap.branches as b (b.name)}
-                  <option value={b.name}>{b.name} (#{b.head})</option>
+                  <option value={b.name}>{b.name} · #{b.head}</option>
                 {/each}
               </select>
             </label>
@@ -305,26 +335,34 @@
        playback overlay can centre on the board rather than the window. */
     --panel-col: clamp(320px, 18vw, 960px);
     --panel-w: 0px;
+    /* The gutter of page background around the mat and the timeline,
+       thinner above and below on a short screen, where the mat's cards
+       (sized by the root --cw) need the height. */
+    --gutter: var(--space-3);
+    --gutter-y: var(--gutter);
   }
-  .app.panel-side { --panel-w: var(--panel-col); }
-  .app.reveal { border: 6px solid var(--reveal); }
+  @media (max-height: 820px) { .app { --gutter-y: var(--space-1); } }
+  @media (max-height: 740px) { .app { --gutter-y: 0px; } }
+  .app.panel-side { --panel-w: calc(var(--panel-col) + var(--gutter)); }
+  .app.reveal { border: 6px solid var(--warn-line); }
   /* With no timeline beside the board, the board takes the full width (see
      --cw in app.css). With the timeline below, the board also keeps 200px of
      height for it, and the timeline fills whatever height the board leaves. */
   .app.wide {
-    --cw: clamp(48px, min((100vh - 115px) / 11.1, (100vw - 40px) / 10), 240px);
+    --cw: clamp(48px, min((100vh - 140px) / 11.1, (100vw - 64px) / 10), 240px);
     --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
   }
   .app.panel-bottom {
     height: 100vh;
-    --cw: clamp(48px, min((100vh - 315px) / 11.1, (100vw - 40px) / 10), 240px);
+    --cw: clamp(48px, min((100vh - 340px) / 11.1, (100vw - 64px) / 10), 240px);
   }
   /* The landscape mat (app.wide) fills the window and sizes its cards
      from the board area: <main> is a size container, and .board inside it
      takes the largest card width at which the four rows fit main's height
      and the widest row (the longer bench, the prize fan and the piles)
      fits its width. */
-  .app.landscape { height: 100vh; min-height: 0; }
+  /* The landscape mat gives its cards the room of a thinner gutter. */
+  .app.landscape { height: 100vh; min-height: 0; --gutter: var(--space-1); --gutter-y: var(--space-1); }
   .app.landscape main { container-type: size; }
   .app.landscape .body.panel.bottom { grid-template-rows: minmax(0, 1fr) clamp(200px, 28vh, 480px); }
   /* The rows are about 6.8 card widths tall: two player rows, the middle
@@ -356,10 +394,12 @@
   .app.phone {
     --cw: max(40px, min(calc((100vw - 32px) / 5.6), calc((100dvh - 372px - var(--fit, 0px)) / 6.6)));
     --fs: var(--fs-13);
+    --gutter: 0px;
+    --gutter-y: 0px;
     height: 100dvh;
     min-height: 0;
   }
-  .app.phone main { justify-content: flex-start; overflow: hidden; }
+  .app.phone main { justify-content: flex-start; overflow: hidden; border-radius: 0; }
   /* No header bar on a phone: the dot and ☰ sit at the start of the
      opponent's counters (CounterBar leaves room for them). */
   .app.phone { position: relative; }
@@ -368,6 +408,7 @@
     top: 0;
     left: 0;
     z-index: 6;
+    min-height: 0;
     gap: 6px;
     padding: 2px 4px 2px 8px;
     background: none;
@@ -375,118 +416,224 @@
   }
   .badge {
     position: absolute;
-    top: -2px;
-    right: -2px;
+    top: -6px;
+    right: -6px;
     min-width: 18px;
     height: 18px;
     padding: 0 4px;
-    border-radius: 9px;
-    background: var(--warn);
-    color: var(--warn-badge-ink);
-    font: 700 var(--fs-11)/18px system-ui;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--warn-line);
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font: var(--fw-num) var(--fs-num-s)/16px var(--font-mono);
   }
   .burger { position: relative; }
-  .warning { padding: 6px 12px; font-size: var(--fs-12); color: var(--muted); max-width: 260px; }
+  .warning {
+    margin: 2px 4px;
+    padding: 6px 10px;
+    max-width: 260px;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--warn-line);
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-size: var(--fs-ui-s);
+  }
   aside.sheet {
     position: fixed;
     inset: 0;
     z-index: 65;
     max-height: none;
     border: 0;
+    border-radius: 0;
   }
   aside.sheet .close { position: absolute; top: 4px; right: 8px; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
-  .upright { background: var(--felt); color: var(--mat-ink); font-size: var(--fs-16); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
+  .upright { background: var(--mat-surface); color: var(--mat-ink); font-size: var(--fs-16); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
   .phone-icon { font-size: var(--fs-40); display: inline-block; transform: rotate(90deg); }
+
+  /* The header: a light bar of the mark, the game, its branch, the mode,
+     Reveal all, then warnings, the connection and ☰ at the end. Its sizes
+     are in em, so the whole bar grows with its text above 1920px. */
   header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 6px 14px;
+    gap: var(--space-2) var(--space-4);
+    min-height: var(--header-height);
+    padding: var(--space-1) var(--space-5);
     background: var(--panel);
+    color: var(--ink);
     border-bottom: 1px solid var(--line);
     flex-wrap: wrap;
     /* Header text is today's 13px up to 1920px wide and grows above it. */
-    font-size: max(var(--fs-13), 0.677vw);
+    font-size: max(var(--fs-ui), 0.677vw);
   }
-  header button:not(.burger), header select { font-size: inherit; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--offline); }
+  header button, header select { font-size: inherit; }
+  header svg { width: 1.38em; height: 1.38em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .brand { display: flex; align-items: center; gap: 0.77em; }
+  .brand img { width: 2.3em; height: 2.3em; display: block; }
+  .brand strong { font-size: 1.3em; font-weight: 700; }
+  .game { font-weight: var(--fw-ui-title); }
+  .branch { display: flex; align-items: center; gap: 0.6em; color: var(--muted); font-size: 0.92em; }
+  .branch select {
+    height: 2.5em;
+    padding: 0 0.77em;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--control-line);
+    background: var(--panel);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 1.09em;
+  }
+  /* Play | Review: the mode in force is filled in primary. */
+  .mode { display: flex; border: 1px solid var(--control-line); border-radius: var(--radius-s); overflow: hidden; }
+  .mode label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.3em;
+    padding: 0 1.08em;
+    background: var(--panel);
+    color: var(--muted);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .mode label + label { border-left: 1px solid var(--control-line); }
+  .mode label:hover { background: var(--hover); }
+  .mode label.on { background: var(--primary); color: var(--on-primary); cursor: default; }
+  .mode label:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: -4px; }
+  .mode input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+  .toggle { display: flex; gap: 0.6em; align-items: center; cursor: pointer; }
+  .toggle input { width: 1.23em; height: 1.23em; margin: 0; accent-color: var(--primary); }
+  .spacer { flex: 1; }
+  header .warn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.46em;
+    height: 2.3em;
+    padding: 0 0.77em;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--warn-line);
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-weight: 600;
+    cursor: help;
+  }
+  header .warn svg { width: 1.15em; height: 1.15em; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .conn { display: inline-flex; align-items: center; gap: 0.46em; color: var(--muted); }
+  .dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--danger); }
   .dot.on { background: var(--live); }
-  .game { color: var(--muted); }
-  .branch select { margin-left: 4px; }
-  .toggle { display: flex; gap: 4px; align-items: center; cursor: pointer; }
-  .reveal-toggle { color: var(--reveal); font-weight: 700; }
-  .warn { color: var(--warn); cursor: help; }
-  .more { margin-left: auto; position: relative; }
-  .burger { font-size: max(var(--fs-16), 0.833vw); line-height: 1; padding: 4px 9px; }
+  .app.phone .dot { width: 10px; height: 10px; }
+  header button {
+    display: grid;
+    place-items: center;
+    width: 2.6em;
+    height: 2.6em;
+    padding: 0;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--control-line);
+    background: var(--panel);
+    color: var(--ink);
+  }
+  header button:hover:not(:disabled) { border-color: var(--control-line); background: var(--hover); }
+  header button[aria-pressed='true'] { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
+  header button[aria-pressed='true']:hover:not(:disabled) { border-color: var(--primary); background: var(--primary); }
+  .more { position: relative; }
   .backdrop { position: fixed; inset: 0; z-index: 70; }
+
+  /* ☰'s menu: a raised panel of rows. */
   .dropdown {
     position: absolute;
     right: 0;
     top: calc(100% + 6px);
     z-index: 71;
-    min-width: 230px;
+    min-width: var(--popover-width);
     display: flex;
     flex-direction: column;
-    padding: 4px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    box-shadow: var(--shadow-dropdown);
+    padding: var(--space-1);
+    background: var(--panel-raised);
+    color: var(--ink);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-menu);
+    font-size: max(var(--fs-ui), 0.677vw);
   }
   /* On a phone ☰ sits at the left, so its menu opens rightwards, and
      scrolls if it is taller than the screen. */
   .app.phone .dropdown { right: auto; left: 0; max-height: calc(100dvh - 60px); overflow-y: auto; max-width: calc(100vw - 16px); }
-  .dropdown button { width: 100%; text-align: left; border-color: transparent; background: none; }
-  .dropdown button:hover { background: var(--hover); }
+  .dropdown button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 34px;
+    padding: 0 var(--space-3);
+    text-align: left;
+    font-size: inherit;
+    border: 0;
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--ink);
+  }
+  .dropdown button:hover:not(:disabled) { background: var(--hover); }
   .dropdown form { margin: 0; }
-  .menu-check { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: max(var(--fs-13), 0.677vw); cursor: pointer; border-radius: 6px; }
+  .menu-check { display: flex; align-items: center; gap: var(--space-2); min-height: 34px; padding: 0 var(--space-3); cursor: pointer; border-radius: var(--radius-s); }
   .menu-check:hover { background: var(--hover); }
-  .sep { height: 1px; background: var(--line); margin: 4px 0; }
+  .menu-check input { margin: 0; accent-color: var(--primary); }
+  .menu-check select { height: 30px; padding: 0 var(--space-2); border-radius: var(--radius-s); border: 1px solid var(--control-line); background: var(--panel); color: var(--ink); font-family: var(--font-mono); font-size: var(--fs-ui); }
+  .sep { height: 1px; background: var(--line); margin: var(--space-1) 0; }
   .menu-group { display: flex; flex-wrap: wrap; align-items: center; }
-  .menu-label { flex-basis: 100%; padding: 4px 10px 0; color: var(--muted); font-size: var(--fs-label); font-weight: var(--fw-label); letter-spacing: var(--ls-label); text-transform: uppercase; }
-  .account { color: var(--muted); padding: 4px 10px; font-size: var(--fs-12); }
+  .menu-label { flex-basis: 100%; padding: var(--space-2) var(--space-3) var(--space-1); color: var(--muted); font-size: var(--fs-label); font-weight: var(--fw-label); letter-spacing: var(--ls-label); text-transform: uppercase; }
+  .account { color: var(--muted); padding: var(--space-1) var(--space-3); font-size: var(--fs-ui-s); }
+
   .over-banner {
-    background: var(--accent);
-    color: var(--accent-label-ink);
-    font-weight: 800;
+    background: var(--primary);
+    color: var(--on-primary);
+    font-weight: 700;
     text-align: center;
-    padding: 4px;
+    padding: var(--space-1) var(--space-3);
   }
   .reveal-banner {
-    background: var(--reveal);
-    color: var(--on-color);
-    font-weight: 800;
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    border-bottom: 1px solid var(--warn-line);
+    font-weight: 700;
     text-align: center;
-    padding: 4px;
+    padding: var(--space-1) var(--space-3);
     letter-spacing: 0.04em;
   }
-  .body { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; }
+
+  /* The mat and the timeline are rounded panels on the page background. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; padding: var(--gutter-y) var(--gutter); gap: var(--gutter); }
   .body.panel { grid-template-columns: 1fr var(--panel-col); }
-  main { overflow: auto; display: flex; flex-direction: column; justify-content: center; font-size: var(--fs); }
+  main { overflow: auto; display: flex; flex-direction: column; justify-content: center; font-size: var(--fs); border-radius: var(--radius-l); }
   aside {
     background: var(--panel);
-    border-left: 1px solid var(--line);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
     display: flex;
     flex-direction: column;
     min-height: 0;
-    max-height: calc(100vh - 44px);
+    max-height: calc(100vh - var(--header-height) - 2 * var(--gutter-y));
     position: sticky;
-    top: 0;
+    top: var(--gutter-y);
+    overflow: hidden;
   }
-  .body.panel.bottom { grid-template-columns: 1fr; grid-template-rows: auto minmax(200px, 1fr); }
+  /* Docked below, the board and the timeline join into one panel. */
+  .body.panel.bottom { grid-template-columns: 1fr; grid-template-rows: auto minmax(200px, 1fr); gap: 0; }
+  .body.bottom main { border-radius: var(--radius-l) var(--radius-l) 0 0; }
   .body.bottom aside {
-    border-left: 0;
-    border-top: 1px solid var(--line);
+    border-radius: 0 0 var(--radius-l) var(--radius-l);
     max-height: none;
     position: static;
   }
-  aside h2 { font-size: max(var(--fs-13), 0.677vw); margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
-  .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: 8px; }
+  aside h2 { font-size: max(var(--fs-ui), 0.677vw); font-weight: var(--fw-label); color: var(--muted); margin: var(--space-3) var(--space-3) 0; text-transform: uppercase; letter-spacing: var(--ls-label); }
+  .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: var(--space-2); }
   aside .dock {
-    display: grid; place-items: center; width: 26px; height: 22px; padding: 0; margin-top: 8px;
-    background: none; border: 1px solid transparent; border-radius: 4px; color: var(--muted); cursor: pointer;
+    display: grid; place-items: center; width: 28px; height: 24px; padding: 0; margin-top: var(--space-2);
+    background: var(--panel); border: 1px solid var(--control-line); border-radius: var(--radius-s); color: var(--muted); cursor: pointer;
   }
-  aside .dock:hover, aside .dock:focus-visible { color: var(--text); border-color: var(--line); }
+  aside .dock:hover, aside .dock:focus-visible { color: var(--ink); background: var(--hover); border-color: var(--control-line); }
   .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
   .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: 999px; border: 1px solid var(--line); color: var(--text); }
   .opp-status.acting { border-color: var(--accent); color: var(--accent); }
@@ -496,7 +643,7 @@
   .muted { color: var(--muted); }
   .overlay {
     position: fixed;
-    top: 52px;
+    top: calc(var(--header-height) + var(--gutter-y) + var(--space-2));
     /* Centred on the board area: the window less the timeline beside it. */
     left: calc(50% - var(--panel-w) / 2);
     transform: translateX(-50%);
@@ -512,36 +659,52 @@
   .overlay > :global(*) { pointer-events: auto; }
   .caption {
     white-space: pre-line;
-    font-size: var(--fs-15);
-    line-height: 1.45;
-    background: var(--caption-bg);
-    color: var(--on-color);
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 2px solid var(--accent);
+    font-size: var(--fs-body-s);
+    line-height: var(--lh-body-s);
+    background: var(--panel-raised);
+    color: var(--ink);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-menu);
     max-width: min(80vw, calc(100vw - var(--panel-w) - 32px));
     text-align: center;
   }
   .toasts {
     position: fixed;
-    right: 16px;
-    bottom: 16px;
+    right: var(--space-4);
+    bottom: var(--space-4);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
     z-index: 60;
     max-width: min(420px, calc(100vw - 32px));
     /* A toast never takes a touch: on a phone it lies over the hand, where
        the card it talks about (a pair's second half) waits to be dragged. */
     pointer-events: none;
   }
-  .toast { padding: 8px 12px; border-radius: 8px; box-shadow: var(--shadow-toast); font-size: var(--fs-13); }
-  .toast.error { background: var(--toast-error); color: var(--on-color); }
-  .toast.warn { background: var(--warn); color: var(--warn-badge-ink); }
-  .toast.info { background: var(--toast-info); color: var(--on-color); }
+  .toast {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-m);
+    border: 1px solid var(--line);
+    background: var(--panel-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-menu);
+    font-size: var(--fs-ui);
+    font-weight: var(--fw-ui);
+  }
+  .toast.error { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); }
+  .toast.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); }
   @media (max-width: 900px) {
     .body.panel { grid-template-columns: 1fr; }
     aside { max-height: 40vh; position: static; }
     .app.panel-side { --panel-w: 0px; }
+  }
+  /* On a touch screen every header control is at least a fingertip's 44px. */
+  @media (pointer: coarse) {
+    header .warn, .mode { min-height: var(--touch-target); }
+    header .warn { min-width: var(--touch-target); justify-content: center; }
+    .mode label { height: auto; }
+    header button { width: var(--touch-target); height: var(--touch-target); }
+    .branch select { height: var(--touch-target); }
   }
 </style>

@@ -13,11 +13,12 @@ main { color: var(--mat-ink); --muted: var(--mat-muted); }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  font: var(--fs-14)/1.4 var(--font-ui);
+  font: var(--fs-14)/1.4 var(--font-sans);
   background: var(--bg);
-  color: var(--text);
+  color: var(--ink);
 }
-main { background: var(--felt); }
+/* The mat: one flat surface in the chosen mat colour. */
+main { background: var(--mat-surface); }
 button {
   font: inherit;
   font-size: var(--fs-13);
@@ -31,7 +32,7 @@ button {
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { opacity: 0.45; cursor: default; }
 button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
-select { font: inherit; background: var(--input); color: var(--text); border: 1px solid var(--line); border-radius: 4px; }
+select { font: inherit; background: var(--panel); color: var(--ink); border: 1px solid var(--control-line); border-radius: var(--radius-xs); }
 code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
 
 /* A card enlarged on hover sits above the cards around it. */
