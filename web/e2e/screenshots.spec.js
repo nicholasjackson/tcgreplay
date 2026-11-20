@@ -25,6 +25,9 @@ async function settle(page) {
     () =>
       new Promise((resolve) => {
         const list = document.querySelector('.timeline');
+        // Smooth scrolling can come to rest a pixel either side of the end,
+        // so the capture pins the timeline to its very bottom.
+        if (list) list.scrollTop = list.scrollHeight;
         let last = list?.scrollTop;
         let still = 0;
         const tick = () => {

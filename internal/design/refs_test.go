@@ -133,3 +133,52 @@ func TestUnresolvedRefsResolver(t *testing.T) {
 		t.Errorf("unresolved %v, want %v", got, want)
 	}
 }
+
+// TestSiteVarsResolve: every var(--name) in the website's styles (its
+// stylesheet, layouts, components and pages) is a token in tokens.css or a
+// property the website assigns itself, so a mistyped token name cannot
+// silently drop a colour from a page.
+func TestSiteVarsResolve(t *testing.T) {
+	root := filepath.Join("..", "..")
+	defined := map[string]bool{}
+	tokens, err := os.ReadFile("tokens.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	definedProps(string(tokens), defined)
+
+	site := filepath.Join(root, "site", "src")
+	files := map[string]string{}
+	refs := 0
+	err = filepath.WalkDir(site, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		switch filepath.Ext(p) {
+		case ".css", ".astro", ".ts":
+			b, err := os.ReadFile(p)
+			if err != nil {
+				return err
+			}
+			definedProps(string(b), defined)
+			if filepath.Ext(p) != ".ts" {
+				rel, err := filepath.Rel(root, p)
+				if err != nil {
+					return err
+				}
+				files[filepath.ToSlash(rel)] = string(b)
+				refs += len(varRef.FindAllString(string(b), -1))
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if refs == 0 {
+		t.Fatal("found no var(--name) references in the website's styles: the scan is looking in the wrong place")
+	}
+	for _, m := range unresolvedRefs(files, defined) {
+		t.Errorf("%s is neither a token in internal/design/tokens.css nor a property assigned in site/src", m)
+	}
+}

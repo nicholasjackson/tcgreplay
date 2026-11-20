@@ -62,20 +62,20 @@ import { site } from '../lib/facts';
   @media (min-width: 56rem) {
     .hero { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 2rem; }
   }
-  h1 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); margin: 0 0 0.5rem; }
-  .lede { font-size: 1.1rem; margin: 0 0 1rem; }
+  h1 { font-size: clamp(var(--fs-r160), 3.2vw, var(--fs-r230)); margin: 0 0 0.5rem; }
+  .lede { font-size: var(--fs-r110); margin: 0 0 1rem; }
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin: 0; }
   .button {
     display: inline-block;
     padding: 0.6rem 1.4rem;
     border-radius: 6px;
     background: var(--accent);
-    color: #1d2420;
+    color: var(--button-ink);
     font-weight: 700;
     text-decoration: none;
   }
   .button:hover { filter: brightness(1.08); }
-  .works-with { color: var(--muted); font-size: 0.95rem; }
+  .works-with { color: var(--muted); font-size: var(--fs-r95); }
   .what ul { padding-left: 1.2rem; }
   .what li { margin: 0.5rem 0; }
 </style>

@@ -9,20 +9,20 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font: var(--fs-16)/1.6 var(--font-site);
   background: var(--panel);
   color: var(--text);
   overflow-wrap: break-word;
 }
 a { color: var(--accent); }
 @media (prefers-color-scheme: light) {
-  :where(:root:not([data-theme='dark'])) a { color: #8a5d00; }
+  :where(:root:not([data-theme='dark'])) a { color: var(--link-light); }
 }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .site-header {
   background: var(--felt);
-  color: #e8efe9;
+  color: var(--on-felt);
   border-bottom: 1px solid var(--line);
 }
 .site-header .bar {
@@ -38,10 +38,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #e8efe9;
+  color: var(--on-felt);
   text-decoration: none;
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: var(--fs-r115);
 }
 .brand img { width: 36px; height: 36px; }
 .site-nav ul {
@@ -52,7 +52,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   margin: 0;
   padding: 0;
 }
-.site-nav a { color: #e8efe9; text-decoration: none; }
+.site-nav a { color: var(--on-felt); text-decoration: none; }
 .site-nav a:hover, .site-nav a[aria-current='page'] { color: var(--accent); text-decoration: underline; }
 
 main {
@@ -92,13 +92,13 @@ table { display: block; max-width: 100%; overflow-x: auto; border-collapse: coll
 .copy-block pre { padding-right: 5rem; }
 .copy-block.wrap pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .copy-block.tall pre { max-height: 24rem; overflow: auto; }
-.copy-block .label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.25rem; }
+.copy-block .label { display: block; font-size: var(--fs-r85); color: var(--muted); margin-bottom: 0.25rem; }
 button.copy {
   position: absolute;
   top: 0.4rem;
   right: 0.4rem;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--fs-r85);
   padding: 0.2rem 0.7rem;
   border-radius: 4px;
   border: 1px solid var(--line);
@@ -124,7 +124,7 @@ button.copy[data-copied] { border-color: var(--accent); color: var(--accent); }
 .site-footer {
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--fs-r90);
 }
 .site-footer .bar { max-width: 64rem; margin: 0 auto; padding: 1rem; }
 .site-footer p { margin: 0.4rem 0; }
