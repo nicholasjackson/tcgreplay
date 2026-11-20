@@ -48,6 +48,7 @@
 <div
   class="hand"
   class:small
+  class:peek={app.wide && small}
   class:phone={app.layout === 'phone'}
   data-scroll-x
   {@attach dropZone('hand', (data) => dropOnZone(data, 'hand'))}
@@ -149,4 +150,28 @@
     font-size: 0.8em;
     color: var(--muted);
   }
+  /* On the mat the count follows the hand's last card, not the board's
+     edge. The phone keeps it in the strip's corner. */
+  .hand:not(.phone) .count {
+    position: static;
+    align-self: flex-end;
+    margin-left: calc(var(--cw) * 0.7);
+    white-space: nowrap;
+  }
+  .hand.small:not(.phone) .count { align-self: flex-start; }
+  /* The landscape mat: the opponent's hand hangs off the board's top edge,
+     about a third of each card showing, enough to count them, and takes no
+     row. The board's edge cuts off the rest; the count sits beside the
+     cards' visible ends. */
+  .hand.peek {
+    position: absolute;
+    top: calc(var(--cw) * 0.62 * 1.4 * -0.67);
+    left: 0;
+    right: 0;
+    z-index: 5;
+    min-height: 0;
+    padding: 0 20px;
+  }
+  .peek .slot { margin: 0 calc(var(--cw) * -0.24); transform: rotate(var(--a)); }
+  .hand.small.peek .count { align-self: flex-end; }
 </style>

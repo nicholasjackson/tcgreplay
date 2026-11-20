@@ -1,6 +1,6 @@
 <script>
   import { openDeckList } from './lib/actions.js';
-  import { app, setPanelAt } from './lib/store.svelte.js';
+  import { app, benchSlots, setPanelAt } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
   import { setAutoplay } from './lib/playback.svelte.js';
   import Side from './components/Side.svelte';
@@ -19,14 +19,17 @@
   // sheet opened from ☰ rather than a column beside the board.
   const phone = $derived(app.layout === 'phone');
   let timelineOpen = $state(false);
-  // fit is how many pixels the phone board gives up so it never scrolls:
-  // the cards shrink by fit / 6.6 when the board would run past the
-  // screen (a two-row strip, Pokémon with many attachments) and grow back
-  // as room returns.
+  // fit is how many pixels the phone board, or the landscape mat, gives up
+  // so it never scrolls: the cards shrink when the board would run past
+  // the screen (a two-row strip, Pokémon with many attachments) and grow
+  // back as room returns. Only the rows in the flow count: the landscape
+  // mat's peeking hand and corner name sit over it.
   let fit = $state(0);
   function fitBoard(main) {
     const measure = () => {
-      const used = [...main.children].reduce((h, c) => h + c.offsetHeight, 0);
+      const pad = parseFloat(getComputedStyle(main).paddingTop) + parseFloat(getComputedStyle(main).paddingBottom);
+      const rows = [...main.children].filter((c) => getComputedStyle(c).position !== 'absolute');
+      const used = rows.reduce((h, c) => h + c.offsetHeight, pad);
       const over = used - main.clientHeight;
       if (over > 0) fit += over;
       else if (over < -24 && fit > 0) fit = Math.max(0, fit + over);
@@ -47,6 +50,20 @@
       fit = 0;
     };
   }
+  // measureBoard keeps app.wide in step with the board area's width. The
+  // board area resizes with the window and when the timeline moves or
+  // hides, so one observer covers every way it can cross 1600px.
+  function measureBoard(main) {
+    const ro = new ResizeObserver(() => (app.wide = main.clientWidth >= 1600));
+    ro.observe(main);
+    return () => {
+      ro.disconnect();
+      app.wide = false;
+    };
+  }
+  // benchN is the longer bench's slot count: the landscape mat's widest
+  // row, which its card size must fit.
+  const benchN = $derived(app.board ? Math.max(...Object.values(app.board.sides).map((s) => benchSlots(s).length)) : 5);
   const showTimeline = $derived(!app.landscapePhone && (phone ? timelineOpen : app.panelOpen));
   const bottom = $derived(!phone && app.panelOpen && app.panelAt === 'bottom');
   // menuOpen shows the header's menu of less frequent actions.
@@ -83,9 +100,26 @@
   }
 </script>
 
+<!-- The board, top to bottom: the opponent's name, hand and half, the
+     strip, your half, hand and name. -->
+{#snippet board()}
+  {#if !phone || app.opponent}
+    <div class="seat-name top">
+      {#if !phone}{nameOf(app.claude)} · {app.claude}{/if}
+      {#if app.opponent}<span class="opp-status {app.opponent}">{oppStatus[app.opponent]}</span>{/if}
+    </div>
+  {/if}
+  {#if !phone}<Hand seat={app.claude} small />{/if}
+  <Side seat={app.claude} name={nameOf(app.claude)} mirrored />
+  <Strip />
+  <Side seat={app.human} name={nameOf(app.human)} />
+  <Hand seat={app.human} />
+  {#if !phone}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
+{/snippet}
+
 <svelte:window onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
 
-<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:phone style:--fit="{fit}px">
+<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone style:--fit="{fit}px">
   <header>
     <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
     {#if !phone}<strong>tcgreplay</strong>{/if}
@@ -167,20 +201,13 @@
         <p>Turn your phone upright to see the board.</p>
       </div>
     {:else}
-    <main {@attach phone && fitBoard}>
-      {#if app.board}
-        {#if !phone || app.opponent}
-          <div class="seat-name top">
-            {#if !phone}{nameOf(app.claude)} · {app.claude}{/if}
-            {#if app.opponent}<span class="opp-status {app.opponent}">{oppStatus[app.opponent]}</span>{/if}
-          </div>
-        {/if}
-        {#if !phone}<Hand seat={app.claude} small />{/if}
-        <Side seat={app.claude} name={nameOf(app.claude)} mirrored />
-        <Strip />
-        <Side seat={app.human} name={nameOf(app.human)} />
-        <Hand seat={app.human} />
-        {#if !phone}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
+    <main {@attach phone ? fitBoard : measureBoard}>
+      {#if app.board && app.wide}
+        <!-- The landscape mat sizes its cards from the board area, so it
+             sits in a box whose container units measure <main>. -->
+        <div class="board" style:--bench-n={benchN} {@attach fitBoard}>{@render board()}</div>
+      {:else if app.board}
+        {@render board()}
       {:else}
         <div class="landing">
           <h1>No game open</h1>
@@ -250,7 +277,13 @@
     flex-direction: column;
     border: 0 solid transparent;
     box-sizing: border-box;
+    /* The timeline column's width beside the board. --panel-w is the room
+       it takes from the board area (0 when it is below or hidden), so the
+       playback overlay can centre on the board rather than the window. */
+    --panel-col: clamp(320px, 18vw, 960px);
+    --panel-w: 0px;
   }
+  .app.panel-side { --panel-w: var(--panel-col); }
   .app.reveal { border: 6px solid var(--reveal); }
   /* With no timeline beside the board, the board takes the full width (see
      --cw in app.css). With the timeline below, the board also keeps 200px of
@@ -263,6 +296,34 @@
     height: 100vh;
     --cw: clamp(48px, min((100vh - 315px) / 11.1, (100vw - 40px) / 10), 240px);
   }
+  /* The landscape mat (app.wide) fills the window and sizes its cards
+     from the board area: <main> is a size container, and .board inside it
+     takes the largest card width at which the four rows fit main's height
+     and the widest row (the longer bench, the prize fan and the piles)
+     fits its width. */
+  .app.landscape { height: 100vh; min-height: 0; }
+  .app.landscape main { container-type: size; }
+  .app.landscape .body.panel.bottom { grid-template-rows: minmax(0, 1fr) clamp(200px, 28vh, 480px); }
+  /* The rows are about 6.8 card widths tall: two player rows, the middle
+     row with its captions, your hand and the opponent's peeking hand above
+     them; plus your name. A busy board (Energy under benched Pokémon) gives
+     up --fit (see fitBoard). */
+  .board {
+    --cw: max(48px, min((100cqh - 50px - var(--fit, 0px)) / 6.9, (100cqw - 80px) / (4.6 + 1.16 * var(--bench-n, 5))));
+    --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
+    font-size: var(--fs);
+    position: relative;
+    height: 100%;
+    /* The opponent's hand peeks into this strip from above the board. */
+    padding-top: calc(var(--cw) * 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+  }
+  /* The opponent's name and status, small in the top-left corner. */
+  .board > .seat-name.top { position: absolute; top: 8px; left: 12px; z-index: 6; padding: 0; text-align: left; }
+  /* Your hand's cards keep their size, with less felt above them. */
+  .board :global(.hand:not(.small)) { min-height: 0; padding-top: calc(var(--cw) * 0.04); }
   /* Phone: the board fits the screen and never scrolls; only the hand, a
      bench of more than five and the menus do. Cards are five and a bit
      across, or smaller when the screen is short: the field (two benches
@@ -321,8 +382,10 @@
     background: var(--panel);
     border-bottom: 1px solid var(--line);
     flex-wrap: wrap;
-    font-size: 13px;
+    /* Header text is today's 13px up to 1920px wide and grows above it. */
+    font-size: max(13px, 0.677vw);
   }
+  header button:not(.burger), header select { font-size: inherit; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: #c62828; }
   .dot.on { background: #43a047; }
   .game { color: var(--muted); }
@@ -331,7 +394,7 @@
   .reveal-toggle { color: var(--reveal); font-weight: 700; }
   .warn { color: #ffb300; cursor: help; }
   .more { margin-left: auto; position: relative; }
-  .burger { font-size: 16px; line-height: 1; padding: 4px 9px; }
+  .burger { font-size: max(16px, 0.833vw); line-height: 1; padding: 4px 9px; }
   .backdrop { position: fixed; inset: 0; z-index: 70; }
   .dropdown {
     position: absolute;
@@ -353,7 +416,7 @@
   .dropdown button { width: 100%; text-align: left; border-color: transparent; background: none; }
   .dropdown button:hover { background: var(--hover); }
   .dropdown form { margin: 0; }
-  .menu-check { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; border-radius: 6px; }
+  .menu-check { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: max(13px, 0.677vw); cursor: pointer; border-radius: 6px; }
   .menu-check:hover { background: var(--hover); }
   .sep { height: 1px; background: var(--line); margin: 4px 0; }
   .account { color: var(--muted); padding: 4px 10px; font-size: 12px; }
@@ -366,7 +429,7 @@
     letter-spacing: 0.04em;
   }
   .body { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; }
-  .body.panel { grid-template-columns: 1fr clamp(320px, 18vw, 480px); }
+  .body.panel { grid-template-columns: 1fr var(--panel-col); }
   main { overflow: auto; display: flex; flex-direction: column; justify-content: center; font-size: var(--fs); }
   aside {
     background: var(--panel);
@@ -385,7 +448,7 @@
     max-height: none;
     position: static;
   }
-  aside h2 { font-size: 13px; margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
+  aside h2 { font-size: max(13px, 0.677vw); margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
   .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: 8px; }
   aside .dock {
     display: grid; place-items: center; width: 26px; height: 22px; padding: 0; margin-top: 8px;
@@ -401,7 +464,8 @@
   .overlay {
     position: fixed;
     top: 52px;
-    left: 50%;
+    /* Centred on the board area: the window less the timeline beside it. */
+    left: calc(50% - var(--panel-w) / 2);
     transform: translateX(-50%);
     z-index: 25;
     display: flex;
@@ -409,7 +473,7 @@
     align-items: center;
     gap: 8px;
     width: max-content;
-    max-width: calc(100vw - 32px);
+    max-width: calc(100% - var(--panel-w) - 32px);
     pointer-events: none;
   }
   .overlay > :global(*) { pointer-events: auto; }
@@ -422,7 +486,7 @@
     padding: 8px 16px;
     border-radius: 20px;
     border: 2px solid var(--accent);
-    max-width: 80vw;
+    max-width: min(80vw, calc(100vw - var(--panel-w) - 32px));
     text-align: center;
   }
   .toasts {
@@ -442,5 +506,6 @@
   @media (max-width: 900px) {
     .body.panel { grid-template-columns: 1fr; }
     aside { max-height: 40vh; position: static; }
+    .app.panel-side { --panel-w: 0px; }
   }
 </style>
