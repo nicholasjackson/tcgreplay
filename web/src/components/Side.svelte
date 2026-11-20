@@ -1,7 +1,9 @@
 <script>
   // One player's half of the mat. The opponent's half is mirrored: bench
-  // on the outside, Active Spot towards the middle.
-  import { app, cardInfo, openSheet } from '../lib/store.svelte.js';
+  // on the outside, Active Spot towards the middle. On the landscape mat
+  // (app.wide) a half is one row of prizes, bench and piles, and the Strip
+  // holds both Active Spots.
+  import { app, benchSlots, openSheet } from '../lib/store.svelte.js';
   import { deckMenu, dropOnZone } from '../lib/actions.js';
   import { dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
@@ -13,10 +15,7 @@
 
   const side = $derived(app.board.sides[seat]);
   const mine = $derived(seat === app.human || app.snap?.mode === 'review');
-  // A Stadium such as Area Zero Underdepths lets a bench hold 8: once the
-  // shown slots are full, offer the next one to drop on.
-  const expands = $derived(/\b8 Pokémon on (their|his or her) Bench/.test(cardInfo(app.board.stadium?.def)?.effect ?? ''));
-  const slots = $derived(expands && side.bench.length < 8 && side.bench.every(Boolean) ? [...side.bench, null] : side.bench);
+  const slots = $derived(benchSlots(side));
   // pile makes a deck, discard or Lost Zone pile a drop zone.
   const pile = (zone) => dropZone(zone, (data) => dropOnZone(data, zone));
   function prize(p) {
@@ -57,47 +56,9 @@
   }
 </script>
 
-{#if app.layout === 'phone'}
-  <!-- The phone board: counters for the piles and prizes, the Active
-       centred, and a bench row that scrolls sideways. -->
-  <section class="side phone" class:mirrored aria-label="{seat} side">
-    <CounterBar {seat} {name} inset={mirrored} />
-    <div class="bench-wrap">
-      <div class="row bench" data-scroll-x {@attach offscreen}>
-        {#each slots as b, i (i)}
-          <Stack {seat} slot="bench:{i}" stack={b} label="{seat} bench {i + 1}" />
-        {/each}
-      </div>
-      {#if hidden}<span class="more" aria-hidden="true">+{hidden} ›</span>{/if}
-    </div>
-    <div class="row active-row">
-      <Stack {seat} slot="active" stack={side.active} label="{seat} Active" />
-    </div>
-  </section>
-{:else}
-<section class="side" class:mirrored aria-label="{seat} side">
-  <div class="prizes" title="{side.prizes_left} prizes left">
-    {#each side.prizes as p (p.slot)}
-      <div class="prize" class:taken={!p.card}>
-        {#if p.card}
-          <Card card={p.card} size="sm" draggable={false} onclick={() => prize(p)} />
-        {/if}
-      </div>
-    {/each}
-    <span class="count">{side.prizes_left}</span>
-  </div>
-
-  <div class="field">
-    <div class="row active-row">
-      <Stack {seat} slot="active" stack={side.active} label="{seat} Active" />
-    </div>
-    <div class="row bench">
-      {#each slots as b, i (i)}
-        <Stack {seat} slot="bench:{i}" stack={b} label="{seat} bench {i + 1}" />
-      {/each}
-    </div>
-  </div>
-
+<!-- The Deck, Discard and Lost Zone: a column beside today's mat, a row
+     at the end of the landscape mat's row. -->
+{#snippet piles()}
   <div class="piles">
     <div
       class="pile deck"
@@ -140,6 +101,70 @@
       <span class="label">Lost {side.lost?.length ?? 0}</span>
     </div>
   </div>
+{/snippet}
+
+{#if app.layout === 'phone'}
+  <!-- The phone board: counters for the piles and prizes, the Active
+       centred, and a bench row that scrolls sideways. -->
+  <section class="side phone" class:mirrored aria-label="{seat} side">
+    <CounterBar {seat} {name} inset={mirrored} />
+    <div class="bench-wrap">
+      <div class="row bench" data-scroll-x {@attach offscreen}>
+        {#each slots as b, i (i)}
+          <Stack {seat} slot="bench:{i}" stack={b} label="{seat} bench {i + 1}" />
+        {/each}
+      </div>
+      {#if hidden}<span class="more" aria-hidden="true">+{hidden} ›</span>{/if}
+    </div>
+    <div class="row active-row">
+      <Stack {seat} slot="active" stack={side.active} label="{seat} Active" />
+    </div>
+  </section>
+{:else if app.wide}
+  <!-- The landscape mat: one row of the prize fan, the bench and the
+       piles; the opponent's row runs the other way, as across a table. The
+       fan shows only the prizes left, so it closes up as they are taken. -->
+  <section class="side wide" class:mirrored aria-label="{seat} side">
+    <div class="prizes fan" title="{side.prizes_left} prizes left">
+      {#each side.prizes.filter((p) => p.card) as p (p.slot)}
+        <div class="prize">
+          <Card card={p.card} size="sm" draggable={false} onclick={() => prize(p)} />
+        </div>
+      {/each}
+      <span class="count">{side.prizes_left}</span>
+    </div>
+    <div class="row bench">
+      {#each slots as b, i (i)}
+        <Stack {seat} slot="bench:{i}" stack={b} label="{seat} bench {i + 1}" />
+      {/each}
+    </div>
+    {@render piles()}
+  </section>
+{:else}
+<section class="side" class:mirrored aria-label="{seat} side">
+  <div class="prizes" title="{side.prizes_left} prizes left">
+    {#each side.prizes as p (p.slot)}
+      <div class="prize" class:taken={!p.card}>
+        {#if p.card}
+          <Card card={p.card} size="sm" draggable={false} onclick={() => prize(p)} />
+        {/if}
+      </div>
+    {/each}
+    <span class="count">{side.prizes_left}</span>
+  </div>
+
+  <div class="field">
+    <div class="row active-row">
+      <Stack {seat} slot="active" stack={side.active} label="{seat} Active" />
+    </div>
+    <div class="row bench">
+      {#each slots as b, i (i)}
+        <Stack {seat} slot="bench:{i}" stack={b} label="{seat} bench {i + 1}" />
+      {/each}
+    </div>
+  </div>
+
+  {@render piles()}
 </section>
 {/if}
 
@@ -205,6 +230,28 @@
   .pile.deck :global(.card) { --w: calc(var(--cw) * 0.8); }
   .pile :global(.card:not(.sm)) { --w: calc(var(--cw) * 0.8); }
   .label { font-size: 0.8em; color: var(--muted); white-space: nowrap; }
+  /* The landscape mat: one row, the bench in the middle, the prize fan at
+     one end and the piles at the other. Smaller piles and prizes leave the
+     bench and the Active Spots the room. */
+  .side.wide {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas: 'prizes bench piles';
+    gap: calc(var(--cw) * 0.3);
+    padding: 0 12px;
+    max-width: none;
+  }
+  .side.wide.mirrored { grid-template-areas: 'piles bench prizes'; }
+  .wide .bench { grid-area: bench; flex-wrap: nowrap; }
+  .wide .bench :global(.slot) { width: calc(var(--cw) * 1.05); min-height: calc(var(--cw) * 1.4 + 8px); }
+  .wide .prizes { grid-area: prizes; display: flex; gap: 0; justify-self: start; }
+  .wide.mirrored .prizes { justify-self: end; }
+  .wide .prize { border: 0; }
+  .wide .prize + .prize { margin-left: calc(var(--cw) * -0.42); }
+  .wide .piles { grid-area: piles; flex-direction: row; justify-self: end; align-items: stretch; }
+  .wide.mirrored .piles { flex-direction: row-reverse; justify-self: start; }
+  .wide .pile { min-width: calc(var(--cw) * 0.75); min-height: calc(var(--cw) * 0.62 * 1.4 + 8px); }
+  .wide .pile.deck :global(.card),
+  .wide .pile :global(.card:not(.sm)) { --w: calc(var(--cw) * 0.7); }
   /* Phone: one column, the counters outermost and the Active towards the
      middle; the bench scrolls sideways, a finger swiping it as in the hand. */
   .side.phone { display: flex; flex-direction: column-reverse; align-items: stretch; gap: 4px; padding: 4px 0; max-width: none; }

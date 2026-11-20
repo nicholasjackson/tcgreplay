@@ -161,8 +161,10 @@ function start() {
     width: `${r.width}px`,
     height: `${r.height}px`,
   });
-  // Card sizes follow --cw, which the board sets below body.
-  ghost.style.setProperty('--cw', getComputedStyle(g.el).getPropertyValue('--cw'));
+  // Card sizes follow --cw, which the board sets below body. The
+  // landscape mat's is in container units, which mean nothing on the
+  // ghost outside the board, so the ghost takes its width in pixels.
+  ghost.style.setProperty('--cw', `${cardWidth(g.el)}px`);
   document.body.append(ghost);
   // A finger would hide the card, so its ghost rides half a card above it.
   g.ghost = ghost;
@@ -279,4 +281,16 @@ function end() {
     app.dragging = null;
   }
   g = null;
+}
+
+// cardWidth is --cw, in pixels, where el is.
+function cardWidth(el) {
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position: absolute; visibility: hidden; width: var(--cw)';
+  el.append(probe);
+  // Its computed width: the card may be turned (a fanned hand), which a
+  // bounding box would measure.
+  const w = parseFloat(getComputedStyle(probe).width);
+  probe.remove();
+  return w;
 }

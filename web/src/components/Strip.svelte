@@ -1,11 +1,14 @@
 <script>
   // The middle of the mat: Stadium, turn, coin, a play area to drop
-  // Trainers on, lingering effects and the turn buttons.
+  // Trainers on, lingering effects and the turn buttons. On the landscape
+  // mat (app.wide) it is the middle row and holds both Active Spots too:
+  // the Stadium, your Active, "vs", the opponent's Active, the controls.
   import { app, canAct, oppActing, ownerOf } from '../lib/store.svelte.js';
   import { dropOnZone, endTurn, seatArgs } from '../lib/actions.js';
   import { dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
+  import Stack from './Stack.svelte';
 
   const b = $derived(app.board);
   const snap = $derived(app.snap);
@@ -24,6 +27,9 @@
   const nameOf = (seat) => b.sides?.[seat]?.name || (seat === app.human ? 'You' : app.assistant);
   // A phone's strip is one row, so its turn label is short: "T2 · You".
   const phone = $derived(app.layout === 'phone');
+  const wide = $derived(app.wide && !phone);
+  // spotName captions an Active Spot with whose it is.
+  const spotName = (seat) => (b.sides?.[seat]?.name ? `${b.sides[seat].name}'s Active` : seat === app.human ? 'Your Active' : `${app.assistant}'s Active`);
   // On a phone the Stadium sits on the side of whoever played it: left of
   // your Active, or right of the opponent's.
   const theirs = $derived(!!b.stadium && ownerOf(b.stadium.iid) !== app.human);
@@ -46,7 +52,7 @@
 
 <!-- No bar: a thin midline between the halves. The Stadium straddles it
      left of the Active Spots, the turn controls float on the right. -->
-<div class="strip" class:phone={app.layout === 'phone'}>
+<div class="strip" class:phone={app.layout === 'phone'} class:wide>
   <div class="stadium" class:theirs class:pair={!!b.stadium?.pair} {@attach zone('stadium')} role="region" aria-label="Stadium">
     {#if b.stadium?.pair}
       <!-- A Stadium played as a pair stands as one card, as TCG Live shows
@@ -66,6 +72,18 @@
       <span>Stadium</span>
     {/if}
   </div>
+
+  {#if wide}
+    <div class="actives">
+      {#each [app.human, app.claude] as seat, i (seat)}
+        {#if i}<span class="vs" aria-hidden="true">vs</span>{/if}
+        <figure class="spot" style:--seat="var(--{seat})">
+          <Stack {seat} slot="active" stack={b.sides[seat].active} label="{seat} Active" />
+          <figcaption>{spotName(seat)}</figcaption>
+        </figure>
+      {/each}
+    </div>
+  {/if}
 
   <div class="controls">
     <div class="status">
@@ -207,6 +225,48 @@
   .buttons { display: flex; gap: 6px; flex-wrap: wrap; }
   .buttons button { font-size: 0.95em; padding: 0.4em 0.8em; }
 
+  /* The landscape mat's middle row: the Stadium at the left, the two
+     Active Spots side by side, each edged in its seat's colour, and the
+     turn controls at the right. The Actives are a little larger than the
+     bench. */
+  .strip.wide {
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: calc(var(--cw) * 0.3);
+    /* Room above for the Active Spots' captions. */
+    padding: 1.2em 12px 0;
+  }
+  .wide .stadium { position: static; transform: none; justify-self: end; width: calc(var(--cw) * 1.2); min-height: calc(var(--cw) * 1.1 * 1.4 + 8px); }
+  .wide .controls { position: relative; inset: auto; transform: none; justify-self: start; }
+  /* The play area shows only during a drag; it floats under the controls
+     so the row, and so every card, keeps its size. */
+  .wide .play { position: absolute; top: calc(100% + 6px); left: 0; z-index: 3; white-space: nowrap; }
+  .wide :global(.card.lg) { --w: calc(var(--cw) * 1.1); }
+  /* A pair-played Stadium matches a single Stadium on the landscape mat. */
+  .wide .joined { --jw: calc(var(--cw) * 1.1); }
+  .actives { display: flex; align-items: flex-start; gap: calc(var(--cw) * 0.2); }
+  .vs { align-self: center; }
+  /* The caption sits on the spot's top edge, taking no row of its own. */
+  .spot { margin: 0; position: relative; }
+  .strip.wide .spot :global(.slot.active) {
+    width: calc(var(--cw) * 1.25);
+    min-height: calc(var(--cw) * 1.1 * 1.4 + 8px);
+    border: 2px solid var(--seat);
+    align-content: start;
+    padding-top: 4px;
+  }
+  .spot figcaption {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    translate: -50% 0;
+    font-size: 0.8em;
+    color: var(--seat);
+    white-space: nowrap;
+  }
+  .vs { font-weight: 800; font-size: 1.1em; color: var(--muted); }
   /* Phone: one compact row between the halves: the Stadium, the turn, the
      coin and the turn buttons. The play area covers the row while a card
      is dragged. */

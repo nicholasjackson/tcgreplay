@@ -37,6 +37,12 @@ export default defineConfig({
       name: 'desktop',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
+    {
+      // A big monitor: the board area beside the timeline is over 1600px
+      // wide, so the board is the landscape mat.
+      name: 'wide',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 2560, height: 1440 } },
+    },
   ],
   webServer: [
     {

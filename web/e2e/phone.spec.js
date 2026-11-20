@@ -2,7 +2,7 @@
 // player's piles and prizes, a bench row reaching all 8 slots, the header's
 // controls behind ☰, and a notice when the phone is held sideways. Tablets
 // and desktops keep the mat.
-import { test, expect, act, isPhone, pile } from './fixtures.js';
+import { test, expect, act, isPhone, isWide, pile } from './fixtures.js';
 
 const region = (page, name) => page.getByRole('region', { name, exact: true });
 const counters = (page, seat) => page.getByRole('group', { name: `${seat} counters` });
@@ -182,6 +182,7 @@ test('held sideways, a phone asks to be turned upright and loses nothing', async
 
 test('tablets and desktops keep the mat: piles and prizes beside it, no counters', async ({ page }, testInfo) => {
   test.skip(isPhone(testInfo), 'the mat');
+  test.skip(isWide(testInfo), 'the landscape mat (wide.spec.js)');
   for (const seat of ['p1', 'p2']) {
     await expect(counters(page, seat)).toHaveCount(0);
     const side = region(page, `${seat} side`);
@@ -192,6 +193,50 @@ test('tablets and desktops keep the mat: piles and prizes beside it, no counters
   await expect(page.getByRole('list', { name: 'p2 hand' })).toBeVisible();
   await expect(page.locator('aside')).toBeVisible();
   await expect(page.locator('aside')).not.toHaveClass(/\bsheet\b/);
+});
+
+// handCount measures a hand's "N in hand" against the hand's last card and
+// a benched card's width (one card width).
+async function handCount(page, seat) {
+  return page.evaluate((seat) => {
+    const hand = document.querySelector(`[aria-label="${seat} hand"]`);
+    const slots = hand.querySelectorAll('.slot');
+    const last = slots[slots.length - 1].getBoundingClientRect();
+    const count = hand.querySelector('.count');
+    const box = count.getBoundingClientRect();
+    const bench = document.querySelector('[aria-label="p1 bench 1"] .card, [aria-label="p1 bench 0"] .card');
+    return {
+      text: count.textContent,
+      position: getComputedStyle(count).position,
+      gap: box.left - last.right,
+      cw: bench ? bench.getBoundingClientRect().width : null,
+      handRight: hand.getBoundingClientRect().right,
+      countRight: box.right,
+    };
+  }, seat);
+}
+
+test('on the mat each "N in hand" sits right beside its hand', async ({ page }, testInfo) => {
+  test.skip(isPhone(testInfo), 'the mat');
+  for (const size of [null, { width: 1920, height: 1080 }]) {
+    if (size) await page.setViewportSize(size);
+    for (const seat of ['p1', 'p2']) {
+      const m = await handCount(page, seat);
+      expect(m.text, seat).toMatch(/^\d+ in hand$/);
+      // Within one card width of the hand's nearest (last) card, never
+      // overlapping it.
+      expect(m.gap, `${seat} gap`).toBeGreaterThanOrEqual(-1);
+      expect(m.gap, `${seat} gap`).toBeLessThanOrEqual(m.cw);
+    }
+  }
+});
+
+test('on a phone the hand count stays in the strip\'s corner', async ({ page }, testInfo) => {
+  test.skip(!isPhone(testInfo), 'the phone board');
+  const m = await handCount(page, 'p1');
+  expect(m.text).toMatch(/^\d+ in hand$/);
+  expect(m.position).toBe('absolute');
+  expect(m.handRight - m.countRight).toBeCloseTo(12, 0);
 });
 
 test('tablets and desktops use none of the phone board', async ({ page }, testInfo) => {
@@ -217,8 +262,10 @@ test('tablets and desktops use none of the phone board', async ({ page }, testIn
 
   // The timeline sits beside the board, and the cards keep the mat's
   // size: --cw from the root rule (timeline beside, width less 360px).
+  // The landscape mat sizes its cards from the board area instead.
   const [aside, main] = [await page.locator('aside').boundingBox(), await page.locator('main').boundingBox()];
   expect(aside.x).toBeGreaterThanOrEqual(main.x + main.width - 1);
+  if (isWide(testInfo)) return;
   // A benched card is one --cw wide (at least 44px on a touch screen).
   const width = await page.evaluate(() => {
     const probe = document.createElement('div');

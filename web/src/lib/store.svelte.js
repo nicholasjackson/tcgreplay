@@ -45,6 +45,10 @@ export const app = $state({
   // or 'desktop'; landscapePhone is a phone held sideways.
   layout: 'desktop',
   landscapePhone: false,
+  // wide is true when the board area (beside or above the timeline) is
+  // 1600px wide or more on any layout but the phone: the board is then the
+  // landscape mat (wide-board design). App measures it.
+  wide: false,
   modal: null, // {kind, ...}
   zoom: null, // card view
   dragging: null,
@@ -154,6 +158,14 @@ export function cardInfo(def) {
       .catch(() => {});
   }
   return null;
+}
+
+// benchSlots is a side's bench as the board shows it. A Stadium such as
+// Area Zero Underdepths lets a bench hold 8: once the shown slots are full,
+// it offers the next one to drop on.
+export function benchSlots(side) {
+  const expands = /\b8 Pokémon on (their|his or her) Bench/.test(cardInfo(app.board?.stadium?.def)?.effect ?? '');
+  return expands && side.bench.length < 8 && side.bench.every(Boolean) ? [...side.bench, null] : side.bench;
 }
 
 // A card image is tried in stages, one per candidate address, in the

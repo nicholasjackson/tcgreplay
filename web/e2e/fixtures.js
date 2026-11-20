@@ -192,3 +192,9 @@ export function pileLabel(page, name, seat = 'p1') {
 export function isPhone(testInfo) {
   return testInfo.project.name === 'phone';
 }
+
+// isWide reports whether the test runs on the big-monitor profile, whose
+// board is the landscape mat.
+export function isWide(testInfo) {
+  return testInfo.project.name === 'wide';
+}
