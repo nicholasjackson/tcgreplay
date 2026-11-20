@@ -77,7 +77,9 @@
     max-width: min(96vw, calc(var(--zw) * 2.4));
     max-height: 94vh;
     background: var(--panel);
-    border-radius: 14px;
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow-dialog);
+    color: var(--ink);
     padding: clamp(16px, 2vh, 32px);
     overflow: auto;
     flex-wrap: wrap;
@@ -92,7 +94,7 @@
   .joined img:last-child { border-radius: 0 calc(var(--zw) * 0.036) calc(var(--zw) * 0.036) 0; }
   .zoom.pair { max-width: min(96vw, calc(var(--zw) * 3)); }
   .text { flex: 1; min-width: min(18em, 100%); max-width: 40em; }
-  h2 { margin: 0 0 0.2em; font-size: 1.6em; }
+  h2 { margin: 0 0 0.2em; font-size: 1.6em; font-weight: var(--fw-ui-title); }
   .meta { color: var(--muted); font-size: 0.85em; margin: 0 0 0.8em; }
-  pre { white-space: pre-wrap; font: 1em/1.5 system-ui, sans-serif; margin: 0; }
+  pre { white-space: pre-wrap; font: 1em/1.5 var(--font-sans); margin: 0; }
 </style>

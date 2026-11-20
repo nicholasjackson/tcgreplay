@@ -1,8 +1,10 @@
 <script>
   // One card: art from TCGdex when known, a named text card otherwise, and
-  // a card back when hidden.
+  // a card back when hidden: the Studio back, navy with a cyan frame and
+  // the TCG Replay mark.
   import { app, cardInfo, imageSrc, nextImageStage, pointerTypeOf } from '../lib/store.svelte.js';
   import { draggable as dragSource } from '../lib/pointer.svelte.js';
+  import markUrl from '../../../internal/design/mark.svg';
 
   let {
     card,
@@ -32,7 +34,7 @@
 
   // energyType pulls the type out of names like "Basic Fighting Energy".
   function energyType(name) {
-    const m = /(Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal)/i.exec(name || '');
+    const m = /(Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Colorless)/i.exec(name || '');
     return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : 'Special';
   }
 
@@ -71,11 +73,11 @@
     title={card.hidden ? (card.known ? `Known: ${card.known} (${card.iid})` : card.iid) : unknown ? `Unknown card (${card.iid}): never revealed` : `${card.name} (${card.iid})`}
   >
     {#if card.hidden}
-      <div class="back-art"><span></span></div>
+      <div class="back-art" data-back="studio"><img class="mark" src={markUrl} alt="" draggable="false" /></div>
       <!-- A revealed card in another player's hand stays face down, marked. -->
       {#if card.known}<span class="known" aria-label="known: {card.known}">{card.known}</span>{/if}
     {:else if unknown}
-      <div class="back-art unknown"><span>?</span></div>
+      <div class="back-art unknown" data-back="studio"><img class="mark" src={markUrl} alt="" draggable="false" /><span>?</span></div>
     {:else if info?.category === 'Energy' && !imageSrc(info, 'low.webp', stage)}
       <div class="token" data-type={energyType(info.name)} title={info.name}>{energyType(info.name).slice(0, 1)}</div>
     {:else if imageSrc(info, 'low.webp', stage)}
@@ -158,31 +160,34 @@
     border-radius: 1em;
     background: var(--accent);
     color: var(--accent-label-ink);
-    font: 700 max(var(--fs-9), calc(var(--w, var(--cw)) * 0.11)) system-ui;
+    font: 700 max(var(--fs-9), calc(var(--w, var(--cw)) * 0.11)) var(--font-sans);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     pointer-events: none;
   }
+  /* The Studio back: navy, framed in cyan inside a navy edge, with the
+     mark in the middle (its own navy square melts into the back). */
   .back-art {
     width: 100%;
     height: 100%;
     border-radius: inherit;
-    background: radial-gradient(circle at 50% 50%, var(--card-back-light) 0 13%, var(--card-back-band) 13% 17%, transparent 17%),
-      linear-gradient(var(--card-back-red) 0 47%, var(--card-back-band) 47% 53%, var(--card-back-blue) 53%);
-    border: calc(var(--w) * 0.05) solid var(--card-back-edge);
-    box-sizing: border-box;
-  }
-  .back-art.unknown {
-    filter: grayscale(0.85) brightness(0.7);
     display: grid;
     place-items: center;
+    background: var(--brand-navy);
+    border: calc(var(--w) * 0.05) solid var(--brand-navy);
+    box-shadow: inset 0 0 0 max(1px, calc(var(--w) * 0.025)) var(--brand-cyan);
+    box-sizing: border-box;
+    overflow: hidden;
   }
+  .back-art > * { grid-area: 1 / 1; }
+  .back-art .mark { width: 78%; height: auto; pointer-events: none; }
+  /* Never identified: the back, dimmed, under a "?". */
+  .back-art.unknown .mark { opacity: 0.35; }
   .back-art.unknown span {
-    font: 800 calc(var(--w) * 0.45) / 1 system-ui;
+    font: 800 calc(var(--w) * 0.45) / 1 var(--font-sans);
     color: var(--on-color);
     text-shadow: var(--shadow-text-glyph);
-    filter: none;
   }
   .text-card {
     width: 100%;
@@ -193,16 +198,17 @@
     display: flex;
     flex-direction: column;
     gap: 4%;
-    background: linear-gradient(160deg, var(--card-text-face), var(--card-text-face-end));
-    color: var(--card-text-ink);
+    background: var(--card-face);
+    color: var(--card-face-ink);
     font-size: calc(var(--w) * 0.12);
     line-height: 1.15;
     overflow: hidden;
-    border: calc(var(--w) * 0.04) solid var(--card-text-edge);
+    border: calc(var(--w) * 0.04) solid var(--card-border-pokemon);
   }
-  .text-card[data-cat='Trainer'] { border-color: var(--card-text-edge-trainer); background: linear-gradient(160deg, var(--card-text-face-trainer), var(--card-text-face-trainer-end)); }
-  .text-card[data-cat='Energy'] { border-color: var(--card-text-edge-energy); }
-  .text-card .hp { font-weight: 700; color: var(--card-text-hp); }
+  .text-card[data-cat='Trainer'] { border-color: var(--card-border-trainer); background: var(--card-face-trainer); }
+  .text-card[data-cat='Energy'] { border-color: var(--card-border-energy); }
+  .text-card strong { font-weight: var(--fw-ui-title); }
+  .text-card .hp { font-weight: 700; color: var(--card-hp); }
   .text-card small { opacity: 0.7; }
   .token {
     width: 100%;
@@ -210,7 +216,7 @@
     border-radius: inherit;
     display: grid;
     place-items: center;
-    font: 800 calc(var(--w) * 0.5) / 1 system-ui;
+    font: 800 calc(var(--w) * 0.5) / 1 var(--font-sans);
     color: var(--on-color);
     text-shadow: var(--shadow-text-energy);
     background: radial-gradient(circle at 50% 45%, var(--ec) 0 38%, var(--energy-ring) 39% 44%, var(--ec) 45%);
@@ -224,15 +230,16 @@
   .token[data-type='Psychic'] { --ec: var(--energy-psychic); }
   .token[data-type='Darkness'] { --ec: var(--energy-darkness); }
   .token[data-type='Metal'] { --ec: var(--energy-metal); }
+  .token[data-type='Colorless'] { --ec: var(--energy-colorless); }
   .basis {
     position: absolute;
     top: 2px;
     left: 2px;
     background: var(--basis);
     color: var(--on-color);
-    font: 700 max(var(--fs-10), calc(var(--w) * 0.11))/1 system-ui;
+    font: 700 max(var(--fs-10), calc(var(--w) * 0.11))/1 var(--font-sans);
     padding: 0.2em 0.4em;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     text-transform: uppercase;
   }
 </style>
