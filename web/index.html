@@ -1,9 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light" data-mat="slate">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>tcgreplay</title>
+    <!-- IBM Plex Sans and Mono from Google Fonts; system fonts stand in
+         until they load, and if they cannot. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
+    <!-- The interface theme and the mat the player chose (lib/store.svelte.js),
+         applied before the board first draws so it never flashes the default. -->
+    <script>
+      try {
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+        const mat = localStorage.getItem('mat');
+        if (mat === 'felt' || mat === 'navy') document.documentElement.dataset.mat = mat;
+      } catch {
+        // storage unavailable: the defaults stand
+      }
+    </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30' fill='none'><rect width='30' height='30' rx='8' fill='%2313285C'/><rect x='7' y='8' width='10' height='14' rx='2' transform='rotate(-12 12 15)' stroke='%235CC8F2' stroke-width='1.8'/><rect x='12' y='8' width='10' height='14' rx='2' fill='%2313285C' stroke='%23FFFFFF' stroke-width='1.8'/><path d='M15.2 17.2a2.2 2.2 0 1 0 2.2-2.2h-1' stroke='%235CC8F2' stroke-width='1.6' stroke-linecap='round'/></svg>" />
   </head>
   <body>

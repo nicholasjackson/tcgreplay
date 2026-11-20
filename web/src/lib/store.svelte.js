@@ -65,14 +65,24 @@ export const app = $state({
   // Show "Knocked Out: take N prize cards" after a knock-out. Off for
   // practising without the hint. Remembered in this browser.
   prizeReminders: true,
+  // The interface theme ('light' or 'dark') and the mat ('slate', 'felt'
+  // or 'navy'), applied as data-theme and data-mat on the document root.
+  // Remembered in this browser; index.html applies them before first paint.
+  theme: 'light',
+  mat: 'slate',
   acting: false, // a request of the viewer's own is in flight
   deckListShow: 'all', // deck list filter: all, unplayed or undrawn
   lastLog: 0, // highest log id seen, to mark new lines
 });
 
+export const THEMES = ['light', 'dark'];
+export const MATS = ['slate', 'felt', 'navy'];
+
 try {
   if (localStorage.getItem('panelAt') === 'bottom') app.panelAt = 'bottom';
   if (localStorage.getItem('prizeReminders') === 'off') app.prizeReminders = false;
+  if (THEMES.includes(localStorage.getItem('theme'))) app.theme = localStorage.getItem('theme');
+  if (MATS.includes(localStorage.getItem('mat'))) app.mat = localStorage.getItem('mat');
 } catch {
   // storage unavailable: keep the default
 }
@@ -113,6 +123,30 @@ export function setPrizeReminders(on) {
   app.prizeReminders = on;
   try {
     localStorage.setItem('prizeReminders', on ? 'on' : 'off');
+  } catch {
+    // storage unavailable: the choice lasts for this page only
+  }
+}
+
+// setTheme switches the interface between light and dark.
+export function setTheme(theme) {
+  if (!THEMES.includes(theme)) return;
+  app.theme = theme;
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem('theme', theme);
+  } catch {
+    // storage unavailable: the choice lasts for this page only
+  }
+}
+
+// setMat switches the mat between slate, felt and navy.
+export function setMat(mat) {
+  if (!MATS.includes(mat)) return;
+  app.mat = mat;
+  document.documentElement.dataset.mat = mat;
+  try {
+    localStorage.setItem('mat', mat);
   } catch {
     // storage unavailable: the choice lasts for this page only
   }

@@ -72,7 +72,7 @@ code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
 @media (pointer: coarse) {
   button,
   select,
-  input:not([type='checkbox']),
-  label:has(> input[type='checkbox']) { min-height: 44px; min-width: 44px; }
-  label:has(> input[type='checkbox']) { display: inline-flex; align-items: center; }
+  input:not([type='checkbox'], [type='radio']),
+  label:has(> input[type='checkbox'], > input[type='radio']) { min-height: 44px; min-width: 44px; }
+  label:has(> input[type='checkbox'], > input[type='radio']) { display: inline-flex; align-items: center; }
 }

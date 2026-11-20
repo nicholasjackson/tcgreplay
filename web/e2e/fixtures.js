@@ -1,9 +1,31 @@
 // Shared setup for the browser suite: every test starts from the board
 // test server's fixed position, and any browser dialog fails it.
 import { test as base, expect } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
+import { basename, join } from 'node:path';
+
+// fonts is the local copy of IBM Plex (testdata/fonts) the tests serve in
+// place of Google Fonts, so they never reach Google and render the same
+// every run.
+const fonts = fileURLToPath(new URL('../../testdata/fonts/', import.meta.url));
+
+// serveFonts answers the board's Google Fonts requests from testdata/fonts.
+export async function serveFonts(context) {
+  await context.route('https://fonts.googleapis.com/**', (route) =>
+    route.fulfill({ path: join(fonts, 'css2.css'), contentType: 'text/css' }),
+  );
+  await context.route('https://fonts.gstatic.com/**', (route) =>
+    route.fulfill({
+      path: join(fonts, basename(new URL(route.request().url()).pathname)),
+      contentType: 'font/woff2',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+    }),
+  );
+}
 
 export const test = base.extend({
   page: async ({ page, request }, use) => {
+    await serveFonts(page.context());
     const reset = await request.post('/test/reset');
     expect(reset.ok(), 'reset the board test server').toBeTruthy();
     const dialogs = [];

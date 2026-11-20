@@ -1,6 +1,6 @@
 <script>
   import { openDeckList } from './lib/actions.js';
-  import { app, benchSlots, setPanelAt, setPrizeReminders } from './lib/store.svelte.js';
+  import { app, benchSlots, setPanelAt, setPrizeReminders, setTheme, setMat, THEMES, MATS } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
   import { setAutoplay } from './lib/playback.svelte.js';
   import Side from './components/Side.svelte';
@@ -183,6 +183,19 @@
           <label class="menu-check" title="Play the assistant's moves on the board as they arrive">
             <input type="checkbox" checked={app.autoplay} onchange={(ev) => setAutoplay(ev.target.checked)} /> Autoplay {app.assistant}'s moves
           </label>
+          <div class="sep"></div>
+          <div class="menu-group" role="radiogroup" aria-label="Interface">
+            <span class="menu-label">Interface</span>
+            {#each THEMES as t (t)}
+              <label class="menu-check"><input type="radio" name="theme" value={t} checked={app.theme === t} onchange={() => setTheme(t)} /> {t === 'light' ? 'Light' : 'Dark'}</label>
+            {/each}
+          </div>
+          <div class="menu-group" role="radiogroup" aria-label="Mat">
+            <span class="menu-label">Mat</span>
+            {#each MATS as m (m)}
+              <label class="menu-check"><input type="radio" name="mat" value={m} checked={app.mat === m} onchange={() => setMat(m)} /> {m[0].toUpperCase() + m.slice(1)}</label>
+            {/each}
+          </div>
           <!-- At every layout and in the desktop app alike, outside the hosted-only account block. -->
           <div class="sep"></div>
           <button role="menuitem" onclick={() => menu(() => (app.modal = { kind: 'about' }))}>About tcgreplay</button>
@@ -429,6 +442,8 @@
   .menu-check { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: max(var(--fs-13), 0.677vw); cursor: pointer; border-radius: 6px; }
   .menu-check:hover { background: var(--hover); }
   .sep { height: 1px; background: var(--line); margin: 4px 0; }
+  .menu-group { display: flex; flex-wrap: wrap; align-items: center; }
+  .menu-label { flex-basis: 100%; padding: 4px 10px 0; color: var(--muted); font-size: var(--fs-label); font-weight: var(--fw-label); letter-spacing: var(--ls-label); text-transform: uppercase; }
   .account { color: var(--muted); padding: 4px 10px; font-size: var(--fs-12); }
   .over-banner {
     background: var(--accent);
