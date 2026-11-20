@@ -27,7 +27,7 @@ func TestGeneratedCurrent(t *testing.T) {
 // TestGeneratedCurrentCatchesEdits: a changed source no longer matches the
 // committed stylesheet, which is what makes TestGeneratedCurrent fail.
 func TestGeneratedCurrentCatchesEdits(t *testing.T) {
-	edited := bytes.Replace(source, []byte(`"#e3b341"`), []byte(`"#123456"`), 1)
+	edited := bytes.Replace(source, []byte(`"#38BDF8"`), []byte(`"#123456"`), 1)
 	if bytes.Equal(edited, source) {
 		t.Fatal("the planted edit did not change the source")
 	}
@@ -44,30 +44,61 @@ func TestGeneratedCurrentCatchesEdits(t *testing.T) {
 	}
 }
 
-// TestCSSThemes: every token is on :root with its default-theme value, and
-// the other theme overrides only the tokens that vary by theme.
+// TestCSSThemes: every token is on :root with its default-theme value; the
+// other theme overrides only the tokens that vary by theme; each other mat
+// repoints the mat-* aliases at its own set; references become var().
 func TestCSSThemes(t *testing.T) {
-	tok, err := Parse([]byte(`{"color":{"themes":["dark","light"],"default":"dark","switch":"media","tokens":[
-		{"name":"ink","value":{"dark":"#eee","light":"#111"}},
-		{"name":"accent","value":"#f80"}]}}`))
+	tok, err := Parse([]byte(`{"color":{"themes":["light","dark"],"default":"light","tokens":[
+		{"name":"ink","value":{"light":"#111","dark":"#eee"}},
+		{"name":"accent","value":"#f80"},
+		{"name":"text","value":"{ink}"},
+		{"name":"slate-ink","value":"#ddd"},
+		{"name":"felt-ink","value":"#efe"},
+		{"name":"mat-ink","value":"{slate-ink}"}]},
+		"mats":{"default":"slate","sets":["slate","felt"]}}`))
 	if err != nil {
 		t.Fatal(err)
 	}
 	css := string(tok.CSS())
-	root, light, ok := strings.Cut(css, "@media (prefers-color-scheme: light)")
+	root, rest, ok := strings.Cut(css, "[data-theme='dark'] {")
 	if !ok {
-		t.Fatalf("no light block:\n%s", css)
+		t.Fatalf("no dark block:\n%s", css)
 	}
-	for _, want := range []string{"--ink: #eee;", "--accent: #f80;", "color-scheme: dark;"} {
+	dark, felt, ok := strings.Cut(rest, "[data-mat='felt'] {")
+	if !ok {
+		t.Fatalf("no felt block:\n%s", css)
+	}
+	for _, want := range []string{"--ink: #111;", "--accent: #f80;", "--text: var(--ink);", "--mat-ink: var(--slate-ink);", "color-scheme: light;"} {
 		if !strings.Contains(root, want) {
 			t.Errorf(":root lacks %q:\n%s", want, root)
 		}
 	}
-	if !strings.Contains(light, ":root:not([data-theme='dark'])") || !strings.Contains(light, "--ink: #111;") {
-		t.Errorf("light block does not override ink:\n%s", light)
+	if !strings.Contains(dark, "--ink: #eee;") || !strings.Contains(dark, "color-scheme: dark;") {
+		t.Errorf("dark block does not override ink:\n%s", dark)
 	}
-	if strings.Contains(light, "--accent") {
-		t.Errorf("light block repeats a token that does not vary by theme:\n%s", light)
+	if strings.Contains(dark, "--accent") || strings.Contains(dark, "--text") {
+		t.Errorf("dark block repeats a token that does not vary by theme:\n%s", dark)
+	}
+	if strings.TrimSpace(felt) != "--mat-ink: var(--felt-ink);\n}" {
+		t.Errorf("felt block should repoint only the mat alias, got:\n%s", felt)
+	}
+	if strings.Contains(css, "data-mat='slate'") {
+		t.Errorf("the default mat needs no block:\n%s", css)
+	}
+}
+
+// TestParseRejectsMats: a mat alias needs its counterpart in every mat set,
+// a reference must name a token, and a pair must name tokens.
+func TestParseRejectsMats(t *testing.T) {
+	for name, src := range map[string]string{
+		"missing set token": `{"color":{"themes":["light"],"default":"light","tokens":[{"name":"slate-ink","value":"#000"},{"name":"mat-ink","value":"{slate-ink}"}]},"mats":{"default":"slate","sets":["slate","felt"]}}`,
+		"unknown reference": `{"color":{"themes":["light"],"default":"light","tokens":[{"name":"text","value":"{nope}"}]}}`,
+		"unknown pair":      `{"color":{"themes":["light"],"default":"light","tokens":[{"name":"ink","value":"#000"}]},"pairs":[{"text":"ink","background":"nope","min":4.5}]}`,
+		"default mat":       `{"color":{"themes":["light"],"default":"light","tokens":[]},"mats":{"default":"wool","sets":["slate"]}}`,
+	} {
+		if _, err := Parse([]byte(src)); err == nil {
+			t.Errorf("%s: parsed without error", name)
+		}
 	}
 }
 

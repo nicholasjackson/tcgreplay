@@ -7,10 +7,9 @@
   --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
 }
 /* The colour tokens come from internal/design/tokens.css (imported first,
-   in main.js). On the light variant the mat keeps light text. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) main { color: var(--felt-ink); --muted: var(--felt-muted); }
-}
+   in main.js). The mat is dark in every interface theme, so text on it
+   uses the mat's own colours. */
+main { color: var(--mat-ink); --muted: var(--mat-muted); }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {

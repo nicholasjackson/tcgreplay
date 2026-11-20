@@ -369,7 +369,7 @@
     padding: 0 4px;
     border-radius: 9px;
     background: var(--warn);
-    color: var(--warn-ink);
+    color: var(--warn-badge-ink);
     font: 700 var(--fs-11)/18px system-ui;
   }
   .burger { position: relative; }
@@ -382,7 +382,7 @@
     border: 0;
   }
   aside.sheet .close { position: absolute; top: 4px; right: 8px; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
-  .upright { background: var(--felt); color: var(--felt-ink); font-size: var(--fs-16); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
+  .upright { background: var(--felt); color: var(--mat-ink); font-size: var(--fs-16); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
   .phone-icon { font-size: var(--fs-40); display: inline-block; transform: rotate(90deg); }
   header {
     display: flex;
@@ -522,7 +522,7 @@
   }
   .toast { padding: 8px 12px; border-radius: 8px; box-shadow: var(--shadow-toast); font-size: var(--fs-13); }
   .toast.error { background: var(--toast-error); color: var(--on-color); }
-  .toast.warn { background: var(--warn); color: var(--warn-ink); }
+  .toast.warn { background: var(--warn); color: var(--warn-badge-ink); }
   .toast.info { background: var(--toast-info); color: var(--on-color); }
   @media (max-width: 900px) {
     .body.panel { grid-template-columns: 1fr; }

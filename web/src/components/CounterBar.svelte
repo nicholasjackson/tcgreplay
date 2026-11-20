@@ -50,7 +50,7 @@
     line-height: 1.1;
     white-space: nowrap;
     background: var(--chip-bg);
-    color: var(--felt-ink);
+    color: var(--mat-ink);
     border: 1px solid var(--chip-line);
   }
   .chip small { font-size: var(--fs-10); font-weight: 600; opacity: 0.8; }
