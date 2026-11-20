@@ -78,11 +78,14 @@ test('prizes left read off the mat: pips and a count, the landscape fan, or the 
     // Today's mat: six pips, filled for each prize still to take, and the
     // count ("5 prizes" on a touch screen, which drops the "Prizes" word).
     for (const [seat, left] of [['p1', 5], ['p2', 6]]) {
-      const prizes = side(page, seat).getByRole('button', { name: `Prizes: ${left} left` });
-      await expect(prizes).toBeVisible();
+      const prizes = side(page, seat).getByRole('group', { name: `Prizes: ${left} left` });
+      await expect(prizes.locator('.prize').first()).toBeVisible();
       await expect(prizes.locator('.prize')).toHaveCount(6);
       await expect(prizes.locator('.prize:not(.taken)')).toHaveCount(left);
-      await expect(prizes.locator('.count')).toHaveText(isTouch(testInfo) ? `${left} prizes` : `${left}`, { useInnerText: true });
+      const count = prizes.locator('.count');
+      await expect(count).toBeVisible();
+      if (isTouch(testInfo)) await expect(count).toHaveText(`${left} prizes`);
+      else await expect(count).toHaveText(`${left}`, { useInnerText: true });
       await expect(prizes.locator('.what')).toBeVisible({ visible: !isTouch(testInfo) });
     }
   }
@@ -95,6 +98,20 @@ test('the player blocks, the turn strip and the Stadium read as the Studio desig
     // The phone's header bar: the turn tag and whose turn it is.
     await expect(page.locator('header .turn-tag')).toHaveText('T1');
     await expect(page.locator('header .whose')).toHaveText('Your turn');
+    await expect(strip.locator('.turn')).toBeHidden();
+    // A short phone's header has no room for them: they show in the strip,
+    // over the Stadium's name, so the turn is always on screen.
+    for (const size of [{ width: 390, height: 664 }, { width: 375, height: 667 }]) {
+      await page.setViewportSize(size);
+      const at = `${size.width}×${size.height}`;
+      await expect(page.locator('header .turn-tag'), at).toBeHidden();
+      await expect(strip.locator('.turn .tag'), at).toHaveText('T1');
+      await expect(strip.locator('.turn .tag'), at).toBeInViewport();
+      await expect(strip.locator('.turn strong'), at).toHaveText('Your turn');
+      await expect(strip.locator('.turn strong'), at).toBeInViewport();
+      await expect(strip.locator('.stadium-name strong'), at).toHaveText('Arena');
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
   } else if (isWide(testInfo)) {
     // The landscape mat spells the turn out and names each player in the
     // corner and under the hand.
@@ -104,14 +121,20 @@ test('the player blocks, the turn strip and the Stadium read as the Studio desig
     await expect(page.locator('.seat-name:not(.top)')).toHaveText('Alice · p1');
   } else {
     // Today's mat: each player block names its player and seat, then the
-    // Deck and Lost chips; the discard shows its top card's name.
+    // Deck, Discard and Lost chips with their counts; at the row's other
+    // end the top of the discard: its card, captioned "Top of discard"
+    // over the card's name.
     await expect(side(page, 'p1').locator('.seat-name')).toHaveText('Alice · p1');
     await expect(side(page, 'p2').locator('.seat-name')).toHaveText('Bob · p2');
-    await expect(side(page, 'p1').locator('.chip.pile.deck')).toHaveText('Deck 40');
-    await expect(side(page, 'p1').locator('.chip.pile.lost')).toHaveText('Lost 0');
-    await expect(side(page, 'p1').locator('.pile.discard .label')).toHaveText('Discard 1');
-    await expect(side(page, 'p1').locator('.pile.discard .caption strong')).toHaveText('Fighting Energy');
-    await expect(side(page, 'p2').locator('.pile.discard .caption strong')).toHaveText('Empty');
+    const chips = (seat) => side(page, seat).locator('.piles .chip');
+    await expect(chips('p1')).toHaveText(['Deck 40', 'Discard 1', 'Lost 0']);
+    await expect(chips('p2')).toHaveText(['Deck 46', 'Discard 0', 'Lost 0']);
+    for (const [seat, top] of [['p1', 'Fighting Energy'], ['p2', 'Empty']]) {
+      const block = side(page, seat).locator('.discard-top');
+      await expect(block.locator('.caption .what')).toHaveText('Top of discard');
+      await expect(block.locator('.caption strong')).toHaveText(top);
+    }
+    await expect(titled(side(page, 'p1').locator('.discard-top'), 'Fighting Energy (p1-16)')).toBeVisible();
     // The strip: the turn tag, whose turn, then the turn buttons.
     await expect(strip.locator('.turn .tag')).toHaveText('T1');
     await expect(strip.locator('.turn strong')).toHaveText('Your turn');
@@ -270,18 +293,50 @@ test('the mat is painted in the Studio\'s colours on every mat, in both interfac
   }
 });
 
-test('the prize pips open the prize view on today\'s mat', async ({ page }, testInfo) => {
+test('a click on a prize pip takes that prize, and the count opens the prize view, on today\'s mat', async ({ page }, testInfo) => {
   test.skip(isPhone(testInfo), 'the phone\'s Prizes chip (phone.spec.js)');
   test.skip(isWide(testInfo), 'the landscape mat\'s prize fan (wide.spec.js)');
-  const prizes = side(page, 'p1').getByRole('button', { name: 'Prizes: 6 left' });
-  await (isTouch(testInfo) ? prizes.tap() : prizes.click());
+  test.skip(isTouch(testInfo), 'a touch screen\'s pips open the prize view (next test)');
+  const prizes = side(page, 'p1').getByRole('group', { name: /^Prizes: \d left$/ });
+  // A click on a filled pip takes that prize to the hand, as a click on
+  // its card did.
+  await prizes.getByRole('button', { name: 'Take prize 3' }).click();
+  await expect(prizes).toHaveAccessibleName('Prizes: 5 left');
+  await expect(prizes.getByRole('button', { name: 'Prize 3 taken' })).toBeDisabled();
+  await expect(prizes.locator('.prize.taken')).toHaveCount(1);
+  await expect(page.getByRole('list', { name: 'p1 hand' }).locator('.count')).toHaveText('9 in hand');
+  await expect(page.locator('.modal')).toHaveCount(0);
+  // The count opens the prize view, which takes a prize too.
+  await prizes.getByRole('button', { name: 'Open the prizes: 5 left' }).click();
   const modal = page.locator('.modal');
-  await expect(modal.locator('h2')).toHaveText('p1 prizes · 6 left');
-  await modal.getByRole('button', { name: 'Take' }).first().click();
   await expect(modal.locator('h2')).toHaveText('p1 prizes · 5 left');
+  await modal.getByRole('button', { name: 'Take' }).first().click();
+  await expect(modal.locator('h2')).toHaveText('p1 prizes · 4 left');
   await modal.getByRole('button', { name: 'Close' }).click();
   await expect(modal).toHaveCount(0);
-  await expect(side(page, 'p1').getByRole('button', { name: 'Prizes: 5 left' }).locator('.prize.taken')).toHaveCount(1);
+  await expect(prizes.locator('.prize.taken')).toHaveCount(2);
+});
+
+test('on a touch screen the pips are one fingertip-sized button that opens the prize view, where a tap takes a prize', async ({ page }, testInfo) => {
+  test.skip(!isTouch(testInfo) || isPhone(testInfo) || isWide(testInfo), 'today\'s mat on a touch screen');
+  const prizes = side(page, 'p1').getByRole('group', { name: /^Prizes: \d left$/ });
+  const row = prizes.locator('button.pips');
+  await expect(row).toHaveAccessibleName('Open the prizes: 6 left');
+  const box = await row.boundingBox();
+  expect(box.height).toBeGreaterThanOrEqual(43.5);
+  expect(box.width).toBeGreaterThanOrEqual(43.5);
+  // No single pip is a tap target of its own.
+  await expect(prizes.getByRole('button', { name: /^Take prize/ })).toHaveCount(0);
+  await row.tap();
+  const modal = page.locator('.modal');
+  await expect(modal.locator('h2')).toHaveText('p1 prizes · 6 left');
+  await modal.getByRole('button', { name: 'Take' }).first().tap();
+  await expect(modal.locator('h2')).toHaveText('p1 prizes · 5 left');
+  await modal.getByRole('button', { name: 'Close' }).tap();
+  await expect(modal).toHaveCount(0);
+  await expect(prizes).toHaveAccessibleName('Prizes: 5 left');
+  await expect(prizes.locator('.prize.taken')).toHaveCount(1);
+  await expect(page.getByRole('list', { name: 'p1 hand' }).locator('.count')).toHaveText('9 in hand');
 });
 
 test('a hand card\'s kind label lets a tap or drag through to the card', async ({ page }, testInfo) => {

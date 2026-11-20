@@ -241,7 +241,7 @@
   /* Energy dots, in each Energy type's colour. */
   .dots { display: inline-flex; flex-wrap: wrap; gap: 2px; }
   .dots i { width: max(8px, 0.65em); aspect-ratio: 1; border-radius: 50%; background: var(--energy-colorless); }
-  .dots.lg { gap: 3px; }
+  .dots.lg { gap: 3px; flex-wrap: nowrap; }
   .dots.lg i { width: max(10px, 0.8em); }
   .dots i[data-e='grass'] { background: var(--energy-grass); }
   .dots i[data-e='fire'] { background: var(--energy-fire); }
@@ -284,20 +284,24 @@
   /* Today's mat gives the Active a little less than its full size, so
      both halves and the strip fit the screen. */
   :global(.side.mat) .slot.active :global(.card.lg) { --w: calc(var(--cw) * 1.1); }
+  /* The readout is as wide as its damage tag, dots and "2 Energy" on one
+     line, and at least the design's 150px; a long name does not widen it
+     (contain), but ends in an ellipsis. */
   .readout:not(.bench-readout) {
-    width: max(150px, 8.5em);
+    width: max-content;
+    min-width: max(150px, 8.5em);
     display: flex;
     flex-direction: column;
     gap: 0.25em;
     color: var(--mat-ink);
   }
-  .name { font-size: max(var(--fs-ui-title), 1.15em); font-weight: var(--fw-ui-title); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .name { contain: inline-size; font-size: max(var(--fs-ui-title), 1.15em); font-weight: var(--fw-ui-title); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .hp { display: flex; align-items: baseline; gap: 0.3em; font-family: var(--font-mono); }
   .hpleft b { font-size: max(var(--fs-hp-xl), 2em); font-weight: var(--fw-hp-xl); line-height: var(--lh-hp-xl); }
   .hpleft .of, .unit { font-size: max(var(--fs-num), 1.08em); font-weight: 500; color: var(--mat-muted); }
   .slash { margin: 0 0.3em; }
   .bar { display: block; height: max(6px, 0.5em); border-radius: var(--radius-pill); background: var(--mat-track); overflow: hidden; }
   .bar span { display: block; height: 100%; border-radius: inherit; background: var(--hp); }
-  .tags { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6em; min-height: 1.4em; font-size: max(var(--fs-ui-s), 1em); color: var(--mat-muted); }
+  .tags { display: flex; align-items: center; gap: 0.6em; white-space: nowrap; min-height: 1.4em; font-size: max(var(--fs-ui-s), 1em); color: var(--mat-muted); }
   .tag { padding: 1px 0.5em; border-radius: var(--radius-xs); background: var(--damage-bg); color: var(--damage-ink); font: var(--fw-num) max(var(--fs-ui-s), 1em) var(--font-mono); }
 </style>

@@ -438,7 +438,8 @@
   .whose { font-size: var(--fs-ui-title); font-weight: var(--fw-ui-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* A short phone has no room for the bar: the dot and ☰ sit at the start
      of the opponent's counters (CounterBar leaves room for them), the
-     warnings counted on ☰. */
+     warnings counted on ☰, and the turn tag and whose turn it is move to
+     the strip, over the Stadium's name (Strip.svelte). */
   .badge { display: none; }
   @media (max-height: 739px) {
     .app.phone { position: relative; }

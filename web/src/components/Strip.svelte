@@ -73,7 +73,16 @@
       <span>Stadium</span>
     {/if}
   </div>
-  {#if !wide && b.stadium}
+  {#if phone}
+    <!-- A phone's Stadium name; a short phone, whose header has no room
+         for the turn, shows the turn tag and whose turn it is over it. -->
+    <span class="phone-mid">
+      <span class="turn phone-turn" class:mine={myTurn}>{#if setup}<strong>Setup</strong>{:else}<span class="tag">T{b.turn}</span> <strong>{whoseTurn()}</strong>{/if}</span>
+      {#if b.stadium}
+        <span class="stadium-name"><small>Stadium</small><strong>{b.stadium.name}{#if b.stadium.pair}<span class="pair-note">{' · pair'}</span>{/if}</strong></span>
+      {/if}
+    </span>
+  {:else if !wide && b.stadium}
     <span class="stadium-name"><small>Stadium</small><strong>{b.stadium.name}{#if b.stadium.pair}<span class="pair-note">{' · pair'}</span>{/if}</strong></span>
   {/if}
 
@@ -92,7 +101,8 @@
   <div class="controls">
     {#if !phone}
       <!-- The turn tag and whose turn it is (a phone shows them in its
-           header). The landscape mat spells the turn out. -->
+           header, or beside the Stadium on a short phone). The landscape
+           mat spells the turn out. -->
       <div class="status">
         {#if setup}
           <div class="turn" class:mine={myTurn}>Setup</div>
@@ -327,9 +337,19 @@
     background: var(--mat-strip);
     font-size: var(--fs-ui-s);
   }
-  .phone .stadium-name { flex: 1; }
+  .phone-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
   .phone .stadium-name small { font-size: var(--fs-10); }
   .phone .stadium-name strong { font-size: var(--fs-ui-s); }
+  /* The turn shows here only on a short phone (App.svelte's header drops
+     it below 740px tall), over the Stadium's name in place of its
+     "Stadium" caption. */
+  .phone-turn { display: none; min-width: 0; gap: var(--space-1); font-size: var(--fs-ui-s); line-height: 1.3; }
+  .phone-turn strong { overflow: hidden; text-overflow: ellipsis; }
+  .phone-turn .tag { flex: none; padding: 0 0.4em; font-size: var(--fs-num-s); }
+  @media (max-height: 739px) {
+    .phone-turn { display: flex; }
+    .phone .stadium-name small { display: none; }
+  }
   .phone .controls { margin-left: auto; gap: var(--space-1); }
   .phone .buttons { flex-wrap: nowrap; gap: var(--space-1); }
   .phone .buttons button { padding: 0 var(--space-2); font-size: var(--fs-ui); }

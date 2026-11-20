@@ -1,6 +1,6 @@
 <script>
   // A player's piles as counters, for the phone board: the deck, discard,
-  // Lost Zone and prizes as chips (and the opponent's hand count). A chip
+  // Lost Zone and prizes as chips, and each hand's count. A chip
   // opens its pile, the deck's actions or the prizes, and the pile chips
   // take dropped cards as the piles do. The Prizes chip is tinted with its
   // player's colour, and sits at your bar's start, the opponent's end.
@@ -33,6 +33,11 @@
   <button class="chip" {@attach pile('discard')} onclick={() => open('pile', 'discard')}><small>Discard</small> <b>{side.discard.length}</b></button>
   <button class="chip" {@attach pile('lost')} onclick={() => open('pile', 'lost')}><small>Lost</small> <b>{side.lost?.length ?? 0}</b></button>
   {#if !mine}{@render prizes()}{/if}
+  <!-- Your hand's count ends your bar, as the phone design has it, clear
+       of the hand's cards. -->
+  {#if mine}
+    <span class="chip static" aria-label="Hand {side.hand_count}"><small>Hand</small> <b>{side.hand_count}</b></span>
+  {/if}
 </div>
 
 <style>

@@ -153,7 +153,9 @@
     background: var(--mat-surface);
   }
   .hand.phone .slot { transform: none; margin: 0 3px; }
-  .hand.phone .count { z-index: 3; padding: 1px var(--space-1); border-radius: var(--radius-xs); background: var(--mat-surface); }
+  /* The phone counts the hand in your counters (CounterBar), so the
+     count here is for screen readers only, off the cards. */
+  .hand.phone .count { width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .slot {
     position: relative;
     display: flex;

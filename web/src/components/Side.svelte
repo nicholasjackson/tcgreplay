@@ -34,6 +34,10 @@
     openSheet(ev, () => deckMenu(seat), pointerType);
   }
   const topOf = (pile) => (pile && pile.length ? pile[pile.length - 1] : null);
+  // pips are today's mat's six prize pips: the prizes still to take first,
+  // each tapped to take that prize as its card once was, then the taken.
+  const pips = $derived([...side.prizes.filter((p) => p.card), ...side.prizes.filter((p) => !p.card)]);
+  const openPrizes = () => (app.modal = { kind: 'prizes', seat });
 
   // offscreen counts the bench slots past the right edge of the phone's
   // scrolling bench row, for its "+n ›" hint.
@@ -158,15 +162,27 @@
         {#if mirrored}<span class="seat-dot" aria-hidden="true"></span>{/if}<strong>{name}</strong><span class="seat-id">{` · ${seat}`}</span>{#if !mirrored}<span class="seat-dot" aria-hidden="true"></span>{/if}
         {#if status}<span class="opp-status {app.opponent}">{status}</span>{/if}
       </div>
-      <!-- Six pips, filled for the prizes still to take; they open the
-           prize cards, where one is taken. -->
-      <button class="prizes" title="{side.prizes_left} prizes left" aria-label="Prizes: {side.prizes_left} left" onclick={() => (app.modal = { kind: 'prizes', seat })}>
+      <!-- Six pips, filled for the prizes still to take: with a mouse,
+           clicking one takes that prize, as clicking its card did; the count
+           opens the prize cards. On a touch screen six pips are too narrow
+           to tap one reliably (and which prize matters once they are
+           revealed), so the row is one fingertip-sized button that opens
+           the prize cards, each a full card to tap. -->
+      <div class="prizes" role="group" title="{side.prizes_left} prizes left" aria-label="Prizes: {side.prizes_left} left">
         <span class="what">Prizes</span>
-        <span class="pips">
-          {#each side.prizes as p, i (p.slot)}<span class="prize" class:taken={i >= side.prizes_left}></span>{/each}
-        </span>
-        <span class="count">{side.prizes_left}<span class="unit">{' prizes'}</span></span>
-      </button>
+        {#if app.layout === 'tablet'}
+          <button class="pips" aria-label="Open the prizes: {side.prizes_left} left" onclick={openPrizes}>
+            {#each pips as p (p.slot)}<span class="pip"><span class="prize" class:taken={!p.card}></span></span>{/each}
+          </button>
+        {:else}
+          <span class="pips">
+            {#each pips as p (p.slot)}<button class="pip" disabled={!p.card || !mine} aria-label={p.card ? `Take prize ${p.slot + 1}` : `Prize ${p.slot + 1} taken`} onclick={() => prize(p)}><span class="prize" class:taken={!p.card}></span></button>{/each}
+          </span>
+        {/if}
+        <button class="count" aria-label="Open the prizes: {side.prizes_left} left" onclick={openPrizes}>{side.prizes_left}<span class="unit">{' prizes'}</span></button>
+      </div>
+      <!-- Pile chips: the deck, the discard and the Lost Zone, each with its
+           count; each takes a dropped card. -->
       <div class="piles">
         <button
           class="chip pile deck"
@@ -174,6 +190,7 @@
           onclick={deck}
           oncontextmenu={(ev) => { ev.preventDefault(); deck(ev, 'mouse'); }}
         ><span class="label">Deck <b>{side.deck_count}</b></span></button>
+        <button class="chip pile discard" {@attach pile('discard')} onclick={() => openPile('discard')}><span class="label">Discard <b>{side.discard.length}</b></span></button>
         <button class="chip pile lost" {@attach pile('lost')} onclick={() => openPile('lost')}><span class="label">Lost <b>{side.lost?.length ?? 0}</b></span></button>
       </div>
     </div>
@@ -184,9 +201,10 @@
       {/each}
     </div>
 
-    <!-- The discard pile: its top card, its count and the top card's name. -->
+    <!-- The top of the discard pile: its card and name. It opens the
+         pile, takes a dropped card, and its card drags off. -->
     <div
-      class="pile discard"
+      class="discard-top"
       {@attach pile('discard')}
       role="button"
       tabindex="0"
@@ -199,7 +217,7 @@
         <span class="slot-box" aria-hidden="true"></span>
       {/if}
       <span class="caption">
-        <span class="label">Discard <b>{side.discard.length}</b></span>
+        <span class="what">Top of discard</span>
         <strong>{topOf(side.discard)?.name || 'Empty'}</strong>
       </span>
     </div>
@@ -268,23 +286,31 @@
   .opp-status.deciding { border-style: dashed; }
   .opp-status.stopped { border-color: var(--damage-ink); color: var(--damage-ink); }
   /* Prize pips: six slots in the player's colour, filled for each prize
-     still to take, with the count. */
+     still to take, with the count. Each pip is a button a little larger
+     than the pip it draws. */
   .mat .prizes {
     --seat-c: var(--seat-p1-mat);
     display: flex;
     flex-direction: row-reverse;
     align-items: center;
     gap: var(--space-2);
-    padding: 0;
-    border: 0;
-    background: none;
     color: var(--mat-ink);
-    cursor: pointer;
   }
   .mat.mirrored .prizes { --seat-c: var(--seat-p2-mat); flex-direction: row; }
-  .mat .prizes:hover:not(:disabled) { border: 0; }
   .mat .prizes .what { font-size: max(var(--fs-ui-s), 1em); color: var(--mat-muted); }
-  .pips { display: flex; gap: var(--space-2); }
+  .pips { display: flex; }
+  .pip {
+    display: grid;
+    place-items: center;
+    padding: 3px;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: none;
+  }
+  .pip:hover:not(:disabled) { border: 0; box-shadow: inset 0 0 0 1px var(--mat-slot-line); }
+  /* A taken pip, or the other player's in play, is drawn as it is, not
+     faded as a disabled button. */
+  .pip:disabled { opacity: 1; }
   .mat .prize {
     width: max(12px, 1em);
     aspect-ratio: 3 / 4;
@@ -293,13 +319,25 @@
     box-shadow: inset 0 0 0 1.5px var(--seat-c);
   }
   .mat .prize.taken { background: transparent; }
-  .mat .prizes .count { font: var(--fw-num) max(var(--fs-num), 1.08em) var(--font-mono); }
-  /* Pile chips: the deck and the Lost Zone, each with its count. */
+  /* The count opens the prize cards. */
+  .mat .prizes .count {
+    padding: 0.15em 0.35em;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: none;
+    color: var(--mat-ink);
+    font: var(--fw-num) max(var(--fs-num), 1.08em) var(--font-mono);
+    white-space: nowrap;
+  }
+  .mat .prizes .count:hover:not(:disabled) { border: 0; box-shadow: inset 0 0 0 1px var(--mat-slot-line); }
+  /* Pile chips: the deck, the discard and the Lost Zone, each with its
+     count. */
   .mat .piles { display: flex; gap: var(--space-2); }
   .chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.4em;
     min-height: max(28px, 2.3em);
     padding: 0 0.75em;
     border-radius: var(--radius-s);
@@ -310,12 +348,15 @@
     white-space: nowrap;
   }
   .chip:hover:not(:disabled) { border: 0; box-shadow: inset 0 0 0 1px var(--mat-slot-line); }
-  .chip b, .discard .label b { font-family: var(--font-mono); font-weight: var(--fw-num); }
-  /* The top of the discard pile, at the other end of the row. */
-  .pile.discard {
+  .chip .label { font-size: inherit; color: inherit; }
+  .chip b { font-family: var(--font-mono); font-weight: var(--fw-num); }
+  /* The top of the discard pile, at the other end of the row: its card,
+     captioned "Top of discard" over the card's name. */
+  .discard-top {
     grid-area: discard;
     justify-self: start;
     min-width: 0;
+    max-width: 100%;
     display: flex;
     align-items: center;
     gap: var(--space-2);
@@ -323,7 +364,7 @@
     border-radius: var(--radius-s);
     cursor: pointer;
   }
-  .mirrored .pile.discard { justify-self: end; flex-direction: row-reverse; text-align: right; }
+  .mirrored .discard-top { justify-self: end; flex-direction: row-reverse; text-align: right; }
   .slot-box {
     width: calc(var(--cw) * 0.62);
     aspect-ratio: 63 / 88;
@@ -332,18 +373,59 @@
     box-shadow: inset 0 0 0 1px var(--mat-slot-line);
   }
   .caption { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: max(var(--fs-ui-s), 1em); }
-  .caption .label { color: var(--mat-muted); white-space: nowrap; }
+  .caption .what { color: var(--mat-muted); }
   .caption strong { font-weight: var(--fw-ui-title); color: var(--mat-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mat .prizes .unit { display: none; }
-  /* A touch screen's narrower block: "4 prizes" beside smaller pips. */
+  /* A touch screen's narrower block, after the iPad design: a grid of the
+     name, then the six pips across the block (one button, opening the
+     prize cards), then the chips two to a row, "4 prizes" (tinted in the
+     player's colour) filling the last cell. */
   @media (pointer: coarse) {
-    .chip, .mat .prizes { min-height: var(--touch-target); }
-    .mat .prizes { flex-wrap: wrap; row-gap: 2px; max-width: 100%; }
-    .mat .prizes .count { white-space: nowrap; }
+    .block, .mirrored .block {
+      justify-self: stretch;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-1) calc(var(--space-1) * 1.5);
+    }
+    /* The name row reaches into the empty corner beside the Active panel
+       (above your row, below the opponent's), so the taller block does
+       not push the hand further down the screen. */
+    .mat:not(.mirrored) .block { margin-top: calc(var(--touch-target) * -1); }
+    .mat.mirrored .block { margin-bottom: calc(var(--touch-target) * -1); }
+    .seat-name, .pips { grid-column: 1 / -1; }
+    .mat .prizes, .mat .piles { display: contents; }
     .mat .prizes .what { display: none; }
-    .mat .prizes .unit { display: inline; font-family: var(--font-sans); font-weight: var(--fw-ui); }
-    .mat .pips { gap: calc(var(--space-1) * 1.5); }
+    .mat .pips { justify-content: space-between; }
+    .mat.mirrored .pips { justify-content: flex-start; }
+    .mat:not(.mirrored) .pips { justify-content: flex-end; }
+    /* The row is one button, a fingertip tall, that opens the prizes. */
+    .mat .pips {
+      align-items: center;
+      gap: 0;
+      min-height: var(--touch-target);
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-s);
+      background: none;
+    }
+    .mat .pips:hover:not(:disabled) { border: 0; box-shadow: inset 0 0 0 1px var(--mat-slot-line); }
+    .pip { flex: 0 1 var(--touch-target); min-width: 0; padding: 0; }
     .mat .prize { width: 11px; }
+    /* Each chip's count over its name, as on the phone's counters: a
+       sixth of a narrow block holds them side by side no more. */
+    .chip, .mat .prizes .count {
+      min-width: 0;
+      min-height: var(--touch-target);
+      padding: 0 2px;
+      border-radius: var(--radius-s);
+      line-height: 1;
+    }
+    .chip .label, .mat .prizes .count { display: flex; flex-direction: column-reverse; align-items: center; justify-content: center; gap: 1px; }
+    .chip .label { font-size: var(--fs-10); color: var(--mat-muted); }
+    .chip b, .mat .prizes .count { font: var(--fw-num) var(--fs-num) var(--font-mono); color: var(--mat-ink); }
+    .mat .prizes .count { order: 1; flex-direction: column; background: var(--prize-chip-p1); }
+    .mat.mirrored .prizes .count { background: var(--prize-chip-p2); }
+    .mat .prizes .unit { display: inline; font: var(--fw-ui) var(--fs-10) var(--font-sans); color: var(--mat-muted); }
     .slot-box { width: max(44px, calc(var(--cw) * 0.62)); }
   }
 

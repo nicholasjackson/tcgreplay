@@ -194,9 +194,10 @@ export async function timelineLines(page) {
   );
 }
 
-// pile finds a seat's deck, discard or Lost Zone by name ("Deck"): the
-// pile beside the mat, or on a phone its counter chip. pileLabel is the
-// text that counts it ("Discard 1").
+// pile finds a seat's deck, discard or Lost Zone by name ("Deck"): its
+// chip in the player block on today's mat, its pile on the landscape mat,
+// or on a phone its counter chip. pileLabel is the text that counts it
+// ("Discard 1").
 export function pile(page, name, seat = 'p1') {
   const re = new RegExp(`^${name} `);
   const mat = page.getByRole('region', { name: `${seat} side` }).locator('.pile', { has: page.locator('.label', { hasText: re }) });
@@ -219,4 +220,10 @@ export function isPhone(testInfo) {
 // board is the landscape mat.
 export function isWide(testInfo) {
   return testInfo.project.name === 'wide';
+}
+
+// discardTop finds where a seat's top discard card lies on the mat: the
+// "Top of discard" block on today's mat, the pile on the landscape mat.
+export function discardTop(page, seat = 'p1') {
+  return page.getByRole('region', { name: `${seat} side` }).locator('.discard-top').or(pile(page, 'Discard', seat));
 }
