@@ -1,11 +1,13 @@
 // The desktop and tablet board's chrome on any screen size: the playback
-// controls centre on the board area, not the window, and on screens wider
+// controls head the timeline beside or below the board, and with it hidden
+// they and the caption centre on the board area, not the window; on screens wider
 // than 1920px the header and timeline text grow and the timeline widens.
 // The board knows when its area is wide enough for the landscape mat.
 import { test, expect, isPhone, isWide } from './fixtures.js';
 
-// offCentre is how far the playback bar's and the caption's horizontal
-// centres sit from the board area's (main's).
+// offCentre is how far the floating playback bar's and the caption's
+// horizontal centres sit from the board area's (main's), null for one not
+// shown.
 async function offCentre(page) {
   return page.evaluate(() => {
     const mid = (el) => {
@@ -14,44 +16,49 @@ async function offCentre(page) {
     };
     const main = mid(document.querySelector('main'));
     const caption = document.querySelector('.overlay .caption');
+    const bar = document.querySelector('.overlay .bar');
     return {
-      bar: Math.abs(mid(document.querySelector('.overlay .bar')) - main),
+      bar: bar ? Math.abs(mid(bar) - main) : null,
       caption: caption ? Math.abs(mid(caption) - main) : null,
     };
   });
 }
 
-test('during a replay the playback bar and caption centre on the board, with the timeline beside, below or hidden', async ({ page }, testInfo) => {
+test('during a replay the playback controls head the timeline beside or below the board, and with it hidden float centred on the board, the caption centred throughout', async ({ page }, testInfo) => {
   test.skip(isPhone(testInfo), 'the phone timeline is a sheet');
   const aside = page.locator('aside');
   await aside.locator('.line').first().getByTitle('Play from here').click();
-  const bar = page.locator('.overlay .bar');
-  await expect(bar).toBeVisible();
+  const controls = aside.getByRole('toolbar', { name: 'Playback' });
   // Pause so the replay holds still while it is measured.
-  await bar.getByRole('button', { name: 'Pause' }).click();
-  await bar.getByRole('button', { name: 'Next move' }).click();
+  await controls.getByRole('button', { name: 'Pause' }).click();
+  await controls.getByRole('button', { name: 'Next step' }).click();
   await expect(page.locator('.overlay .caption')).toBeVisible();
 
   const check = async (where) => {
     const off = await offCentre(page);
-    expect(off.bar, `bar, timeline ${where}`).toBeLessThanOrEqual(2);
+    if (where === 'hidden') expect(off.bar, `bar, timeline ${where}`).toBeLessThanOrEqual(2);
+    else expect(off.bar, `no floating bar, timeline ${where}`).toBeNull();
     if (off.caption !== null) expect(off.caption, `caption, timeline ${where}`).toBeLessThanOrEqual(2);
   };
+  await expect(controls).toBeVisible();
   await check('beside');
 
   await aside.getByRole('button', { name: 'Move timeline below the board' }).click();
   await expect(page.locator('.body')).toHaveClass(/\bbottom\b/);
+  await expect(controls).toBeVisible();
   await check('below');
 
   await aside.getByRole('button', { name: 'Move timeline beside the board' }).click();
   await page.getByRole('button', { name: 'Menu' }).click();
   await page.getByRole('menuitem', { name: 'Hide timeline' }).click();
   await expect(aside).toHaveCount(0);
+  const bar = page.locator('.overlay .bar');
+  await expect(bar).toBeVisible();
   await check('hidden');
 
   // The controls still work: step back, then back to the live position.
-  await bar.getByRole('button', { name: 'Previous move' }).click();
-  await bar.getByRole('button', { name: /^Live/ }).click();
+  await bar.getByRole('button', { name: 'Previous step' }).click();
+  await bar.getByRole('button', { name: 'Go live' }).click();
   await expect(bar).toHaveCount(0);
 });
 

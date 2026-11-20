@@ -20,8 +20,8 @@
   // sheet opened from ☰ rather than a column beside the board.
   const phone = $derived(app.layout === 'phone');
   let timelineOpen = $state(false);
-  // fit is how many pixels the phone board, or the landscape mat, gives up
-  // so it never scrolls: the cards shrink when the board would run past
+  // fit is how many pixels the phone board, the landscape mat or today's
+  // mat above the docked timeline gives up so it never scrolls: the cards shrink when the board would run past
   // the screen (a two-row strip, Pokémon with many attachments) and grow
   // back as room returns. Only the rows in the flow count: the landscape
   // mat's peeking hand and corner name sit over it.
@@ -67,6 +67,61 @@
   const benchN = $derived(app.board ? Math.max(...Object.values(app.board.sides).map((s) => benchSlots(s).length)) : 5);
   const showTimeline = $derived(!app.landscapePhone && (phone ? timelineOpen : app.panelOpen));
   const bottom = $derived(!phone && app.panelOpen && app.panelAt === 'bottom');
+  // The playback controls head the timeline beside or below the board;
+  // with it hidden, or a phone's sheet, they float over the board.
+  const docked = $derived(showTimeline && !phone);
+
+  // The docked timeline's height follows its handle, dragged or keyed,
+  // within bounds that leave the board room for its smallest cards:
+  // today's mat is about 540px tall at 40px cards, the landscape mat
+  // about 6.9 card widths and 80px at 48px. A touch screen's mat (48px
+  // cards) seldom fits under a docked timeline anyway, so there the board
+  // scrolls and keeps at least half the room. bodyRoom is the height the
+  // board and the timeline share. The height starts at a default (220px,
+  // or 28% of the screen on the landscape mat), always within the bounds,
+  // and is kept in memory only (app.dockHeight).
+  const DOCK_MIN = 160;
+  let screenH = $state(0);
+  let bodyRoom = $state(0);
+  function measureBody(body) {
+    const ro = new ResizeObserver(() => {
+      const cs = getComputedStyle(body);
+      bodyRoom = body.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    });
+    ro.observe(body);
+    return () => ro.disconnect();
+  }
+  const boardMin = $derived(app.wide ? 6.9 * 48 + 80 : app.layout === 'tablet' ? bodyRoom / 2 : 540);
+  const dockMax = $derived(Math.max(DOCK_MIN, Math.floor(bodyRoom - boardMin)));
+  const dockDefault = $derived(app.wide ? Math.min(480, Math.max(200, screenH * 0.28)) : 220);
+  const dockPx = $derived(Math.round(Math.min(dockMax, Math.max(DOCK_MIN, app.dockHeight ?? dockDefault))));
+  function setDock(h) {
+    app.dockHeight = Math.round(Math.min(dockMax, Math.max(DOCK_MIN, h)));
+  }
+  function dragDock(ev) {
+    if (ev.button !== 0) return;
+    ev.preventDefault();
+    const handle = ev.currentTarget;
+    handle.setPointerCapture(ev.pointerId);
+    const [y, h] = [ev.clientY, dockPx];
+    const move = (e) => setDock(h + y - e.clientY);
+    const end = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', end);
+      handle.removeEventListener('pointercancel', end);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+  }
+  function keyDock(ev) {
+    const by = { ArrowUp: 16, ArrowDown: -16, PageUp: 80, PageDown: -80 }[ev.key];
+    if (by) setDock(dockPx + by);
+    else if (ev.key === 'Home') setDock(DOCK_MIN);
+    else if (ev.key === 'End') setDock(dockMax);
+    else return;
+    ev.preventDefault();
+  }
   // menuOpen shows the header's menu of less frequent actions.
   let menuOpen = $state(false);
   function menu(run) {
@@ -124,9 +179,9 @@
   {#if app.wide}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
 {/snippet}
 
-<svelte:window onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
+<svelte:window bind:innerHeight={screenH} onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
 
-<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone style:--fit="{fit}px">
+<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone style:--fit="{fit}px" style:--dock-h={bottom ? `${dockPx}px` : null}>
   <header>
     {#if phone}
       <!-- A phone's header: the connection, whose turn it is, the
@@ -265,7 +320,7 @@
     <div class="reveal-banner">REVEAL VIEW: both hands, prizes and decks are face up. Post-mortem only.</div>
   {/if}
 
-  <div class="body" class:panel={showTimeline && !phone} class:bottom>
+  <div class="body" class:panel={showTimeline && !phone} class:bottom {@attach measureBody}>
     {#if app.landscapePhone}
       <!-- A phone held sideways is too short for the board. -->
       <div class="upright" role="status">
@@ -273,7 +328,7 @@
         <p>Turn your phone upright to see the board.</p>
       </div>
     {:else}
-    <main {@attach phone ? fitBoard : measureBoard}>
+    <main {@attach phone ? fitBoard : measureBoard} {@attach bottom && !app.wide && fitBoard}>
       {#if app.board && app.wide}
         <!-- The landscape mat sizes its cards from the board area, so it
              sits in a box whose container units measure <main>. -->
@@ -294,16 +349,38 @@
     </main>
     {/if}
     {#if showTimeline}
-      <aside class:sheet={phone}>
+      <aside class:sheet={phone} aria-label="Timeline">
         {#if phone}
           <h2>Timeline</h2>
           <button class="close" aria-label="Close the timeline" onclick={() => (timelineOpen = false)}>✕</button>
+          <Timeline />
         {:else}
+          {#if bottom}
+            <!-- Drag (or key) the handle to share the height between the
+                 board and the timeline. A focusable separator is a
+                 widget, which Svelte's check does not know. -->
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+            <div
+              class="grip"
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="Resize the timeline"
+              aria-valuenow={dockPx}
+              aria-valuemin={DOCK_MIN}
+              aria-valuemax={dockMax}
+              tabindex="0"
+              onpointerdown={dragDock}
+              onkeydown={keyDock}
+            >
+              <span></span>
+            </div>
+          {/if}
           <!-- Like a dev tools dock button: the icon shows where the
                timeline goes next. -->
           {@const where = bottom ? 'beside' : 'below'}
-          <div class="aside-head">
+          <div class="aside-head" class:dock-row={bottom}>
             <h2>Timeline</h2>
+            {#if bottom}<PlaybackBar where="dock" />{/if}
             <button class="dock" aria-label="Move timeline {where} the board" title="Move timeline {where} the board" onclick={() => setPanelAt(bottom ? 'side' : 'bottom')}>
               <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
                 <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" />
@@ -315,16 +392,20 @@
               </svg>
             </button>
           </div>
+          {#if !bottom}<PlaybackBar where="side" />{/if}
+          <div class="aside-body">
+            <Timeline rail={bottom} />
+          </div>
         {/if}
-        <Timeline />
       </aside>
     {/if}
   </div>
 
   <!-- The caption stacks under the playback bar, however many rows the bar
-       wraps to. -->
+       wraps to. With the timeline beside or below the board, the bar heads
+       the timeline instead and only the caption floats. -->
   <div class="overlay">
-    <PlaybackBar />
+    {#if !docked}<PlaybackBar />{/if}
     {#if app.caption}
       <div class="caption">{app.caption}</div>
     {/if}
@@ -371,9 +452,17 @@
     --cw: clamp(48px, min((100vh - 140px) / 11.1, (100vw - 64px) / 10), 240px);
     --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
   }
+  /* Docked below, the timeline takes --dock-h (its handle sets it) and the
+     board the rest: its cards fit the height left, about 11.1 card widths
+     under 120px of header, gutters and padding, less --fit when the board
+     would still scroll (fitBoard). */
   .app.panel-bottom {
     height: 100vh;
-    --cw: clamp(48px, min((100vh - 340px) / 11.1, (100vw - 64px) / 10), 240px);
+    --dock-h: 220px;
+    --cw: clamp(40px, min((100vh - 120px - var(--dock-h) - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10), 240px);
+  }
+  @media (pointer: coarse) {
+    .app.panel-bottom { --cw: clamp(48px, min((100vh - 120px - var(--dock-h) - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10), 240px); }
   }
   /* The landscape mat (app.wide) fills the window and sizes its cards
      from the board area: <main> is a size container, and .board inside it
@@ -383,7 +472,7 @@
   /* The landscape mat gives its cards the room of a thinner gutter. */
   .app.landscape { height: 100vh; min-height: 0; --gutter: var(--space-1); --gutter-y: var(--space-1); }
   .app.landscape main { container-type: size; }
-  .app.landscape .body.panel.bottom { grid-template-rows: minmax(0, 1fr) clamp(200px, 28vh, 480px); }
+  .app.landscape.panel-bottom { --dock-h: clamp(200px, 28vh, 480px); }
   /* The rows are about 6.8 card widths tall: two player rows, the middle
      row with its captions, your hand and the opponent's peeking hand above
      them; plus your name. A busy board (Energy under benched Pokémon) gives
@@ -482,7 +571,7 @@
     border: 0;
     border-radius: 0;
   }
-  aside.sheet .close { position: absolute; top: 4px; right: 8px; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+  aside.sheet .close { position: absolute; top: 4px; right: 8px; z-index: 3; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
   .upright { background: var(--mat-surface); color: var(--mat-ink); font-size: var(--fs-16); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
   .phone-icon { font-size: var(--fs-40); display: inline-block; transform: rotate(90deg); }
 
@@ -640,7 +729,9 @@
   /* The mat and the timeline are rounded panels on the page background. */
   .body { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; padding: var(--gutter-y) var(--gutter); gap: var(--gutter); }
   .body.panel { grid-template-columns: 1fr var(--panel-col); }
-  main { overflow: auto; display: flex; flex-direction: column; justify-content: center; font-size: var(--fs); border-radius: var(--radius-l); }
+  /* safe: a board taller than its area scrolls from its top, rather than
+     centring and cutting the top off out of reach. */
+  main { overflow: auto; display: flex; flex-direction: column; justify-content: safe center; font-size: var(--fs); border-radius: var(--radius-l); }
   /* Today's mat keeps a margin of mat above the opponent's fanned hand and
      below yours, whose turned cards reach past their rows. */
   .app:not(.landscape, .phone) main { padding-block: var(--space-3); }
@@ -658,7 +749,9 @@
     overflow: hidden;
   }
   /* Docked below, the board and the timeline join into one panel. */
-  .body.panel.bottom { grid-template-columns: 1fr; grid-template-rows: auto minmax(200px, 1fr); gap: 0; }
+  /* Rows of a set height, never auto: the landscape mat's <main> is a size
+     container, which takes no height from its content. */
+  .body.panel.bottom { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) var(--dock-h); gap: 0; }
   .body.bottom main { border-radius: var(--radius-l) var(--radius-l) 0 0; }
   .body.bottom aside {
     border-radius: 0 0 var(--radius-l) var(--radius-l);
@@ -668,9 +761,20 @@
   aside h2 { font-size: max(var(--fs-ui), 0.677vw); font-weight: var(--fw-label); color: var(--muted); margin: var(--space-3) var(--space-3) 0; text-transform: uppercase; letter-spacing: var(--ls-label); }
   .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: var(--space-2); }
   aside .dock {
-    display: grid; place-items: center; width: 28px; height: 24px; padding: 0; margin-top: var(--space-2);
-    background: var(--panel); border: 1px solid var(--control-line); border-radius: var(--radius-s); color: var(--muted); cursor: pointer;
+    display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0; margin-top: var(--space-2);
+    background: var(--panel); border: 1px solid var(--control-line); border-radius: var(--radius-s); color: var(--ink); cursor: pointer;
   }
+  /* Docked, one row: the heading, the playback controls and the dock
+     button, under the handle. */
+  .aside-head.dock-row { gap: var(--space-2); padding: 2px 14px var(--space-2); border-bottom: 1px solid var(--line); }
+  .aside-head.dock-row h2 { margin: 0 var(--space-2) 0 0; }
+  .aside-head.dock-row .dock { margin: 0; }
+  .aside-body { flex: 1; min-height: 0; display: flex; }
+  /* The handle: a strip with a centred grip, a fingertip tall on touch. */
+  .grip { flex: none; height: 10px; display: flex; justify-content: center; align-items: center; cursor: row-resize; touch-action: none; }
+  .grip span { width: 44px; height: 4px; border-radius: 2px; background: var(--control-line); }
+  .grip:hover span, .grip:focus-visible span { background: var(--muted); }
+  .grip:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
   aside .dock:hover, aside .dock:focus-visible { color: var(--ink); background: var(--hover); border-color: var(--control-line); }
   .seat-name { text-align: center; color: var(--mat-muted); font-size: 0.85em; padding: 0.15em; }
   .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: var(--radius-pill); border: 1px solid var(--mat-slot-line); color: var(--mat-ink); }
@@ -744,5 +848,7 @@
     .mode label { height: auto; }
     header button { width: var(--touch-target); height: var(--touch-target); }
     .branch select { height: var(--touch-target); }
+    aside .dock { width: var(--touch-target); height: var(--touch-target); }
+    .grip { height: var(--touch-target); }
   }
 </style>

@@ -35,6 +35,10 @@ export const app = $state({
   // Where the timeline sits: 'side' (right of the board) or 'bottom'
   // (below it, for tall screens). Remembered in this browser.
   panelAt: 'side',
+  // The docked timeline's height in pixels, once its handle has been
+  // dragged; null for the layout's own. Kept for this page only: the
+  // settings this browser remembers are listed on the privacy page.
+  dockHeight: null,
   // The open action sheet: build() returns the menu model (see
   // actions.js), re-run as the board changes; pointerType picks its
   // container and x, y place the desktop popover.

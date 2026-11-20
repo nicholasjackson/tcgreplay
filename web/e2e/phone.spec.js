@@ -300,13 +300,13 @@ test('the timeline\'s dock button moves it below the board and back', async ({ p
 test('the last timeline entry has no rewind button: rewinding there would change nothing', async ({ page }, testInfo) => {
   test.skip(isPhone(testInfo), 'the phone timeline is a sheet');
   const lines = page.locator('aside .line');
-  await expect(lines.last().getByTitle(/^Rewind to just after/)).toHaveCount(0);
+  await expect(lines.last().getByRole('button', { name: /^Rewind to just after #/ })).toHaveCount(0);
   await expect(lines.last().getByTitle('Play from here')).toHaveCount(1);
-  await expect(lines.nth(-2).getByTitle(/^Rewind to just after/)).toHaveCount(1);
+  await expect(lines.nth(-2).getByRole('button', { name: /^Rewind to just after #/ })).toHaveCount(1);
   // A new event moves the missing button to the new last entry.
   await act(page, 'move', { iid: 'p1-2', to: 'discard' });
-  await expect(lines.last().getByTitle(/^Rewind to just after/)).toHaveCount(0);
-  await expect(lines.nth(-2).getByTitle(/^Rewind to just after/)).toHaveCount(1);
+  await expect(lines.last().getByRole('button', { name: /^Rewind to just after #/ })).toHaveCount(0);
+  await expect(lines.nth(-2).getByRole('button', { name: /^Rewind to just after #/ })).toHaveCount(1);
 });
 
 test('a Stadium pair shows both halves side by side, on screen and clear of the Active', async ({ page }, testInfo) => {

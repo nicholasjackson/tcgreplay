@@ -83,8 +83,8 @@ test('the timeline shows its rewind and play buttons on a touch screen, and they
     await page.getByRole('menuitem', { name: 'Show timeline' }).tap();
   }
   const line = page.locator('.line').filter({ hasText: 'Move Riolu' }).first();
-  const rewind = line.getByRole('button', { name: '↺' });
-  const play = line.getByRole('button', { name: '▶' });
+  const rewind = line.getByRole('button', { name: /^Rewind to just after #/ });
+  const play = line.getByRole('button', { name: /^Play from #/ });
   await line.scrollIntoViewIfNeeded();
   await expect(rewind).toHaveCSS('opacity', '1');
   await expect(play).toBeVisible();
@@ -106,7 +106,7 @@ test('the timeline shows its rewind and play buttons on a touch screen, and they
     await page.getByRole('menuitem', { name: 'Show timeline' }).tap();
   }
 
-  await page.locator('.line').filter({ hasText: 'Move Riolu' }).first().getByRole('button', { name: '▶' }).tap();
+  await page.locator('.line').filter({ hasText: 'Move Riolu' }).first().getByRole('button', { name: /^Play from #/ }).tap();
   await expect(page.locator('.line.now')).toHaveCount(1);
 });
 
