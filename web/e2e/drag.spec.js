@@ -111,7 +111,12 @@ const drops = [
       return titled(page.locator('.modal'), 'Fighting Energy (p1-16)');
     },
     sideways: true,
-    to: (page) => hand(page),
+    // Low in the hand: on the landscape mat only the hand's strip along the
+    // bottom edge shows, the rest of each card tucked under the Bench.
+    to: async (page) => {
+      const b = await hand(page).boundingBox();
+      return { x: b.x + b.width / 2, y: b.y + b.height - 20 };
+    },
     lines: ['p1 moved p1-16 Fighting Energy p1:discard → p1:hand'],
     check: async (page) => {
       await expect(hand(page).locator('.count')).toHaveText('9 in hand');
@@ -128,10 +133,10 @@ for (const d of drops) {
       const a = await from.boundingBox();
       const f = await touchStart(page, from);
       await f.move({ x: a.x + a.width / 2 + 30, y: a.y + a.height / 2 }, { steps: 4 });
-      await f.move(d.to(page));
+      await f.move(await d.to(page));
       await f.end();
     } else {
-      await drag(page, from, d.to(page), testInfo);
+      await drag(page, from, await d.to(page), testInfo);
     }
     await expectNewLines(page, before, d.lines);
     await d.check(page, testInfo);
