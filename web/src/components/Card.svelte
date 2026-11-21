@@ -107,7 +107,7 @@
     transition: transform 0.25s ease, box-shadow 0.25s ease, outline-color 0.25s;
     box-shadow: var(--shadow-card);
     cursor: grab;
-    background: var(--card-bg);
+    background: var(--mat-zone);
     outline: 3px solid transparent;
     /* A long touch selects nothing and opens no callout. */
     user-select: none;
@@ -140,7 +140,7 @@
   }
   .card.lit {
     outline-color: var(--accent);
-    box-shadow: 0 0 18px 4px var(--accent-glow);
+    box-shadow: 0 0 18px 4px var(--highlight-glow);
   }
   img {
     width: 100%;
@@ -158,8 +158,8 @@
     max-width: 92%;
     padding: 0.05em 0.45em;
     border-radius: 1em;
-    background: var(--accent);
-    color: var(--accent-label-ink);
+    background: var(--primary);
+    color: var(--on-primary);
     font: 700 max(var(--fs-9), calc(var(--w, var(--cw)) * 0.11)) var(--font-sans);
     white-space: nowrap;
     overflow: hidden;
@@ -186,7 +186,7 @@
   .back-art.unknown .mark { opacity: 0.35; }
   .back-art.unknown span {
     font: 800 calc(var(--w) * 0.45) / 1 var(--font-sans);
-    color: var(--on-color);
+    color: var(--glyph-ink);
     text-shadow: var(--shadow-text-glyph);
   }
   .text-card {
@@ -217,10 +217,10 @@
     display: grid;
     place-items: center;
     font: 800 calc(var(--w) * 0.5) / 1 var(--font-sans);
-    color: var(--on-color);
+    color: var(--glyph-ink);
     text-shadow: var(--shadow-text-energy);
     background: radial-gradient(circle at 50% 45%, var(--ec) 0 38%, var(--energy-ring) 39% 44%, var(--ec) 45%);
-    --ec: var(--energy-special);
+    --ec: var(--energy-colorless);
   }
   .token[data-type='Fighting'] { --ec: var(--energy-fighting); }
   .token[data-type='Fire'] { --ec: var(--energy-fire); }
@@ -235,8 +235,8 @@
     position: absolute;
     top: 2px;
     left: 2px;
-    background: var(--basis);
-    color: var(--on-color);
+    background: var(--assumed-badge);
+    color: var(--glyph-ink);
     font: 700 max(var(--fs-10), calc(var(--w) * 0.11))/1 var(--font-sans);
     padding: 0.2em 0.4em;
     border-radius: var(--radius-xs);

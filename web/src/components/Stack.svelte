@@ -198,8 +198,8 @@
     box-shadow: var(--shadow-badge);
   }
   .dmg { background: var(--damage-bg); color: var(--damage-ink); }
-  .marker.poison { background: var(--poison); color: var(--on-color); }
-  .marker.burn { background: var(--burn); color: var(--on-color); }
+  .marker.poison { background: var(--condition-poisoned); color: var(--glyph-ink); }
+  .marker.burn { background: var(--condition-burned); color: var(--glyph-ink); }
   .controls {
     position: absolute;
     bottom: var(--space-1);

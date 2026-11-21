@@ -1,10 +1,12 @@
 // Screenshot baselines of the board in every layout: phone, tablet,
 // desktop and wide (the landscape mat) from the fixed position, plus the
-// desktop with the timeline docked below. They prove a change that should
+// desktop with the timeline docked below, and a card's actions in each of
+// their three containers: the desktop popover, the tablet panel and the
+// phone sheet. They prove a change that should
 // look the same does, and are re-recorded deliberately when the look
 // changes (npx playwright test e2e/screenshots.spec.js --update-snapshots).
 // Captures park the pointer and wait for finite animations, so they repeat.
-import { test, expect } from './fixtures.js';
+import { test, expect, isTouch } from './fixtures.js';
 
 // settle parks the pointer clear of the board, waits for every finite
 // animation to finish (gotcha board-boxes-settle-before-comparing), and
@@ -55,4 +57,19 @@ test('the board with the timeline docked below looks as recorded', async ({ page
   await expect(page.locator('.body.panel.bottom')).toBeVisible();
   await settle(page);
   await expect(page).toHaveScreenshot('board-docked.png');
+});
+
+// A card's actions, opened on your Active Makuhita: right-clicked open as
+// the popover on desktop, tapped open as the panel on a tablet and the
+// full-screen sheet on a phone. The landscape mat's popover is the
+// desktop's, so it is not recorded twice.
+test('a card\'s actions look as recorded in their container', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'wide', 'the same popover as desktop');
+  const active = page.getByRole('region', { name: 'p1 Active', exact: true }).locator('.card[title="Makuhita (p1-5)"]');
+  if (isTouch(testInfo)) await active.tap();
+  else await active.click({ button: 'right' });
+  const sheet = page.locator('.sheet');
+  await expect(sheet).toHaveAttribute('data-mode', isTouch(testInfo) ? testInfo.project.name : 'popover');
+  await settle(page);
+  await expect(page).toHaveScreenshot('menu.png');
 });
