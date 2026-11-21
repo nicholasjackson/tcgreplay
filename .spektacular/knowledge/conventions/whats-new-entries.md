@@ -6,4 +6,6 @@ Every change players can see ships, in the same change, with an entry in `site/s
 - Set `refresh: true` when the change adds, removes or renames a tool, changes a tool's description, title or parameters, or changes a guide or the server instructions, because assistants keep the tool list they fetched when they connected. Otherwise set `refresh: false`. Entries with `refresh: true` link players to the refresh steps (`/docs/connect#refresh`).
 - Never name an old address outside the connecting page's move note (`data-moved-note`). Never say TCG Replay is in ChatGPT's Plugin Directory while `site/src/lib/listing.ts` has `listed: false`. The browser suite fails on either.
 
+Quote a change line that contains `: ` (`- "…readouts on the mat: HP left…"`). Unquoted, YAML reads it as a map, and the build stops with "has an empty change".
+
 The build (`site/src/lib/whats-new.ts`) stops on a missing or malformed date, title, refresh or changes. It cannot tell whether a change was player-visible, so applying this rule is the author's job, and the maintainer checks it.

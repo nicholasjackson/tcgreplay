@@ -1,5 +1,5 @@
 ---
-tags: [playwright, testing, board, layout, webui]
+tags: [playwright, testing, board, layout, webui, screenshots]
 ---
 
 # Board card positions move without anything changing: settle them before comparing
@@ -18,3 +18,5 @@ await page.evaluate(() => Promise.all(document.getAnimations()
 ```
 
 Poll the after-measurement with `expect.poll`. `web/e2e/about.spec.js` (`boxes`) does this.
+
+**Screenshots need one more wait: the timeline's smooth scroll.** The timeline scrolls to its newest line with `behavior: 'smooth'` (`web/src/components/Timeline.svelte`), and Playwright's `animations: 'disabled'` does not stop smooth scrolling, so a capture can catch the timeline a pixel short and fail the comparison only now and then. Before `toHaveScreenshot`, wait until `.timeline`'s `scrollTop` has stayed the same for several animation frames; `web/e2e/screenshots.spec.js` (`settle`) does this.

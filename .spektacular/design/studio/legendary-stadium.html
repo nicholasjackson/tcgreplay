@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Legendary Stadium in Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F6F7F9; --panel: #FFFFFF; --line: #E2E5EA; --control: #D5DAE1;
+    --ink: #14171C; --muted: #5B6370; --navy: #13285C; --cyan: #5CC8F2;
+    --mat-surface: #252A33; --mat-zone: #2D333D; --mat-strip: #1E232B; --mat-chip: #323945;
+    --mat-ink: #E6E9EE; --mat-muted: #A7AFBC;
+    --p1: #60A5FA; --p2: #FB923C; --end: #38BDF8; --hp: #4ADE80;
+    --dmg-ink: #FFB4B4; --dmg-bg: #5B1E22;
+    --card-face: #F4EFE3; --card-trainer: #E9ECF1; --card-trainer-line: #AEB6C2; --card-ink: #1B1F26;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 var(--sans); }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .lede { color: var(--muted); margin: 0 0 28px; max-width: 760px; }
+  section { margin-bottom: 36px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .note { color: var(--muted); font-size: 13px; margin: 8px 0 0; max-width: 820px; }
+
+  /* The mat */
+  .mat { background: var(--mat-surface); border-radius: 12px; padding: 20px; color: var(--mat-ink); overflow-x: auto; }
+  .row { display: flex; gap: 20px; align-items: center; }
+  .label { font: 500 11px/1 var(--mono); color: var(--mat-muted); text-transform: uppercase; letter-spacing: .06em; text-align: center; margin-top: 8px; }
+
+  /* Stadium spot */
+  .spot { --w: 96px; width: calc(var(--w) + 12px); padding: 6px; border-radius: 10px; background: var(--mat-zone); }
+  .spot.empty .slot { width: var(--w); aspect-ratio: 63/88; border-radius: 7px; background: var(--mat-strip);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.35); display: grid; place-items: center;
+    font: 500 11px var(--mono); color: var(--mat-muted); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* A card (colour-block style, as the Studio canvas draws them) */
+  .card { width: var(--w); aspect-ratio: 63/88; border-radius: 7px; background: var(--card-trainer);
+    border: 2px solid var(--card-trainer-line); box-shadow: 0 2px 6px rgba(0,0,0,.35); color: var(--card-ink);
+    padding: 7px; position: relative; }
+  .card .name { font-weight: 600; font-size: 12px; line-height: 1.1; }
+  .card .kind { font-size: 10px; color: #5B6370; }
+  .card .art { position: absolute; left: 7px; right: 7px; top: 34px; height: 38%; border-radius: 3px;
+    background: linear-gradient(135deg, #8FA3BF, #C8D3E2); }
+
+  /* The pair: two quarter-turned halves joined into one card, one outline and shadow, hairline seam */
+  .pair { width: var(--w); aspect-ratio: 63/88; border-radius: 7px; border: 2px solid var(--card-trainer-line);
+    box-shadow: 0 2px 6px rgba(0,0,0,.35); overflow: hidden; display: grid; grid-template-rows: 1fr 1fr;
+    background: var(--card-trainer); position: relative; }
+  .half { position: relative; display: flex; align-items: stretch; padding: 5px 6px 5px 4px; gap: 5px; }
+  .half + .half { border-top: 1px dashed rgba(27,31,38,.28); } /* the hairline seam */
+  .half .side { writing-mode: vertical-rl; transform: rotate(180deg); display: flex; flex-direction: column;
+    justify-content: flex-start; gap: 1px; }
+  .half .side b { font-size: 10.5px; font-weight: 600; line-height: 1; color: var(--card-ink); }
+  .half .side i { font-style: normal; font-size: 8.5px; color: #5B6370; line-height: 1; }
+  .half .art { flex: 1; border-radius: 3px; background: linear-gradient(90deg, #7F95B4, #C6D1E1); }
+  .half.top .art { background: linear-gradient(90deg, #C6D1E1, #9AAECA); }
+  .basis { position: absolute; right: 5px; bottom: 5px; font: 600 8px/1 var(--mono); color: #fff; background: var(--navy);
+    border-radius: 3px; padding: 2px 3px; }
+
+  .callout { position: relative; }
+  .tag { position: absolute; font: 500 11px/1.25 var(--sans); color: var(--mat-ink); background: var(--mat-chip);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 6px; padding: 4px 7px; white-space: nowrap; }
+  .tag::before { content: ''; position: absolute; width: 18px; border-top: 1px solid var(--mat-muted); top: 50%; }
+  .tag.r { left: calc(100% + 22px); } .tag.r::before { right: 100%; }
+
+  /* Turn strip */
+  .strip { background: var(--mat-strip); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 24px; min-width: 760px; }
+  .turn { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: center; }
+  .ttag { font: 600 13px var(--mono); background: var(--mat-chip); padding: 4px 8px; border-radius: 6px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .step { font: 500 12px var(--mono); color: var(--mat-muted); }
+  .btns { display: flex; gap: 8px; }
+  .btn { font: 500 13px var(--sans); padding: 8px 12px; border-radius: 8px; background: var(--mat-chip); color: var(--mat-ink); border: 1px solid rgba(255,255,255,.1); }
+  .btn.end { background: var(--end); color: #04121F; font-weight: 600; border: 0; }
+
+  /* Active panels (landscape mat middle row) */
+  .active { border: 2px solid var(--seat); border-radius: 12px; padding: 10px; background: var(--mat-zone); display: flex; gap: 12px; align-items: flex-start; }
+  .active .card { --w: 108px; background: var(--card-face); border-color: #C9A64A; }
+  .active .card .art { background: linear-gradient(135deg, #C9A64A, #EBD9A6); }
+  .readout { width: 138px; }
+  .readout .who { font: 500 11px var(--mono); color: var(--seat); text-transform: uppercase; letter-spacing: .06em; }
+  .readout .nm { font-weight: 600; font-size: 15px; margin: 2px 0 6px; }
+  .hpnum { font: 600 22px/1 var(--mono); } .hpnum small { font-size: 13px; color: var(--mat-muted); }
+  .bar { height: 6px; border-radius: 3px; background: var(--mat-strip); margin: 7px 0; overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--hp); }
+  .dmg { display: inline-block; font: 600 12px var(--mono); color: var(--dmg-ink); background: var(--dmg-bg); padding: 2px 6px; border-radius: 5px; }
+  .en { display: flex; gap: 4px; align-items: center; margin-top: 8px; font: 500 12px var(--mono); color: var(--mat-muted); }
+  .en i { width: 11px; height: 11px; border-radius: 50%; background: #C0612B; display: inline-block; }
+  .vs { font: 600 14px var(--mono); color: var(--mat-muted); }
+
+  /* Mat swatches */
+  .mats { display: flex; gap: 16px; flex-wrap: wrap; }
+  .mats .mat { padding: 14px; display: flex; gap: 14px; align-items: center; }
+  .mats .spot { --w: 72px; }
+  .felt { --mat-surface: #1D4430; --mat-zone: #24513A; --mat-strip: #163626; --mat-chip: #2C5A43; --mat-ink: #EEF3EF; --mat-muted: #AFC7B8; }
+  .navy { --mat-surface: #14244A; --mat-zone: #1B2F5C; --mat-strip: #0F1D3D; --mat-chip: #22386A; --mat-ink: #EAF1FF; --mat-muted: #A9B9DA; }
+
+  /* Light-interface pieces: popover and zoom */
+  .lightrow { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .popover { width: 264px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(20,23,28,.14); overflow: hidden; }
+  .popover header { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .popover header b { display: block; font-size: 14px; }
+  .popover header span { font: 500 11.5px var(--mono); color: var(--muted); }
+  .popover .sec { font: 600 10.5px var(--sans); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px 12px 2px; }
+  .popover .it { height: 34px; display: flex; align-items: center; padding: 0 12px; font-size: 13.5px; }
+  .popover hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  .zoom { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: 0 8px 24px rgba(20,23,28,.14); }
+  .zoompic { display: flex; border-radius: 10px; overflow: hidden; border: 2px solid var(--card-trainer-line); width: 440px; max-width: 100%; aspect-ratio: 2 * 63 / 88; aspect-ratio: 1.43; }
+  .zoompic div { flex: 1; background: var(--card-trainer); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .zoompic div + div { border-left: 1px dashed rgba(27,31,38,.28); }
+  .zoompic b { font-size: 15px; } .zoompic em { font-style: normal; font-size: 11px; color: var(--muted); }
+  .zoompic .art { flex: 1; border-radius: 6px; background: linear-gradient(135deg, #7F95B4, #C6D1E1); }
+  .zoompic div + div .art { background: linear-gradient(135deg, #C6D1E1, #9AAECA); }
+  .zoom .meta { font: 500 12px var(--mono); color: var(--muted); margin: 10px 0 0; }
+
+  /* Phone strip */
+  .phone { width: 390px; max-width: 100%; background: var(--mat-surface); border-radius: 18px; padding: 12px; }
+  .phone .strip { min-width: 0; padding: 8px; gap: 8px; }
+  .phone .spot { --w: 48px; padding: 3px; }
+  .phone .btn { padding: 6px 8px; font-size: 12px; }
+  .phone .coin { width: 36px; height: 36px; border-radius: 50%; background: #E3B341; color: #3A2A00; display: grid; place-items: center; font: 600 10px var(--sans); }
+  .phone .half .side b { font-size: 6px; } .phone .half .side i { display: none; } .phone .half { padding: 2px; gap: 2px; }
+  .phone .basis { font-size: 6px; padding: 1px 2px; right: 3px; bottom: 3px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Legendary Stadium in Studio</h1>
+  <p class="lede">A Stadium played as a pair, such as Delta Reign's Legendary Stadiums, stands in the Stadium spot as one card. The two halves are turned a quarter and joined edge to edge. Cards are drawn as colour blocks, as on the Studio canvas; the board shows the real card images.</p>
+
+  <section>
+    <h2>1 · The Stadium spot: single, pair, empty (slate mat)</h2>
+    <div class="mat">
+      <div class="row" style="gap:40px">
+        <div>
+          <div class="spot"><div class="card"><div class="name">Area Zero Underdepths</div><div class="kind">Stadium</div><div class="art"></div></div></div>
+          <div class="label">Single Stadium</div>
+        </div>
+        <div class="callout">
+          <div class="spot">
+            <div class="pair" aria-label="Twin Peak (pair)">
+              <div class="half top"><div class="side"><b>Twin Peak</b><i>Stadium</i></div><div class="art"></div></div>
+              <div class="half"><div class="side"><b>Twin Peak</b><i>Stadium</i></div><div class="art"></div><span class="basis">i</span></div>
+            </div>
+          </div>
+          <div class="label">Legendary pair</div>
+          <span class="tag r" style="top:14px">Each half turned a quarter, in print order</span>
+          <span class="tag r" style="top:62px">Hairline seam; one outline and shadow</span>
+          <span class="tag r" style="top:110px">An assumed-card mark, when shown, sits on the lower half only</span>
+        </div>
+        <div style="margin-left:300px">
+          <div class="spot empty"><div class="slot">Stadium</div></div>
+          <div class="label">Empty</div>
+        </div>
+      </div>
+    </div>
+    <p class="note">All three take exactly the same space, so nothing else on the mat moves or resizes when a Stadium, a pair or nothing is in play.</p>
+  </section>
+
+  <section>
+    <h2>2 · Turn strip on the desktop mat</h2>
+    <div class="mat">
+      <div class="strip">
+        <div class="spot" style="--w:84px">
+          <div class="pair">
+            <div class="half top"><div class="side"><b>Twin Peak</b><i>Stadium</i></div><div class="art"></div></div>
+            <div class="half"><div class="side"><b>Twin Peak</b><i>Stadium</i></div><div class="art"></div><span class="basis">i</span></div>
+          </div>
+        </div>
+        <div class="turn"><span class="ttag">T5</span><span class="dot" style="background:var(--p1)"></span><b>Alice's turn</b><span class="step">#217 · Attack</span></div>
+        <div class="btns"><span class="btn">Flip coin</span><span class="btn">End action</span><span class="btn end">End turn</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 · Landscape mat middle row (board area 1600px or wider)</h2>
+    <div class="mat">
+      <div class="row" style="gap:28px; min-width:980px">
+        <div class="spot" style="--w:104px">
+          <div class="pair">
+            <div class="half top"><div class="side"><b>Twin Peak</b><i>Stadium</i></div><div class="art"></div></div>
+            <div class="half"><div class="side"><b>Twin Peak</b><i>Stadium</i></div><div class="art"></div><span class="basis">i</span></div>
+          </div>
+        </div>
+        <div class="active" style="--seat:var(--p1)">
+          <div class="card"><div class="name">Lucario</div><div class="kind">Stage 1</div><div class="art"></div></div>
+          <div class="readout"><div class="who">Alice · Active</div><div class="nm">Lucario</div>
+            <div class="hpnum">70<small>/130</small></div><div class="bar"><span style="width:54%"></span></div>
+            <span class="dmg">−60</span><div class="en"><i></i><i></i> 2 Energy</div></div>
+        </div>
+        <span class="vs">vs</span>
+        <div class="active" style="--seat:var(--p2)">
+          <div class="card"><div class="name">Makuhita</div><div class="kind">Basic</div><div class="art"></div></div>
+          <div class="readout"><div class="who">Bob · Active</div><div class="nm">Makuhita</div>
+            <div class="hpnum">80<small>/80</small></div><div class="bar"><span style="width:100%"></span></div>
+            <div class="en"><i></i> 1 Energy</div></div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px">
+          <div class="turn" style="justify-content:flex-start"><span class="ttag">T5</span><b>Alice's turn</b></div>
+          <div class="btns"><span class="btn">Draw</span><span class="btn end">End turn</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4 · On every mat</h2>
+    <div class="mats">
+      <div class="mat"><div class="spot"><div class="pair"><div class="half top"><div class="side"><b>Twin Peak</b></div><div class="art"></div></div><div class="half"><div class="side"><b>Twin Peak</b></div><div class="art"></div><span class="basis">i</span></div></div></div><span class="label" style="margin:0">Slate</span></div>
+      <div class="mat felt"><div class="spot"><div class="pair"><div class="half top"><div class="side"><b>Twin Peak</b></div><div class="art"></div></div><div class="half"><div class="side"><b>Twin Peak</b></div><div class="art"></div><span class="basis">i</span></div></div></div><span class="label" style="margin:0">Felt</span></div>
+      <div class="mat navy"><div class="spot"><div class="pair"><div class="half top"><div class="side"><b>Twin Peak</b></div><div class="art"></div></div><div class="half"><div class="side"><b>Twin Peak</b></div><div class="art"></div><span class="basis">i</span></div></div></div><span class="label" style="margin:0">Navy</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>5 · Phone strip</h2>
+    <div class="phone">
+      <div class="strip">
+        <div class="spot">
+          <div class="pair">
+            <div class="half top"><div class="side"><b>Twin Peak</b></div><div class="art"></div></div>
+            <div class="half"><div class="side"><b>Twin Peak</b></div><div class="art"></div><span class="basis">i</span></div>
+          </div>
+        </div>
+        <span class="ttag">T5</span><span class="coin">Coin</span>
+        <div class="btns" style="margin-left:auto"><span class="btn end">End turn</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>6 · Menu and zoom (light interface)</h2>
+    <div class="lightrow">
+      <div class="popover">
+        <header><b>Twin Peak</b><span>Stadium · played as a pair</span></header>
+        <div class="sec">Move</div>
+        <div class="it">Discard</div><div class="it">Lost Zone</div>
+        <hr>
+        <div class="sec">Other</div>
+        <div class="it">Card text</div>
+      </div>
+      <div class="zoom">
+        <div class="zoompic">
+          <div><b>Twin Peak</b><em>Stadium · left half</em><span class="art"></span></div>
+          <div><b>Twin Peak</b><em>Stadium · right half</em><span class="art"></span></div>
+        </div>
+        <p class="meta">Played as a pair: p1-59 · TP-1 + p1-60 · TP-2</p>
+      </div>
+    </div>
+    <p class="note">Tapping or right-clicking either half opens that half's menu. The zoom shows the whole pair side by side as one picture, whichever half you opened it from.</p>
+  </section>
+</main>
+</body>
+</html>

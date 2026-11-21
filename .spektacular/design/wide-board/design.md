@@ -4,6 +4,7 @@ document_status: draft
 spec: 20261104090653-7373a393-wide-screen-landscape-board
 specs:
     - 20261104090653-7373a393-wide-screen-landscape-board
+    - 20261120140830-52277437-studio-redesign
 ---
 
 # Wide-screen board: the landscape mat
@@ -58,6 +59,22 @@ four rows, so cards can be much larger: at least 1.6 times today's width at 2560
   colour and caption), with "vs" between them. The turn pill and turn
   controls sit at the right. Attached energy and tools sit under each Active
   as on today's mat.
+- **A Legendary Stadium** (a Stadium played as a pair, such as Delta Reign's
+  Legendary Stadiums) sits in the same Stadium spot as one card, as on
+  today's mat and in TCG Live. Each half is turned a quarter, and the two are
+  joined edge to edge into one upright picture.
+
+  ```
+  [ ▭ upper half ]
+  [ ▭ lower half ]   [Alice's Active]  vs  [Bob's Active]   Turn 1 · Draw/End
+  ```
+
+  - The pair takes exactly the space of a single Stadium on the landscape
+    mat, so the middle row and every card size stay the same whether a
+    single Stadium, a pair or nothing is in play.
+  - Each half is still its own card: it can be tapped, dragged or zoomed on
+    its own, and the pair carries one basis mark, the lower half's.
+  - Screen readers hear it as one group named after the Stadium, "(pair)".
 - **Player's hand** runs along the bottom, overlapping as today, with
   "N in hand" right beside it. The player's name sits centred below.
 

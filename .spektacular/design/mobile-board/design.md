@@ -3,6 +3,7 @@ created_date: "2026-11-02"
 document_status: draft
 specs:
     - 20261102110545-5c84659c-touch-friendly-board
+    - 20261120140830-52277437-studio-redesign
 ---
 
 # Touch-friendly board
