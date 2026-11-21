@@ -1,10 +1,19 @@
 :root {
-  /* Card width: as large as fits the mat in one screen. Measured, the mat
-     is about 11 card widths tall plus 55px, under a 43px header, and about
-     10 card widths wide beside the timeline. Everything on the board
-     scales from it, text included (--fs). */
+  /* Card width: as large as fits the mat in one screen, about 11 card
+     widths tall and 10 wide beside the timeline. This is a first guess
+     only: the app (App.svelte) sizes it from the board area it measures,
+     under the header and any banners. Everything on the board scales from
+     it, text included (--fs). */
   --cw: clamp(48px, min((100vh - 115px) / 11.1, (100vw - 360px) / 10), 240px);
   --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
+  /* Header and timeline text on a large screen: the design's size up to
+     1920px wide, growing with the screen to at most 1.15 times it at
+     3840px (B * 0.85 + B * 0.15 * 100vw / 1920px; the vw share is worked
+     out per size: 0.15 * B / 19.2). Readable at arm's length on a 4K
+     panel without the lines turning huge. */
+  --fs-grow-13: clamp(var(--fs-13), calc(var(--fs-13) * 0.85 + 0.1015vw), calc(var(--fs-13) * 1.15));
+  --fs-grow-12: clamp(var(--fs-12), calc(var(--fs-12) * 0.85 + 0.0937vw), calc(var(--fs-12) * 1.15));
+  --fs-grow-11: clamp(var(--fs-11), calc(var(--fs-11) * 0.85 + 0.0859vw), calc(var(--fs-11) * 1.15));
 }
 /* The colour tokens come from internal/design/tokens.css (imported first,
    in main.js). The mat is dark in every interface theme, so text on it
@@ -36,7 +45,7 @@ select { font: inherit; background: var(--panel); color: var(--ink); border: 1px
 code { background: var(--panel-sunk); padding: 1px 5px; border-radius: 4px; }
 
 /* A card enlarged on hover sits above the cards around it. */
-:where(.slot, .main, .att, .pile, .prize, .entry):has(> * .card.lift:hover, > .card.lift:hover) {
+:where(.slot, .main, .pile, .prize, .entry):has(> * .card.lift:hover, > .card.lift:hover) {
   position: relative;
   z-index: 30;
 }
@@ -55,12 +64,6 @@ code { background: var(--panel-sunk); padding: 1px 5px; border-radius: 4px; }
 /* The ghost's position and size are set inline (lib/pointer.svelte.js),
    where no card style can override them. */
 .drag-ghost { box-shadow: var(--shadow-drag); }
-
-/* On a phone, Energy and Tools tuck further under their Pokémon, so less
-   of them hangs below it, and fan in close so several stay within the
-   Pokémon's own width. */
-.app.phone .attachments { margin-top: calc(var(--cw) * -0.3 - 24px); max-width: none; flex-wrap: nowrap; }
-.app.phone .att + .att { margin-left: -30px; }
 
 /* Target mode (lib/target.js): the candidates glow through the highlight
    and every other card dims; the card being played is faded. */

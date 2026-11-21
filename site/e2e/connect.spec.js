@@ -110,11 +110,13 @@ test('one refresh section gives steps for claude.ai, ChatGPT and Claude Code', a
   await expect(page.locator('#refresh ~ ol').first()).toContainText(site.mcpURL);
 });
 
-test('the docs sidebar links to the refresh steps', async ({ page }) => {
+test("the connecting page's On this page rail links to the refresh steps", async ({ page }) => {
+  // The Studio design's DocsSidebar lists pages only; the refresh steps are
+  // a section of Get started, reached from its On this page rail.
   await page.goto('/docs/connect');
-  await expect(page.getByRole('navigation', { name: 'Guide' }).getByRole('link', { name: 'Refreshing the connection' })).toHaveAttribute(
+  await expect(page.getByRole('navigation', { name: 'On this page' }).getByRole('link', { name: 'Refresh after an update' })).toHaveAttribute(
     'href',
-    '/docs/connect#refresh',
+    '#refresh',
   );
 });
 

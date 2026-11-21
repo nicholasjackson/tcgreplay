@@ -38,6 +38,21 @@ async function openTimeline(page, testInfo) {
   await expect(page.locator('aside.sheet')).toBeVisible();
 }
 
+// bare reports whether the timeline runs without per-line and heading
+// buttons, as the design has a touch screen's timeline beside the board:
+// there tapping a line shows its Play and Rewind.
+const bare = (testInfo) => testInfo.project.name === 'tablet';
+
+// lineButton finds a line's Play or Rewind (by name), tapping the
+// line first to show them where the timeline has no per-line buttons.
+async function lineButton(l, name, testInfo) {
+  if (bare(testInfo)) {
+    const row = l.locator('.row');
+    if ((await row.getAttribute('aria-expanded')) !== 'true') await hit(row, testInfo);
+  }
+  return l.getByRole('button', { name });
+}
+
 // lastLine is the id of the timeline's last line, the board's head.
 async function lastLine(page) {
   return Number((await page.locator('.line .id').last().innerText()).slice(1));
@@ -87,18 +102,20 @@ function endOfSetup(log) {
 const next = (log, id) => log[log.findIndex((l) => l.id === id) + 1].id;
 
 // The starts, by control: [name of the heading's Rewind, of its Play, the
-// start] for setup, each turn and each player's half of turns 1 and 2.
+// start] for setup and each player's half of turns 1 and 2. The timeline
+// has one heading per half, and none for a whole turn (the Studio design).
 function starts(log) {
   return [
     ['Rewind to the end of setup', 'Play from the end of setup', endOfSetup(log)],
-    ['Rewind to the start of turn 1', 'Play from the start of turn 1', openingDraw(log, 1, 'p1')],
     ['Rewind to the start of your turn 1', 'Play from the start of your turn 1', openingDraw(log, 1, 'p1')],
     ["Rewind to the start of Bob's turn 1", "Play from the start of Bob's turn 1", openingDraw(log, 1, 'p2')],
-    ['Rewind to the start of turn 2', 'Play from the start of turn 2', openingDraw(log, 2, 'p1')],
     ['Rewind to the start of your turn 2', 'Play from the start of your turn 2', openingDraw(log, 2, 'p1')],
     ["Rewind to the start of Bob's turn 2", "Play from the start of Bob's turn 2", openingDraw(log, 2, 'p2')],
   ];
 }
+
+// lineAt is the timeline line with event id.
+const lineAt = (page, id) => page.locator('.line').filter({ has: page.locator('.id', { hasText: new RegExp(`^#${id}$`) }) });
 
 // expectHead waits for the board to be on a branch other than main whose
 // head is id, its timeline ending at that line.
@@ -142,7 +159,7 @@ test('a line\'s Play from here plays on from its event, and its Rewind to here r
   expect(await idOf(energy)).toBe(id + 1);
 
   // Play from here: a replay starts, its first step that line's event.
-  await hit(riolu.getByRole('button', { name: `Play from #${id}` }), testInfo);
+  await hit(await lineButton(riolu, `Play from #${id}`, testInfo), testInfo);
   await expect(nowLine(page)).toHaveText(`#${id}`);
   await expect(page.locator('.line.now')).toHaveCount(1);
   // The position reads that event, of the head.
@@ -151,7 +168,7 @@ test('a line\'s Play from here plays on from its event, and its Rewind to here r
 
   // Rewind to here: the board is at just after that event, on a new
   // branch, and the later move is gone from it.
-  await hit(riolu.getByRole('button', { name: `Rewind to just after #${id}` }), testInfo);
+  await hit(await lineButton(riolu, `Rewind to just after #${id}`, testInfo), testInfo);
   await expect.poll(() => lastLine(page)).toBe(id);
   await expect(energy).toHaveCount(0);
   const snap = await snapshot(page);
@@ -169,28 +186,35 @@ test('a line\'s Play from here plays on from its event, and its Rewind to here r
   await expect(branch.locator('option:checked')).toHaveText(`at-${id} · #${id}`);
 });
 
-test('each turn\'s and each player\'s half\'s Rewind lands on its start, and setup\'s on the end of setup', async ({ page }, testInfo) => {
+test('each player\'s half\'s Rewind lands on its start, and setup\'s on the end of setup', async ({ page }, testInfo) => {
   await playTwoTurns(page);
   await fresh(page);
   await openTimeline(page, testInfo);
   const { log, head } = await snapshot(page);
   const tl = page.locator('.timeline');
   for (const [rewind, , start] of starts(log)) {
-    await hit(tl.getByRole('button', { name: rewind, exact: true }), testInfo);
+    // A touch screen's headings have no buttons: the start's own line
+    // rewinds there.
+    if (bare(testInfo)) await hit(await lineButton(lineAt(page, start), `Rewind to just after #${start}`, testInfo), testInfo);
+    else await hit(tl.getByRole('button', { name: rewind, exact: true }), testInfo);
     await expectHead(page, start, rewind);
     await backToMain(page, head);
   }
 });
 
-test('each turn\'s and each player\'s half\'s Play replays from its start, and setup\'s from the end of setup', async ({ page }, testInfo) => {
-  test.setTimeout(60_000); // seven replays, each waited on to its first step
+test('each player\'s half\'s Play replays from its start, and setup\'s from the end of setup', async ({ page }, testInfo) => {
+  test.setTimeout(60_000); // five replays, each waited on to its first step
   await playTwoTurns(page);
   await fresh(page);
   await openTimeline(page, testInfo);
   const { log } = await snapshot(page);
   const tl = page.locator('.timeline');
   for (const [, play, start] of starts(log)) {
-    await hit(tl.getByRole('button', { name: play, exact: true }), testInfo);
+    // A touch screen's headings have no buttons: the line after the start
+    // plays from there.
+    const first = next(log, start);
+    if (bare(testInfo)) await hit(await lineButton(lineAt(page, first), `Play from #${first}`, testInfo), testInfo);
+    else await hit(tl.getByRole('button', { name: play, exact: true }), testInfo);
     // The replay's first step is the event just after the start.
     await expect(nowLine(page), play).toHaveText(`#${next(log, start)}`);
     await goLive(page, testInfo);
@@ -207,45 +231,78 @@ test('the timeline\'s play and rewind show without a hover, a fingertip\'s 44px 
   const lines = tl.locator('.line');
   const n = await lines.count();
   expect(n).toBeGreaterThan(100);
-  await expect(lines.locator('.acts button[title="Play from here"]')).toHaveCount(n);
-  // Every line but the last has its rewind.
-  await expect(lines.locator('.acts button[title="Rewind to here"]')).toHaveCount(n - 1);
-  await expect(tl.locator('h3 .head-btn')).toHaveCount(2 * 3);
-  await expect(tl.locator('h4 .head-btn')).toHaveCount(2 * 4);
-
-  // Every control: opaque all the way up (no hover reveals it), shown,
-  // and, on a touch screen, at least 44×44.
   const touch = isTouch(testInfo);
-  const faults = await tl.evaluate((el, touch) => {
-    const out = [];
-    for (const b of el.querySelectorAll('.acts button, .head-btn')) {
-      const name = b.getAttribute('aria-label');
-      for (let e = b; e && e !== el; e = e.parentElement) {
-        const cs = getComputedStyle(e);
-        if (cs.opacity !== '1' || cs.visibility !== 'visible' || cs.display === 'none') out.push(`${name}: hidden (${e.className})`);
-      }
-      const r = b.getBoundingClientRect();
-      if (touch && (r.width < 43.5 || r.height < 43.5)) out.push(`${name}: ${r.width}×${r.height}`);
-      if (!touch && (r.width === 0 || r.height === 0)) out.push(`${name}: no size`);
-    }
-    return out;
-  }, touch);
-  expect(faults).toEqual([]);
 
-  // Scrolled to, the first, a middle and the last lines' controls and
-  // every heading's are on screen, at full opacity, with nothing hovered.
-  const some = [lines.first(), lines.nth(Math.floor(n / 2)), lines.nth(n - 2), lines.last()];
-  const controls = [...some.flatMap((l) => [l.getByTitle('Play from here'), l.getByTitle('Rewind to here')]), ...(await tl.locator('.head-btn').all())];
-  for (const c of controls) {
-    if (!(await c.count())) continue; // the last line has no rewind
-    await c.scrollIntoViewIfNeeded();
-    await expect(c).toBeVisible();
-    await expect(c).toBeInViewport();
-    await expect(c).toHaveCSS('opacity', '1');
-    if (touch) {
-      const box = await c.boundingBox();
-      expect(box.width, await c.getAttribute('aria-label')).toBeGreaterThanOrEqual(43.5);
-      expect(box.height, await c.getAttribute('aria-label')).toBeGreaterThanOrEqual(43.5);
+  if (bare(testInfo)) {
+    // A touch screen's timeline beside the board, as the design has it:
+    // no per-line or heading buttons, each line at least 44px tall, and a
+    // tapped line shows its Play and Rewind (an icon and one word, as on
+    // the half headings), 44px each.
+    await expect(tl.locator('.acts')).toHaveCount(0);
+    await expect(tl.locator('.head-btn')).toHaveCount(0);
+    await expect(tl.locator('h3')).toHaveCount(5);
+    for (const l of [lines.first(), lines.nth(Math.floor(n / 2)), lines.nth(n - 2)]) {
+      await l.scrollIntoViewIfNeeded();
+      expect((await l.locator('.row').boundingBox()).height).toBeGreaterThanOrEqual(43.5);
+      for (const title of ['Play from here', 'Rewind to here']) {
+        const id = Number((await l.locator('.id').innerText()).slice(1));
+        const name = title === 'Play from here' ? `Play from #${id}` : `Rewind to just after #${id}`;
+        const c = await lineButton(l, name, testInfo);
+        await expect(c).toBeVisible();
+        await expect(c).toHaveCSS('opacity', '1');
+        await expect(c).toHaveText(title === 'Play from here' ? 'Play' : 'Rewind');
+        await expect(c).toHaveClass(/\bhead-btn\b/);
+        const box = await c.boundingBox();
+        expect(box.width, name).toBeGreaterThanOrEqual(43.5);
+        expect(box.height, name).toBeGreaterThanOrEqual(43.5);
+      }
+    }
+    // The last line has no rewind.
+    await hit(lines.last().locator('.row'), testInfo);
+    await expect(lines.last().getByTitle('Play from here')).toHaveCount(1);
+    await expect(lines.last().getByTitle('Rewind to here')).toHaveCount(0);
+  } else {
+    await expect(lines.locator('.acts button[title="Play from here"]')).toHaveCount(n);
+    // Every line but the last has its rewind.
+    await expect(lines.locator('.acts button[title="Rewind to here"]')).toHaveCount(n - 1);
+    // One heading per player's half, and setup's, each with Rewind and
+    // Play; no heading for a whole turn.
+    await expect(tl.locator('h3')).toHaveCount(5);
+    await expect(tl.locator('h3 .head-btn')).toHaveCount(2 * 5);
+
+    // Every control: opaque all the way up (no hover reveals it), shown,
+    // and, on a touch screen, at least 44×44.
+    const faults = await tl.evaluate((el, touch) => {
+      const out = [];
+      for (const b of el.querySelectorAll('.acts button, .head-btn')) {
+        const name = b.getAttribute('aria-label');
+        for (let e = b; e && e !== el; e = e.parentElement) {
+          const cs = getComputedStyle(e);
+          if (cs.opacity !== '1' || cs.visibility !== 'visible' || cs.display === 'none') out.push(`${name}: hidden (${e.className})`);
+        }
+        const r = b.getBoundingClientRect();
+        if (touch && (r.width < 43.5 || r.height < 43.5)) out.push(`${name}: ${r.width}×${r.height}`);
+        if (!touch && (r.width === 0 || r.height === 0)) out.push(`${name}: no size`);
+      }
+      return out;
+    }, touch);
+    expect(faults).toEqual([]);
+
+    // Scrolled to, the first, a middle and the last lines' controls and
+    // every heading's are on screen, at full opacity, with nothing hovered.
+    const some = [lines.first(), lines.nth(Math.floor(n / 2)), lines.nth(n - 2), lines.last()];
+    const controls = [...some.flatMap((l) => [l.getByTitle('Play from here'), l.getByTitle('Rewind to here')]), ...(await tl.locator('.head-btn').all())];
+    for (const c of controls) {
+      if (!(await c.count())) continue; // the last line has no rewind
+      await c.scrollIntoViewIfNeeded();
+      await expect(c).toBeVisible();
+      await expect(c).toBeInViewport();
+      await expect(c).toHaveCSS('opacity', '1');
+      if (touch) {
+        const box = await c.boundingBox();
+        expect(box.width, await c.getAttribute('aria-label')).toBeGreaterThanOrEqual(43.5);
+        expect(box.height, await c.getAttribute('aria-label')).toBeGreaterThanOrEqual(43.5);
+      }
     }
   }
 
@@ -261,7 +318,10 @@ test('the timeline\'s play and rewind show without a hover, a fingertip\'s 44px 
     // Beside the board the playback controls head the timeline, live too.
     const aside = page.getByRole('complementary', { name: 'Timeline' });
     await expect(aside.getByRole('toolbar', { name: 'Playback' })).toBeVisible();
-    for (const name of ['Previous step', 'Play', 'Next step', 'Go live']) await expect(bar.getByRole('button', { name, exact: true })).toBeVisible();
+    for (const name of ['Previous step', 'Play', 'Next step']) await expect(bar.getByRole('button', { name, exact: true })).toBeVisible();
+    // Go live: in the row, except on a touch screen while the board is live
+    // (the design drops it there).
+    await expect(bar.getByRole('button', { name: 'Go live', exact: true })).toHaveCount(bare(testInfo) ? 0 : 1);
     await expect(bar.getByRole('slider', { name: 'Position' })).toBeVisible();
     await expect(bar.getByRole('combobox')).toBeVisible();
     if (touch) {
@@ -276,7 +336,9 @@ test('the timeline\'s play and rewind show without a hover, a fingertip\'s 44px 
 
 // dock moves the timeline below the board.
 async function dock(page, testInfo) {
-  await hit(page.getByRole('button', { name: 'Move timeline below the board' }), testInfo);
+  // Beside the board, the dock button is in ☰ (the Studio design).
+  await hit(page.getByRole('button', { name: 'Menu' }), testInfo);
+  await hit(page.getByRole('menuitem', { name: 'Move timeline below the board' }), testInfo);
   await expect(page.locator('.body')).toHaveClass(/\bbottom\b/);
 }
 const grip = (page) => page.getByRole('separator', { name: 'Resize the timeline' });
@@ -317,7 +379,10 @@ test('docked below, dragging the handle up gives the timeline height and the boa
     // The board scrolls from its top: nothing above the area is out of reach.
     const top = await main.evaluate((m) => {
       m.scrollTop = 0;
-      const first = [...m.children].find((c) => getComputedStyle(c).position !== 'absolute');
+      // Today's mat lays each half out as display: contents, its rows the
+      // mat's own: the first row is the first box.
+      const flat = (els) => els.flatMap((c) => (getComputedStyle(c).display === 'contents' ? flat([...c.children]) : [c]));
+      const first = flat([...m.children]).filter((c) => getComputedStyle(c).position !== 'absolute').sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)[0];
       return first.getBoundingClientRect().top - m.getBoundingClientRect().top;
     });
     expect(top).toBeGreaterThanOrEqual(0);
@@ -362,10 +427,10 @@ test('docked below, the turn list rewinds to any player\'s half and shows the pr
   await expect(turns.getByLabel('Prizes left after turn 1: Alice 6, Bob 6')).toHaveText('6–6');
   await expect(turns.getByLabel('Prizes left after turn 2: Alice 5, Bob 6')).toHaveText('5–6');
 
-  // A button per player's half (setup's to its end), each rewinding to
-  // that half's start, at least 44px on a touch screen.
+  // A button per player's half, each rewinding to that half's start, at
+  // least 44px on a touch screen; setup has none (the design's TurnRail).
+  await expect(turns.getByRole('button', { name: 'Rewind to the end of setup' })).toHaveCount(0);
   const halves = [
-    ['Rewind to the end of setup', endOfSetup(log)],
     ['Rewind to your turn 1', openingDraw(log, 1, 'p1')],
     ["Rewind to Bob's turn 1", openingDraw(log, 1, 'p2')],
     ['Rewind to your turn 2', openingDraw(log, 2, 'p1')],

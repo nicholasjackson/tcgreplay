@@ -16,6 +16,9 @@
     lift = true,
     onmenu = null,
     onclick = null,
+    // label, if given, is the card's accessible name in place of its
+    // name: the hand's "Boss's Orders, Supporter".
+    label = '',
   } = $props();
 
   const info = $derived(card && !card.hidden ? cardInfo(card.def) : null);
@@ -70,6 +73,7 @@
     onkeydown={(ev) => ev.key === 'Enter' && click(ev)}
     role="button"
     tabindex="-1"
+    aria-label={label || null}
     title={card.hidden ? (card.known ? `Known: ${card.known} (${card.iid})` : card.iid) : unknown ? `Unknown card (${card.iid}): never revealed` : `${card.name} (${card.iid})`}
   >
     {#if card.hidden}
@@ -88,9 +92,6 @@
         {#if info?.hp}<span class="hp">HP {info.hp}</span>{/if}
         <small>{info?.stage || info?.trainer_type || info?.energy_type || ''}</small>
       </div>
-    {/if}
-    {#if card.basis && card.basis !== 'decklist'}
-      <span class="basis" title="assumed: {card.basis}">{card.basis[0]}</span>
     {/if}
   </div>
 {/if}
@@ -231,15 +232,4 @@
   .token[data-type='Darkness'] { --ec: var(--energy-darkness); }
   .token[data-type='Metal'] { --ec: var(--energy-metal); }
   .token[data-type='Colorless'] { --ec: var(--energy-colorless); }
-  .basis {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    background: var(--assumed-badge);
-    color: var(--glyph-ink);
-    font: 700 max(var(--fs-10), calc(var(--w) * 0.11))/1 var(--font-sans);
-    padding: 0.2em 0.4em;
-    border-radius: var(--radius-xs);
-    text-transform: uppercase;
-  }
 </style>

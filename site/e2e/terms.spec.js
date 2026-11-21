@@ -42,7 +42,7 @@ test('the terms are at /terms, open signed out with no cookie, and linked from t
   expect(resp.status()).toBe(200);
   expect(resp.headers()['set-cookie']).toBeUndefined();
   await page.goto('/');
-  const footer = page.locator('footer').getByRole('navigation', { name: 'Footer' });
+  const footer = page.locator('footer').getByRole('navigation', { name: 'Project' });
   await footer.getByRole('link', { name: 'Terms', exact: true }).click();
   await expect(page).toHaveURL(/\/terms\/?$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Terms of service');
@@ -120,13 +120,14 @@ test('an On this page card lists every section, in order, linking to it', async 
   await page.goto('/terms');
   const toc = page.getByRole('navigation', { name: 'On this page' });
   await expect(toc).toBeVisible();
-  const links = toc.getByRole('link');
-  await expect(links).toHaveText(sections);
+  await expect(toc.getByRole('listitem')).toHaveText(sections);
   for (const name of sections) {
     const href = await toc.getByRole('link', { name, exact: true }).getAttribute('href');
     expect(href, name).toMatch(/^#/);
     await expect(page.locator(`main ${href}`).getByRole('heading', { level: 2 }), `${href} is the ${name} section`).toHaveText(name);
   }
+  // Under a rule, the card links to the other policy page.
+  await expect(toc.getByRole('link', { name: 'Privacy →' })).toHaveAttribute('href', '/privacy');
   // A card: its own white surface, apart from the text column.
   expect(await toc.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
 });

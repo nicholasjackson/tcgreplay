@@ -1,7 +1,7 @@
 // The Studio mat: each Pokémon's HP left, damage and Energy, and each
 // player's prizes, read straight off the mat, no card or menu opened; the
-// player blocks, the Active panels, the turn strip and the hand's kind
-// labels laid out as the Studio design has them; and the Studio's colours
+// player blocks, the Active panels, the turn strip and the hand laid out
+// as the Studio design has them; and the Studio's colours
 // painted on every mat (slate, felt, navy) in both interface themes. The
 // pixel match is the recorded screenshots' job (screenshots.spec.js).
 import { test, expect, act, drag, isTouch, isPhone, isWide } from './fixtures.js';
@@ -26,17 +26,19 @@ async function hurt(page) {
   await expect(region(page, 'p1 Active').locator('.hpleft')).toHaveText('50/80');
 }
 
-test('HP left, damage and Energy read off the Active panel and the Bench, no card opened', async ({ page }) => {
+test('HP left, damage and Energy read off the Active panel and the Bench, no card opened', async ({ page }, testInfo) => {
   await hurt(page);
   const active = region(page, 'p1 Active');
   // The Active: its name, HP left over maximum, the HP bar at 50/80, the
-  // damage tag and the Energy as dots and a count.
+  // damage tag and the Energy as dots and a count (the phone's design has
+  // the dots alone).
   await expect(active.locator('.readout .name')).toHaveText('Makuhita');
   await expect(active.locator('.hpleft')).toBeVisible();
   await expect(active.locator('.bar span')).toHaveAttribute('style', /width: 63%/);
   await expect(active.locator('.readout .tag')).toHaveText('−30');
   await expect(active.locator('.readout .tag')).toBeVisible();
-  await expect(active.locator('.readout .count')).toHaveText('1 Energy');
+  if (isPhone(testInfo)) await expect(active.locator('.readout .count')).toHaveCount(0);
+  else await expect(active.locator('.readout .count')).toHaveText('1 Energy');
   await expect(active.locator('.dots')).toHaveAttribute('aria-label', '1 Energy');
   await expect(active.locator('.dots i')).toHaveCount(1);
   // The opponent's undamaged Active: full HP, no damage tag, no Energy.
@@ -120,15 +122,16 @@ test('the player blocks, the turn strip and the Stadium read as the Studio desig
     await expect(page.locator('.seat-name.top')).toHaveText('Bob · p2');
     await expect(page.locator('.seat-name:not(.top)')).toHaveText('Alice · p1');
   } else {
-    // Today's mat: each player block names its player and seat, then the
-    // Deck, Discard and Lost chips with their counts; at the row's other
-    // end the top of the discard: its card, captioned "Top of discard"
-    // over the card's name.
-    await expect(side(page, 'p1').locator('.seat-name')).toHaveText('Alice · p1');
-    await expect(side(page, 'p2').locator('.seat-name')).toHaveText('Bob · p2');
+    // Today's mat: each player block names its player ("you" and your
+    // name; the opponent's name and status), then the chips with their
+    // counts: the opponent's Hand first, then Deck, Discard and Lost; at
+    // the row's other end the top of the discard: its card, captioned
+    // "Top of discard" over the card's name.
+    await expect(side(page, 'p1').locator('.seat-name')).toHaveText(/^you\s*Alice$/);
+    await expect(side(page, 'p2').locator('.seat-name')).toHaveText(/^Bob\s*waiting$/);
     const chips = (seat) => side(page, seat).locator('.piles .chip');
-    await expect(chips('p1')).toHaveText(['Deck 40', 'Discard 1', 'Lost 0']);
-    await expect(chips('p2')).toHaveText(['Deck 46', 'Discard 0', 'Lost 0']);
+    await expect(chips('p1')).toHaveText([/^Deck\s*40$/, /^Discard\s*1$/, /^Lost\s*0$/]);
+    await expect(chips('p2')).toHaveText([/^Hand\s*6$/, /^Deck\s*46$/, /^Discard\s*0$/, /^Lost\s*0$/]);
     for (const [seat, top] of [['p1', 'Fighting Energy'], ['p2', 'Empty']]) {
       const block = side(page, seat).locator('.discard-top');
       await expect(block.locator('.caption .what')).toHaveText('Top of discard');
@@ -139,7 +142,10 @@ test('the player blocks, the turn strip and the Stadium read as the Studio desig
     await expect(strip.locator('.turn .tag')).toHaveText('T1');
     await expect(strip.locator('.turn strong')).toHaveText('Your turn');
   }
-  for (const name of ['Draw', 'End turn']) await expect(strip.getByRole('button', { name, exact: true })).toBeVisible();
+  // A phone's strip keeps only the coin and End turn, as its design has
+  // it; its Deck counter draws (phone.spec.js).
+  for (const name of isPhone(testInfo) ? ['End turn'] : ['Draw', 'End turn']) await expect(strip.getByRole('button', { name, exact: true })).toBeVisible();
+  if (isPhone(testInfo)) await expect(strip.getByRole('button', { name: 'Draw', exact: true })).toHaveCount(0);
   await expect(strip.getByRole('button', { name: 'Flip coin' })).toBeVisible();
   // Off the landscape mat, the Stadium's thumbnail is captioned with its name.
   if (!isWide(testInfo)) {
@@ -161,16 +167,19 @@ test('a Stadium played as a pair shows as one card, captioned "· pair" off the 
   }
 });
 
-test('each card in the hand is labelled with its kind, once per stack, and the opponent\'s hand is not', async ({ page }, testInfo) => {
-  const kinds = await hand(page).locator('.kind').allTextContents();
-  expect(kinds.sort()).toEqual(['Energy', 'Item', 'Pokémon', 'Pokémon', 'Stadium', 'Supporter', 'Tool']);
-  await expect(hand(page).locator('.kind').first()).toHaveCSS('text-transform', 'uppercase');
-  // The two Fighting Energy stack, the label on the top copy only.
-  const energy = hand(page).locator('.slot', { has: page.locator('.card[title^="Fighting Energy ("]') });
-  await expect(energy.locator('.copy')).toHaveCount(2);
-  await expect(energy.locator('.kind')).toHaveCount(1);
-  await expect(energy.locator('.copy').last().locator('.kind')).toHaveText('Energy');
-  if (!isPhone(testInfo)) await expect(page.getByRole('list', { name: 'p2 hand' }).locator('.kind')).toHaveCount(0);
+test('each card in the hand names its kind for screen readers only, no label drawn on its art', async ({ page }, testInfo) => {
+  // No kind label sits on the art, in any layout.
+  await expect(page.locator('.hand .kind')).toHaveCount(0);
+  // Each face-up card's accessible name is its name and its kind.
+  const names = await hand(page).locator('.card').evaluateAll((cs) => cs.map((c) => c.getAttribute('aria-label')));
+  const kinds = names.map((n) => n.split(', ').at(-1));
+  expect(kinds.sort()).toEqual(['Energy', 'Energy', 'Item', 'Pokémon', 'Pokémon', 'Stadium', 'Supporter', 'Tool']);
+  await expect(hand(page).locator('.card[title="Riolu (p1-2)"]')).toHaveAccessibleName('Riolu, Pokémon');
+  await expect(hand(page).locator('.card[title^="Iono ("]')).toHaveAccessibleName('Iono, Supporter');
+  await expect(hand(page).locator('.card[title^="Fighting Energy ("]').first()).toHaveAccessibleName('Fighting Energy, Energy');
+  // The opponent's cards are face down: no name, so no kind.
+  const opp = page.getByRole('list', { name: 'p2 hand' }).locator('.card');
+  if (await opp.count()) await expect(opp.first()).not.toHaveAttribute('aria-label', /, /);
 });
 
 // The Studio's colours, written out from internal/design/tokens.json: the
@@ -310,7 +319,7 @@ test('a click on a prize pip takes that prize, and the count opens the prize vie
   await prizes.getByRole('button', { name: 'Open the prizes: 5 left' }).click();
   const modal = page.locator('.modal');
   await expect(modal.locator('h2')).toHaveText('p1 prizes · 5 left');
-  await modal.getByRole('button', { name: 'Take' }).first().click();
+  await modal.getByRole('button', { name: 'Take this prize into your hand', exact: true }).first().click();
   await expect(modal.locator('h2')).toHaveText('p1 prizes · 4 left');
   await modal.getByRole('button', { name: 'Close' }).click();
   await expect(modal).toHaveCount(0);
@@ -330,7 +339,7 @@ test('on a touch screen the pips are one fingertip-sized button that opens the p
   await row.tap();
   const modal = page.locator('.modal');
   await expect(modal.locator('h2')).toHaveText('p1 prizes · 6 left');
-  await modal.getByRole('button', { name: 'Take' }).first().tap();
+  await modal.getByRole('button', { name: 'Take this prize into your hand', exact: true }).first().tap();
   await expect(modal.locator('h2')).toHaveText('p1 prizes · 5 left');
   await modal.getByRole('button', { name: 'Close' }).tap();
   await expect(modal).toHaveCount(0);
@@ -339,19 +348,122 @@ test('on a touch screen the pips are one fingertip-sized button that opens the p
   await expect(page.getByRole('list', { name: 'p1 hand' }).locator('.count')).toHaveText('9 in hand');
 });
 
-test('a hand card\'s kind label lets a tap or drag through to the card', async ({ page }, testInfo) => {
-  const label = hand(page).locator('.copy', { has: page.locator('.card[title="Riolu (p1-2)"]') }).locator('.kind');
-  await expect(label).toHaveText('Pokémon');
-  // A finger or the mouse on the label lands on the card under it (the
-  // tablet's hand starts below the fold, so it is scrolled to first).
-  await label.scrollIntoViewIfNeeded();
-  const under = await label.evaluate((el) => {
+test('a hand card takes a tap or a drag anywhere on it, its foot included', async ({ page }, testInfo) => {
+  const riolu = hand(page).locator('.card[title="Riolu (p1-2)"]');
+  // The tablet's hand starts below the fold, so it is scrolled to first.
+  await riolu.scrollIntoViewIfNeeded();
+  // Nothing lies over the card's foot, where the kind label once sat.
+  const under = await riolu.evaluate((el) => {
     const r = el.getBoundingClientRect();
-    return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.card')?.getAttribute('title');
+    return document.elementFromPoint(r.left + r.width / 2, r.bottom - r.height * 0.06)?.closest('.card')?.getAttribute('title');
   });
   expect(under).toBe('Riolu (p1-2)');
-  // Dragged from its label, the card goes to the bench.
-  await drag(page, label, region(page, 'p1 bench 3'), testInfo);
+  await drag(page, riolu, region(page, 'p1 bench 3'), testInfo);
   await expect(titled(region(page, 'p1 bench 3'), 'Riolu (p1-2)')).toBeVisible();
   await expect(hand(page).locator('.count')).toHaveText('7 in hand');
 });
+
+// The bench row never covers the player block or the top of the discard
+// (the prize fan and the piles on the landscape mat), at any size: the
+// cards shrink to the board area's width as well as its height, and the
+// bench moves off centre before it overlaps. The Deck chip stays tappable
+// at its centre. Checked at the project's size, then at the other tablet
+// and desktop sizes, with Reveal all's border taking room too.
+for (const strips of [false, true]) {
+test(`the bench never covers the player block, the top of the discard or the Deck chip${strips ? ', with tucked strips' : ''}`, async ({ page }, testInfo) => {
+  test.skip(isPhone(testInfo), 'the phone has no player block beside the bench');
+  if (strips) {
+    // Two strips over p1's first benched Pokémon (a Tool and a Special
+    // Energy) and one over p2's, so both Bench rows leave room above.
+    await act(page, 'move', { iid: 'p1-9', to: 'bench:0', as: 'tool' });
+    await act(page, 'move', { iid: 'p1-58', to: 'bench:0', as: 'energy' });
+    await act(page, 'move', { iid: 'p2-9', to: 'p2:bench:0', as: 'tool', seat: 'p2' });
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'p1 bench 1', exact: true }).locator('.tuck')).toHaveCount(2);
+    await expect(page.getByRole('region', { name: 'p2 bench 1', exact: true }).locator('.tuck')).toHaveCount(1);
+  }
+  const sizes = isWide(testInfo) ? [null] : isTouch(testInfo) ? [null, [1180, 820], [1024, 768]] : [null, [1280, 800], [1440, 900]];
+  for (const size of sizes) {
+    if (size) await page.setViewportSize({ width: size[0], height: size[1] });
+    for (const reveal of [false, true]) {
+      await page.getByLabel('Reveal all').setChecked(reveal);
+      const where = `${size ? size.join('×') : 'project size'}${reveal ? ', Reveal all' : ''}`;
+      // Polled: the card size follows the board area a frame after a resize.
+      await expect
+        .poll(
+          () =>
+            page.evaluate(() => {
+              const hit = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+              const out = [];
+              for (const seat of ['p1', 'p2']) {
+                const s = document.querySelector(`[aria-label="${seat} side"]`);
+                const bench = s.querySelector('.bench').getBoundingClientRect();
+                const others = s.classList.contains('wide') ? ['.prizes', '.piles'] : ['.block', '.discard-top'];
+                for (const sel of others) if (hit(bench, s.querySelector(sel).getBoundingClientRect())) out.push(`${seat} bench covers ${sel}`);
+                const deck = s.querySelector('.pile.deck');
+                const d = deck.getBoundingClientRect();
+                if (!deck.contains(document.elementFromPoint(d.left + d.width / 2, d.top + d.height / 2))) out.push(`${seat} Deck chip covered at its centre`);
+              }
+              return out;
+            }),
+          { message: where },
+        )
+        .toEqual([]);
+    }
+  }
+});
+}
+
+// On the landscape mat nothing overlaps either: your hand's cards sit wholly
+// below your Bench (its cards, tucked strips and readouts), and the
+// opponent's cropped hand strip above theirs, with tucked cards on the
+// Bench or without, at 2560×1440 and 3840×2160. The cards shrink instead
+// (fitBoard counts every row at its full height).
+for (const strips of [false, true]) {
+  test(`on the landscape mat the hands never cover the Benches${strips ? ', with tucked strips' : ''}`, async ({ page }, testInfo) => {
+    test.skip(!isWide(testInfo), 'the landscape mat');
+    if (strips) {
+      // Two strips over each player's Bench (a Tool and a Special Energy
+      // for p1, two Tools for p2) and one over your Active.
+      await act(page, 'move', { iid: 'p1-9', to: 'bench:0', as: 'tool' });
+      await act(page, 'move', { iid: 'p1-58', to: 'bench:1', as: 'energy' });
+      await act(page, 'move', { iid: 'p1-10', to: 'bench:1', as: 'tool' });
+      await act(page, 'move', { iid: 'p2-9', to: 'p2:bench:0', as: 'tool', seat: 'p2' });
+      await act(page, 'move', { iid: 'p2-10', to: 'p2:bench:0', as: 'tool', seat: 'p2' });
+      await act(page, 'move', { iid: 'p2-58', to: 'p2:active', as: 'energy', seat: 'p2' });
+      await page.reload();
+      await expect(page.locator('header .dot.on')).toBeVisible();
+    }
+    for (const [w, h] of [[2560, 1440], [3840, 2160]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await expect(page.locator('.app')).toHaveAttribute('data-wide', 'true');
+      if (strips) await expect(page.locator('[aria-label="p1 side"] .tuck')).toHaveCount(3);
+      await expect
+        .poll(
+          () =>
+            page.evaluate(() => {
+              const out = [];
+              const r = (el) => el.getBoundingClientRect();
+              const slots = (seat) => [...document.querySelectorAll(`[aria-label="${seat} side"] .bench > .slot`)].map(r);
+              // Your hand's cards are wholly below every slot of your Bench.
+              const p1 = slots('p1');
+              const lowest = Math.max(...p1.map((s) => s.bottom));
+              for (const c of document.querySelectorAll('[aria-label="p1 hand"] .card')) {
+                if (r(c).top < lowest - 0.5) out.push(`p1 hand card ${c.title} top ${Math.round(r(c).top)} above Bench bottom ${Math.round(lowest)}`);
+              }
+              // The opponent's hand strip is wholly above their Bench and
+              // its tucked strips.
+              const peek = document.querySelector('.hand.peek');
+              const p2top = Math.min(...slots('p2').map((s) => s.top), ...[...document.querySelectorAll('[aria-label="p2 side"] .tuck')].map((t) => r(t).top));
+              if (peek && r(peek).bottom > p2top + 0.5) out.push(`p2 hand strip bottom ${Math.round(r(peek).bottom)} below Bench top ${Math.round(p2top)}`);
+              // And the board does not scroll.
+              const main = document.querySelector('main');
+              if (main.scrollHeight - main.clientHeight > 1) out.push(`main scrolls ${main.scrollHeight - main.clientHeight}`);
+              return out;
+            }),
+          { message: `${w}×${h}`, timeout: 10_000 },
+        )
+        .toEqual([]);
+    }
+  });
+}

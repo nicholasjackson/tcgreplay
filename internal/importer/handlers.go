@@ -348,7 +348,7 @@ func buildHandlers(a, b string) []handler {
 			return r.addDamage(seat, l, count(m[3]))
 		}),
 		// Newer logs say "was healed for 30 damage".
-		h(`{P}'s (.+?) (?:was )?healed (?:for )?(\d+) damage\.`, func(r *replay, m []string, n, _ *Node) error {
+		h(`{P}'s (.+?) (?:was )?healed (?:for )?(\d+) damage\.`, func(r *replay, m []string, n, parent *Node) error {
 			seat := r.seat(m[1])
 			// Only a copy carrying at least that much damage can heal it,
 			// which settles identical copies the log can't tell apart.
@@ -368,7 +368,14 @@ func buildHandlers(a, b string) []handler {
 				}
 			}
 			r.lastRef = &l
-			return r.addDamage(seat, l, -count(m[3]))
+			if err := r.addDamage(seat, l, -count(m[3])); err != nil {
+				return err
+			}
+			// What the healing card does next, if the log leaves it out.
+			if then := afterHeal[r.playedCard(seat, parent)]; then != nil && count(m[3]) > 0 {
+				return then(r, seat, l, n, parent)
+			}
+			return nil
 		}),
 		h(`(an?|\d+) damage counters? (?:was|were) placed on {P}'s (.+) for the Special Condition (\w+)\.`, func(r *replay, m []string, n, _ *Node) error {
 			seat := r.seat(m[2])

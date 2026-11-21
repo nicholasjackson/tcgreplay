@@ -44,7 +44,7 @@ const toc = [
   title="Privacy"
   description="What the hosted tcgreplay playmat collects when you sign in and play, what visitor counting and diagnostics record, how long it keeps it, and what it never collects."
 >
-  <article class="privacy prose">
+  <article class="policy privacy prose">
     <h1>Privacy</h1>
     <p class="updated" data-updated>Last updated {updated}.</p>
     <p>
@@ -60,12 +60,12 @@ const toc = [
       Cloudflare's visitor-counting script (see <a href="#visitor-counting">visitor counting</a>).
     </p>
 
-    <nav class="toc" aria-label="On this page">
+    <nav class="toc" aria-label="On this page" data-toc>
       <span class="toc-head">On this page</span>
       <ul>
         {toc.map((t) => <li><a href={`#${t.id}`}>{t.label}</a></li>)}
       </ul>
-      <a class="toc-terms" href="/terms">Terms of service →</a>
+      <a class="toc-other" href="/terms">Terms of service →</a>
     </nav>
 
     <section id="sign-in" aria-labelledby="h-sign-in">
@@ -93,8 +93,8 @@ const toc = [
         <li><code>tcgreplay_login_…</code>, which exists only while a Google sign-in is in progress.</li>
       </ul>
       <p>
-        The board also remembers six display settings in your browser (replay speed, autoplay, where the panel sits,
-        prize reminders, the interface theme and the mat). They never leave your browser.
+        The board also remembers seven display settings in your browser (replay speed, autoplay, where the panel sits,
+        prize reminders, the interface theme, the mat and whether the key to the action buttons shows). They never leave your browser.
       </p>
     </section>
 
@@ -256,26 +256,8 @@ const toc = [
 </Base>
 
 <style>
-  /* A text column; from 60rem the On this page card stands beside it,
-     staying in view as the page scrolls. */
-  .privacy { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
-  .privacy > * { grid-column: 1; }
-  @media (min-width: 60rem) {
-    .privacy { grid-template-columns: minmax(0, var(--prose-width)) 15rem; column-gap: var(--space-10); }
-    .privacy > .toc { grid-column: 2; grid-row: 1 / span 20; position: sticky; top: var(--space-4); margin-top: var(--space-2); }
-  }
-  .privacy h1 { margin-bottom: 6px; }
-  .updated { margin: 0 0 var(--space-6); font: 500 var(--fs-13) var(--font-mono); color: var(--muted); }
-  /* Grid items keep both margins, so the intro paragraphs set their own. */
-  .privacy > p:not(.updated) { margin: 0 0 var(--space-3); }
-  /* The intro's lead in ink, the rest of the running text softer. */
-  .updated + p + p { color: var(--ink-soft); }
-
-  section { margin-top: var(--space-10); scroll-margin-top: var(--space-4); }
-  section h2 { margin: 0 0 10px; }
-  section > p, section > ul { color: var(--ink-soft); }
-  section > h2 + p { color: var(--ink); }
-  .privacy code { color: var(--ink); }
+  /* The layout, the date and the On this page card are the policy pages'
+     shared styles (styles/site.css, .policy). */
 
   /* What sign-in keeps: one white card, a numbered row each. */
   .kept {
@@ -317,31 +299,4 @@ const toc = [
   .services li { margin: 0; padding: var(--space-3) var(--space-4); }
   .services li + li { border-top: 1px solid var(--line); }
   .services strong { color: var(--ink); }
-
-  .toc {
-    display: flex;
-    flex-direction: column;
-    margin: var(--space-2) 0 var(--space-4);
-    padding: var(--space-4);
-    border-radius: var(--radius-l);
-    background: var(--panel);
-    box-shadow: 0 0 0 1px var(--line);
-    font-size: var(--fs-14);
-    line-height: 1.4;
-  }
-  .toc-head {
-    display: block;
-    padding: 0 var(--space-2) var(--space-2);
-    font-size: var(--fs-12);
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-  .toc li { margin: 0; }
-  .toc a { display: block; padding: 6px var(--space-2); border-radius: var(--radius-s); color: var(--ink-soft); text-decoration: none; }
-  .toc a:hover { background: var(--hover); color: var(--primary); }
-  .toc-terms { margin-top: 10px; border-top: 1px solid var(--line); }
-  .toc .toc-terms { border-radius: 0; padding-top: var(--space-3); }
 </style>

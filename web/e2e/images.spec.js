@@ -16,7 +16,8 @@ const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQ
 const region = (page, name) => page.getByRole('region', { name, exact: true });
 const titled = (scope, title) => scope.locator(`.card[title="${title}"]`);
 const riolu = (page) => titled(region(page, 'p1 bench 1'), 'Riolu (p1-1)');
-const energy = (page) => titled(region(page, 'p1 Active'), 'Fighting Energy (p1-15)');
+// An Energy: the one in the hand (an attached Basic Energy is a dot only).
+const energy = (page) => titled(page.getByRole('list', { name: 'p1 hand' }), 'Fighting Energy (p1-18)');
 
 // serveList gives every card info the image list imagesFor(def) returns,
 // makes every image host serve a pixel when ok(url) says so and a 404

@@ -6,18 +6,32 @@
 // sit in a dark box: data-theme="dark" gives the tokens inside it their
 // dark values. theme: 'light' or 'dark' overrides that choice (the example
 // page's light decklist panel); left out, wrap decides as before.
+// label: the small label shown before the text, and the name of its Copy
+// button ("Copy <label>"); copyLabel names the button instead when the
+// visible label is worded for the eye ("Playmat address").
+// icon: an icon-only Copy button (a terminal command, a prompt), named by
+// copyName ("Copy the command", "Copy the prompt"). A terminal command
+// (dark, not tall) is icon-only by default. Anything slotted follows the
+// box, inside the block (a prompt card's note).
 interface Props {
   text: string;
   label?: string;
+  copyLabel?: string;
   wrap?: boolean;
   tall?: boolean;
   theme?: 'light' | 'dark';
+  icon?: boolean;
+  copyName?: string;
   class?: string;
 }
-const { text, label, wrap = false, tall = false, theme, class: extra } = Astro.props;
+const { text, label, copyLabel, wrap = false, tall = false, theme, icon, copyName, class: extra } = Astro.props;
 const dark = theme ? theme === 'dark' : !wrap;
+const terminal = dark && !tall && !wrap;
+const iconOnly = icon ?? terminal;
+const name = copyName ?? (iconOnly && terminal ? 'Copy the command' : undefined);
 ---
-<div class:list={['copy-block', { wrap, tall }, extra]}>
+<div class:list={['copy-block', { wrap, tall, command: terminal && !text.includes('\n') }, extra]}>
   {label && <span class="label">{label}</span>}
-  <div class="copy-box" data-theme={dark ? 'dark' : undefined}><pre data-copy data-copy-label={label}><code>{text}</code></pre></div>
+  <div class="copy-box" data-theme={dark ? 'dark' : undefined}><pre data-copy data-copy-label={copyLabel ?? label} data-copy-icon={iconOnly ? '' : undefined} data-copy-name={name}><code>{text}</code></pre></div>
+  <slot />
 </div>

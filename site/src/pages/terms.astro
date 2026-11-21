@@ -34,7 +34,7 @@ const toc = [
   title="Terms of service"
   description="The terms for using the hosted tcgreplay playmat and this website: free and as is, the hosted limits, acceptable use and where to get help."
 >
-  <article class="terms prose">
+  <article class="policy terms prose">
     <h1>Terms of service</h1>
     <p class="updated" data-updated>Last updated {updated}.</p>
     <p>
@@ -42,11 +42,12 @@ const toc = [
       agree to these terms. If you don't agree, please don't use them.
     </p>
 
-    <nav class="toc" aria-label="On this page">
+    <nav class="toc" aria-label="On this page" data-toc>
       <span class="toc-head">On this page</span>
       <ul>
         {toc.map((t) => <li><a href={`#${t.id}`}>{t.label}</a></li>)}
       </ul>
+      <a class="toc-other" href="/privacy">Privacy →</a>
     </nav>
 
     <section id="who" aria-labelledby="h-who">
@@ -70,7 +71,7 @@ const toc = [
       <p>
         Games are held in the playmat's memory only, and can be lost at any time: after a while without activity, when
         your last sign-in ends, and whenever the playmat is updated or restarted. To keep a game, ask your assistant for
-        its record and save it yourself (see <a href="/docs/limits#keep-the-record">keep the record</a>).
+        its record and save it yourself (see <a href="/docs/import#keeping-the-game">keeping the game</a>).
       </p>
     </section>
 
@@ -82,7 +83,7 @@ const toc = [
         <li>it serves up to <strong data-limit="users">{limits.maxUsers}</strong> signed-in players at once;</li>
         <li>games idle for <strong data-limit="idle">{limits.idleTimeout}</strong> are dropped.</li>
       </ul>
-      <p>The limits may change. See <a href="/docs/limits">the hosted playmat's limits</a> for what they mean for you.</p>
+      <p>The limits may change.</p>
     </section>
 
     <section id="acceptable-use" aria-labelledby="h-acceptable-use">
@@ -137,37 +138,7 @@ const toc = [
 </Base>
 
 <style>
-  /* A text column; from 60rem the On this page card stands beside it,
-     staying in view as the page scrolls. */
-  .terms { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
-  .terms > * { grid-column: 1; }
-  @media (min-width: 60rem) {
-    .terms { grid-template-columns: minmax(0, var(--prose-width)) 15rem; column-gap: var(--space-10); }
-    .terms > .toc { grid-column: 2; grid-row: 1 / span 20; position: sticky; top: var(--space-4); margin-top: var(--space-2); }
-  }
-  .updated { margin-top: 0; color: var(--muted); }
-  section { scroll-margin-top: var(--space-4); }
-
-  .toc {
-    margin: var(--space-2) 0 var(--space-4);
-    padding: var(--space-4);
-    border-radius: 12px;
-    background: var(--panel);
-    box-shadow: 0 0 0 1px var(--line);
-    font-size: var(--fs-14);
-    line-height: 1.4;
-  }
-  .toc-head {
-    display: block;
-    margin-bottom: 10px;
-    font-size: var(--fs-12);
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
-  .toc li { margin: 0; }
-  .toc a { color: var(--ink-soft); text-decoration: none; }
-  .toc a:hover { color: var(--primary); text-decoration: underline; }
+  /* The layout, the date and the On this page card are the policy pages'
+     shared styles (styles/site.css, .policy). */
+  .terms ul { color: var(--ink-soft); }
 </style>

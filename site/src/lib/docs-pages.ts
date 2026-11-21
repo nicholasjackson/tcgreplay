@@ -7,19 +7,17 @@ import { getCollection } from 'astro:content';
 
 export type DocsPage = { href: string; title: string; description?: string; order: number };
 
-// Pages that are not Markdown docs, placed among them by order.
+// Pages that are not Markdown docs, placed among them by order. The order
+// is the Studio design's DocsSidebar: Get started, Signing in, Importing a
+// game, Rewind, Coaching workflows, Example game, Running it on
+// your desktop, What's new, For developers. (The refresh steps are a
+// section of Get started, reached from its On this page rail.)
 const extra: DocsPage[] = [
   {
     href: '/docs/connect',
     title: 'Get started',
     description: 'Connect the hosted tcgreplay playmat to claude.ai, ChatGPT or Claude Code, and check it works.',
     order: 10,
-  },
-  {
-    href: '/docs/connect#refresh',
-    title: 'Refreshing the connection',
-    description: 'Make your assistant see new or changed tools after an update.',
-    order: 15,
   },
   {
     href: '/docs/workflows',
@@ -32,12 +30,6 @@ const extra: DocsPage[] = [
     title: 'Example game',
     description: 'A complete Pokémon TCG Live game and its decklist to copy, so you can try tcgreplay without a game of your own.',
     order: 70,
-  },
-  {
-    href: '/docs/limits',
-    title: 'Limits',
-    description: 'What the hosted tcgreplay playmat keeps, when games are dropped, and how many players and requests it serves.',
-    order: 80,
   },
   {
     href: '/docs/whats-new',

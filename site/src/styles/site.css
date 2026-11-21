@@ -90,7 +90,7 @@ main {
   width: 100%;
   max-width: var(--content-width);
   margin: 0 auto;
-  padding: var(--space-8) clamp(var(--space-4), 4vw, var(--space-8)) var(--space-12);
+  padding: var(--space-8) clamp(var(--space-4), 4vw, var(--space-8)) 72px;
   min-width: 0;
 }
 main > * { max-width: 100%; }
@@ -121,23 +121,31 @@ pre {
 }
 table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
 
-/* A docs article: the page title, section headings and running text. */
+/* A docs article: the page title, section headings and running text. The
+   lead (the paragraph under the title) is ink, the rest of the running
+   text ink-soft, with bold words back in ink. */
 .prose h1 {
-  margin: 6px 0 20px;
-  font-size: clamp(var(--fs-28), 3.4vw, var(--fs-page-title));
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  margin: 6px 0 12px;
+  font-size: clamp(var(--fs-30), 3.4vw, var(--fs-page-title));
+  font-weight: var(--fw-page-title);
+  line-height: var(--lh-page-title);
+  letter-spacing: var(--ls-page-title);
 }
 .prose h2 {
-  margin: var(--space-8) 0 var(--space-4);
+  margin: var(--space-10) 0 var(--space-4);
   font-size: var(--fs-heading);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: var(--fw-heading);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-heading);
   scroll-margin-top: var(--space-4);
 }
 .prose h3 { margin: var(--space-6) 0 var(--space-2); font-size: var(--fs-card-title); font-weight: 600; }
 .prose li { margin: 0.3rem 0; }
 .prose ol, .prose ul { padding-left: 1.4rem; }
+.prose > p, .prose > ul:not([class]) { color: var(--ink-soft); }
+.prose > h1 + p, .prose > h1 + .copy-block + p, .prose > .lead { color: var(--ink); }
+.prose > p.soft { color: var(--ink-soft); }
+.prose p strong { color: var(--ink); }
 
 /* Steps: a docs page's numbered lists, each number in a round badge. */
 .prose > ol:not([class]) {
@@ -172,8 +180,11 @@ table { display: block; max-width: 100%; overflow-x: auto; border-collapse: coll
 }
 .prose > ol:not([class]) > li > p:first-child { margin-top: 0; }
 .prose > ol:not([class]) > li > :last-child { margin-bottom: 0; }
+.prose > ol:not([class]) > li > p:first-child:has(+ .copy-block) { margin-bottom: var(--space-2); }
+.prose > ol:not([class]) > li > .copy-block { margin: 0; }
 
-/* A callout set off from the steps around it (Connected before?). */
+/* A warning callout (Connected before?): warn-bg with an inset warn-line
+   ring, warn-ink text and the circle-! icon. */
 .note {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
@@ -185,6 +196,7 @@ table { display: block; max-width: 100%; overflow-x: auto; border-collapse: coll
   box-shadow: inset 0 0 0 1px var(--warn-line);
   color: var(--warn-ink);
   font-size: var(--fs-15);
+  line-height: 1.55;
 }
 .note::before {
   content: '';
@@ -200,12 +212,14 @@ table { display: block; max-width: 100%; overflow-x: auto; border-collapse: coll
 .note > * { grid-column: 2; }
 .note > :first-child { margin-top: 0; }
 .note > :last-child { margin-bottom: 0; }
+.note strong { color: inherit; }
 .note code { background: transparent; box-shadow: none; padding: 0; }
 
 /* Copyable blocks: copy.ts adds the button beside the text, in the box.
-   Code and logs keep their lines and scroll inside a dark box (the box
-   carries data-theme="dark"); the playmat's address sits in a white band
-   with its label; prompts are chat bubbles. */
+   Terminal commands and logs keep their lines in a dark box (the box
+   carries data-theme="dark"), a command wrapping inside it; the
+   playmat's address sits in a white band with its label; prompts are chat
+   bubbles in a white card. */
 .copy-block { margin: var(--space-4) 0; }
 .copy-block .label { display: block; font-size: var(--fs-13); color: var(--muted); margin-bottom: var(--space-1); }
 .copy-box { display: flex; align-items: flex-start; gap: var(--space-2); }
@@ -214,6 +228,10 @@ table { display: block; max-width: 100%; overflow-x: auto; border-collapse: coll
 .copy-block.tall pre { max-height: 24rem; overflow: auto; }
 button.copy {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font: inherit;
   font-size: var(--fs-14);
   font-weight: 600;
@@ -225,10 +243,24 @@ button.copy {
   color: var(--ink);
   cursor: pointer;
 }
+button.copy .copy-icon { flex: none; width: 15px; height: 15px; }
 button.copy:hover { background: var(--hover); }
-button.copy[data-copied] { border-color: var(--primary); color: var(--primary); }
+/* An icon-only button: its word is for screen readers until it confirms
+   "Copied". */
+button.copy.icon { min-width: 36px; padding: 0; }
+button.copy.icon[data-copied] { padding: 0 10px; }
+button.copy.icon:not([data-copied]) .copy-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
-/* Code and logs: the dark box. */
+/* Code and logs: the dark box. A one-line command wraps in its box, with
+   the icon button beside it. */
 .copy-box[data-theme='dark'] {
   padding: 10px 10px 10px 14px;
   border-radius: var(--radius-m);
@@ -236,6 +268,8 @@ button.copy[data-copied] { border-color: var(--primary); color: var(--primary); 
   color: var(--ink);
 }
 .copy-box[data-theme='dark'] pre { padding: 6px 0; border: 0; background: transparent; color: var(--ink); }
+.copy-block.command .copy-box { align-items: center; }
+.copy-block.command pre { padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* The playmat's address: label, address and button in one white band. */
 .copy-block.wrap:not(.prompt) {
@@ -265,17 +299,17 @@ button.copy[data-copied] { border-color: var(--primary); color: var(--primary); 
   color: var(--on-primary);
 }
 .copy-block.wrap:not(.prompt) button.copy:hover { filter: brightness(1.15); }
-.copy-block.wrap:not(.prompt) button.copy[data-copied] { color: var(--on-primary); }
 
-/* An example prompt: a chat bubble with its button beside it, on a white
-   card with its label. */
+/* An example prompt: a chat bubble with its icon button beside it, in a
+   white card under its label, with a note under them when there is one. */
 .copy-block.prompt {
   padding: var(--space-4);
   border-radius: 12px;
   background: var(--panel);
   box-shadow: 0 0 0 1px var(--line);
 }
-.copy-block.prompt .label { margin-bottom: 10px; font-size: var(--fs-14); font-weight: 600; color: var(--ink); }
+.copy-block.prompt.bare { padding: 14px; }
+.copy-block.prompt .label { margin-bottom: 10px; font-size: var(--fs-14); font-weight: 600; line-height: 1.5; color: var(--ink); }
 .copy-block.prompt .copy-box { align-items: center; gap: 10px; }
 .copy-block.prompt pre code { font: inherit; }
 .copy-block.prompt pre {
@@ -289,7 +323,10 @@ button.copy[data-copied] { border-color: var(--primary); color: var(--primary); 
   font-weight: 400;
   line-height: 1.5;
 }
-.copy-block.prompt button.copy { height: 40px; background: var(--panel); }
+.copy-block.prompt button.copy { height: 40px; min-width: 40px; background: var(--panel); }
+.copy-block.prompt button.copy:hover { background: var(--hover); }
+.copy-block.prompt .copy-icon { width: 16px; height: 16px; }
+.prompt-note { margin: 12px 0 0; font-size: var(--fs-14); line-height: 1.5; color: var(--ink-soft); }
 
 .sr-only {
   position: absolute;
@@ -319,12 +356,12 @@ button.copy[data-copied] { border-color: var(--primary); color: var(--primary); 
   flex-direction: column;
   gap: 28px;
 }
-.footer-top { display: flex; flex-wrap: wrap; gap: 28px clamp(var(--space-8), 5vw, 64px); }
+.footer-top { display: flex; flex-wrap: wrap; gap: 28px 64px; }
 .footer-about { flex: 1 1 260px; display: flex; flex-direction: column; gap: 10px; }
-.footer-brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; font-size: var(--fs-18); }
+.footer-brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; font-size: var(--fs-17); }
 .footer-brand img { width: 28px; height: 28px; border-radius: 7px; }
 .footer-tagline { font-size: var(--fs-14); color: var(--muted); }
-.footer-col { flex: 1 0 140px; max-width: 180px; font-size: var(--fs-14); }
+.footer-col { flex: 0 1 180px; font-size: var(--fs-14); }
 .footer-head {
   display: block;
   margin-bottom: var(--space-2);
@@ -348,3 +385,55 @@ button.copy[data-copied] { border-color: var(--primary); color: var(--primary); 
 }
 .footer-small p { margin: 0; max-width: 60em; }
 .footer-small a { color: var(--ink-soft); }
+
+/* Privacy and Terms (class policy): the article at prose-width with the
+   On this page card (at most 280px) 48px to its right, staying in view as
+   the page scrolls; on a phone the card comes first. Under the h1, the
+   last-updated date in small mono; sections 40px apart; the lead in ink,
+   the rest ink-soft. */
+.policy { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; margin-top: var(--space-2); line-height: 1.65; }
+.policy > * { grid-column: 1; }
+.policy > .toc { order: -1; margin: 0 0 var(--space-6); }
+@media (min-width: 60rem) {
+  .policy { grid-template-columns: minmax(0, var(--prose-width)) minmax(0, 280px); column-gap: var(--space-12); }
+  .policy > .toc { order: 0; grid-column: 2; grid-row: 1 / span 30; position: sticky; top: var(--space-4); margin: 0; }
+}
+.policy h1 { margin: 0 0 6px; }
+.policy .updated { margin: 0 0 var(--space-6); font: 500 var(--fs-13) var(--font-mono); color: var(--muted); }
+.policy > p:not(.updated) { margin: 0 0 14px; color: var(--ink-soft); }
+.policy > .updated + p { color: var(--ink); }
+.policy section { margin-top: var(--space-10); scroll-margin-top: var(--space-4); }
+.policy section h2 { margin: 0 0 10px; }
+.policy section > p, .policy section > ul { color: var(--ink-soft); }
+.policy section > h2 + p { color: var(--ink); }
+.policy code { color: var(--ink); }
+.policy :not(pre) > code { font-size: 0.875em; background: transparent; box-shadow: none; padding: 0; }
+
+/* The On this page card: rows, the section in view filled, then a link to
+   the other policy page under a rule. */
+.policy .toc {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--line);
+  font-size: var(--fs-14);
+  line-height: 1.4;
+}
+.policy .toc-head {
+  display: block;
+  padding: 0 var(--space-2) var(--space-2);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.policy .toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.policy .toc li { margin: 0; }
+.policy .toc a { display: block; padding: 6px var(--space-2); border-radius: var(--radius-s); color: var(--ink-soft); text-decoration: none; }
+.policy .toc a:hover { background: var(--hover); color: var(--primary); }
+.policy .toc a[aria-current='true'] { background: var(--selected); color: var(--primary); font-weight: 600; }
+.policy .toc .toc-other { margin-top: 10px; padding-top: var(--space-3); border-radius: 0; box-shadow: inset 0 1px 0 var(--line); }
+.policy .toc .toc-other:hover { background: transparent; text-decoration: underline; }

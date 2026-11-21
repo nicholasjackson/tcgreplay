@@ -126,7 +126,7 @@ test('Look at top N shows the count chosen on screen', async ({ page }, testInfo
   await expect(sheet(page).getByRole('textbox', { name: 'Cards to look at' })).toHaveValue('4');
   await press(button(page, 'Look at the top 4'), testInfo);
   await expect(page.locator('.modal h2')).toHaveText('Top 4 of p1 deck');
-  await expect(page.locator('.modal .grid .card')).toHaveCount(4);
+  await expect(page.locator('.modal .plist .card')).toHaveCount(4);
 });
 
 test('the count cannot go past the cards left in the deck', async ({ page }, testInfo) => {

@@ -1,7 +1,7 @@
 // The landscape mat on a big monitor: both Active Pokémon side by side in
 // the middle row between the Stadium and the turn controls, each player's
-// prize fan, bench and piles in one mirrored row, the opponent's hand
-// peeking from the top edge with their name in the corner, cards sized
+// prize fan, bench and piles in one mirrored row, the opponent's hand a
+// straight row cropped at the top edge with their name in the corner, cards sized
 // from the board area so it fits without scrolling, and every pile, prize,
 // drop target, action sheet and turn control working as on today's mat.
 // The board switches between the landscape mat, today's mat and the phone
@@ -159,7 +159,7 @@ test('with 6, 3 and 1 prizes left every remaining prize shows in one overlapping
   await expect(page.getByRole('list', { name: 'p2 hand' }).locator('.count')).toHaveText('12 in hand');
 });
 
-test('a benched card is at least 1.6 times its width on today\'s mat at 2560×1440', async ({ page }, testInfo) => {
+test('a benched card is at least 1.5 times its width on today\'s mat at 2560×1440', async ({ page }, testInfo) => {
   test.skip(!isWide(testInfo), 'the landscape mat');
   // Today's --cw with the timeline beside the board (the root rule), at
   // this viewport: 119.4px at 2560×1440.
@@ -173,7 +173,9 @@ test('a benched card is at least 1.6 times its width on today\'s mat at 2560×14
     return { today, card };
   });
   expect(width.today).toBeCloseTo(119.4, 0);
-  expect(width.card).toBeGreaterThanOrEqual(1.6 * width.today);
+  // The section gaps (mat-gap-*) take a little of the height the hand
+  // strips give back, so the cards are about 1.55 times today's.
+  expect(width.card).toBeGreaterThanOrEqual(1.5 * width.today);
 });
 
 test('the board fits with no scroll bars at 2560×1440 and 3840×2160, with the timeline beside, below or hidden', async ({ page }, testInfo) => {
@@ -194,7 +196,9 @@ test('the board fits with no scroll bars at 2560×1440 and 3840×2160, with the 
   };
   await check('beside');
 
-  await aside.getByRole('button', { name: 'Move timeline below the board' }).click();
+  // Beside the board, the dock button is in ☰ (the Studio design).
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('menuitem', { name: 'Move timeline below the board' }).click();
   await expect(page.locator('.body')).toHaveClass(/\bbottom\b/);
   await check('below');
 
@@ -272,30 +276,63 @@ test('Draw and End turn work on the landscape mat', async ({ page }, testInfo) =
   await expect(turn).toHaveText("Turn 1 · Bob's turn");
 });
 
-test('the opponent\'s hand peeks from the top edge: every card back partly in view, still a list with its count', async ({ page }, testInfo) => {
+test('the opponent\'s hand is one straight row of cards turned 180° at your hand\'s size, cropped at the top edge to their top strip', async ({ page }, testInfo) => {
   test.skip(!isWide(testInfo), 'the landscape mat');
   const main = await box(page.locator('main'));
   const list = page.getByRole('list', { name: 'p2 hand' });
   await expect(list.getByRole('listitem')).toHaveCount(6);
   const cards = list.locator('.card');
   await expect(cards).toHaveCount(6);
-  for (let i = 0; i < 6; i++) {
-    const c = await box(cards.nth(i));
-    // It starts above the board's top edge and ends a little way into it.
-    expect(c.y, `card ${i + 1}`).toBeLessThan(main.y);
-    expect(c.bottom, `card ${i + 1}`).toBeGreaterThan(main.y + 8);
-    expect(c.bottom - main.y, `card ${i + 1} shows under half`).toBeLessThan(c.height / 2);
+  const strip = await box(list);
+  const yours = await box(hand(page).locator('.card').first());
+  const boxes = [];
+  for (let i = 0; i < 6; i++) boxes.push(await box(cards.nth(i)));
+  // Each card is turned 180°, as across a table: still portrait, upside down.
+  const turns = await list.locator('.copy').evaluateAll((els) => els.map((el) => getComputedStyle(el).rotate));
+  expect(turns).toEqual(Array(6).fill('180deg'));
+  for (const [i, c] of boxes.entries()) {
+    // Your hand's size, portrait.
+    expect(c.width, `card ${i + 1} width`).toBeCloseTo(yours.width, 0);
+    expect(c.height, `card ${i + 1} portrait`).toBeGreaterThan(c.width);
+    // It is pushed up off the board's top edge: the strip shows the card's
+    // top (the name and the type band, upside down along the strip's lower
+    // edge), about a third of the card, the rest cropped above.
+    expect(c.y, `card ${i + 1} above the top edge`).toBeLessThan(main.y);
+    expect(Math.abs(c.bottom - strip.bottom), `card ${i + 1} ends at the strip's lower edge`).toBeLessThanOrEqual(1);
+    expect(strip.y, 'the strip at the top edge').toBeCloseTo(main.y, 0);
+    const shown = strip.height / c.height;
+    expect(shown, `card ${i + 1} shows its top strip`).toBeGreaterThan(0.25);
+    expect(shown, `card ${i + 1} shows its top strip`).toBeLessThan(0.4);
+    // One straight row, in order.
+    expect(c.y, `card ${i + 1} in the row`).toBeCloseTo(boxes[0].y, 0);
+    if (i) expect(c.x, `card ${i + 1} after card ${i}`).toBeGreaterThan(boxes[i - 1].x);
     // The part in view is the part a player sees: nothing covers it.
     const hit = await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest('[aria-label="p2 hand"]'), { x: c.x + c.width / 2, y: main.y + 4 });
     expect(hit, `card ${i + 1} on top`).toBe(true);
   }
-  // The count reads as text beside the cards' visible ends.
-  await expect(list.locator('.count')).toHaveText('6 in hand');
-  const count = await box(list.locator('.count'));
-  expect(count.y).toBeGreaterThanOrEqual(main.y);
+  // Centred like your hand (the count hangs off the row's right end).
+  const mid = (boxes[0].x + boxes[5].right) / 2;
+  expect(Math.abs(mid - (main.x + main.width / 2))).toBeLessThan(yours.width);
+  // The count reads as text to the right of the row, inside the strip.
+  const tally = page.locator('.strip.top .tally');
+  await expect(tally).toHaveText('6 in hand');
+  const count = await box(tally);
+  expect(count.x).toBeGreaterThanOrEqual(boxes[5].right - 1);
+  expect(count.y).toBeGreaterThanOrEqual(strip.y);
+  expect(count.bottom).toBeLessThanOrEqual(strip.bottom + 1);
   // The hand takes no row: the opponent's row starts near the top.
   const row = await box(side(page, 'p2'));
   expect(row.y - main.y).toBeLessThan(main.height * 0.12);
+  expect(row.y).toBeGreaterThanOrEqual(strip.bottom - 1);
+
+  // Under Reveal all the cards show face up, still cropped to their top.
+  await page.getByLabel('Reveal all').check();
+  await expect(page.locator('.reveal-banner')).toBeVisible();
+  await expect(list.locator('.card.back')).toHaveCount(0);
+  // A card still opens: a click on its visible strip zooms it.
+  const first = await box(list.locator('.card').first());
+  await list.locator('.card').first().click({ position: { x: 20, y: first.height - 10 } });
+  await expect(page.locator('.zoom, [role="dialog"]').first()).toBeVisible();
 });
 
 test('the opponent\'s name and status sit in the board\'s top-left corner, with no bar across it', async ({ page }, testInfo) => {
@@ -312,21 +349,21 @@ test('the opponent\'s name and status sit in the board\'s top-left corner, with 
   expect(b.right).toBeLessThan(hand.x);
 });
 
-// clipped lists the board's parts, apart from the peeking hand, that run
-// past the board area's edges.
+// clipped lists the board's parts, apart from the hands (strips cropped at
+// the board's edges by design), that run past the board area's edges.
 async function clipped(page) {
   return page.evaluate(() => {
     const m = document.querySelector('main').getBoundingClientRect();
     const parts = document.querySelectorAll('.board .card, .board .slot, .board .pile, .board .label, .board .seat-name, .board .strip button, .board .turn, .board .count, .board figcaption');
     return [...parts]
-      .filter((el) => !el.closest('.peek') && el.getClientRects().length)
+      .filter((el) => !el.closest('.strip.top, .strip.bottom') && el.getClientRects().length)
       .map((el) => [el, el.getBoundingClientRect()])
       .filter(([, r]) => r.width > 1 && (r.left < m.left - 1 || r.top < m.top - 1 || r.right > m.right + 1 || r.bottom > m.bottom + 1))
       .map(([el]) => el.getAttribute('title') || el.className);
   });
 }
 
-test('apart from the peek, nothing on the board is cut off at 2560×1440 or 3840×2160, even with Energy under benched Pokémon', async ({ page }, testInfo) => {
+test('apart from the hand strips, nothing on the board is cut off at 2560×1440 or 3840×2160, even with Energy under benched Pokémon', async ({ page }, testInfo) => {
   test.skip(!isWide(testInfo), 'the landscape mat');
   for (const size of [{ width: 2560, height: 1440 }, { width: 3840, height: 2160 }]) {
     await page.setViewportSize(size);
@@ -337,7 +374,10 @@ test('apart from the peek, nothing on the board is cut off at 2560×1440 or 3840
   for (const [iid, to, as] of [['p1-17', 'bench:0', 'energy'], ['p1-18', 'bench:1', 'energy'], ['p1-9', 'bench:1', 'tool'], ['p2-2', 'p2:bench:0', 'energy']]) {
     await act(page, 'move', { iid, to, as, ...(iid.startsWith('p2') ? { seat: 'p2' } : {}) });
   }
-  await expect(region(page, 'p2 bench 1').locator('.att')).toHaveCount(1);
+  // The Band is tucked behind p1's second benched Pokémon; Basic Energy
+  // draws no card.
+  await expect(region(page, 'p1 bench 2').locator('.tuck')).toHaveCount(1);
+  await expect(region(page, 'p1 bench 1').locator('.tuck')).toHaveCount(0);
   for (const size of [{ width: 2560, height: 1440 }, { width: 3840, height: 2160 }]) {
     await page.setViewportSize(size);
     await expect.poll(() => clipped(page), { message: `busy ${size.width}×${size.height}` }).toEqual([]);
@@ -349,7 +389,9 @@ test('a dragged card\'s ghost keeps the card\'s size on the landscape mat, with 
   test.skip(!isWide(testInfo), 'the landscape mat');
   // Below the board, the timeline makes the board area much shorter than
   // the window, so a size taken from the window would show.
-  await page.locator('aside').getByRole('button', { name: 'Move timeline below the board' }).click();
+  // Beside the board, the dock button is in ☰ (the Studio design).
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('menuitem', { name: 'Move timeline below the board' }).click();
   await expect(page.locator('.app')).toHaveAttribute('data-wide', 'true');
   const riolu = titled(hand(page), 'Riolu (p1-2)');
   // A card's corners are 5% of its width (Card.svelte), so they show its size.
@@ -400,11 +442,12 @@ test('on the landscape mat each "N in hand" sits within one card width of its ha
   const cw = (await box(region(page, 'p1 bench 1').locator('.card'))).width;
   for (const seat of ['p1', 'p2']) {
     const list = page.getByRole('list', { name: `${seat} hand` });
-    const count = await box(list.locator('.count'));
+    const tally = page.locator(`.strip.${seat === 'p1' ? 'bottom' : 'top'} .tally`);
+    const count = await box(tally);
     // The nearest card is the last one; its box is measured unturned by
     // taking the slot's centre and the card's own width.
     const last = await box(list.locator('.slot').last());
-    await expect(list.locator('.count')).toBeInViewport();
+    await expect(tally).toBeInViewport();
     expect(count.x - last.right, seat).toBeGreaterThanOrEqual(-1);
     expect(count.x - last.right, seat).toBeLessThanOrEqual(cw);
   }

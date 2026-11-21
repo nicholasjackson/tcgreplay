@@ -2,7 +2,7 @@
 // They prove a change that should look the same does, and are re-recorded
 // deliberately when the look changes
 // (npx playwright test e2e/screenshots.spec.js --update-snapshots).
-// The home page's animated scene is held at its still (reduced motion).
+// Reduced motion keeps any transition from catching a page mid-change.
 import { test, expect } from './fixtures.js';
 import { crawl } from './crawl.js';
 

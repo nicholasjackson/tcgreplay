@@ -3,7 +3,7 @@
   // Trainers on, lingering effects and the turn buttons. On the landscape
   // mat (app.wide) it is the middle row and holds both Active Spots too:
   // the Stadium, your Active, "vs", the opponent's Active, the controls.
-  import { app, canAct, oppActing } from '../lib/store.svelte.js';
+  import { app, canAct, cardInfo, oppActing } from '../lib/store.svelte.js';
   import { dropOnZone, endTurn, seatArgs } from '../lib/actions.js';
   import { dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
@@ -43,6 +43,18 @@
   function whoseTurn() {
     return b.current === app.human ? 'Your turn' : `${nameOf(b.current)}'s turn`;
   }
+  // step is the step of the turn the board knows it is in: an attack
+  // left open (its compound action not yet ended) is the attack step. The
+  // playmat records no other steps, so otherwise none is shown.
+  const step = $derived.by(() => {
+    if (!snap?.open_action || !b.turn_open) return '';
+    const label = snap.log?.findLast((l) => l.action === snap.open_action)?.label || '';
+    const [, move] = label.split(': ');
+    if (!move) return '';
+    const top = b.sides?.[b.current]?.active?.pokemon?.at(-1);
+    const attacks = cardInfo(top?.def)?.attacks || [];
+    return attacks.some((a) => a.name === move) ? 'attack step' : '';
+  });
   // coins is the last flip's result: "H T".
   const coins = () => b.last_coins.map((c) => (c === 'heads' ? 'H' : 'T')).join(' ');
   // compact shows the coin as an icon alone: on a phone or touch screen.
@@ -76,7 +88,11 @@
   {#if phone}
     <!-- A phone's Stadium name; a short phone, whose header has no room
          for the turn, shows the turn tag and whose turn it is over it. -->
-    <span class="phone-mid">
+    <!-- The name is part of the Stadium's tap target (its 30px thumbnail
+         alone is under a fingertip wide): a tap opens the card, as a tap
+         on the thumbnail does. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <span class="phone-mid" onclick={() => b.stadium && (app.zoom = b.stadium)}>
       <span class="turn phone-turn" class:mine={myTurn}>{#if setup}<strong>Setup</strong>{:else}<span class="tag">T{b.turn}</span> <strong>{whoseTurn()}</strong>{/if}</span>
       {#if b.stadium}
         <span class="stadium-name"><small>Stadium</small><strong>{b.stadium.name}{#if b.stadium.pair}<span class="pair-note">{' · pair'}</span>{/if}</strong></span>
@@ -109,7 +125,7 @@
         {:else if wide}
           <div class="turn" class:mine={myTurn}><span class="tag">Turn {b.turn}</span> · <strong>{whoseTurn()}</strong></div>
         {:else}
-          <div class="turn" class:mine={myTurn}><span class="tag">T{b.turn}</span> <strong>{whoseTurn()}</strong></div>
+          <div class="turn" class:mine={myTurn}><span class="tag">T{b.turn}</span> <strong>{whoseTurn()}</strong>{#if step}<span class="step">{`· ${step}`}</span>{/if}</div>
         {/if}
       </div>
     {/if}
@@ -127,9 +143,14 @@
         {#if snap?.open_action}
           <button onclick={() => act('end_action')} title="Close the open compound action ({snap.open_action})" disabled={oppActing()}>End action</button>
         {/if}
-        <button onclick={() => act('draw', { n: 1, ...seatArgs(actor) })} disabled={!canAct()}>
-          {actor === app.human ? 'Draw' : `Draw for ${nameOf(actor)}`}
-        </button>
+        <!-- Draw shows only when it applies: when the player may act, and
+             not in the attack step. A phone's strip has no room for it, as
+             its design has it: there the Deck counter's menu draws. -->
+        {#if canAct() && !step && !phone}
+          <button onclick={() => act('draw', { n: 1, ...seatArgs(actor) })}>
+            {actor === app.human ? 'Draw' : `Draw for ${nameOf(actor)}`}
+          </button>
+        {/if}
         <button class="primary" onclick={() => endTurn(actor)} disabled={(!myTurn && !review) || oppActing()}>
           {actor === app.human ? 'End turn' : `End ${nameOf(actor)}'s turn`}
         </button>
@@ -164,12 +185,12 @@
   }
   /* Today's mat: a strip across the mat between the two halves. */
   .strip.bar {
+    order: 3;
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    margin: 0 var(--space-5);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-m);
+    gap: 14px;
+    padding: var(--space-2) 10px;
+    border-radius: var(--radius-l);
     background: var(--mat-strip);
   }
   /* The Stadium spot: a recessed box labelled "Stadium" when empty. */
@@ -190,6 +211,14 @@
     font-size: max(var(--fs-9), 0.7em);
   }
   @media (pointer: coarse) { .stadium.empty { width: max(44px, calc(var(--cw) * 0.62)); } }
+  /* Today's mat: the Stadium is a thumbnail beside its name. */
+  .bar .stadium :global(.card.sm), .bar .stadium.empty { --w: calc(var(--cw) * 0.48); width: var(--w); }
+  .bar .stadium :global(.card.sm) { box-shadow: none; }
+  .bar .joined.sm { --jw: calc(var(--cw) * 0.48); }
+  @media (pointer: coarse) {
+    .bar .stadium :global(.card.sm), .bar .stadium.empty { --w: max(44px, calc(var(--cw) * 0.48)); }
+    .bar .joined.sm { --jw: max(44px, calc(var(--cw) * 0.48)); }
+  }
   .stadium-name { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
   .stadium-name small { font-size: max(var(--fs-label), 0.92em); color: var(--mat-muted); }
   .stadium-name strong { font-size: max(var(--fs-ui), 1.08em); font-weight: var(--fw-ui-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -220,8 +249,6 @@
   @media (pointer: coarse) { .joined.sm { --jw: max(44px, calc(var(--cw) * 0.62)); } }
   .joined .half { position: absolute; left: 50%; top: 75%; width: 0; height: 0; }
   .joined .half.top { top: 25%; }
-  /* The pair is one card, so it carries one basis mark: the lower half's. */
-  .joined .half.top :global(.basis) { display: none; }
   .joined :global(.card) {
     --w: calc(var(--jw) * 0.698);
     position: absolute;
@@ -236,6 +263,7 @@
   /* The turn tag in mono, then whose turn it is. */
   .turn { display: flex; align-items: center; gap: var(--space-2); font-size: max(var(--fs-ui-title), 1.15em); white-space: nowrap; }
   .turn strong { font-weight: var(--fw-ui-title); }
+  .step { color: var(--mat-muted); font-weight: var(--fw-ui); }
   .tag {
     padding: 0.2em 0.6em;
     border-radius: var(--radius-xs);
@@ -324,22 +352,35 @@
   }
   .vs { align-self: center; font-weight: 700; font-size: 1.1em; color: var(--mat-muted); }
 
-  /* Phone: one compact row between the halves: the Stadium and its name,
-     the coin and the turn buttons. The play area covers the row while a
-     card is dragged. */
+  /* Phone (the PhoneBoard design): one row between the halves, 12px in
+     from the screen's edges, on a 12px-cornered strip: the Stadium's 30px
+     thumbnail (44px on touch; or its empty box) and its name, then the 44px coin and End
+     turn. The play area covers the row while a card is dragged. */
   .strip.phone {
+    order: 4;
     display: flex;
     align-items: center;
     gap: var(--space-2);
     margin: 0 var(--space-3);
-    padding: 2px 2px 2px var(--space-2);
-    border-radius: var(--radius-m);
+    padding: 6px 6px 6px var(--space-2);
+    border-radius: 12px;
     background: var(--mat-strip);
     font-size: var(--fs-ui-s);
   }
-  .phone-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .phone .stadium :global(.card.sm), .phone .stadium.empty { --w: 30px; width: var(--w); border-radius: var(--radius-xs); box-shadow: none; }
+  .phone .stadium.empty { font-size: 0; }
+  .phone .joined.sm { --jw: 30px; box-shadow: none; }
+  /* On a touch screen the Stadium stays a fingertip wide, as every card
+     on the board does; the strip loses its padding above and below, so it
+     grows only from the design's 56px to the card's 61px. */
+  @media (pointer: coarse) {
+    .strip.phone { padding-block: 0; }
+    .phone .stadium :global(.card.sm), .phone .stadium.empty { --w: var(--touch-target); }
+    .phone .joined.sm { --jw: var(--touch-target); }
+  }
+  .phone-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-self: stretch; cursor: pointer; }
   .phone .stadium-name small { font-size: var(--fs-10); }
-  .phone .stadium-name strong { font-size: var(--fs-ui-s); }
+  .phone .stadium-name strong { font-size: var(--fs-12); }
   /* The turn shows here only on a short phone (App.svelte's header drops
      it below 740px tall), over the Stadium's name in place of its
      "Stadium" caption. */
@@ -350,10 +391,12 @@
     .phone-turn { display: flex; }
     .phone .stadium-name small { display: none; }
   }
-  .phone .controls { margin-left: auto; gap: var(--space-1); }
-  .phone .buttons { flex-wrap: nowrap; gap: var(--space-1); }
-  .phone .buttons button { padding: 0 var(--space-2); font-size: var(--fs-ui); }
-  .phone .buttons button.primary { padding: 0 var(--space-3); }
+  .phone .controls { margin-left: auto; gap: var(--space-2); }
+  .phone .buttons { flex-wrap: nowrap; gap: var(--space-2); }
+  .phone .buttons button { min-height: var(--touch-target); padding: 0 var(--space-2); border-radius: var(--space-2); font-size: var(--fs-ui); }
+  .phone .buttons button.coin { justify-content: center; min-width: var(--touch-target); }
+  .phone .coin svg { width: 20px; height: 20px; }
+  .phone .buttons button.primary { padding: 0 14px; border: 0; font: 700 var(--fs-14) var(--font-sans); }
   .phone .effects { position: absolute; top: 100%; left: var(--space-2); right: var(--space-2); z-index: 3; }
   @media (pointer: coarse) {
     .buttons button { min-height: var(--touch-target); }

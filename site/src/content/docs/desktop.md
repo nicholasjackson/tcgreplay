@@ -1,7 +1,7 @@
 ---
 title: Running it on your desktop
 description: Install the tcgreplay playmat on your own computer and use it with the Claude desktop app.
-order: 30
+order: 82
 ---
 
 You can run the playmat on your own computer and use it with the **Claude desktop app**. There is no sign-in, no limits on players, and your games stay on your machine. It runs one game at a time.

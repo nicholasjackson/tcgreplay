@@ -26,6 +26,17 @@ const { Content } = await render(w.page.entry);
 </Docs>
 
 <style>
-  .guide-line { color: var(--muted); border-left: 3px solid var(--accent); padding-left: 0.75rem; }
+  /* The guide's line: a note callout (note-bg with a note-line ring). */
+  .guide-line {
+    margin: var(--space-4) 0;
+    padding: 14px var(--space-4);
+    border-radius: var(--radius-m);
+    background: var(--note-bg);
+    box-shadow: inset 0 0 0 1px var(--note-line);
+    color: var(--note-ink);
+    font-size: var(--fs-15);
+    line-height: 1.55;
+  }
   .guide-line .label { font-weight: 600; }
+  .guide-line code { background: transparent; box-shadow: none; padding: 0; }
 </style>

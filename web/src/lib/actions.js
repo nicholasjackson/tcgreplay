@@ -3,6 +3,7 @@
 import { app, cardInfo, ownerOf, toast } from './store.svelte.js';
 import { act } from './ws.js';
 import { startTarget, targetItem } from './target.js';
+import { energyProvided } from './energy.js';
 import AttackPanel from '../components/AttackPanel.svelte';
 import CountPanel from '../components/CountPanel.svelte';
 
@@ -149,6 +150,91 @@ export function energyType(card) {
   return TYPES.find((t) => name.includes(t)) || 'colorless';
 }
 
+// BASIC_NAME matches a Basic Energy's name ("Fighting Energy", "Basic
+// Fighting Energy", "Basic {F} Energy").
+const BASIC_NAME = /^(basic\s+)?(\{[a-z]\}|grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy)\s+energy$/i;
+
+// isSpecialEnergy reports whether an attached Energy is a Special Energy:
+// from its card data once known, until then (and for data that does not
+// say) from its name. Special Energy is tucked behind its Pokémon on the
+// board; Basic Energy shows only as dots.
+export function isSpecialEnergy(card) {
+  const info = cardInfo(card?.def);
+  if (info?.energy_type === 'Special') return true;
+  if (info?.energy_type === 'Normal') return false;
+  return !BASIC_NAME.test((info?.name || card?.name || '').trim());
+}
+
+// providedEnergy lists the Energy a Pokémon's attached Energy provides, one
+// {key, type, special} per Energy (energy.js reads each Special Energy's
+// text), so a Double Colorless Energy gives two dots, each ringed as
+// Special. type is one of energy.js's TYPES or 'any'.
+export function providedEnergy(stack) {
+  return (stack?.energy || []).flatMap((e) => {
+    const special = isSpecialEnergy(e);
+    const types = special ? energyProvided(cardInfo(e.def)?.text, energyType(e)) : [energyType(e)];
+    return types.map((type, i) => ({ key: `${e.iid}:${i}`, type, special }));
+  });
+}
+
+// TUCK_CAP is how many tucked cards a Pokémon shows a strip of: the strips
+// say "cards are attached" at a glance; the Pokémon's Attached list has
+// them all.
+export const TUCK_CAP = 2;
+
+// tuckedOf lists the attachments the board tucks behind a Pokémon, the
+// Tools first, then the Special Energy, each {card, role}: a Basic Energy
+// shows only as dots.
+export function tuckedOf(stack) {
+  return [
+    ...(stack?.tools || []).map((card) => ({ card, role: 'tool' })),
+    ...(stack?.energy || []).filter(isSpecialEnergy).map((card) => ({ card, role: 'energy' })),
+  ];
+}
+
+// attachedKind names an attached card's kind for its row and its view:
+// "Tool", "Special Energy" or "Energy".
+export function attachedKind(card, role) {
+  return role === 'tool' ? 'Tool' : isSpecialEnergy(card) ? 'Special Energy' : 'Energy';
+}
+
+// attachedItems lists every card attached to a Pokémon as sheet items, the
+// Tools first, then the Energy as attached: each a row with the card's
+// picture (thumb), its name and kind, opening the card's view (the zoom,
+// which offers its actions: Zoom.svelte). The only way to a Basic
+// Energy's card, which the board draws as a dot.
+function attachedItems(stack) {
+  return [...(stack.tools || []).map((t) => [t, 'tool']), ...(stack.energy || []).map((e) => [e, 'energy'])].map(([c, role]) => ({
+    label: c.name || c.iid,
+    detail: attachedKind(c, role),
+    key: c.iid,
+    thumb: c,
+    opens: true,
+    run: () => (app.zoom = c),
+  }));
+}
+
+// attachmentOf finds the Pokémon a card is attached to: {role, kind,
+// where} ("Special Energy on Active (Mega Lucario ex)"), or null for a
+// card not attached.
+export function attachmentOf(card) {
+  if (!card?.iid) return null;
+  for (const seat of ['p1', 'p2']) {
+    const s = app.board?.sides[seat];
+    if (!s) continue;
+    const stacks = [['Active', s.active], ...s.bench.map((b, i) => [`Bench ${i + 1}`, b])];
+    for (const [where, st] of stacks) {
+      if (!st) continue;
+      const role = (st.tools || []).some((c) => c.iid === card.iid) ? 'tool' : (st.energy || []).some((c) => c.iid === card.iid) ? 'energy' : null;
+      if (role) {
+        const kind = attachedKind(card, role);
+        return { role, kind, where: `${kind} on ${where} (${st.pokemon.at(-1)?.name ?? '?'})` };
+      }
+    }
+  }
+  return null;
+}
+
 // ownStacks lists the seat's occupied Pokémon slots as target candidates:
 // {spec, name, iid} of each one's top card, and the stack itself.
 export function ownStacks(seat) {
@@ -175,7 +261,8 @@ function benchStacks(seat) {
 // attached Energy's types) tag a Pokémon's touch header. A section holds
 // items ({label, detail, primary, danger, cost, icon} and one of run,
 // target or panel), a stepper ({value, step, quick, min, set}) or toggles
-// ({label, on, set}); grid lays its items out as a grid of small buttons
+// ({label, on, set}); an item with menu (a builder) swaps the sheet for
+// that menu, as the Attached section opens an attachment's; grid lays its items out as a grid of small buttons
 // in the popover. cost is an attack's Energy cost (type names), icon one
 // of the sheet's icons ('eye', 'text'). The groups follow the design's
 // order and empty ones are left out.
@@ -334,13 +421,19 @@ export function stackMenu(seat, slot, stack) {
   // One step for "heal all damage" (Wally's Compassion), not one per 10.
   if (damage) other.push({ label: `Heal all (${damage} damage)`, run: () => act('place_damage', { target: spec, amount: -damage }) });
   other.push({ label: 'Knock Out', danger: true, run: () => act('knock_out', { target: spec }) });
+  // Every attached card, each opening its view with its actions: a Basic
+  // Energy is a dot on the board, and the phone draws no attached cards.
+  const attached = attachedItems(stack);
   const where = slot === 'active' ? 'Active' : `Bench ${Number(slot.split(':')[1]) + 1}`;
   const hp = hpOf(stack);
   const left = hpLeft(stack);
-  const energy = stack.energy?.length;
+  const provided = providedEnergy(stack);
+  const energy = provided.length;
   return {
     title: top?.name ?? spec,
     card: top,
+    // The evolution chain, under the name, once it has two or more cards.
+    chain: stack.pokemon.length > 1 ? stack.pokemon.map((p) => p.name || p.iid).join(' → ') : '',
     summary: [
       seat === app.human ? where : `${seat} ${where}`,
       hp && left !== null && `${Math.max(left, 0)}/${hp} HP`,
@@ -349,7 +442,7 @@ export function stackMenu(seat, slot, stack) {
       .filter(Boolean)
       .join(' · '),
     damage,
-    energy: (stack.energy || []).map(energyType),
+    energy: provided,
     sections: sections(
       { label: 'Attack', items: attacks },
       { label: 'Ability', items: abilities },
@@ -376,6 +469,8 @@ export function stackMenu(seat, slot, stack) {
             : [],
       },
       { label: 'Other', items: other },
+      // Last, after the Pokémon's own actions: every card attached to it.
+      { label: 'Attached', list: true, items: attached },
     ),
   };
 }
@@ -491,6 +586,63 @@ export function pileCardActions(card, seat, from) {
   if (from === 'deck') out.push({ label: 'Bottom', run: () => act('move', { iid: card.iid, to: 'deck:bottom', ...sa }) });
   if (from !== 'lost') out.push({ label: 'Lost', run: () => act('move', { iid: card.iid, to: 'lost', ...sa }) });
   return out;
+}
+
+// PILE_CELLS are the six fixed cells of a listed card's icon buttons (the
+// PileActions design): row 1 brings a card into play, row 2 puts it away.
+// Each has its icon, its word in the key and its accessible name; the Deck
+// cell is Deck bottom when the card is in the deck, Deck top otherwise.
+const DECK_TOP = { icon: 'decktop', word: 'Deck top', name: 'Put on top of the deck' };
+const DECK_BOTTOM = { icon: 'deckbottom', word: 'Deck bottom', name: 'Put on the bottom of the deck' };
+const PILE_CELLS = [
+  { cell: 'hand', labels: ['Hand'], icon: 'hand', word: 'Hand', name: 'Put in hand' },
+  { cell: 'bench', labels: ['Bench'], icon: 'bench', word: 'Bench', name: 'Move to the Bench' },
+  { cell: 'attach', labels: ['Attach'], icon: 'attach', word: 'Attach', name: 'Attach to a Pokémon' },
+  { cell: 'deck', labels: ['Deck', 'Bottom'] },
+  { cell: 'discard', labels: ['Discard'], icon: 'discard', word: 'Discard', name: 'Discard' },
+  { cell: 'lost', labels: ['Lost'], icon: 'lost', word: 'Lost Zone', name: 'Put in the Lost Zone' },
+];
+
+// pileKey is the key to a view's six cells: each icon and its word.
+export function pileKey(from) {
+  return PILE_CELLS.map((c) => ({ cell: c.cell, ...(c.cell === 'deck' ? (from === 'deck' ? DECK_BOTTOM : DECK_TOP) : c) }));
+}
+
+// whyNot says why a cell's action is not offered for a card, from the
+// same rules pileCardActions follows.
+function whyNot(cell, info, from) {
+  if (cell === 'bench') return 'Only Pokémon go on the Bench';
+  if (cell === 'attach') {
+    if (from === 'deck') return 'Not from the deck';
+    return info ? 'Only Energy and Tools attach' : 'Unknown card: only Energy and Tools attach';
+  }
+  if (cell === 'discard') return 'Already in the discard';
+  if (cell === 'lost') return 'Already in the Lost Zone';
+  return 'Not available';
+}
+
+// pileCells are a listed card's six cells, always all six: each is
+// {cell, icon, word, name} with run when pileCardActions offers it, or
+// reason (a disabled cell's tooltip) when it does not.
+export function pileCells(card, seat, from) {
+  const offered = pileCardActions(card, seat, from);
+  const info = cardInfo(card.def);
+  return pileKey(from).map((k) => {
+    const labels = PILE_CELLS.find((c) => c.cell === k.cell).labels;
+    const a = offered.find((o) => labels.includes(o.label));
+    return a ? { ...k, run: a.run } : { ...k, reason: whyNot(k.cell, info, from) };
+  });
+}
+
+// categoryOf names a listed card's category under its name: "Stage1
+// Fighting", "Supporter", "Basic Energy"; the server's kind while the
+// card's data is unknown.
+export function categoryOf(card) {
+  const info = cardInfo(card.def);
+  if (info?.category === 'Pokemon') return [info.stage, info.types?.[0]].filter(Boolean).join(' ') || 'Pokémon';
+  if (info?.category === 'Trainer') return info.trainer_type || 'Trainer';
+  if (info?.category === 'Energy') return info.energy_type === 'Special' ? 'Special Energy' : 'Basic Energy';
+  return card.kind || '';
 }
 
 // firstEmptyBench is past the shown slots when they are full; the server

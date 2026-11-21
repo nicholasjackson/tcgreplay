@@ -23,11 +23,15 @@
   <button class="chip prize-chip {seat}" onclick={() => open('prizes')}><small>Prizes</small> <b>{side.prizes_left}</b></button>
 {/snippet}
 
+{#snippet hand()}
+  <button class="chip" aria-label="Hand {side.hand_count}" onclick={() => open('hand')}><small>Hand</small> <b>{side.hand_count}</b></button>
+{/snippet}
+
 <div class="counters" class:inset role="group" aria-label="{seat} counters">
   <span class="name">{name}</span>
   {#if mine}{@render prizes()}{/if}
   {#if !mine}
-    <span class="chip static" aria-label="Hand {side.hand_count}"><small>Hand</small> <b>{side.hand_count}</b></span>
+    {@render hand()}
   {/if}
   <button class="chip" {@attach pile('deck')} onclick={(ev) => openSheet(ev, () => deckMenu(seat))}><small>Deck</small> <b>{side.deck_count}</b></button>
   <button class="chip" {@attach pile('discard')} onclick={() => open('pile', 'discard')}><small>Discard</small> <b>{side.discard.length}</b></button>
@@ -35,23 +39,23 @@
   {#if !mine}{@render prizes()}{/if}
   <!-- Your hand's count ends your bar, as the phone design has it, clear
        of the hand's cards. -->
-  {#if mine}
-    <span class="chip static" aria-label="Hand {side.hand_count}"><small>Hand</small> <b>{side.hand_count}</b></span>
-  {/if}
+  {#if mine}{@render hand()}{/if}
 </div>
 
 <style>
-  /* One row: the name, then a chip per pile, its count over its label. */
+  /* One row of five chips sharing the width, 6px apart, each its count
+     over its label. The player's name is for screen readers: the bar's
+     place on the mat says whose it is. */
   .counters {
     display: flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: 6px;
     padding: 0 var(--space-3);
     font-size: var(--fs-ui);
     color: var(--mat-ink);
   }
   @media (max-height: 739px) { .counters.inset { padding-left: 76px; } }
-  .name { font-weight: var(--fw-ui-title); flex: 0 1 auto; min-width: 0; max-width: 22%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .chip {
     display: inline-flex;
     flex-direction: column-reverse;
@@ -62,7 +66,7 @@
     min-height: var(--touch-target);
     min-width: 44px;
     padding: 0 2px;
-    border-radius: var(--radius-s);
+    border-radius: var(--space-2);
     line-height: 1;
     white-space: nowrap;
     background: var(--mat-chip);
@@ -73,5 +77,5 @@
   .prize-chip.p1 { background: var(--prize-chip-p1); }
   .prize-chip.p2 { background: var(--prize-chip-p2); }
   .chip small { font-size: var(--fs-10); font-weight: var(--fw-ui); color: var(--mat-muted); }
-  .chip b { font: var(--fw-num) var(--fs-num) var(--font-mono); }
+  .chip b { font: var(--fw-num) var(--fs-14) var(--font-mono); }
 </style>

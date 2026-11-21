@@ -162,22 +162,25 @@ test.describe("the What's new page", () => {
     expect(shape.map((e) => e.date)).toEqual(whatsNew.map((e) => e.date));
     for (const [i, e] of shape.entries()) {
       expect(e.dot, `entry ${i + 1} has its dot`).toBe(true);
-      expect(e.rail, `entry ${i + 1} has its rail`).toBe(true);
+      // The rail runs down to the next entry, none after the last.
+      expect(e.rail, `entry ${i + 1} ${i < shape.length - 1 ? 'has' : 'ends'} its rail`).toBe(i < shape.length - 1);
       expect(e.dateAbove, `entry ${i + 1} is dated above its title`).toBe(true);
       if (i > 0) expect(e.top, `entry ${i + 1} is below entry ${i}`).toBeGreaterThan(shape[i - 1].top);
     }
-    // A refresh-needed entry shows it as a callout, its link kept.
+    // A refresh-needed entry shows it as a callout ending with a "How to
+    // refresh" button.
     const needed = page.locator('[data-entry] [data-refresh].needed').first();
     if (whatsNew.some((e) => e.refresh)) {
       await expect(needed).toBeVisible();
       await expect(needed.locator('a[href="/docs/connect#refresh"]')).toHaveCount(1);
+      await expect(needed.locator('a[href="/docs/connect#refresh"]')).toHaveText('How to refresh');
       expect(await needed.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
     }
   });
 
   test('the docs sidebar, the docs index and the refresh steps link to it', async ({ page }) => {
     await page.goto('/docs/connect');
-    await expect(page.getByRole('navigation', { name: 'Guide' }).getByRole('link', { name: "What's new" })).toHaveAttribute('href', '/docs/whats-new');
+    await expect(page.getByRole('navigation', { name: 'Docs', exact: true }).getByRole('link', { name: "What's new" })).toHaveAttribute('href', '/docs/whats-new');
     await expect(page.locator('#refresh + p a[href="/docs/whats-new"]')).toHaveCount(1);
     await page.goto('/docs');
     await expect(page.locator('[data-docs-index] a[href="/docs/whats-new"]')).toHaveText("What's new");

@@ -27,7 +27,6 @@ const shared = JSON.parse(readFileSync(new URL('../../internal/notice/notice.jso
 const navLinks = [
   { name: 'Guides', href: '/docs/workflows' },
   { name: 'Example', href: '/docs/example' },
-  { name: 'Limits', href: '/docs/limits' },
   { name: "What's new", href: '/docs/whats-new' },
 ];
 const start = { name: 'Get started', href: '/docs/connect' };
@@ -109,7 +108,8 @@ test('every page shows the logo, the site navigation, Get started, the shared fa
       await expect(credit.getByRole('link', { name }), `${path}: credit links ${name}`).toHaveAttribute('href', url);
     }
 
-    const links = page.locator('footer').getByRole('navigation', { name: 'Footer' });
+    // The footer's Project column (the design system's SiteFooter names it).
+    const links = page.locator('footer').getByRole('navigation', { name: 'Project' });
     await expect(links, `${path}: footer links`).toBeVisible();
     await expect(links.getByRole('link', { name: 'Privacy', exact: true }), `${path}: footer Privacy`).toHaveAttribute('href', '/privacy');
     await expect(links.getByRole('link', { name: 'Terms', exact: true }), `${path}: footer Terms`).toHaveAttribute('href', '/terms');

@@ -14,6 +14,8 @@ const total = /^Total Cards:\s*(\d+)\s*$/m.exec(example.deck)?.[1];
 ---
 <Docs
   title="Example game"
+  width="wider"
+  toc={false}
   description="A complete Pokémon TCG Live game and its decklist to copy, so you can try tcgreplay without a game of your own."
 >
   <h1>Example game</h1>
@@ -26,7 +28,7 @@ const total = /^Total Cards:\s*(\d+)\s*$/m.exec(example.deck)?.[1];
     <li class="step">Copy the decklist and the battle log below.</li>
     <li class="step wide">
       <span>Paste both into a chat with your assistant, with a prompt like this one:</span>
-      <Prompt text="Here's a game from TCG Live and my decklist. Import it and review it with me." />
+      <Prompt text="Here's a game from TCG Live and my decklist. Import it and review it with me." label="" />
     </li>
   </ol>
   <p class="after">
@@ -44,7 +46,7 @@ const total = /^Total Cards:\s*(\d+)\s*$/m.exec(example.deck)?.[1];
     <section class="panel" data-panel="log" data-theme="dark">
       <div class="panel-head">
         <h2>The battle log</h2>
-        <span class="meta">Every line of the game, from setup to the result.</span>
+        <span class="meta">Every line, setup to result</span>
       </div>
       <CopyBlock text={example.log} label="Example battle log" tall theme="dark" class="example-log" />
     </section>
@@ -92,17 +94,9 @@ const total = /^Total Cards:\s*(\d+)\s*$/m.exec(example.deck)?.[1];
     font: 600 var(--fs-13) var(--font-mono);
   }
   /* The prompt sits in the step card as a bare bubble and button: the
-     step's own words introduce it, so its label is for screen readers. */
+     step's own words introduce it. */
   .step :global(.copy-block.prompt) { margin: 0; padding: 0; background: transparent; box-shadow: none; }
-  .step :global(.copy-block.prompt .label) {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
+  .step :global(.copy-block.prompt pre) { color: var(--ink); }
 
   /* The copy panels: a head with the title, a note and the Copy button,
      then the text, which scrolls inside the panel. */
@@ -170,16 +164,8 @@ const total = /^Total Cards:\s*(\d+)\s*$/m.exec(example.deck)?.[1];
     color: var(--on-primary);
     font-size: var(--fs-13);
   }
-  .panel :global(.copy-block button.copy::before) {
-    content: '';
-    width: 14px;
-    height: 14px;
-    background: currentColor;
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M5 15V5a1 1 0 0 1 1-1h9'/%3E%3C/svg%3E") center / contain no-repeat;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M5 15V5a1 1 0 0 1 1-1h9'/%3E%3C/svg%3E") center / contain no-repeat;
-  }
+  .panel :global(.copy-block button.copy .copy-icon) { width: 14px; height: 14px; }
   .panel :global(.copy-block button.copy:hover) { filter: brightness(1.15); }
-  .panel :global(.copy-block button.copy[data-copied]) { color: var(--on-primary); }
   @media (max-width: 40rem) {
     .panel :global(.copy-block pre) { height: 24rem; }
   }

@@ -1,7 +1,7 @@
 // Choosing a target on the board: an action that needs a destination
 // closes the sheet, names itself in a banner, lights its candidates and
 // waits for a tap (touch profiles) or a click (desktop) on one of them.
-import { test, expect, act, isTouch, timelineLines } from './fixtures.js';
+import { test, expect, act, isTouch, timelineLines, expectAttached, attached } from './fixtures.js';
 
 const hand = (page) => page.getByRole('list', { name: 'p1 hand' });
 const region = (page, name) => page.getByRole('region', { name, exact: true });
@@ -54,7 +54,7 @@ test('Attach for an Energy names it, lights every own Pokémon and attaches to t
   await expect(energy(page)).toHaveClass(/\btarget-source\b/);
 
   await press(titled(region(page, 'p1 bench 1'), 'Riolu (p1-1)'), testInfo);
-  await expect(titled(region(page, 'p1 bench 1'), 'Fighting Energy (p1-18)')).toBeVisible();
+  await expectAttached(page, 'p1 bench 1', 'Fighting Energy (p1-18)', testInfo);
   await expectNewLines(page, before, ['p1 moved p1-18 Fighting Energy p1:hand → p1:bench:0 as energy']);
   await expect(banner(page)).toHaveCount(0);
   await expect(page.locator('.card.lit')).toHaveCount(0);
@@ -102,7 +102,7 @@ const actions = [
     lines: ['p1 moved p1-3 Lucario p1:hand → p1:bench:0'],
     check: async (page) => {
       await expect(titled(region(page, 'p1 bench 1'), 'Lucario (p1-3)')).toBeVisible();
-      await expect(region(page, 'p1 bench 1').locator('.chain')).toHaveText('2');
+      await expect(region(page, 'p1 bench 1').locator('.chain')).toHaveCount(0);
     },
   },
   {
@@ -112,7 +112,7 @@ const actions = [
     lit: own,
     tap: (page) => titled(region(page, 'p1 Active'), 'Makuhita (p1-5)'),
     lines: ['p1 moved p1-9 Band p1:hand → p1:active as tool'],
-    check: (page) => expect(titled(region(page, 'p1 Active'), 'Band (p1-9)')).toBeVisible(),
+    check: (page, testInfo) => expectAttached(page, 'p1 Active', 'Band (p1-9)', testInfo),
   },
   {
     name: 'Retreat',
@@ -136,30 +136,38 @@ const actions = [
     lines: ['p1 swapped p1:bench:0 (Riolu) with p1:active (Makuhita)'],
     check: (page) => expect(titled(region(page, 'p1 Active'), 'Riolu (p1-1)')).toBeVisible(),
   },
-  {
-    name: 'moving an attached Energy',
-    from: (page) => titled(region(page, 'p1 Active'), 'Fighting Energy (p1-15)'),
-    item: 'Move to',
-    lit: own,
-    tap: (page) => titled(region(page, 'p1 bench 2'), 'Makuhita (p1-6)'),
-    lines: ['p1 moved p1-15 Fighting Energy p1:active → p1:bench:1 as energy'],
-    check: (page) => expect(titled(region(page, 'p1 bench 2'), 'Fighting Energy (p1-15)')).toBeVisible(),
-  },
 ];
 
 for (const a of actions) {
   test(`${a.name} picks its destination on the board`, async ({ page }, testInfo) => {
     const before = await timelineLines(page);
-    await open(page, a.from(page), testInfo);
+    await open(page, await a.from(page, testInfo), testInfo);
     await press(item(page, a.item), testInfo);
     await expect(banner(page)).toBeVisible();
     expect(await lit(page)).toEqual([...a.lit].sort());
     await press(a.tap(page), testInfo);
-    await a.check(page);
+    await a.check(page, testInfo);
     await expectNewLines(page, before, a.lines);
     await expect(banner(page)).toHaveCount(0);
   });
 }
+
+test('moving an attached Energy picks its destination on the board, from the card\'s view', async ({ page }, testInfo) => {
+  const before = await timelineLines(page);
+  // A Basic Energy is a dot on the board: its row in the Pokémon's
+  // Attached list opens its view, whose Move to waits for the target.
+  await press(await attached(page, 'p1 Active', 'Fighting Energy (p1-15)', testInfo), testInfo);
+  const view = page.getByRole('dialog', { name: 'Fighting Energy' });
+  await expect(view).toHaveClass(/\bzoom\b/);
+  await press(view.getByRole('button', { name: 'Move to' }), testInfo);
+  await expect(view).toHaveCount(0);
+  await expect(banner(page)).toBeVisible();
+  expect(await lit(page)).toEqual([...own].sort());
+  await press(titled(region(page, 'p1 bench 2'), 'Makuhita (p1-6)'), testInfo);
+  await expectAttached(page, 'p1 bench 2', 'Fighting Energy (p1-15)', testInfo);
+  await expectNewLines(page, before, ['p1 moved p1-15 Fighting Energy p1:active → p1:bench:1 as energy']);
+  await expect(banner(page)).toHaveCount(0);
+});
 
 test('with one benched Pokémon, Retreat names it and retreats at once', async ({ page }, testInfo) => {
   await act(page, 'move', { iid: 'p1-6', to: 'hand' });
@@ -184,5 +192,5 @@ test('with a full bench, attaching an Energy to a benched Pokémon takes three t
   await energy(page).tap(); // 1: the Energy
   await item(page, 'Attach').tap(); // 2: Attach
   await titled(region(page, 'p1 bench 5'), 'Lucario (p1-4)').tap(); // 3: the Pokémon
-  await expect(titled(region(page, 'p1 bench 5'), 'Fighting Energy (p1-18)')).toBeVisible();
+  await expectAttached(page, 'p1 bench 5', 'Fighting Energy (p1-18)', testInfo);
 });

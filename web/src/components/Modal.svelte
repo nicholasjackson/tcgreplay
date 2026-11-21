@@ -1,10 +1,10 @@
 <script>
-  // Modals: a pile (discard, Lost Zone), a deck search, the top N cards,
+  // Modals: a pile (discard, Lost Zone), a hand, a deck search, the top N cards,
   // the end-of-turn prompt when the clipboard is unavailable, and About
   // (the fan-project notice, card-data credit and help link, from the
   // notice file the website shares).
-  import { app, cardInfo, imageSrc, nextImageStage, openSheet } from '../lib/store.svelte.js';
-  import { openDeckList, openSearch, pileCardActions } from '../lib/actions.js';
+  import { app, cardInfo, imageSrc, nextImageStage, openSheet, setActionKey } from '../lib/store.svelte.js';
+  import { categoryOf, handMenu, openDeckList, openSearch, pileCardActions, pileCells, pileKey } from '../lib/actions.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
   import Icon from './Icon.svelte';
@@ -15,15 +15,30 @@
   // outlined X in the corner; on a phone it fills the screen.
   const touch = $derived(app.layout !== 'desktop');
   const phone = $derived(app.layout === 'phone');
+  // The card-list views (pile, prizes, deck search, top N) follow the
+  // PileActions design: a fixed header with its own close, the key, then
+  // rows that scroll inside the view.
+  const listView = $derived(['pile', 'prizes', 'search', 'look'].includes(m?.kind));
   let filter = $state('');
 
   $effect(() => {
     if (m?.kind === 'search') filter = m.filter || '';
   });
 
-  const pileCards = $derived(m?.kind === 'pile' ? app.board?.sides[m.seat]?.[m.zone] || [] : []);
+  // A pile's cards top first: the board lists them bottom first, the top
+  // card last. The view keeps the pile's order, never sorting it.
+  const pileCards = $derived(m?.kind === 'pile' ? [...(app.board?.sides[m.seat]?.[m.zone] || [])].reverse() : []);
   // The prize view (the phone's Prizes counter): each slot, taken or not.
   const prizes = $derived(m?.kind === 'prizes' ? app.board?.sides[m.seat]?.prizes || [] : []);
+  // The hand view: the cards the board knows of, then a back for each
+  // card it does not.
+  const handSide = $derived(m?.kind === 'hand' ? app.board?.sides[m.seat] : null);
+  const handCards = $derived.by(() => {
+    if (!handSide) return [];
+    const known = handSide.hand || [];
+    const backs = Array.from({ length: Math.max(0, handSide.hand_count - known.length) }, (_, i) => ({ iid: `${m.seat}-hidden-${i}`, hidden: true }));
+    return [...known, ...backs];
+  });
   const mayTake = $derived(m?.seat === app.human || app.snap?.mode === 'review');
   function takePrize(p) {
     const args = { slot: p.slot };
@@ -122,90 +137,142 @@
   $effect(() => {
     if (!m) preview = null;
   });
-  const kindOf = (c) => {
-    const i = cardInfo(c.def);
-    return c.kind || i?.stage || i?.trainer_type || i?.energy_type || '';
-  };
+  // The dialog's name: its heading's words.
+  const title = $derived.by(() => {
+    if (m?.kind === 'pile') return `${m.seat} ${m.zone === 'lost' ? 'Lost Zone' : 'discard'}`;
+    if (m?.kind === 'prizes') return `${m.seat} prizes`;
+    if (m?.kind === 'search') return `Search ${m.seat} deck`;
+    if (m?.kind === 'look') return `Top ${m.n} of ${m.seat} deck`;
+    return null;
+  });
 </script>
 
 <svelte:window onkeydown={(ev) => ev.key === 'Escape' && close()} />
 
+<!-- The card-list views' pieces (the PileActions design). -->
+{#snippet closeButton(word)}
+  {#if touch}<button class="hb xb" aria-label="Close" onclick={close}><Icon name="close" /></button>{:else}<button class="hb" onclick={close}>{word}</button>{/if}
+{/snippet}
+<!-- With the key hidden, the header keeps a Key button to bring it back. -->
+{#snippet keyButton()}
+  {#if !app.actionKey}<button class="hb" aria-pressed="false" aria-label="Show the key" title="Show the key" onclick={() => setActionKey(true)}><Icon name="key" />Key</button>{/if}
+{/snippet}
+<!-- The key: each cell's icon with its word, in the same cells as the
+     buttons when narrow, one line when wide. -->
+{#snippet key(cells)}
+  {#if app.actionKey}
+    <div class="key" role="note" aria-label="Key to the action buttons">
+      <span class="klab">Key</span>
+      <span class="kcells">
+        {#each cells as k (k.cell)}<span class="k" data-cell={k.cell}><Icon name={k.icon} />{k.word}</span>{/each}
+      </span>
+      <button class="hide" onclick={() => setActionKey(false)}>Hide key</button>
+    </div>
+  {/if}
+{/snippet}
+<!-- A listed card: the card, its name over its category (pos, a position
+     in the pile or the top N, before it), then all six action cells, an
+     action the card can't take disabled with the reason. The card or its
+     name opens its actions in words. -->
+{#snippet row(c, from, pos)}
+  <div class="prow" role="listitem" onpointerenter={(ev) => hover(ev, c)} onpointerleave={() => (preview = null)}>
+    <Card card={c} size="xs" from="{m.seat}:{from}" lift={false} onmenu={cardMenu(c, from)} />
+    <button class="ptxt" onclick={(ev) => cardMenu(c, from)(ev)}>
+      <span class="nm">{c.name || c.iid}</span>
+      <span class="cat">{#if pos}<span class="ppos">{pos}</span>{/if}{(pos ? ' · ' : '') + categoryOf(c)}</span>
+    </button>
+    <div class="pa" role="group" aria-label={c.name || c.iid}>
+      {#each pileCells(c, m.seat, from) as k (k.cell)}
+        {#if k.run}
+          <button class="pab" style:grid-area={k.cell} aria-label={k.name} title={k.name} onclick={() => run(k.run)}><Icon name={k.icon} /></button>
+        {:else}
+          <button class="pab" style:grid-area={k.cell} aria-label={k.name} title={k.reason} disabled aria-disabled="true"><Icon name={k.icon} /></button>
+        {/if}
+      {/each}
+    </div>
+  </div>
+{/snippet}
+
 {#if m}
   <div class="backdrop" onclick={close} role="presentation"></div>
-  <div class="modal" class:touch class:phone role="dialog" aria-modal="true">
-    {#if touch}<button class="x" aria-label="Close" onclick={close}><Icon name="close" /></button>{/if}
+  <div class="modal" class:touch class:phone class:lv={listView} role="dialog" aria-modal="true" aria-label={listView ? title : null}>
+    {#if touch && !listView}<button class="x" aria-label="Close" onclick={close}><Icon name="close" /></button>{/if}
     {#if m.kind === 'pile'}
-      <header><h2>{m.seat} {m.zone === 'lost' ? 'Lost Zone' : 'discard'} · {pileCards.length}</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
-      <div class="grid">
-        {#each pileCards as c (c.iid)}
-          <div class="entry" onpointerenter={(ev) => hover(ev, c)} onpointerleave={() => (preview = null)}>
-            <Card card={c} size="sm" from="{m.seat}:{m.zone}" lift={false} onmenu={cardMenu(c, m.zone)} />
-            <div class="acts">
-              {#each pileCardActions(c, m.seat, m.zone) as a}
-                <button onclick={() => run(a.run)}>{a.label}</button>
-              {/each}
+      <header><div class="hr"><h2>{m.seat} {m.zone === 'lost' ? 'Lost Zone' : 'discard'} · <span class="n">{pileCards.length}</span></h2>{@render keyButton()}{@render closeButton('Close')}</div></header>
+      <div class="lvbody">
+        {@render key(pileKey(m.zone))}
+        <p class="note">{m.zone === 'lost' ? 'Top of the Lost Zone first (1 is the card on top). Cards keep the order they went in.' : 'Top of the discard first (1 is the card on top). Cards keep the order they were discarded in.'}</p>
+        <div class="plist" role="list" aria-label={title}>
+          {#each pileCards as c, i (c.iid)}
+            {@render row(c, m.zone, i + 1)}
+          {:else}
+            <p class="empty">Empty.</p>
+          {/each}
+        </div>
+      </div>
+    {:else if m.kind === 'prizes'}
+      <header><div class="hr"><h2>{m.seat} prizes · <span class="n">{prizes.filter((p) => p.card).length}</span> left</h2>{#if mayTake}{@render keyButton()}{/if}{@render closeButton('Close')}</div></header>
+      <div class="lvbody">
+        {#if mayTake}{@render key([{ cell: 'take', icon: 'take', word: 'Take' }])}{/if}
+        <div class="grid prizegrid">
+          {#each prizes as p (p.slot)}
+            <div class="entry">
+              {#if p.card}
+                <Card card={p.card} size="sm" draggable={false} lift={false} onclick={() => mayTake && takePrize(p)} />
+                {#if mayTake}<button class="pab take" aria-label="Take this prize into your hand" title="Take this prize into your hand" onclick={() => takePrize(p)}><Icon name="take" /></button>{/if}
+              {:else}
+                <span class="empty">Taken</span>
+              {/if}
             </div>
+          {/each}
+        </div>
+      </div>
+    {:else if m.kind === 'hand'}
+      <!-- A player's hand (the opponent's Hand chip): face down unless
+           revealed, a known card marked with its name. -->
+      <header><h2>{m.seat} hand · {handSide?.hand_count ?? 0}</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
+      <div class="grid" role="list" aria-label="{m.seat} hand">
+        {#each handCards as c (c.iid)}
+          <div class="entry" role="listitem" onpointerenter={(ev) => !c.hidden && hover(ev, c)} onpointerleave={() => (preview = null)}>
+            <Card card={c} size="sm" from="{m.seat}:hand" lift={false} onmenu={c.hidden ? null : (ev, type) => openSheet(ev, () => handMenu(c), type)} />
           </div>
         {:else}
           <p class="empty">Empty.</p>
         {/each}
       </div>
-    {:else if m.kind === 'prizes'}
-      <header><h2>{m.seat} prizes · {prizes.filter((p) => p.card).length} left</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
-      <div class="grid">
-        {#each prizes as p (p.slot)}
-          <div class="entry">
-            {#if p.card}
-              <Card card={p.card} size="sm" draggable={false} lift={false} onclick={() => mayTake && takePrize(p)} />
-              {#if mayTake}<div class="acts"><button onclick={() => takePrize(p)}>Take</button></div>{/if}
-            {:else}
-              <span class="empty">Taken</span>
-            {/if}
-          </div>
-        {/each}
-      </div>
     {:else if m.kind === 'search'}
-      <header>
-        <h2>Search {m.seat} deck</h2>
-        <form onsubmit={(ev) => { ev.preventDefault(); openSearch(m.seat, filter); }}>
-          <input bind:value={filter} placeholder="e.g. basic fighting, supporter" />
-          <button type="submit">Filter</button>
-        </form>
-        <button onclick={() => run(() => act('shuffle', { whose: m.seat }))}>Shuffle</button>
-        {#if !touch}<button onclick={close}>Done</button>{/if}
+      <header class="search">
+        <div class="hr"><h2>Search {m.seat} deck</h2>{#if phone}{@render keyButton()}{@render closeButton('Done')}{/if}</div>
+        <div class="hr tools">
+          <form class="field" role="search" onsubmit={(ev) => { ev.preventDefault(); openSearch(m.seat, filter); }}>
+            <input bind:value={filter} aria-label="Filter the deck" placeholder={phone ? 'e.g. basic fighting' : 'e.g. basic fighting, supporter'} />
+            <button type="submit" aria-label="Filter" title="Filter"><Icon name="search" /></button>
+          </form>
+          <button class="hb" onclick={() => run(() => act('shuffle', { whose: m.seat }))}><Icon name="shuffle" />Shuffle</button>
+          {#if !phone}{@render keyButton()}{@render closeButton('Done')}{/if}
+        </div>
       </header>
-      <p class="note">Sorted by category and name, never in deck order. Remember to shuffle.</p>
-      <div class="list">
-        {#each m.cards as c (c.iid)}
-          <div class="row" onpointerenter={(ev) => hover(ev, c)} onpointerleave={() => (preview = null)}>
-            <Card card={c} size="xs" from="{m.seat}:deck" lift={false} onmenu={cardMenu(c, 'deck')} />
-            <span class="name">{c.name}</span>
-            <span class="kind">{kindOf(c)}</span>
-            <span class="acts">
-              {#each pileCardActions(c, m.seat, 'deck') as a}
-                <button onclick={() => run(a.run)}>{a.label}</button>
-              {/each}
-            </span>
-          </div>
-        {:else}
-          <p class="empty">No matching cards.</p>
-        {/each}
+      <div class="lvbody">
+        {@render key(pileKey('deck'))}
+        <p class="note">Sorted by category and name, never in deck order. Remember to shuffle.</p>
+        <div class="plist" role="list" aria-label={title}>
+          {#each m.cards as c (c.iid)}
+            {@render row(c, 'deck', 0)}
+          {:else}
+            <p class="empty">No matching cards.</p>
+          {/each}
+        </div>
       </div>
     {:else if m.kind === 'look'}
-      <header><h2>Top {m.n} of {m.seat} deck</h2>{#if !touch}<button onclick={close}>Done</button>{/if}</header>
-      <p class="note">Top card first.</p>
-      <div class="grid">
-        {#each m.cards as c, i (c.iid)}
-          <div class="entry" onpointerenter={(ev) => hover(ev, c)} onpointerleave={() => (preview = null)}>
-            <span class="pos">{i + 1}</span>
-            <Card card={c} size="sm" from="{m.seat}:deck" lift={false} onmenu={cardMenu(c, 'deck')} />
-            <div class="acts">
-              {#each pileCardActions(c, m.seat, 'deck') as a}
-                <button onclick={() => run(a.run)}>{a.label}</button>
-              {/each}
-            </div>
-          </div>
-        {/each}
+      <header><div class="hr"><h2>Top {m.n} of {m.seat} deck</h2>{@render keyButton()}{@render closeButton('Done')}</div></header>
+      <div class="lvbody">
+        {@render key(pileKey('deck'))}
+        <p class="note">Top card first.</p>
+        <div class="plist" role="list" aria-label={title}>
+          {#each m.cards as c, i (c.iid)}
+            {@render row(c, 'deck', i + 1)}
+          {/each}
+        </div>
       </div>
     {:else if m.kind === 'decklist'}
       <header>
@@ -355,25 +422,126 @@
   .note { color: var(--muted); font-size: var(--fs-12); margin: var(--space-2) 0 6px; }
   .grid { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
   .entry { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); position: relative; }
-  /* Numbers on the cards: a position in the top N, copies in the deck list. */
-  .pos,
+  /* Copies in the deck list, on the card. */
   .count {
     position: absolute;
     top: -6px;
+    right: 14px;
     z-index: 2;
     background: var(--primary);
     color: var(--on-primary);
-    font: 600 var(--fs-11) var(--font-mono);
+    border-radius: var(--radius-s);
+    padding: 1px 6px;
+    font: 600 var(--fs-12) var(--font-mono);
   }
-  .pos { left: -6px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; }
-  .count { right: 14px; border-radius: var(--radius-s); padding: 1px 6px; font-size: var(--fs-12); }
-  .acts { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; max-width: calc(var(--cw) * 1.4); }
-  .list { display: flex; flex-direction: column; gap: var(--space-1); margin-top: var(--space-2); }
-  .row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 3px var(--space-1); border-radius: var(--radius-s); }
-  .row:hover { background: var(--hover); }
-  .row .acts { max-width: none; justify-content: flex-end; }
-  .name { font-weight: 600; }
-  .kind { color: var(--muted); font-size: var(--fs-12); }
+
+  /* The card-list views (pile, prizes, deck search, top N): the
+     PileActions design. The header stays put and the rows scroll. */
+  .modal { --pa: 36px; }
+  @media (pointer: coarse) {
+    .modal { --pa: var(--touch-target); }
+  }
+  .modal.lv { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+  .lv header { flex-direction: column; align-items: stretch; flex-wrap: nowrap; flex: none; }
+  .lv .hr { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+  .lv .hr h2 { flex: 1; min-width: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  h2 .n { font-family: var(--font-mono); font-weight: 600; }
+  /* Wider than a phone, the deck search's header is one row: the title,
+     the filter, Shuffle and the close. */
+  .lv:not(.phone) header.search { flex-direction: row; align-items: center; }
+  .lv:not(.phone) header.search .hr:first-child { flex: 0 1 auto; min-width: 8em; }
+  .lv:not(.phone) header.search .tools { flex: 1 1 auto; justify-content: flex-end; }
+  .lv:not(.phone) header.search .field { flex: 0 1 360px; }
+  .lv.phone { padding: 0; }
+  .lv.phone header { padding: var(--space-3) var(--space-4); gap: var(--space-2); }
+  .lvbody { container: pview / inline-size; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-3); }
+  .lv.phone .lvbody { padding: var(--space-3) var(--space-4) 0; }
+  .lv .note { margin: 0; line-height: 1.35; }
+  .plist { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 calc(-1 * var(--space-2)); padding-bottom: var(--space-4); }
+  .lv .prizegrid { overflow-y: auto; min-height: 0; margin-top: var(--space-1); padding: 6px 0 var(--space-6); }
+
+  /* Header buttons: outlined, 44px on touch, an icon beside a word. */
+  .lv .hb { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; padding: 0 12px; }
+  .lv .hb :global(.icon) { width: 18px; height: 18px; }
+  .lv .xb { width: var(--touch-target); height: var(--touch-target); padding: 0; border-radius: var(--radius-m); }
+  .lv .xb :global(.icon) { width: 20px; height: 20px; }
+  .field { display: flex; flex: 1; min-width: 0; gap: 0; }
+  .field input { flex: 1; min-width: 0; width: 0; border-right: 0; border-radius: var(--radius-s) 0 0 var(--radius-s); }
+  .field button { flex: none; display: grid; place-items: center; width: 32px; min-height: 32px; padding: 0; border-radius: 0 var(--radius-s) var(--radius-s) 0; }
+  .field button :global(.icon) { width: 18px; height: 18px; }
+  /* These scoped sizes outrank app.css's 44px touch minimum: restore it. */
+  @media (pointer: coarse) {
+    .lv .hb,
+    .field button { min-height: var(--touch-target); }
+    .lv .hb { border-radius: var(--radius-m); }
+    .lv .hb :global(.icon) { width: 20px; height: 20px; }
+    .field input { border-radius: var(--radius-m) 0 0 var(--radius-m); font-size: var(--fs-15); }
+    .field button { width: var(--touch-target); border-radius: 0 var(--radius-m) var(--radius-m) 0; }
+    .field button :global(.icon) { width: 20px; height: 20px; }
+  }
+
+  /* The key: narrow, a grid putting each word in its button's cell; wide,
+     one line with a rule between the two rows' groups. */
+  .key { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; row-gap: 6px; padding: 6px 12px 10px; background: var(--panel-sunk); border: 1px solid var(--line); border-radius: var(--radius-m); color: var(--ink-soft); font: 500 var(--fs-12)/1.35 var(--font-sans); }
+  .klab { font: 600 var(--fs-11)/1.35 var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .kcells { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 8px; }
+  .k { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; min-width: 0; }
+  .k :global(.icon) { width: 16px; height: 16px; color: var(--ink); }
+  .hide { grid-column: 2; grid-row: 1; min-height: 20px; margin: 0 -6px 0 0; padding: 0 6px; border: 0; background: none; color: var(--primary); font: 500 var(--fs-12) var(--font-sans); text-decoration: underline; text-underline-offset: 2px; }
+  .hide:hover:not(:disabled) { background: none; color: var(--primary); }
+  @container pview (min-width: 560px) {
+    .key { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 9px 12px; }
+    .kcells { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+    .k[data-cell='deck']::before { content: ''; width: 1px; height: 16px; margin-right: 10px; background: var(--control-line); }
+    .hide { margin: -4px -6px -4px auto; }
+  }
+  @media (pointer: coarse) {
+    .hide { min-height: var(--touch-target); margin-top: -12px; margin-bottom: -12px; }
+  }
+  @container pview (min-width: 560px) {
+    @media (pointer: coarse) {
+      .hide { margin-top: -14px; margin-bottom: -14px; }
+    }
+  }
+
+  /* A row: the card, its name over its category, then the six cells. */
+  .prow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: 6px var(--space-2); border-bottom: 1px solid var(--line); }
+  .prow:last-child { border-bottom: 0; }
+  .phone .prow { gap: 10px; padding: var(--space-2); }
+  @media (hover: hover) and (pointer: fine) {
+    .prow:hover { background: var(--hover); border-radius: var(--radius-s); }
+  }
+  .modal .prow :global(.card) { --w: 40px; }
+  @media (pointer: coarse) {
+    .modal .prow :global(.card) { --w: var(--touch-target); }
+  }
+  .ptxt { min-width: 0; width: 100%; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+  .ptxt:hover:not(:disabled) { background: none; }
+  @media (pointer: coarse) {
+    .ptxt { min-height: var(--touch-target); }
+  }
+  .nm { max-width: 100%; font: 600 var(--fs-14)/1.4 var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat { max-width: 100%; font: 500 var(--fs-12)/1.35 var(--font-sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ppos { font: 500 var(--fs-11)/1.3 var(--font-mono); }
+
+  /* PileActions: square icon buttons in fixed cells, two rows of three
+     when the row is narrow, one row of six (a gap between the threes)
+     when it is wide. */
+  .pa { display: grid; gap: var(--space-1); grid-template-columns: repeat(3, var(--pa)); grid-template-rows: repeat(2, var(--pa)); grid-template-areas: 'hand bench attach' 'deck discard lost'; }
+  @container pview (min-width: 560px) {
+    .pa { grid-template-columns: repeat(3, var(--pa)) var(--space-2) repeat(3, var(--pa)); grid-template-rows: var(--pa); grid-template-areas: 'hand bench attach . deck discard lost'; }
+  }
+  .pab { box-sizing: border-box; width: var(--pa); height: var(--pa); min-width: 0; min-height: 0; display: grid; place-items: center; padding: 0; border-radius: var(--radius-s); }
+  .pab :global(.icon) { width: 18px; height: 18px; }
+  .pab:active:not(:disabled) { background: var(--selected); }
+  /* Disabled: still in its cell and recognisable, but flat and faded. Its
+     tooltip says why. */
+  .pab:disabled { background: var(--panel-sunk); border-color: var(--line); color: var(--muted); cursor: not-allowed; }
+  .pab:disabled :global(.icon) { opacity: 0.5; }
+  @media (pointer: coarse) {
+    .pab { border-radius: var(--radius-m); }
+    .pab :global(.icon) { width: 20px; height: 20px; }
+  }
   .empty { color: var(--muted); }
   /* Beside the modal on wide screens; over its right edge on narrow ones. */
   .preview {

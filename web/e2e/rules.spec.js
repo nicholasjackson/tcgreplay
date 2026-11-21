@@ -1,6 +1,6 @@
 // Board help for the rules the playmat doesn't enforce: costs, prizes,
 // healing, reveals and the end of the game.
-import { test, expect, act, isTouch, isPhone, pile } from './fixtures.js';
+import { test, expect, act, isTouch, isPhone, isWide, pile, expectAttached } from './fixtures.js';
 
 const region = (page, name) => page.getByRole('region', { name, exact: true });
 const titled = (scope, title) => scope.locator(`.card[title="${title}"]`);
@@ -20,7 +20,13 @@ async function activate(control, testInfo) {
 }
 
 test('a revealed card in the opponent\'s hand stays face down, marked with its name', async ({ page }, testInfo) => {
-  test.skip(isPhone(testInfo), 'the phone board shows no opponent hand');
+  // The landscape mat draws the opponent's hand; today's mat and the phone
+  // show it in the hand view, opened from their Hand chip.
+  if (!isWide(testInfo)) {
+    const chip = page.getByRole('region', { name: 'p2 side' }).getByRole('button', { name: 'Hand 6' })
+      .or(page.getByRole('group', { name: 'p2 counters' }).getByRole('button', { name: 'Hand 6' }));
+    await activate(chip, testInfo);
+  }
   const theirs = page.getByRole('list', { name: 'p2 hand' });
   await expect(theirs.locator('.known')).toHaveCount(0);
   await act(page, 'reveal', { iids: ['p2-2'], seat: 'p2' });
@@ -54,11 +60,11 @@ test('an Energy in the discard pile attaches straight onto a Pokémon', async ({
   await (isTouch(testInfo) ? pile(page, 'Discard').tap() : pile(page, 'Discard').click());
   const view = page.locator('.modal');
   const row = view.locator('.card[title="Fighting Energy (p1-16)"]').locator('xpath=ancestor::*[.//button][1]');
-  await activate(row.getByRole('button', { name: 'Attach', exact: true }), testInfo);
+  await activate(row.getByRole('button', { name: 'Attach to a Pokémon', exact: true }), testInfo);
   await expect(view).toHaveCount(0);
   const bench = region(page, 'p1 bench 1');
   await activate(bench, testInfo);
-  await expect(bench.locator('.card[title="Fighting Energy (p1-16)"]')).toHaveCount(1);
+  await expectAttached(page, 'p1 bench 1', 'Fighting Energy (p1-16)', testInfo);
 });
 
 test('a Knock Out reminds which prizes to take, unless prize reminders are off', async ({ page }, testInfo) => {

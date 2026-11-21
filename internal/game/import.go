@@ -190,6 +190,19 @@ func parseDeck(ctx context.Context, db cards.DB, text, who string) ([]deck.Entry
 			}
 		}
 	}
+	// Entries are matched against a battle log's card names, which follow
+	// the card, not the export's spelling of it ("Rocky {F} Energy" is the
+	// log's "Rocky Fighting Energy"): name each by its resolved card.
+	for i := range l.Entries {
+		e := &l.Entries[i]
+		name := e.Name
+		if e.Def != "" && db != nil {
+			if c, err := db.Card(ctx, e.Def); err == nil && c.Name != "" {
+				name = c.Name
+			}
+		}
+		e.Name = deck.LogName(name)
+	}
 	return l.Entries, warnings, nil
 }
 

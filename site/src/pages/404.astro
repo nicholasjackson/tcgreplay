@@ -4,7 +4,7 @@
 // message and the ways back, the home page and all the docs.
 import Base from '../layouts/Base.astro';
 ---
-<Base title="Page not found">
+<Base title="Page not found" mainClass="not-found-main">
   <div class="not-found">
     <div class="stack" aria-hidden="true">
       <span class="card back"></span>
@@ -28,8 +28,9 @@ import Base from '../layouts/Base.astro';
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-10) 64px;
-    padding: clamp(var(--space-4), 6vw, 64px) 0;
   }
+  /* The page's own spacing: 48px to 96px above and below. */
+  :global(main.not-found-main) { padding-block: clamp(48px, 8vw, 96px); }
 
   /* The stack: three cards fanned out, the 404 card on top. */
   .stack { flex: 0 1 auto; position: relative; width: 300px; max-width: 100%; height: 230px; }
@@ -70,16 +71,17 @@ import Base from '../layouts/Base.astro';
   .message { flex: 1 1 340px; display: flex; flex-direction: column; gap: 14px; }
   h1 {
     margin: 0;
-    font-size: clamp(var(--fs-28), 3.4vw, var(--fs-page-title));
-    line-height: 1.1;
-    letter-spacing: -0.02em;
+    font-size: clamp(var(--fs-30), 3.4vw, var(--fs-page-title));
+    font-weight: var(--fw-page-title);
+    line-height: var(--lh-page-title);
+    letter-spacing: var(--ls-page-title);
   }
   p { margin: 0; color: var(--ink-soft); }
   .ways { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
   .way {
     display: inline-flex;
     align-items: center;
-    height: 44px;
+    height: var(--touch-target);
     padding: 0 18px;
     border-radius: var(--radius-m);
     border: 1px solid var(--control-line);

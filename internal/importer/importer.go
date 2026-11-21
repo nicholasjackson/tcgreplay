@@ -86,6 +86,10 @@ func Import(text string, opts Options) (*Result, error) {
 	}
 	trace := opts.Trace
 	opts.Trace = nil
+	// The replay binds cards by the names the log prints, and every list
+	// lookup (counts, prints, the cards left to deal, the opponent's
+	// profile) is by name, so key both lists by the log's names.
+	opts.MyDeck, opts.OppDeck = logNames(opts.MyDeck), logNames(opts.OppDeck)
 
 	// With an assumed list, the replay holds the opponent to its counts, so
 	// a card seen again is taken to be a copy already seen rather than a
@@ -103,11 +107,18 @@ func Import(text string, opts Options) (*Result, error) {
 	}
 	var fallback string
 	if opts.oppLimit != nil && len(best.res.Report.Problems) > 0 {
+		// Only blame the list when dropping it helps: problems that stay
+		// without it (say, the owner's own list) are not its doing.
 		p := best.res.Report.Problems[0]
-		fallback = fmt.Sprintf("the assumed list conflicts with the log (line %d: %s), so it was not held to its counts", p.Line, p.Err)
-		opts.oppLimit = nil
-		if best, err = search(secs, me, opp, opts, seed); err != nil {
+		free := opts
+		free.oppLimit = nil
+		alt, err := search(secs, me, opp, free, seed)
+		if err != nil {
 			return nil, err
+		}
+		if len(alt.res.Report.Problems) < len(best.res.Report.Problems) {
+			fallback = fmt.Sprintf("the assumed list conflicts with the log (line %d: %s), so it was not held to its counts", p.Line, p.Err)
+			best, opts = alt, free
 		}
 	}
 	res := best.res
@@ -128,6 +139,21 @@ func Import(text string, opts Options) (*Result, error) {
 	}
 	res.Seed = seed
 	return res, nil
+}
+
+// logNames returns a copy of list with each entry named as the battle log
+// names the card (see deck.LogName): TCG Live's own export writes "Rocky
+// {F} Energy" for the log's "Rocky Fighting Energy". Callers holding a card
+// database should name entries by the resolved card first.
+func logNames(list []deck.Entry) []deck.Entry {
+	if list == nil {
+		return nil
+	}
+	out := slices.Clone(list)
+	for i := range out {
+		out[i].Name = deck.LogName(out[i].Name)
+	}
+	return out
 }
 
 // attempt is one replay and the choices it made.

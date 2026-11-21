@@ -1,4 +1,5 @@
 <script>
+  import { untrack } from 'svelte';
   import { openDeckList } from './lib/actions.js';
   import { app, benchSlots, setPanelAt, setPrizeReminders, setTheme, setMat, THEMES, MATS } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
@@ -27,10 +28,19 @@
   // mat's peeking hand and corner name sit over it.
   let fit = $state(0);
   function fitBoard(main) {
+    // A box laid out as display: contents (today's mat's halves) counts by
+    // its children, which are the board's rows.
+    const flat = (els) => els.flatMap((c) => (getComputedStyle(c).display === 'contents' ? flat([...c.children]) : [c]));
     const measure = () => {
-      const pad = parseFloat(getComputedStyle(main).paddingTop) + parseFloat(getComputedStyle(main).paddingBottom);
-      const rows = [...main.children].filter((c) => getComputedStyle(c).position !== 'absolute');
-      const used = rows.reduce((h, c) => h + c.offsetHeight, pad);
+      const cs = getComputedStyle(main);
+      const pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const rows = flat([...main.children]).filter((c) => getComputedStyle(c).position !== 'absolute');
+      // The phone keeps a least gap between its rows, one more above the
+      // first (its ::before, which spaces the rows from the header).
+      const gaps = (parseFloat(cs.rowGap) || 0) * (rows.length - 1 + (getComputedStyle(main, '::before').content === 'none' ? 0 : 1));
+      // Fractional heights, not offsetHeight's rounded ones, so a board a
+      // fraction of a pixel too tall still shrinks rather than scrolling.
+      const used = rows.reduce((h, c) => h + c.getBoundingClientRect().height, pad + gaps);
       const over = used - main.clientHeight;
       if (over > 0) fit += over;
       else if (over < -24 && fit > 0) fit = Math.max(0, fit + over);
@@ -39,12 +49,17 @@
     const watch = () => {
       ro.disconnect();
       ro.observe(main);
-      for (const c of main.children) ro.observe(c);
+      for (const c of flat([...main.children])) ro.observe(c);
       measure();
     };
     const mo = new MutationObserver(watch);
     mo.observe(main, { childList: true });
-    watch();
+    // Untracked: the first measure runs inside the attachment's effect, and
+    // reading fit there would make the attachment depend on it. Each fit it
+    // wrote would then tear it down (fit back to 0) and attach it again, a
+    // loop that froze a busy landscape mat for 8 seconds before Svelte gave
+    // up (effect_update_depth_exceeded).
+    untrack(watch);
     return () => {
       ro.disconnect();
       mo.disconnect();
@@ -60,6 +75,63 @@
     return () => {
       ro.disconnect();
       app.wide = false;
+    };
+  }
+  // mainH is the board area's height: what is left under the header, any
+  // banners (Reveal all, game over) and, docked below, the timeline. Every
+  // layout's card size follows it (--main-h), so the board takes exactly
+  // the room it has and the window never scrolls. The area's height comes
+  // from the page's grid, never from the board in it, so measuring it
+  // cannot feed back.
+  let mainH = $state(0);
+  // mainW is its width, which today's mat's card size also follows
+  // (--main-w): the widest row, the player block, the bench and the top of
+  // the discard, must fit it, so the bench never covers the block.
+  let mainW = $state(0);
+  function measureMain(main) {
+    const ro = new ResizeObserver(() => {
+      mainH = main.clientHeight;
+      mainW = main.clientWidth;
+    });
+    ro.observe(main);
+    return () => {
+      ro.disconnect();
+      mainH = 0;
+      mainW = 0;
+    };
+  }
+  // blockW is the wider player block's least width on today's mat: its
+  // prize row and pile chips, which keep one line (the name may wrap). The
+  // card size leaves room for it beside the bench (--block-w). It hardly
+  // depends on the card size (the chips' text is a fixed size until the
+  // cards are large), and it changes only past a whole pixel, so it settles.
+  let blockW = $state(0);
+  function measureBlocks(main) {
+    // last is kept outside the state: the attachment must not read blockW,
+    // or writing it would re-run the attachment, and so on.
+    let last = 0;
+    const measure = () => {
+      let w = 0;
+      for (const el of main.querySelectorAll('.seat-row .block .piles, .seat-row .block .prizes')) w = Math.max(w, el.getBoundingClientRect().width);
+      w = Math.ceil(w);
+      if (Math.abs(w - last) >= 1) {
+        last = w;
+        untrack(() => (blockW = w));
+      }
+    };
+    const ro = new ResizeObserver(measure);
+    const watch = () => {
+      ro.disconnect();
+      for (const el of main.querySelectorAll('.seat-row .block .piles, .seat-row .block .prizes')) ro.observe(el);
+      measure();
+    };
+    const mo = new MutationObserver(watch);
+    mo.observe(main, { childList: true, subtree: true });
+    watch();
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      untrack(() => (blockW = 0));
     };
   }
   // benchN is the longer bench's slot count: the landscape mat's widest
@@ -124,6 +196,8 @@
   }
   // menuOpen shows the header's menu of less frequent actions.
   let menuOpen = $state(false);
+  // warnOpen shows the header's warnings under its pill.
+  let warnOpen = $state(false);
   function menu(run) {
     menuOpen = false;
     run();
@@ -154,6 +228,17 @@
     stopped: 'Opponent stopped responding',
   };
 
+  // statusWord is the word after the opponent's name in their player
+  // block: their connection's status when the playmat knows it (hosted
+  // play), otherwise whether it is their turn.
+  const statusWords = { waiting: 'waiting', acting: 'acting', deciding: 'deciding', stopped: 'stopped responding' };
+  function statusWord() {
+    if (app.opponent) return statusWords[app.opponent] || app.opponent;
+    const b = app.board;
+    if (!b || b.phase === 'setup') return '';
+    return b.current === app.claude && b.turn_open ? 'playing' : 'waiting';
+  }
+
   function nameOf(seat) {
     const n = app.board?.sides[seat]?.name;
     return n || (seat === app.human ? ownName() || 'You' : app.assistant);
@@ -171,17 +256,54 @@
       {#if app.opponent}<span class="opp-status {app.opponent}">{oppStatus[app.opponent]}</span>{/if}
     </div>
   {/if}
-  {#if !phone}<Hand seat={app.claude} small />{/if}
-  <Side seat={app.claude} name={nameOf(app.claude)} mirrored status={!phone && !app.wide && app.opponent ? oppStatus[app.opponent] : ''} />
+  {#if app.wide}<Hand seat={app.claude} small />{/if}
+  <Side seat={app.claude} name={nameOf(app.claude)} mirrored status={!phone && !app.wide ? statusWord() : ''} />
   <Strip />
   <Side seat={app.human} name={nameOf(app.human)} />
   <Hand seat={app.human} />
   {#if app.wide}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
 {/snippet}
 
-<svelte:window bind:innerHeight={screenH} onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
+<!-- Like a dev tools dock button: the icon shows where the timeline goes
+     next. -->
+{#snippet dockButton()}
+  {@const where = bottom ? 'beside' : 'below'}
+  <button class="dock" aria-label="Move timeline {where} the board" title="Move timeline {where} the board" onclick={() => setPanelAt(bottom ? 'side' : 'bottom')}>
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+      <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" />
+      {#if bottom}
+        <rect x="10" y="3" width="4" height="10" fill="currentColor" />
+      {:else}
+        <rect x="2" y="9.5" width="12" height="3.5" fill="currentColor" />
+      {/if}
+    </svg>
+  </button>
+{/snippet}
 
-<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone style:--fit="{fit}px" style:--dock-h={bottom ? `${dockPx}px` : null}>
+<!-- The warnings pill opens the warnings, listed under it: the header's
+     on every layout, the phone's showing only the count. -->
+{#snippet warnings()}
+  {#if snap?.warnings?.length}
+    {@const n = snap.warnings.length}
+    <div class="warn-wrap">
+      <button class="warn" title={snap.warnings.join('\n')} aria-label="{n} {n === 1 ? 'warning' : 'warnings'}" aria-haspopup="dialog" aria-expanded={warnOpen} onclick={() => (warnOpen = !warnOpen)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z" /><path d="M12 10v4" /><path d="M12 17.5v.01" /></svg>{n}<span class="warn-word" aria-hidden="true">{n === 1 ? ' warning' : ' warnings'}</span>
+      </button>
+      {#if warnOpen}
+        <div class="backdrop" onclick={() => (warnOpen = false)} role="presentation"></div>
+        <div class="dropdown warn-list" role="dialog" aria-label="Warnings">
+          {#each snap.warnings as w, i (i)}
+            <div class="warning">⚠ {w}</div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
+{/snippet}
+
+<svelte:window bind:innerHeight={screenH} onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = warnOpen = false)} />
+
+<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone class:tablet={app.layout === 'tablet'} style:--fit="{fit}px" style:--main-h={mainH ? `${mainH}px` : null} style:--main-w={mainW ? `${mainW}px` : null} style:--block-w={blockW ? `${blockW}px` : null} style:--dock-h={bottom ? `${dockPx}px` : null}>
   <header>
     {#if phone}
       <!-- A phone's header: the connection, whose turn it is, the
@@ -196,19 +318,17 @@
         {/if}
       {/if}
       <span class="spacer"></span>
-      {#if snap?.warnings?.length}
-        {@const n = snap.warnings.length}
-        <button class="warn" aria-label="{n} {n === 1 ? 'warning' : 'warnings'}" title={snap.warnings.join('\n')} onclick={() => (menuOpen = true)}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z" /><path d="M12 10v4" /><path d="M12 17.5v.01" /></svg>{n}
-        </button>
-      {/if}
+      {@render warnings()}
     {:else}
-      <span class="brand"><img src={markUrl} alt="" /><strong>tcgreplay</strong></span>
+      <span class="brand"><img src={markUrl} alt="" /><strong>TCG Replay</strong></span>
     {/if}
     {#if snap && !phone}
-      <span class="game">{snap.game}</span>
+      <!-- Where the game sits: "Games / Alice vs Bob". The playmat has no
+           page of games, so "Games" is plain text; a narrow window or a
+           tablet shows the game's name alone. -->
+      <nav class="game" aria-label="Breadcrumb"><span class="crumb">Games</span><span class="crumb" aria-hidden="true">/</span><strong>{snap.game}</strong></nav>
       <label class="branch">
-        Branch
+        <span class="branch-label">Branch</span>
         <select value={snap.branch} onchange={checkout} aria-label="branch">
           {#each snap.branches as b (b.name)}
             <option value={b.name}>{b.name} · #{b.head}</option>
@@ -227,22 +347,27 @@
     {/if}
     {#if !phone}
       <span class="spacer"></span>
-      {#if snap?.warnings?.length}
-        {@const n = snap.warnings.length}
-        <span class="warn" title={snap.warnings.join('\n')}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z" /><path d="M12 10v4" /><path d="M12 17.5v.01" /></svg>
-          {n}<span class:sr={app.layout === 'tablet'}> {n === 1 ? 'warning' : 'warnings'}</span>
-        </span>
-      {/if}
-      <span class="conn"><span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>{app.connected ? 'Live' : 'Reconnecting…'}</span>
+      {#snippet conn()}
+        <span class="conn"><span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>{app.connected ? 'Live' : 'Reconnecting…'}</span>
+      {/snippet}
       {#if app.layout === 'tablet'}
-        <!-- On a touch screen the timeline hides and shows from the header,
-             as from ☰. -->
+        <!-- A tablet: the connection, the warnings, then the button that
+             hides and shows the timeline, as ☰ does. -->
+        {@render conn()}
+        {@render warnings()}
         <button class="panel-toggle" aria-label="{app.panelOpen ? 'Hide' : 'Show'} timeline" aria-pressed={app.panelOpen} onclick={() => (app.panelOpen = !app.panelOpen)}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <rect x="3" y="4" width="18" height="16" rx="2" />
             {#if app.panelAt === 'bottom'}<path d="M3 14h18" />{:else}<path d="M15 4v16" />{/if}
           </svg>
+        </button>
+      {:else}
+        {@render warnings()}
+        {@render conn()}
+        <!-- The theme button switches the interface between light and dark,
+             as ☰'s Interface choice does. -->
+        <button class="theme" aria-label={app.theme === 'dark' ? 'Use the light interface' : 'Use the dark interface'} title="Light or dark interface" onclick={() => setTheme(app.theme === 'dark' ? 'light' : 'dark')}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" class="fill" /></svg>
         </button>
       {/if}
     {/if}
@@ -280,6 +405,12 @@
             <button role="menuitem" onclick={() => menu(() => (timelineOpen = true))}>Show timeline</button>
           {:else}
             <button role="menuitem" onclick={() => menu(() => (app.panelOpen = !app.panelOpen))}>{app.panelOpen ? 'Hide' : 'Show'} timeline</button>
+            {#if app.panelOpen}
+              <!-- Beside the board the timeline's control row has no room for
+                   the dock button, so it is here. -->
+              {@const where = bottom ? 'beside' : 'below'}
+              <button role="menuitem" onclick={() => menu(() => setPanelAt(bottom ? 'side' : 'bottom'))}>Move timeline {where} the board</button>
+            {/if}
           {/if}
           <label class="menu-check" title="After a Knock Out, remind me how many prize cards to take">
             <input type="checkbox" checked={app.prizeReminders} onchange={(ev) => setPrizeReminders(ev.target.checked)} /> Prize reminders
@@ -317,7 +448,7 @@
     <div class="over-banner" role="status">Game over: {nameOf(app.board.winner)} wins ({app.board.win_reason})</div>
   {/if}
   {#if app.reveal}
-    <div class="reveal-banner">REVEAL VIEW: both hands, prizes and decks are face up. Post-mortem only.</div>
+    <div class="reveal-banner">{phone ? 'REVEAL VIEW: every card face up. Post-mortem only.' : 'REVEAL VIEW: both hands, prizes and decks are face up. Post-mortem only.'}</div>
   {/if}
 
   <div class="body" class:panel={showTimeline && !phone} class:bottom {@attach measureBody}>
@@ -328,7 +459,7 @@
         <p>Turn your phone upright to see the board.</p>
       </div>
     {:else}
-    <main {@attach phone ? fitBoard : measureBoard} {@attach bottom && !app.wide && fitBoard}>
+    <main {@attach measureMain} {@attach phone ? fitBoard : measureBoard} {@attach !phone && !app.wide && fitBoard} {@attach !phone && !app.wide && measureBlocks}>
       {#if app.board && app.wide}
         <!-- The landscape mat sizes its cards from the board area, so it
              sits in a box whose container units measure <main>. -->
@@ -375,24 +506,18 @@
               <span></span>
             </div>
           {/if}
-          <!-- Like a dev tools dock button: the icon shows where the
-               timeline goes next. -->
-          {@const where = bottom ? 'beside' : 'below'}
-          <div class="aside-head" class:dock-row={bottom}>
-            <h2>Timeline</h2>
-            {#if bottom}<PlaybackBar where="dock" />{/if}
-            <button class="dock" aria-label="Move timeline {where} the board" title="Move timeline {where} the board" onclick={() => setPanelAt(bottom ? 'side' : 'bottom')}>
-              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-                <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" />
-                {#if bottom}
-                  <rect x="10" y="3" width="4" height="10" fill="currentColor" />
-                {:else}
-                  <rect x="2" y="9.5" width="12" height="3.5" fill="currentColor" />
-                {/if}
-              </svg>
-            </button>
-          </div>
-          {#if !bottom}<PlaybackBar where="side" />{/if}
+          <!-- Beside the board the playback controls head the timeline (the
+               dock button is in ☰, the row having no room for it); docked
+               below, one row under the handle ends with the dock button. -->
+          {#if bottom}
+            <div class="aside-head dock-row">
+              <h2>Timeline</h2>
+              <PlaybackBar where="dock" />
+              {@render dockButton()}
+            </div>
+          {:else}
+            <PlaybackBar where="side" />
+          {/if}
           <div class="aside-body">
             <Timeline rail={bottom} />
           </div>
@@ -424,8 +549,11 @@
 </div>
 
 <style>
+  /* The app is one screen tall, never more: the header, any banners, then
+     the body (the board and the timeline) in what is left. */
   .app {
-    min-height: 100vh;
+    height: 100dvh;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     border: 0 solid transparent;
@@ -433,23 +561,43 @@
     /* The timeline column's width beside the board. --panel-w is the room
        it takes from the board area (0 when it is below or hidden), so the
        playback overlay can centre on the board rather than the window. */
-    --panel-col: clamp(320px, 18vw, 960px);
+    --panel-col: clamp(var(--timeline-width), 18vw, var(--timeline-width-max));
     --panel-w: 0px;
     /* The gutter of page background around the mat and the timeline,
        thinner above and below on a short screen, where the mat's cards
        (sized by the root --cw) need the height. */
     --gutter: var(--space-3);
     --gutter-y: var(--gutter);
+    /* Today's mat with the timeline beside it: its cards fit the board
+       area's measured height (about 11.1 card widths inside its 28px of
+       padding and a little more), less --fit when the board would still
+       scroll (fitBoard), and its width less the timeline. The window's
+       height less 115px stays a ceiling: it is the size the mat was tuned
+       to, and the measured room only binds when banners or a short screen
+       take more. */
+    --cw: clamp(48px, min((100vh - 115px) / 11.1, (var(--main-h, calc(100dvh - 80px)) - 35px - var(--fit, 0px)) / 11.1, (100vw - 360px) / 10, var(--cw-w)), 240px);
+    --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
   }
+  /* --cw-w is the width's limit on today's mat: the widest row is the
+     player block (--block-w, measured), the bench (about 4.4 card widths
+     and 72px of gaps and padding), the top of the discard (its card, 0.62
+     of a card width, and a little padding), two 20px gaps and main's 22px
+     padding each side; 176px covers the fixed parts with a few pixels to
+     spare. So the cards shrink before the bench can cover the block. */
+  .app { --cw-w: calc((var(--main-w, calc(100vw - 360px)) - 176px - var(--block-w, 180px)) / 5); }
   @media (max-height: 820px) { .app { --gutter-y: var(--space-1); } }
   @media (max-height: 740px) { .app { --gutter-y: 0px; } }
   .app.panel-side { --panel-w: calc(var(--panel-col) + var(--gutter)); }
+  /* A touch screen's timeline is 362px: the design's 310px plus one Play
+     button's width (52px), so its playback row fits on one line (growing
+     with a very wide screen, as the desktop's does). */
+  .app.tablet { --panel-col: clamp(362px, 18vw, var(--timeline-width-max)); }
   .app.reveal { border: 6px solid var(--warn-line); }
   /* With no timeline beside the board, the board takes the full width (see
      --cw in app.css). With the timeline below, the board also keeps 200px of
      height for it, and the timeline fills whatever height the board leaves. */
   .app.wide {
-    --cw: clamp(48px, min((100vh - 140px) / 11.1, (100vw - 64px) / 10), 240px);
+    --cw: clamp(48px, min((100vh - 140px) / 11.1, (var(--main-h, calc(100dvh - 80px)) - 60px - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10, var(--cw-w)), 240px);
     --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
   }
   /* Docked below, the timeline takes --dock-h (its handle sets it) and the
@@ -457,12 +605,11 @@
      under 120px of header, gutters and padding, less --fit when the board
      would still scroll (fitBoard). */
   .app.panel-bottom {
-    height: 100vh;
     --dock-h: 220px;
-    --cw: clamp(40px, min((100vh - 120px - var(--dock-h) - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10), 240px);
+    --cw: clamp(40px, min((100vh - 120px - var(--dock-h)) / 11.1, (var(--main-h, calc(100dvh - 300px)) - 40px - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10, var(--cw-w)), 240px);
   }
   @media (pointer: coarse) {
-    .app.panel-bottom { --cw: clamp(48px, min((100vh - 120px - var(--dock-h) - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10), 240px); }
+    .app.panel-bottom { --cw: clamp(48px, min((100vh - 120px - var(--dock-h)) / 11.1, (var(--main-h, calc(100dvh - 300px)) - 40px - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10, var(--cw-w)), 240px); }
   }
   /* The landscape mat (app.wide) fills the window and sizes its cards
      from the board area: <main> is a size container, and .board inside it
@@ -470,53 +617,78 @@
      and the widest row (the longer bench, the prize fan and the piles)
      fits its width. */
   /* The landscape mat gives its cards the room of a thinner gutter. */
-  .app.landscape { height: 100vh; min-height: 0; --gutter: var(--space-1); --gutter-y: var(--space-1); }
+  .app.landscape { --gutter: var(--space-1); --gutter-y: var(--space-1); }
   .app.landscape main { container-type: size; }
   .app.landscape.panel-bottom { --dock-h: clamp(200px, 28vh, 480px); }
-  /* The rows are about 6.8 card widths tall: two player rows, the middle
-     row with its captions, your hand and the opponent's peeking hand above
-     them; plus your name. A busy board (Energy under benched Pokémon) gives
-     up --fit (see fitBoard). */
+  /* The landscape mat's rows: the opponent's Bench row, the middle row
+     (both Active Spots, with captions) and your Bench row, about 6.4 card
+     widths with their least gaps. Both hands are strips in its top and
+     bottom margins (Hand.svelte), taking no row of their own. The gaps
+     scale with the card width (the mat-gap-* tokens) and are least sizes:
+     spare height spreads evenly over them. A busy board (tucked strips
+     over the Benches) gives up --fit (see fitBoard). */
   .board {
-    --cw: max(48px, min((100cqh - 50px - var(--fit, 0px)) / 6.9, (100cqw - 80px) / (4.6 + 1.16 * var(--bench-n, 5))));
+    --cw: max(48px, min((100cqh - 30px - var(--fit, 0px)) / 7.3, (100cqw - 80px) / (4.6 + 1.16 * var(--bench-n, 5))));
     --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
+    --gap-section: max(var(--mat-gap-section-min), calc(var(--cw) * var(--mat-gap-section)));
+    --gap-edge: max(var(--mat-gap-edge-min), calc(var(--cw) * var(--mat-gap-edge)));
+    --gap-side: max(var(--mat-gap-side-min), calc(var(--cw) * var(--mat-gap-side)));
+    --strip-h: max(var(--touch-target), calc(var(--cw) * var(--mat-hand-strip)));
     font-size: var(--fs);
     position: relative;
     height: 100%;
-    /* The opponent's hand peeks into this strip from above the board. */
-    padding-top: calc(var(--cw) * 0.3);
+    /* The opponent's hand shows its cards' top strip, about 31% of a card
+       (its name, type band and the top of its art), in the board's top
+       margin, at least a fingertip tall on a touch screen. Yours shows
+       its strip in the bottom margin. */
+    --peek-h: calc(var(--cw) * 0.43);
+    padding: calc(var(--peek-h) + var(--gap-edge)) 0 calc(var(--strip-h) + var(--gap-edge));
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
+    row-gap: var(--gap-section);
   }
-  /* The opponent's name and status, small in the top-left corner. */
+  @media (pointer: coarse) { .board { --peek-h: max(var(--touch-target), calc(var(--cw) * 0.43)); } }
+  /* The players' names, small in the corners: the opponent's top left,
+     yours bottom left. */
   .board > .seat-name.top { position: absolute; top: 8px; left: 12px; z-index: 6; padding: 0; text-align: left; }
-  /* Your hand's cards keep their size, with less felt above them. */
-  .board :global(.hand:not(.small)) { min-height: 0; padding-top: calc(var(--cw) * 0.04); }
+  .board > .seat-name:not(.top) { position: absolute; bottom: 8px; left: 12px; z-index: 7; padding: 0; text-align: left; }
   /* Phone: the board fits the screen and never scrolls; only the hand, a
-     bench of more than five and the menus do. Cards are five and a bit
-     across, or smaller when the screen is short: the field (two benches
-     and two Active Spots) is about 6.6 card widths tall, beside about
-     372px of counters, strip, hand, padding and the Energy tucked under
-     each Active. */
+     bench of more than five and the menus do. --cw is a benched card's
+     width, the design's 56px, or smaller when the board area is short:
+     the cards (two Benches, two Active cards and the hand, whose cards
+     are your Active's size up to 70px) are about 7.79 --cw tall, beside
+     284px of counters, strip, Bench readouts, panel padding, the 10px foot
+     and the least gaps between the rows (290px on touch, whose Stadium is
+     a fingertip wide); a busy board gives up --fit as well (fitBoard). */
   .app.phone {
-    --cw: max(40px, min(calc((100vw - 32px) / 5.6), calc((100dvh - 372px - var(--fit, 0px)) / 6.6)));
+    --phone-rest: 284px;
+    --cw: clamp(40px, min(56px, (100vw - 72px) / 5, (var(--main-h, calc(100dvh - 52px)) - var(--phone-rest) - var(--fit, 0px)) / 7.79), 56px);
     --fs: var(--fs-13);
     --gutter: 0px;
     --gutter-y: 0px;
-    height: 100dvh;
-    min-height: 0;
   }
-  .app.phone main { justify-content: flex-start; overflow: hidden; border-radius: 0; }
+  /* The board's eight rows spread evenly down the screen, as the design
+     has them: the ::before is an empty first row, so the gap under the
+     header matches the gaps between the rows, and the hand sits 10px off
+     the foot. */
+  @media (pointer: coarse) { .app.phone { --phone-rest: 290px; } }
+  .app.phone main { justify-content: space-between; row-gap: var(--space-1); padding: 0 0 10px; overflow: hidden; border-radius: 0; }
+  .app.phone main::before { content: ''; order: -1; }
+  .app.phone main > .seat-name { order: 0; }
   /* A phone's header: a slim light bar of the dot, the turn tag and whose
      turn it is, then the warnings and ☰. */
   .app.phone header {
     flex-wrap: nowrap;
     min-height: calc(var(--space-12) + var(--space-1));
-    gap: var(--space-2);
-    padding: 0 var(--space-2) 0 var(--space-4);
+    gap: 10px;
+    padding: 0 10px 0 14px;
     font-size: var(--fs-ui);
   }
+  .app.phone header button { border-radius: var(--space-2); }
+  .app.phone header .burger svg { width: 20px; height: 20px; }
+  .app.phone header button.warn { gap: var(--space-1); padding: 0 10px; font-size: var(--fs-13); }
+  .app.phone header button.warn svg { width: 16px; height: 16px; }
   .turn-tag {
     padding: 3px 7px;
     border-radius: var(--radius-xs);
@@ -532,8 +704,10 @@
   .badge { display: none; }
   @media (max-height: 739px) {
     .app.phone { position: relative; }
-    .app.phone header { position: absolute; top: 0; left: 0; z-index: 6; min-height: 0; gap: 6px; padding: 2px 4px 2px 8px; background: none; border: 0; }
-    .app.phone header :is(.turn-tag, .whose, .spacer, .warn) { display: none; }
+    /* No room to spare: the rows may close up entirely. */
+    .app.phone main { row-gap: 0; }
+    .app.phone header { position: absolute; top: 0; left: 0; z-index: 6; min-height: 0; gap: 6px; padding: var(--space-1) 4px var(--space-1) 8px; background: none; border: 0; }
+    .app.phone header :is(.turn-tag, .whose, .spacer, .warn-wrap) { display: none; }
     .app.phone .dropdown { right: auto; left: 0; }
     .app.phone .badge {
       display: block;
@@ -588,15 +762,18 @@
     color: var(--ink);
     border-bottom: 1px solid var(--line);
     flex-wrap: wrap;
-    /* Header text is today's 13px up to 1920px wide and grows above it. */
-    font-size: max(var(--fs-ui), 0.677vw);
+    /* Header text is today's 13px up to 1920px wide and grows a little
+       above it, to 15px at 3840 (--fs-grow-13, app.css). */
+    font-size: var(--fs-grow-13);
   }
   header button, header select { font-size: inherit; }
   header svg { width: 1.38em; height: 1.38em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .brand { display: flex; align-items: center; gap: 0.77em; }
   .brand img { width: 2.3em; height: 2.3em; display: block; }
   .brand strong { font-size: 1.3em; font-weight: 700; }
-  .game { font-weight: var(--fw-ui-title); }
+  /* The breadcrumb: "Games /" in muted, the game's name in ink. */
+  .game { display: flex; align-items: center; gap: 0.6em; min-width: 0; color: var(--muted); }
+  .game strong { color: var(--ink); font-weight: var(--fw-ui-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .branch { display: flex; align-items: center; gap: 0.6em; color: var(--muted); font-size: 0.92em; }
   .branch select {
     height: 2.5em;
@@ -649,7 +826,6 @@
   .conn { display: inline-flex; align-items: center; gap: 0.46em; color: var(--muted); }
   .dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--danger); }
   .dot.on { background: var(--live); }
-  .app.phone .dot { width: 10px; height: 10px; }
   header button {
     display: grid;
     place-items: center;
@@ -664,6 +840,31 @@
   header button:hover:not(:disabled) { border-color: var(--control-line); background: var(--hover); }
   header button[aria-pressed='true'] { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
   header button[aria-pressed='true']:hover:not(:disabled) { border-color: var(--primary); background: var(--primary); }
+  /* The warnings pill: warn colours, a triangle, the count and the word. */
+  header button.warn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.46em;
+    width: auto;
+    height: 2.3em;
+    padding: 0 0.77em;
+    border-color: var(--warn-line);
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .warn-wrap { position: relative; }
+  .warn-list { max-width: min(420px, calc(100vw - 32px)); }
+  .warn-list .warning { max-width: none; }
+  header svg .fill { fill: currentColor; stroke: none; }
+  /* A narrow window and a tablet: the game's name alone, the select
+     without its label, the pill with only its count, and no theme button
+     (☰'s Interface choice stays). */
+  @media (max-width: 1199px) {
+    header :is(.crumb, .branch-label, .warn-word, .theme) { display: none; }
+  }
+  .app.tablet header :is(.crumb, .branch-label, .warn-word) { display: none; }
   .more { position: relative; }
   .backdrop { position: fixed; inset: 0; z-index: 70; }
 
@@ -681,7 +882,7 @@
     color: var(--ink);
     border-radius: var(--radius-m);
     box-shadow: var(--shadow-menu);
-    font-size: max(var(--fs-ui), 0.677vw);
+    font-size: var(--fs-grow-13);
   }
   /* On a phone the menu scrolls if it is taller than the screen. */
   .app.phone .dropdown { max-height: calc(100dvh - 60px); overflow-y: auto; max-width: calc(100vw - 16px); }
@@ -709,6 +910,11 @@
   .menu-label { flex-basis: 100%; padding: var(--space-2) var(--space-3) var(--space-1); color: var(--muted); font-size: var(--fs-label); font-weight: var(--fw-label); letter-spacing: var(--ls-label); text-transform: uppercase; }
   .account { color: var(--muted); padding: var(--space-1) var(--space-3); font-size: var(--fs-ui-s); }
 
+  header, .over-banner, .reveal-banner { flex: none; }
+  /* A phone's banners are one slim line where they can be, so the board
+     keeps its room. */
+  .app.phone :is(.over-banner, .reveal-banner) { padding: 2px var(--space-2); font-size: var(--fs-ui-s); letter-spacing: 0; line-height: 1.3; }
+  .app.phone.reveal { border-width: 3px; }
   .over-banner {
     background: var(--primary);
     color: var(--on-primary);
@@ -732,9 +938,15 @@
   /* safe: a board taller than its area scrolls from its top, rather than
      centring and cutting the top off out of reach. */
   main { overflow: auto; display: flex; flex-direction: column; justify-content: safe center; font-size: var(--fs); border-radius: var(--radius-l); }
-  /* Today's mat keeps a margin of mat above the opponent's fanned hand and
-     below yours, whose turned cards reach past their rows. */
-  .app:not(.landscape, .phone) main { padding-block: var(--space-3); }
+  /* Today's mat spreads its six rows evenly down the mat: the opponent's
+     block row, their Active, the strip, your Active, your block row and
+     your hand (Side.svelte lays each half's rows out as the mat's own). */
+  /* Its padding gives way once the board needs more room than shrinking
+     its cards can give (--fit grows past what the cards' least size
+     allows: a touch screen's busy mat under a banner), so the window
+     still never scrolls. */
+  .app:not(.landscape, .phone) main { padding: max(0px, 14px - var(--fit, 0px) / 4) 22px; justify-content: space-between; }
+  .app:not(.landscape, .phone) main > :global(.hand) { order: 6; }
   aside {
     background: var(--panel);
     color: var(--ink);
@@ -743,7 +955,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    max-height: calc(100vh - var(--header-height) - 2 * var(--gutter-y));
+    max-height: 100%;
     position: sticky;
     top: var(--gutter-y);
     overflow: hidden;
@@ -758,7 +970,7 @@
     max-height: none;
     position: static;
   }
-  aside h2 { font-size: max(var(--fs-ui), 0.677vw); font-weight: var(--fw-label); color: var(--muted); margin: var(--space-3) var(--space-3) 0; text-transform: uppercase; letter-spacing: var(--ls-label); }
+  aside h2 { font-size: var(--fs-grow-13); font-weight: var(--fw-ui-title); color: var(--muted); margin: 0; white-space: nowrap; }
   .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: var(--space-2); }
   aside .dock {
     display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0; margin-top: var(--space-2);
@@ -843,8 +1055,10 @@
   }
   /* On a touch screen every header control is at least a fingertip's 44px. */
   @media (pointer: coarse) {
+    .app:not(.phone) header { min-height: 60px; }
+    header button, .mode, .branch select { border-radius: var(--space-2); }
     header .warn, .mode { min-height: var(--touch-target); }
-    header .warn { min-width: var(--touch-target); justify-content: center; }
+    header .warn, header button.warn { min-width: var(--touch-target); height: var(--touch-target); justify-content: center; }
     .mode label { height: auto; }
     header button { width: var(--touch-target); height: var(--touch-target); }
     .branch select { height: var(--touch-target); }

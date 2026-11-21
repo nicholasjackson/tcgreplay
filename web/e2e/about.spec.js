@@ -9,7 +9,7 @@ import { test, expect, isTouch, isPhone } from './fixtures.js';
 // The shared wording, read straight from its file, not through the board's import.
 const shared = JSON.parse(readFileSync(new URL('../../internal/notice/notice.json', import.meta.url), 'utf8'));
 const companies = ['Nintendo', 'The Pokémon Company', 'Creatures', 'Game Freak'];
-const settings = ['autoplay', 'panelAt', 'prizeReminders', 'replaySpeed'];
+const settings = ['actionKey', 'autoplay', 'panelAt', 'prizeReminders', 'replaySpeed'];
 
 const menu = (page) => page.getByRole('button', { name: 'Menu' });
 
@@ -46,7 +46,17 @@ async function boxes(page) {
 }
 
 async function checkAbout(page, testInfo) {
-  const before = await boxes(page);
+  // The board settles first: its card size follows the measured board area
+  // a frame or two after a load or a resize, so two readings must agree.
+  let before = await boxes(page);
+  await expect
+    .poll(async () => {
+      const now = await boxes(page);
+      const same = JSON.stringify(now) === JSON.stringify(before);
+      before = now;
+      return same;
+    })
+    .toBe(true);
   expect(before.cards.length).toBeGreaterThan(0);
   await expect(page.locator('.modal')).toHaveCount(0);
 

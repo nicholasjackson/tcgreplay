@@ -116,7 +116,7 @@ test('with the beacon blocked, every page loads with its content and navigation,
     await expect(page.locator('header img[src="/logo.png"]'), `${path}: logo`).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Site' }), `${path}: site nav`).toBeAttached();
     await expect(page.locator('footer .fan-notice'), `${path}: footer`).toBeVisible();
-    await expect(page.locator('footer').getByRole('navigation', { name: 'Footer' }), `${path}: footer links`).toBeVisible();
+    await expect(page.locator('footer').getByRole('navigation', { name: 'Project' }), `${path}: footer links`).toBeVisible();
     expect(await page.evaluate(() => window.__beacon), `${path}: the beacon never ran`).toBeUndefined();
     await expect(page.getByRole('alert'), `${path}: no error shown`).toHaveCount(0);
 

@@ -69,6 +69,9 @@ export const app = $state({
   // Show "Knocked Out: take N prize cards" after a knock-out. Off for
   // practising without the hint. Remembered in this browser.
   prizeReminders: true,
+  // Show the key to the pile views' icon buttons under each view's header.
+  // "Hide key" turns it off in every view. Remembered in this browser.
+  actionKey: true,
   // The interface theme ('light' or 'dark') and the mat ('slate', 'felt'
   // or 'navy'), applied as data-theme and data-mat on the document root.
   // Remembered in this browser; index.html applies them before first paint.
@@ -85,6 +88,7 @@ export const MATS = ['slate', 'felt', 'navy'];
 try {
   if (localStorage.getItem('panelAt') === 'bottom') app.panelAt = 'bottom';
   if (localStorage.getItem('prizeReminders') === 'off') app.prizeReminders = false;
+  if (localStorage.getItem('actionKey') === 'off') app.actionKey = false;
   if (THEMES.includes(localStorage.getItem('theme'))) app.theme = localStorage.getItem('theme');
   if (MATS.includes(localStorage.getItem('mat'))) app.mat = localStorage.getItem('mat');
 } catch {
@@ -127,6 +131,16 @@ export function setPrizeReminders(on) {
   app.prizeReminders = on;
   try {
     localStorage.setItem('prizeReminders', on ? 'on' : 'off');
+  } catch {
+    // storage unavailable: the choice lasts for this page only
+  }
+}
+
+// setActionKey shows or hides the key to the pile views' icon buttons.
+export function setActionKey(on) {
+  app.actionKey = on;
+  try {
+    localStorage.setItem('actionKey', on ? 'on' : 'off');
   } catch {
     // storage unavailable: the choice lasts for this page only
   }

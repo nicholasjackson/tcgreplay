@@ -26,7 +26,7 @@ test('the privacy page is at /privacy and linked from every page', async ({ page
   const resp = await request.get('/privacy');
   expect(resp.status()).toBe(200);
   await page.goto('/');
-  await expect(page.locator('footer').getByRole('navigation', { name: 'Footer' }).getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
+  await expect(page.locator('footer').getByRole('navigation', { name: 'Project' }).getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
 });
 
 test('it says what is collected at sign-in, kept while playing, for how long, by whom, and never', async ({ page }) => {
@@ -122,8 +122,8 @@ test('its older statements match the playmat: sign-ins, disconnecting, card imag
   await expect(signIn).toContainText('keeps your sign-ins in its memory');
   await expect(signIn).toContainText('encrypted');
   await expect(signIn).toContainText('stay signed in when the playmat is updated');
-  await expect(signIn).toContainText('six display settings');
-  for (const word of ['replay speed', 'autoplay', 'where the panel sits', 'prize reminders', 'the interface theme', 'the mat']) await expect(signIn, word).toContainText(word);
+  await expect(signIn).toContainText('seven display settings');
+  for (const word of ['replay speed', 'autoplay', 'where the panel sits', 'prize reminders', 'the interface theme', 'the mat', 'the key to the action buttons']) await expect(signIn, word).toContainText(word);
 
   const howLong = section('How long it is kept');
   await expect(howLong).toContainText('does not tell the playmat');

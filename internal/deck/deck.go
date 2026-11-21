@@ -129,6 +129,37 @@ func BasicEnergyDef(name string) (string, bool) {
 	return id, ok
 }
 
+// logWords spells out the energy symbols TCG Live's decklist export uses
+// in card names ("Rocky {F} Energy") as the words its battle log uses
+// ("Rocky Fighting Energy"), and straightens curly apostrophes.
+var logWords = strings.NewReplacer(
+	"{G}", "Grass", "{R}", "Fire", "{W}", "Water", "{L}", "Lightning",
+	"{P}", "Psychic", "{F}", "Fighting", "{D}", "Darkness", "{M}", "Metal",
+	"{C}", "Colorless", "{N}", "Dragon", "{Y}", "Fairy",
+	"’", "'", "‘", "'",
+)
+
+// basicTypes are the types a Basic Energy card can provide.
+var basicTypes = map[string]bool{
+	"Grass": true, "Fire": true, "Water": true, "Lightning": true, "Psychic": true,
+	"Fighting": true, "Darkness": true, "Metal": true, "Fairy": true,
+}
+
+// LogName is the name TCG Live's battle log gives the card a decklist
+// names name. The export and the log disagree: the export writes energy
+// symbols ("Basic {F} Energy", "Rocky {F} Energy") where the log writes
+// words ("Basic Fighting Energy", "Rocky Fighting Energy"), and the card
+// database names most Basic Energy without "Basic" ("Fighting Energy")
+// where the log always has it. Anything matching a list against a log
+// must key the list by LogName, of the resolved card's name when known.
+func LogName(name string) string {
+	n := strings.Join(strings.Fields(logWords.Replace(name)), " ")
+	if t, ok := strings.CutSuffix(n, " Energy"); ok && basicTypes[t] {
+		return "Basic " + n
+	}
+	return n
+}
+
 // Resolve fills Def for each entry using db. Unresolved entries are listed
 // in the returned error but keep their names, so the deck still loads.
 func (l *List) Resolve(ctx context.Context, db cards.DB) error {

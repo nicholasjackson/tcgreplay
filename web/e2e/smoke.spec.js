@@ -17,8 +17,13 @@ test('touch profiles have a coarse touch pointer, desktop a fine mouse', async (
 
 test('loads the fixed position', async ({ page }) => {
   // Each name shows by its seat, or on a phone in the seat's counters.
+  // Each player is named: in their player block on today's mat, by name
+  // and seat on the landscape mat, and in their counters on a phone.
   const named = (seat, name) =>
-    page.locator('.seat-name').filter({ hasText: `${name} · ${seat}` }).or(page.getByRole('group', { name: `${seat} counters` }).getByText(name, { exact: true }));
+    page
+      .getByRole('region', { name: `${seat} side` }).locator('.seat-name strong', { hasText: name })
+      .or(page.locator('.seat-name').filter({ hasText: `${name} · ${seat}` }))
+      .or(page.getByRole('group', { name: `${seat} counters` }).getByText(name, { exact: true }));
   await expect(named('p1', 'Alice')).toBeVisible();
   await expect(named('p2', 'Bob')).toBeVisible();
 
@@ -27,9 +32,13 @@ test('loads the fixed position', async ({ page }) => {
     await expect(card(hand, name)).toBeAttached();
   }
   await expect(hand.locator('.count')).toHaveText('8 in hand');
-  // The opponent's hand: its fan, or on a phone the count in its counters.
+  // The opponent's hand: on the landscape mat its row of backs; on today's
+  // mat the Hand chip in their player block; on a phone their counter.
   await expect(
-    page.getByRole('list', { name: 'p2 hand' }).locator('.count').or(page.getByRole('group', { name: 'p2 counters' }).getByLabel('Hand 6')),
+    page
+      .getByRole('list', { name: 'p2 hand' }).locator('.count')
+      .or(page.getByRole('region', { name: 'p2 side' }).getByRole('button', { name: 'Hand 6' }))
+      .or(page.getByRole('group', { name: 'p2 counters' }).getByLabel('Hand 6')),
   ).toHaveText(/6 in hand|6/);
 
   const inPlay = {

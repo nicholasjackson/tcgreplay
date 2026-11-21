@@ -1,7 +1,7 @@
 ---
 title: Rewind and try another line
 description: Rewind an imported game to any turn and play out a different line on its own branch.
-order: 60
+order: 40
 ---
 
 Any imported game can be rewound to any point and played differently. The playmat keeps every line on its own **branch**, so trying something new never loses the original game, and you can switch between lines on the board's timeline.
@@ -32,4 +32,4 @@ Try that line against a few different opponent hands. Does it still work?
 
 ## Compare and keep
 
-Ask to compare the boards at the end of each line, or switch between branches on the timeline yourself. The branches last for the session; to keep the game itself, ask for its record (see [the hosted playmat's limits](/docs/limits)).
+Ask to compare the boards at the end of each line, or switch between branches on the timeline yourself. The branches last for the session; to keep the game itself, ask for its record (see [keeping the game](/docs/import#keeping-the-game)).

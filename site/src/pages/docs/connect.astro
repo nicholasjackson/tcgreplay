@@ -20,7 +20,7 @@ const check = 'What can the tcgreplay playmat do?';
   description="Connect the hosted tcgreplay playmat to claude.ai, ChatGPT or Claude Code, and check it works."
 >
   <h1>Get started</h1>
-  <CopyBlock text={site.mcpURL} label="The playmat's address" wrap class="address" />
+  <CopyBlock text={site.mcpURL} label="Playmat address" copyLabel="The playmat's address" wrap class="address" />
 
   <p>
     tcgreplay runs as a connector (an MCP server) for the AI assistant you already use. Add the hosted playmat at the
@@ -45,12 +45,14 @@ const check = 'What can the tcgreplay playmat do?';
     </li>
     <li>In a chat, make sure tcgreplay is switched on in the chat's tools menu.</li>
   </ol>
-  <p><strong>Check it works.</strong> Start a new chat and ask:</p>
-  <Prompt text={check} />
+  <Prompt
+    text={check}
+    label="Check it works. Start a new chat and ask:"
+    note="Claude should list the playmat's coaching workflows, such as importing a game, reviewing it and drills."
+  />
   <p>
-    Claude should list the playmat's coaching workflows, such as importing a game, reviewing it and drills. If it says
-    it can't reach the playmat, open the connector in <strong>Settings → Connectors</strong> and connect it again. If a
-    tool seems missing after an update, <a href="#refresh">refresh the connection</a>. See <a href="/docs/sign-in">signing in and opening the board</a> for what the sign-in looks like.
+    If it says it can't reach the playmat, open the connector in <strong>Settings → Connectors</strong> and connect it
+    again. If a tool seems missing after an update, <a href="#refresh">refresh the connection</a>. See <a href="/docs/sign-in">signing in and opening the board</a> for what the sign-in looks like.
   </p>
 
   <h2>ChatGPT</h2>
@@ -88,10 +90,9 @@ const check = 'What can the tcgreplay playmat do?';
     </li>
     <li>In a new chat, type <code>@</code> and pick tcgreplay.</li>
   </ol>
-  <p><strong>Check it works.</strong> Start a new chat and ask:</p>
-  <Prompt text={check} />
+  <Prompt text={check} label="Check it works. Start a new chat and ask:" note="ChatGPT should list the playmat's coaching workflows." />
   <p>
-    ChatGPT should list the playmat's coaching workflows. If it can't reach the playmat, open tcgreplay in <strong>Plugins</strong> and connect it again. If a tool seems missing after an update, <a href="#refresh">refresh the connection</a>. See <a href="/docs/sign-in">signing in and opening the board</a>.
+    If it can't reach the playmat, open tcgreplay in <strong>Plugins</strong> and connect it again. If a tool seems missing after an update, <a href="#refresh">refresh the connection</a>. See <a href="/docs/sign-in">signing in and opening the board</a>.
   </p>
 
   <h2>Claude Code</h2>
@@ -105,11 +106,9 @@ const check = 'What can the tcgreplay playmat do?';
       Your browser opens Google's account chooser; pick your account, then return to the terminal.
     </li>
   </ol>
-  <p><strong>Check it works.</strong> Ask Claude Code:</p>
-  <Prompt text={check} />
+  <Prompt text={check} label="Check it works. Ask Claude Code:" note="It should list the playmat's coaching workflows." />
   <p>
-    It should list the playmat's coaching workflows. If it can't reach the playmat, run <code>/mcp</code> again and
-    authenticate tcgreplay. If a tool seems missing after an update, <a href="#refresh">refresh the connection</a>. See <a href="/docs/sign-in">signing in and opening the board</a>.
+    If it can't reach the playmat, run <code>/mcp</code> again and authenticate tcgreplay. If a tool seems missing after an update, <a href="#refresh">refresh the connection</a>. See <a href="/docs/sign-in">signing in and opening the board</a>.
   </p>
 
   <h2>The Claude desktop app</h2>

@@ -1,0 +1,220 @@
+---
+// BoardPicture is the home page's picture of the board, as the Studio
+// design's Hero draws it: the desktop board (1440×900, light interface,
+// slate mat) mid-review, shrunk into a frame with radius-l corners, the
+// hero shadow and a control-line ring, with a caption under it. It is a
+// simplified board drawn in the board's own tokens, with text card faces in
+// place of card images: no artwork, no logos loaded, no image at all (the
+// mark in its header is drawn inline). It is a still picture: one role="img"
+// with a description, the board inside hidden from assistive technology.
+//
+// The board is drawn at full size and scaled to the frame's width: 0.46 on
+// a laptop (a 662px frame), less on a phone. CSS sets the scale for common
+// widths; a small script fits it to the frame exactly.
+type Card = { name: string; kind?: 'trainer' | 'energy' };
+const oppBench: (Card | null)[] = [{ name: 'Abra' }, { name: 'Dudunsparce' }, { name: 'Fezandipiti ex' }, null, null];
+const myBench: (Card | null)[] = [{ name: 'Riolu' }, { name: 'Hariyama' }, { name: 'Solrock' }, { name: 'Lunatone' }, null];
+const hand: Card[] = [
+  { name: 'Ultra Ball', kind: 'trainer' },
+  { name: 'Fighting Energy', kind: 'energy' },
+  { name: "Boss's Orders", kind: 'trainer' },
+  { name: 'Riolu' },
+  { name: "Lillie's Determination", kind: 'trainer' },
+  { name: 'Fighting Gong', kind: 'trainer' },
+  { name: 'Premium Power Pro', kind: 'trainer' },
+];
+const actives = {
+  p2: { name: 'Kadabra', hp: 50, max: 80, damage: 30 },
+  p1: { name: 'Mega Lucario ex', hp: 280, max: 340, damage: 60 },
+};
+// The timeline's scrubber, one segment per stretch of the game, and its
+// lines around the current step (217).
+const scrub: { flex: number; colour: string }[] = [
+  { flex: 2, colour: 'scrub-setup' },
+  { flex: 3, colour: 'scrub-p2' },
+  { flex: 3, colour: 'scrub-p1' },
+  { flex: 4, colour: 'scrub-p2' },
+  { flex: 4, colour: 'scrub-p1' },
+  { flex: 5, colour: 'scrub-p2' },
+  { flex: 3, colour: 'scrub-p1' },
+  { flex: 4, colour: 'scrub-p2' },
+  { flex: 3, colour: 'primary' },
+  { flex: 1, colour: 'line' },
+];
+const lines: { n: number; text: string; at?: 'now' | 'ahead' }[] = [
+  { n: 212, text: 'Alice drew a card' },
+  { n: 213, text: 'Alice played Ultra Ball, discarding 2 cards' },
+  { n: 215, text: 'Alice searched her deck for Solrock and benched it' },
+  { n: 217, text: 'Alice attached Fighting Energy to Mega Lucario ex', at: 'now' },
+  { n: 218, text: "Alice played Boss's Orders", at: 'ahead' },
+  { n: 219, text: 'Mega Lucario ex used Aura Jab on Kadabra for 130', at: 'ahead' },
+];
+const label =
+  'The tcgreplay board mid-review: Mega Lucario ex faces Kadabra on the mat, with the turn strip, the Bench and the hand, and the timeline beside it at step 217.';
+---
+<figure class="picture" data-board-picture>
+  <div class="frame" role="img" aria-label={label}>
+    <div class="mb" aria-hidden="true">
+      <div class="mb-head">
+        <svg class="mark" viewBox="0 0 30 30" aria-hidden="true" focusable="false"><rect class="mark-tile" width="30" height="30" rx="8"></rect><rect class="mark-back" x="7" y="8" width="10" height="14" rx="2" transform="rotate(-12 12 15)"></rect><rect class="mark-front" x="12" y="8" width="10" height="14" rx="2"></rect><path class="mark-arrow" d="M15.2 17.2a2.2 2.2 0 1 0 2.2-2.2h-1"></path></svg>
+        <span class="mb-word">TCG Replay</span>
+        <span class="mb-crumb">Games / <b>Alice vs Bob</b></span>
+        <span class="mb-seg"><span>Play</span><span class="on">Review</span></span>
+        <span class="grow"></span>
+        <span class="mb-live"><i></i>Live</span>
+      </div>
+      <div class="mb-body">
+        <div class="mb-mat">
+          <div class="mb-zone">
+            {oppBench.map((c) => (c ? <div class="mb-card">{c.name}</div> : <div class="mb-slot"></div>))}
+          </div>
+          {(['p2', 'p1'] as const).map((side) => {
+            const a = actives[side];
+            return (
+              <Fragment>
+                {side === 'p1' && (
+                  <div class="mb-strip">
+                    <div class="mb-card tr mini"></div>
+                    <span class="mb-stadium">Gravity Mountain</span>
+                    <span class="grow"></span>
+                    <span class="mb-tag">T5</span>
+                    <strong class="mb-turn">Alice's turn</strong>
+                    <span class="grow"></span>
+                    <span class="mb-btn">Flip coin</span>
+                    <span class="mb-btn">End action</span>
+                    <span class="mb-end">End turn</span>
+                  </div>
+                )}
+                <div class:list={['mb-active', side]}>
+                  <div class="mb-card big">{a.name}</div>
+                  <div class="mb-read">
+                    <b>{a.name}</b>
+                    <div class="mb-hp">{a.hp} <small>/ {a.max} HP</small></div>
+                    <div class="mb-bar"><i style={`width: ${Math.round((a.hp / a.max) * 100)}%`}></i></div>
+                    <span class="mb-dmg">−{a.damage}</span>
+                  </div>
+                </div>
+              </Fragment>
+            );
+          })}
+          <div class="mb-zone">
+            {myBench.map((c) => (c ? <div class="mb-card">{c.name}</div> : <div class="mb-slot"></div>))}
+          </div>
+          <div class="mb-hand">
+            {hand.map((c) => <div class:list={['mb-card', 'hand', { tr: c.kind === 'trainer', en: c.kind === 'energy' }]}>{c.name}</div>)}
+            <span class="mb-count">{hand.length} in hand</span>
+          </div>
+        </div>
+        <div class="mb-tl">
+          <div class="mb-ctl">
+            <div class="mb-ctl-row"><span class="mb-ib"></span><span class="mb-play"></span><span class="mb-ib"></span><span class="mb-step">#217</span></div>
+            <div class="mb-scrub">{scrub.map((s) => <i style={`flex: ${s.flex}; background: var(--${s.colour})`}></i>)}</div>
+          </div>
+          {lines.map((l) => (
+            <div class:list={['mb-row', l.at]}><span>#{l.n}</span>{l.text}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+  <figcaption>The live board your assistant drives, mid-review: step 217 of an imported game.</figcaption>
+</figure>
+
+<script>
+  // Fits the board to its frame: the frame's width over the board's 1440px.
+  for (const frame of document.querySelectorAll<HTMLElement>('[data-board-picture] .frame')) {
+    const fit = () => frame.style.setProperty('--board-scale', String(frame.clientWidth / 1440));
+    fit();
+    new ResizeObserver(fit).observe(frame);
+  }
+</script>
+
+<style>
+  .picture { flex: 0 1 662px; min-width: 0; max-width: 100%; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .frame {
+    --board-scale: 0.46;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1440 / 900;
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    box-shadow: var(--shadow-hero), 0 0 0 1px var(--control-line);
+    background: var(--mat-surface);
+  }
+  @media (max-width: 45rem) {
+    .frame { --board-scale: 0.2486; }
+  }
+  figcaption { font-size: var(--fs-13); line-height: 1.5; color: var(--muted); }
+
+  /* The board, at full size, scaled into the frame. */
+  .mb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1440px;
+    height: 900px;
+    transform: scale(var(--board-scale));
+    transform-origin: 0 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.4;
+  }
+  .grow { flex: 1; }
+  .mb-head { height: 56px; flex: none; display: flex; align-items: center; gap: 18px; padding: 0 20px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .mark { width: 30px; height: 30px; flex: none; }
+  .mark-tile { fill: var(--brand-navy); }
+  .mark-back { fill: none; stroke: var(--brand-cyan); stroke-width: 1.8; }
+  .mark-front { fill: var(--brand-navy); stroke: var(--glyph-ink); stroke-width: 1.8; }
+  .mark-arrow { fill: none; stroke: var(--brand-cyan); stroke-width: 1.6; stroke-linecap: round; }
+  .mb-word { font-weight: 700; font-size: var(--fs-17); }
+  .mb-crumb { font-size: var(--fs-13); color: var(--muted); }
+  .mb-crumb b { color: var(--ink); font-weight: 600; }
+  .mb-seg { display: flex; border: 1px solid var(--control-line); border-radius: var(--radius-s); overflow: hidden; }
+  .mb-seg span { height: 30px; display: grid; place-items: center; padding: 0 14px; font-size: var(--fs-13); font-weight: 600; color: var(--muted); background: var(--panel); }
+  .mb-seg .on { background: var(--primary); color: var(--on-primary); }
+  .mb-live { display: flex; align-items: center; gap: 6px; font-size: var(--fs-13); color: var(--muted); }
+  .mb-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--live); }
+  .mb-body { flex: 1; display: flex; min-height: 0; padding: 12px; gap: 12px; }
+  .mb-mat { flex: 1; min-width: 0; border-radius: var(--radius-l); background: var(--mat-surface); color: var(--mat-ink); padding: 14px 22px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+  .mb-zone { display: flex; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--mat-zone); }
+  .mb-card { flex: none; width: 62px; height: 86px; border-radius: var(--radius-s); background: var(--card-face); box-shadow: inset 0 0 0 2px var(--card-border-pokemon), var(--shadow-card); color: var(--card-face-ink); padding: 5px; font-size: var(--fs-9); font-weight: 700; line-height: 1.2; overflow: hidden; }
+  .mb-card.tr { background: var(--card-face-trainer); box-shadow: inset 0 0 0 2px var(--card-border-trainer), var(--shadow-card); }
+  .mb-card.en { box-shadow: inset 0 0 0 2px var(--card-border-energy), var(--shadow-card); }
+  .mb-card.big { width: 78px; height: 109px; }
+  .mb-card.hand { width: 72px; height: 100px; }
+  .mb-card.mini { width: 34px; height: 48px; padding: 0; }
+  .mb-slot { width: 62px; height: 86px; border-radius: var(--radius-s); background: var(--mat-slot); box-shadow: inset 0 0 0 1px var(--mat-slot-line); }
+  .mb-active { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 12px; background: var(--mat-zone); }
+  .mb-active.p1 { box-shadow: inset 0 0 0 1.5px var(--seat-p1-mat); }
+  .mb-active.p2 { box-shadow: inset 0 0 0 1.5px var(--seat-p2-mat); }
+  .mb-read { width: 150px; display: flex; flex-direction: column; gap: 6px; }
+  .mb-read b { font-size: var(--fs-14); font-weight: 600; }
+  .mb-hp { font: 600 var(--fs-24) / 1 var(--font-mono); }
+  .mb-hp small { font: 500 var(--fs-13) var(--font-mono); color: var(--mat-muted); }
+  .mb-bar { height: 6px; border-radius: 3px; background: var(--mat-track); }
+  .mb-bar i { display: block; height: 100%; border-radius: 3px; background: var(--hp); }
+  .mb-dmg { align-self: flex-start; padding: 1px 6px; border-radius: var(--radius-xs); background: var(--damage-bg); color: var(--damage-ink); font: 600 var(--fs-12) var(--font-mono); }
+  .mb-strip { align-self: stretch; display: flex; align-items: center; gap: 14px; padding: 8px 10px; border-radius: 12px; background: var(--mat-strip); }
+  .mb-stadium { font-size: var(--fs-13); font-weight: 600; }
+  .mb-turn { font-size: var(--fs-14); }
+  .mb-tag { font: 600 var(--fs-12) var(--font-mono); padding: 3px 8px; border-radius: var(--radius-xs); background: var(--brand-navy); color: var(--turn-tag-ink); }
+  .mb-btn { height: 34px; display: grid; place-items: center; padding: 0 12px; border-radius: var(--radius-s); border: 1px solid var(--mat-slot-line); background: var(--mat-zone); color: var(--mat-ink); font-size: var(--fs-13); font-weight: 600; }
+  .mb-end { height: 34px; display: grid; place-items: center; padding: 0 14px; border-radius: var(--radius-s); background: var(--accent); color: var(--on-accent); font-size: var(--fs-13); font-weight: 700; }
+  .mb-hand { display: flex; align-items: flex-end; gap: 8px; }
+  .mb-count { margin-left: 8px; font: 500 var(--fs-12) var(--font-mono); color: var(--mat-muted); }
+  .mb-tl { width: var(--timeline-width); flex: none; border-radius: var(--radius-l); background: var(--panel); box-shadow: 0 0 0 1px var(--line); display: flex; flex-direction: column; }
+  .mb-ctl { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); }
+  .mb-ctl-row { display: flex; align-items: center; gap: 6px; font: 600 var(--fs-13) var(--font-mono); }
+  .mb-step { margin-left: 6px; }
+  .mb-ib { width: 36px; height: 36px; border-radius: var(--radius-s); border: 1px solid var(--control-line); }
+  .mb-play { width: 44px; height: 36px; border-radius: var(--radius-s); background: var(--primary); }
+  .mb-scrub { display: flex; gap: 2px; height: 8px; }
+  .mb-scrub i { border-radius: 2px; }
+  .mb-row { padding: 6px 14px; display: flex; gap: 8px; font-size: var(--fs-13); }
+  .mb-row span { font: 500 var(--fs-11) var(--font-mono); color: var(--muted); width: 34px; flex: none; padding-top: 2px; }
+  .mb-row.now { background: var(--current); }
+  .mb-row.ahead { opacity: 0.5; }
+</style>

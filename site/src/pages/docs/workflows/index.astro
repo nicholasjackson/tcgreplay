@@ -1,24 +1,27 @@
 ---
-// Lists every coaching workflow the playmat offers as cards, in groups
+// Lists every coaching workflow the playmat offers as GuideCards, in groups
 // (after a game, practice, play: lib/workflows.ts), each group in the
-// playmat's own order. A card shows the workflow's title, the guide's name
-// and its one-line description, and the page's first example prompt; the
-// whole card opens the workflow's page. Each group's h2 is an entry in the
-// docs layout's On this page list.
+// playmat's own order. As the Studio design draws it, the page has no docs
+// sidebar and no On this page rail: the cards use the full column. A card
+// shows the workflow's title, the guide's name and the page's first example
+// prompt as a chat bubble, then "Read the guide →"; the whole card opens the
+// workflow's page (its title link is stretched over the card). Each
+// workflow's page carries the guide's one-line description. A slate band
+// at the foot points to rewinding.
 import Docs from '../../../layouts/Docs.astro';
 import { groupWorkflows } from '../../../lib/workflows';
 
 const groups = await groupWorkflows();
 ---
-<Docs title="Coaching workflows" description="Every coaching workflow the tcgreplay playmat offers, with example prompts.">
+<Docs title="Coaching workflows" description="Every coaching workflow the tcgreplay playmat offers, with example prompts." sidebar={false}>
   <h1>Coaching workflows</h1>
   <p class="intro">
     The playmat has a built-in guide for each of these. You don't need to name it: ask in your own words, like the
     example prompts on each page, and your assistant follows the right guide.
   </p>
   {groups.map((g) => (
-    <section class="group" data-workflow-group={g.id}>
-      <h2>{g.title}</h2>
+    <section class="group" data-workflow-group={g.id} aria-labelledby={`group-${g.id}`}>
+      <h2 id={`group-${g.id}`}>{g.title}</h2>
       <ol class="cards" data-workflows>
         {g.workflows.map((w) => (
           <li class="card" data-guide={w.name}>
@@ -26,7 +29,6 @@ const groups = await groupWorkflows();
               <a class="card-link" href={`/docs/workflows/${w.name}`}>{w.page.title}</a>
               <span class="guide-name">{w.name}</span>
             </div>
-            <p class="guide-line">{w.description}</p>
             <p class="bubble">{w.page.prompts[0]}</p>
             <span class="more" aria-hidden="true">Read the guide →</span>
           </li>
@@ -49,16 +51,19 @@ const groups = await groupWorkflows();
     margin: 0 0 14px;
     font-size: var(--fs-13);
     font-weight: 600;
+    line-height: 1.6;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
   }
-  /* Equal columns: a group's odd card keeps its neighbours' width. */
-  .cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--space-4); }
+  /* The cards wrap at 320px and are at most 560px wide. */
+  .cards { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-4); }
 
   /* A card: the title is the link, stretched over the whole card. */
   .card {
     position: relative;
+    flex: 1 1 320px;
+    max-width: 560px;
     min-width: 0;
     margin: 0;
     display: flex;
@@ -70,21 +75,20 @@ const groups = await groupWorkflows();
     box-shadow: 0 0 0 1px var(--line);
     color: var(--ink);
   }
-  .card:hover { box-shadow: 0 0 0 1px var(--control-line); }
+  .card:hover { box-shadow: 0 0 0 1px var(--primary); }
   .card:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
-  .card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) 10px; }
+  .card-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) 10px; }
   .card-link {
     flex: 1 1 auto;
     font-size: var(--fs-card-title);
-    font-weight: 600;
-    line-height: 1.35;
+    font-weight: var(--fw-card-title);
+    line-height: var(--lh-card-title);
     color: var(--ink);
     text-decoration: none;
   }
   .card-link:focus-visible { outline: none; }
   .card-link::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-l); }
   .guide-name { font: 500 var(--fs-12) var(--font-mono); color: var(--muted); }
-  .guide-line { margin: 0; font-size: var(--fs-14); line-height: 1.5; color: var(--ink-soft); }
   .bubble {
     align-self: flex-start;
     margin: 0;
@@ -95,10 +99,10 @@ const groups = await groupWorkflows();
     font-size: var(--fs-14);
     line-height: 1.45;
   }
-  .more { margin-top: auto; font-size: var(--fs-14); font-weight: 600; color: var(--primary); }
+  .more { font-size: var(--fs-14); font-weight: 600; color: var(--primary); }
   .card:hover .more { text-decoration: underline; }
 
-  /* Rewinding: a dark band under the groups. */
+  /* Rewinding: a slate band under the groups, like the board's mat. */
   .rewind {
     display: flex;
     align-items: center;
@@ -106,9 +110,9 @@ const groups = await groupWorkflows();
     margin: 0;
     padding: var(--space-4) 18px;
     border-radius: 12px;
-    background: var(--panel-raised);
-    color: var(--ink);
+    background: var(--slate-surface);
+    color: var(--slate-ink);
   }
-  .rewind svg { flex: none; width: 22px; height: 22px; color: var(--primary); }
-  .rewind a { color: var(--primary); font-weight: 600; }
+  .rewind svg { flex: none; width: 22px; height: 22px; color: var(--brand-cyan); }
+  .rewind a { color: var(--turn-tag-ink); font-weight: 600; }
 </style>

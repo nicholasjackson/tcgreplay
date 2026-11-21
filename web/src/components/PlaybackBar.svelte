@@ -2,7 +2,7 @@
   // The playback controls: previous step, play or pause, next step, the
   // board's position, a scrubber coloured by whose turn each stretch is,
   // the speed and Go live. where places them: 'side' heads the timeline
-  // beside the board (two rows), 'dock' is the docked timeline's one
+  // beside the board (one row over the scrubber), 'dock' is the docked timeline's one
   // control row, and 'overlay' floats over the board while the timeline is
   // hidden or a phone's sheet, showing only during a replay or held moves.
   // An autoplay of the assistant's moves can be paused and skipped, not
@@ -20,6 +20,7 @@
   const live = $derived(!r && !app.held);
   const current = $derived(r && r.index >= 0 ? r.steps[r.index] : null);
   const turns = $derived(groupTurns(app.snap?.log || []));
+  const touch = $derived(app.layout === 'tablet');
 
   // The scrubber's stops (the events it can move to, in order) and its
   // stretches, one per player's half, as long as the half has events:
@@ -121,20 +122,15 @@
       </button>
       <span class="pos" title={current ? turnOf(current.board) : ''}>#{at} <span class="of">/ {head}</span></span>
       {#if where === 'overlay' && current}<span class="turn">{turnOf(current.board)}</span>{/if}
-      {#if where === 'dock' || where === 'overlay'}{@render scrubber()}{/if}
-      {#if where !== 'side'}
-        {@render speed()}
-        {@render goLiveButton()}
-      {/if}
+      {#if where === 'dock' || where === 'overlay'}{@render scrubber()}{:else}<span class="push"></span>{/if}
+      {@render speed()}
+      <!-- A touch screen's timeline beside the board drops Go live while
+           the board is live, where it has nothing to do. -->
+      {#if !(where === 'side' && touch && live)}{@render goLiveButton()}{/if}
     </div>
     {#if where === 'side'}
-      <!-- Beside the board the column is narrow: the scrubber, the speed
-           and Go live take a second row. -->
-      <div class="row">
-        {@render scrubber()}
-        {@render speed()}
-        {@render goLiveButton()}
-      </div>
+      <!-- Beside the board the scrubber runs under the controls. -->
+      {@render scrubber()}
     {/if}
     {#if r?.auto}
       <div class="row msg">{app.assistant} is playing</div>
@@ -159,7 +155,7 @@
     color: var(--ink);
     font-size: var(--fs-ui);
   }
-  .bar.side { padding: var(--space-2) var(--space-3) var(--space-3); border-bottom: 1px solid var(--line); }
+  .bar.side { gap: 10px; padding: var(--space-3) 14px; border-bottom: 1px solid var(--line); }
   .bar.dock { flex: 1; min-width: 0; }
   .bar.overlay {
     padding: var(--space-2) var(--space-3);
@@ -170,7 +166,8 @@
     max-width: calc(100vw - 32px);
   }
   .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
-  .bar.dock .row { flex-wrap: nowrap; }
+  .bar.side .row, .bar.dock .row { flex-wrap: nowrap; }
+  .push { flex: 1; }
   button {
     display: inline-grid;
     place-items: center;
@@ -185,17 +182,20 @@
   button:hover:not(:disabled) { border-color: var(--control-line); background: var(--hover); }
   button:focus-visible, select:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
   button.icon { width: 36px; height: 36px; padding: 0; }
+  .bar.dock button.icon { width: 34px; height: 34px; }
   button.play { width: 44px; border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
   button.play:hover:not(:disabled) { border-color: var(--primary); background: var(--primary); }
   button.text { color: var(--muted); white-space: nowrap; }
   svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   svg.solid { fill: currentColor; stroke: none; }
   .pos { margin-left: var(--space-1); font: var(--fw-num) var(--fs-num) var(--font-mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .of { color: var(--muted); font-weight: 500; }
+  .of { color: var(--muted); font-weight: 500; white-space: nowrap; }
   .turn { color: var(--muted); white-space: nowrap; }
   /* The scrubber: the stretches, under a transparent native slider that
-     takes the pointer and the keys. */
+     takes the pointer and the keys. Beside the board it is a bar of its
+     own under the controls. */
   .scrub { position: relative; flex: 1; min-width: 80px; height: 30px; display: flex; align-items: center; }
+  .bar.side .scrub { flex: none; height: 8px; }
   .bar.overlay .scrub { flex: 1 1 160px; }
   .stretches { display: flex; gap: 2px; width: 100%; height: 8px; pointer-events: none; }
   .bar.dock .stretches { height: 10px; margin: 0 var(--space-2); }
@@ -206,27 +206,37 @@
   .s-now { background: var(--primary); }
   .s-ahead { background: var(--line); }
   .scrub input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .bar.side .scrub input { inset: -6px 0; height: auto; }
   .scrub input:disabled { cursor: default; }
   .scrub:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--radius-s); }
+  /* The speed: a select drawn as the design's "1×" button. */
   .speed select {
+    appearance: none;
     height: 30px;
-    padding: 0 var(--space-1);
+    padding: 0 9px;
     border-radius: var(--radius-s);
     border: 1px solid var(--control-line);
     background: var(--panel);
     color: var(--ink);
     font: 600 var(--fs-12) var(--font-mono);
+    text-align: center;
     cursor: pointer;
   }
+  .speed select:hover { background: var(--hover); }
   .msg { color: var(--muted); font-weight: 600; }
   .auto { display: flex; align-items: center; gap: var(--space-1); font-weight: 400; cursor: pointer; }
   .auto input { margin: 0; accent-color: var(--primary); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   /* On a touch screen every control is a fingertip's 44px. */
   @media (pointer: coarse) {
-    button, button.icon, .speed select { min-width: var(--touch-target); height: var(--touch-target); }
+    button, button.icon, .bar.dock button.icon, .speed select { min-width: var(--touch-target); height: var(--touch-target); }
     button.play { width: 52px; }
     .scrub { height: var(--touch-target); }
+    .bar.side .scrub { height: 10px; }
+    /* The touch column (362px): the position wraps under its total only if it must. */
+    .bar.side .pos { flex: 1; min-width: 0; white-space: normal; }
+    .bar.side .stretches { height: 10px; }
+    .bar.side .scrub input { inset: -17px 0; }
     .auto { min-height: var(--touch-target); min-width: var(--touch-target); }
   }
 </style>

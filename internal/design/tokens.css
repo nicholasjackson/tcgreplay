@@ -99,7 +99,6 @@
   --highlight-glow: #38BDF8aa;
   --energy-ring: #fff;
   --glyph-ink: #fff;
-  --assumed-badge: #7a3fd0;
   --condition-poisoned: #7b1fa2;
   --condition-burned: #ef6c00;
   --mask-fade: linear-gradient(90deg, #000 85%, transparent);
@@ -162,11 +161,13 @@
   --fs-14: 14px;
   --fs-15: 15px;
   --fs-16: 16px;
+  --fs-17: 17px;
   --fs-18: 18px;
   --fs-19: 19px;
   --fs-22: 22px;
   --fs-24: 24px;
   --fs-28: 28px;
+  --fs-30: 30px;
   --fs-40: 40px;
   --fs-r65: 0.65rem;
   --fs-r75: 0.75rem;
@@ -209,6 +210,14 @@
   --header-height: 56px;
   --content-width: 1200px;
   --prose-width: 720px;
+  --timeline-width-max: 520px;
+  --mat-gap-section: 0.32;
+  --mat-gap-section-min: 24px;
+  --mat-gap-edge: 0.22;
+  --mat-gap-edge-min: 16px;
+  --mat-gap-side: 0.4;
+  --mat-gap-side-min: 32px;
+  --mat-hand-strip: 0.46;
   color-scheme: light;
 }
 [data-theme='dark'] {

@@ -1,10 +1,16 @@
 ---
-// Prompt is an example prompt to say to the assistant, with a Copy button.
+// Prompt is an example prompt to say to the assistant: a chat bubble with
+// an icon-only Copy button ("Copy the prompt"), in a white card. label:
+// the card's heading ("Example prompt", or the words that introduce it,
+// "Check it works. Start a new chat and ask:"); set it to '' for a bare
+// card (the text around it introduces the prompt). note: a line under the
+// bubble, inside the card (what the assistant should answer).
 import CopyBlock from './CopyBlock.astro';
 interface Props {
   text: string;
   label?: string;
+  note?: string;
 }
-const { text, label = 'Example prompt' } = Astro.props;
+const { text, label = 'Example prompt', note } = Astro.props;
 ---
-<CopyBlock text={text} label={label} wrap class="prompt" />
+<CopyBlock text={text} label={label || undefined} copyLabel="the prompt" wrap icon copyName="Copy the prompt" class:list={['prompt', { bare: !label }]}>{note && <p class="prompt-note">{note}</p>}</CopyBlock>

@@ -1,8 +1,8 @@
 // Every coaching workflow the playmat offers has a page with at least one
-// copyable example prompt, listed in groups (after a game, practice, play)
-// and in the playmat's own order within each group, showing the
-// description from its guide; the rewind page explains branching with a
-// prompt. The guides are read here from the playmat's files, independently
+// copyable example prompt and the description from its guide, listed in
+// groups (after a game, practice, play) and in the playmat's own order
+// within each group, each card with its guide name and an example prompt;
+// the rewind page explains branching with a prompt. The guides are read here from the playmat's files, independently
 // of the site's own loader.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -83,7 +83,7 @@ test('each workflow page names its group: import and review after a game, the dr
   });
 });
 
-test('the workflows page lists them in groups, After a game, Practice and Play, each in the playmat order, with their guide descriptions', async ({ page }) => {
+test('the workflows page lists them in groups, After a game, Practice and Play, each in the playmat order, with their guide names and a prompt', async ({ page }) => {
   await page.goto('/docs/workflows');
   const sections = page.locator('[data-workflow-group]');
   expect(await sections.evaluateAll((ss) => ss.map((s) => s.dataset.workflowGroup))).toEqual(groups.map((g) => g.id));
@@ -99,15 +99,18 @@ test('the workflows page lists them in groups, After a game, Practice and Play, 
   const items = page.locator('[data-workflows] > li');
   const names = await items.evaluateAll((lis) => lis.map((li) => li.dataset.guide));
   expect([...names].sort()).toEqual([...order].sort());
-  const guides = Object.fromEntries(readGuides().map((g) => [g.name, g.description]));
   for (const name of names) {
     const li = page.locator(`[data-workflows] > li[data-guide="${name}"]`);
-    await expect(li).toContainText(guides[name]);
+    // The card names its guide and shows an example prompt from the
+    // workflow's page; the guide's description is on that page.
+    await expect(li).toContainText(name);
+    await expect(li.locator('.bubble')).not.toBeEmpty();
     await expect(li.getByRole('link')).toHaveAttribute('href', `/docs/workflows/${name}`);
   }
-  // The group headings are the page's On this page entries.
-  const toc = page.getByRole('navigation', { name: 'On this page' }).getByRole('link');
-  await expect(toc).toHaveText(groups.map((g) => g.title));
+  // As the Studio design draws it, the page has no docs sidebar and no On
+  // this page rail: the cards use the full column.
+  await expect(page.getByRole('navigation', { name: 'Docs', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'On this page' })).toHaveCount(0);
 });
 
 test('a workflow prompt copies exactly its text', async ({ context, page, baseURL }) => {

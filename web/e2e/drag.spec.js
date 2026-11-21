@@ -2,7 +2,7 @@
 // mouse on the desktop, through the one pointer layer. Each drop expects
 // the same hand-written timeline line in every profile, so a touch drop
 // and a mouse drop are held to the same result.
-import { test, expect, act, drag, press, timelineLines, isTouch, pile, pileLabel, discardTop, isPhone, touchStart } from './fixtures.js';
+import { test, expect, act, drag, press, timelineLines, isTouch, pile, pileLabel, discardTop, isPhone, touchStart, expectAttached } from './fixtures.js';
 
 const hand = (page) => page.getByRole('list', { name: 'p1 hand' });
 const region = (page, name) => page.getByRole('region', { name, exact: true });
@@ -40,14 +40,14 @@ const drops = [
     from: (page) => titled(hand(page), 'Fighting Energy (p1-18)'),
     to: (page) => region(page, 'p1 Active'),
     lines: ['p1 moved p1-18 Fighting Energy p1:hand → p1:active as energy'],
-    check: (page) => expect(titled(region(page, 'p1 Active'), 'Fighting Energy (p1-18)')).toBeVisible(),
+    check: (page, testInfo) => expectAttached(page, 'p1 Active', 'Fighting Energy (p1-18)', testInfo),
   },
   {
     name: 'a Tool onto a bench slot attaches it',
     from: (page) => titled(hand(page), 'Band (p1-9)'),
     to: (page) => region(page, 'p1 bench 2'),
     lines: ['p1 moved p1-9 Band p1:hand → p1:bench:1 as tool'],
-    check: (page) => expect(titled(region(page, 'p1 bench 2'), 'Band (p1-9)')).toBeVisible(),
+    check: (page, testInfo) => expectAttached(page, 'p1 bench 2', 'Band (p1-9)', testInfo),
   },
   {
     name: 'a Pokémon onto a Pokémon in play evolves it',
@@ -56,7 +56,8 @@ const drops = [
     lines: ['p1 moved p1-3 Lucario p1:hand → p1:bench:0'],
     check: async (page) => {
       await expect(titled(region(page, 'p1 bench 1'), 'Lucario (p1-3)')).toBeVisible();
-      await expect(region(page, 'p1 bench 1').locator('.chain')).toHaveText('2');
+      // No chain count on the card: the chain is in the Pokémon's sheet.
+      await expect(region(page, 'p1 bench 1').locator('.chain')).toHaveCount(0);
     },
   },
   {
@@ -133,7 +134,7 @@ for (const d of drops) {
       await drag(page, from, d.to(page), testInfo);
     }
     await expectNewLines(page, before, d.lines);
-    await d.check(page);
+    await d.check(page, testInfo);
   });
 }
 

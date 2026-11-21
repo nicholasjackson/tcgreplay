@@ -24,7 +24,7 @@ const beacon = 'https://static.cloudflareinsights.com/beacon.min.js';
 const stub = 'window.__beacon = (window.__beacon || 0) + 1;';
 // The board's own settings (web/src/lib/playback.svelte.js and
 // web/src/lib/store.svelte.js): the only keys it may store.
-const settings = ['replaySpeed', 'autoplay', 'panelAt', 'prizeReminders'];
+const settings = ['replaySpeed', 'autoplay', 'panelAt', 'prizeReminders', 'actionKey'];
 
 // test starts every test from this server's fixed position, with every
 // other-host request routed first. blocked aborts the beacon instead of

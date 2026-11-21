@@ -15,6 +15,8 @@ import { notice } from '../lib/notice';
 interface Props {
   title?: string;
   description?: string;
+  // A class for main, for a page that sets its own spacing (home, 404).
+  mainClass?: string;
 }
 const fm = (Astro.props as { frontmatter?: Props }).frontmatter ?? {};
 const title = Astro.props.title ?? fm.title;
@@ -22,21 +24,21 @@ const description =
   Astro.props.description ??
   fm.description ??
   'tcgreplay rebuilds your Pokémon TCG Live games on a live board for your AI assistant to coach you through.';
+const mainClass = Astro.props.mainClass;
 const fullTitle = title ? `${title} · tcgreplay` : 'tcgreplay';
 
 const nav = [
   { href: '/docs/workflows', label: 'Guides' },
   { href: '/docs/example', label: 'Example' },
-  { href: '/docs/limits', label: 'Limits' },
   { href: '/docs/whats-new', label: "What's new" },
 ];
-// The footer's Docs column; its Project column (aria-label "Footer") holds
-// the privacy page, the terms, help and the source.
+// The footer's Docs column (labelled "Docs links", so it stays apart from
+// the docs sidebar's "Docs" landmark); its Project column holds the
+// privacy page, the terms, help and the source.
 const docsLinks = [
   { href: '/docs/connect', label: 'Get started' },
   { href: '/docs/workflows', label: 'Coaching workflows' },
   { href: '/docs/example', label: 'Example game' },
-  { href: '/docs/limits', label: 'Limits' },
   { href: '/docs/whats-new', label: "What's new" },
 ];
 const here = Astro.url.pathname.replace(/\/$/, '') || '/';
@@ -72,7 +74,7 @@ const current = (href: string) => (here === href || here.startsWith(`${href}/`) 
         <a class="button start" href="/docs/connect" aria-current={current('/docs/connect')}>Get started</a>
       </div>
     </header>
-    <main>
+    <main class={mainClass}>
       <slot />
     </main>
     <footer class="site-footer" data-theme="dark">
@@ -88,7 +90,7 @@ const current = (href: string) => (here === href || here.startsWith(`${href}/`) 
               {docsLinks.map((n) => <li><a href={n.href}>{n.label}</a></li>)}
             </ul>
           </nav>
-          <nav class="footer-col footer-links" aria-label="Footer">
+          <nav class="footer-col footer-links" aria-label="Project">
             <span class="footer-head">Project</span>
             <ul>
               <li><a href="/privacy">Privacy</a></li>
@@ -111,6 +113,7 @@ const current = (href: string) => (here === href || here.startsWith(`${href}/`) 
     </footer>
     <script>
       import '../scripts/copy';
+      import '../scripts/toc';
     </script>
   </body>
 </html>

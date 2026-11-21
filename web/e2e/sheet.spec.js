@@ -3,7 +3,7 @@
 // popover. Every container is held to the same hand-written menus.
 // Attack items, Draw N… and Look at top N… still ask with a browser
 // dialog, which fails the test, so they are listed but never pressed.
-import { test, expect, isTouch, touchStart, pile } from './fixtures.js';
+import { test, expect, act, isTouch, isPhone, touchStart, pile } from './fixtures.js';
 
 const hand = (page) => page.getByRole('list', { name: 'p1 hand' });
 const region = (page, name) => page.getByRole('region', { name, exact: true });
@@ -71,19 +71,12 @@ async function expectCardAndText(page, title, text, testInfo) {
 const taps = [
   { kind: 'a card in hand', target: (page) => titled(hand(page), 'Riolu (p1-2)'), title: 'Riolu (p1-2)', name: 'Riolu', text: 'Riolu (tst-1)' },
   { kind: 'a Pokémon in play', target: active, title: 'Makuhita (p1-5)', name: 'Makuhita', text: 'Makuhita (tst-7)' },
-  {
-    kind: 'an attached card',
-    target: (page) => titled(region(page, 'p1 Active'), 'Fighting Energy (p1-15)'),
-    title: 'Fighting Energy (p1-15)',
-    name: 'Fighting Energy',
-    text: 'Fighting Energy (sve-006)',
-  },
 ];
 
 for (const t of taps) {
   test(`tapping ${t.kind} opens its actions with the card and its text`, async ({ page }, testInfo) => {
     test.skip(!isTouch(testInfo), 'tapping is touch');
-    await openActions(page, t.target(page), testInfo);
+    await openActions(page, await t.target(page, testInfo), testInfo);
     await expect(page.getByRole('dialog', { name: t.name })).toHaveClass(/\bsheet\b/);
     await expect(page.locator('.zoom')).toHaveCount(0);
     await expectCardAndText(page, t.title, t.text, testInfo);
@@ -119,33 +112,43 @@ test('tapping a card in a pile view opens its moves with the card and its text',
   await expect(sheet(page)).toHaveAttribute('aria-label', 'Fighting Energy');
   // The sheet mirrors the view's buttons for the card.
   expect(await menuOf(page)).toEqual([['Move', ['Hand', 'Attach', 'Deck', 'Lost']]]);
-  await expect(view.locator('.acts button')).toHaveText(['Hand', 'Attach', 'Deck', 'Lost']);
+  // The row's icon buttons: all six cells, the ones the sheet leaves out
+  // disabled.
+  const cells = view.getByRole('group', { name: 'Fighting Energy', exact: true }).getByRole('button');
+  expect(await cells.evaluateAll((bs) => bs.map((b) => [b.getAttribute('aria-label'), b.disabled]))).toEqual([
+    ['Put in hand', false],
+    ['Move to the Bench', true],
+    ['Attach to a Pokémon', false],
+    ['Put on top of the deck', false],
+    ['Discard', true],
+    ['Put in the Lost Zone', false],
+  ]);
   await expectCardAndText(page, 'Fighting Energy (p1-16)', 'Fighting Energy (sve-006)', testInfo);
 });
 
-test('on a phone, the sheet covers the screen and an overflowing group scrolls sideways', async ({ page }, testInfo) => {
+test('on a phone, the sheet covers the screen and nothing in it scrolls sideways', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'phone', 'the full-screen sheet is the phone');
+  // A busy Pokémon: a Tool, a Special and a Basic Energy, damage and a
+  // condition, so every group of the sheet shows.
+  await act(page, 'move', { iid: 'p1-9', to: 'active', as: 'tool' });
+  await act(page, 'move', { iid: 'p1-58', to: 'active', as: 'energy' });
+  await act(page, 'place_damage', { target: 'p1:active', amount: 30 });
+  await act(page, 'set_condition', { target: 'p1:active', condition: 'poisoned', on: true });
+  await page.reload();
   await openActions(page, active(page), testInfo);
   expect(await sheet(page).boundingBox()).toEqual({ x: 0, y: 0, width: 390, height: 844 });
-
-  // The five condition toggles are wider than the screen.
-  const row = group(page, 'Conditions').locator('.row');
-  const [scrollWidth, clientWidth] = await row.evaluate((r) => [r.scrollWidth, r.clientWidth]);
-  expect(scrollWidth).toBeGreaterThan(clientWidth);
-  await expect(row).toHaveClass(/\bmore\b/);
-
-  const box = await row.boundingBox();
-  const at = { x: box.x + box.width - 40, y: box.y + box.height / 2 };
-  const f = await touchStart(page, at);
-  await f.move({ x: at.x - 200, y: at.y }, { steps: 10 });
-  await f.end();
-  await expect.poll(() => row.evaluate((r) => r.scrollLeft)).toBeGreaterThan(0);
-
-  // At the far end nothing more is off screen and the fade goes.
-  await row.evaluate((r) => r.scrollTo({ left: r.scrollWidth }));
-  await expect(row).not.toHaveClass(/\bmore\b/);
-  // A group that fits shows no fade.
-  await expect(group(page, 'Attack').locator('.row')).not.toHaveClass(/\bmore\b/);
+  await expect(group(page, 'Attached')).toBeVisible();
+  // No element in the open sheet is wider inside than it shows: the
+  // conditions three across, Other two across, attacks wrapping.
+  const overflow = await sheet(page).evaluate((el) => [...el.querySelectorAll('*')].filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => `${e.tagName}.${e.className}`));
+  expect(overflow).toEqual([]);
+  // Every control stays inside the screen's width.
+  const out = await sheet(page).evaluate((el) => [...el.querySelectorAll('button, input')].filter((b) => { const r = b.getBoundingClientRect(); return r.width && (r.left < -0.5 || r.right > innerWidth + 0.5); }).map((b) => b.textContent.trim() || b.getAttribute('aria-label')));
+  expect(out).toEqual([]);
+  // The conditions are three across.
+  const tops = await group(page, 'Conditions').getByRole('button').evaluateAll((bs) => bs.map((b) => Math.round(b.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(2);
+  expect(tops.filter((t) => t === tops[0])).toHaveLength(3);
 });
 
 test('on a tablet, the card sits left of the actions and only the actions scroll', async ({ page }, testInfo) => {
@@ -240,15 +243,30 @@ test('on a touch screen with a mouse too, a tap opens the sheet, a click zooms a
 
 test("an Active Pokémon's groups follow the design's order, with no Ability group when it has none", async ({ page }, testInfo) => {
   await openActions(page, active(page), testInfo);
-  expect((await menuOf(page)).map(([label]) => label)).toEqual(['Attack', 'Move', 'Damage', 'Conditions', 'Other']);
+  // Attached comes last, after the Pokémon's own actions, on every layout.
+  expect((await menuOf(page)).map(([label]) => label)).toEqual(['Attack', 'Move', 'Damage', 'Conditions', 'Other', 'Attached']);
   await expect(group(page, 'Ability')).toHaveCount(0);
   // One item per attack, its damage beside it.
   await expect(group(page, 'Attack').locator('.item')).toHaveText(['Slap 20', 'Body Slam 60']);
   await expect(group(page, 'Attack').locator('.detail')).toHaveText(['20', '60']);
-  // Knock Out is the last action, marked dangerous.
-  const last = sheet(page).locator('section[role="group"]').last().locator('button').last();
+  // Knock Out is the last of its own actions, marked dangerous.
+  const last = group(page, 'Other').locator('button').last();
   await expect(last).toHaveText('Knock Out');
   await expect(last).toHaveClass(/\bdanger\b/);
+});
+
+test('an evolved Pokémon\'s sheet names its evolution chain under its name; a Basic\'s does not', async ({ page }, testInfo) => {
+  await act(page, 'move', { iid: 'p1-3', to: 'bench:0' });
+  await page.reload();
+  await expect(page.locator('header .dot.on')).toBeVisible();
+  // The board draws no chain count on the card.
+  await expect(region(page, 'p1 bench 1').locator('.chain')).toHaveCount(0);
+  await openActions(page, titled(region(page, 'p1 bench 1'), 'Lucario (p1-3)'), testInfo);
+  await expect(sheet(page).locator('.chain')).toHaveText('Riolu → Lucario');
+  await page.keyboard.press('Escape');
+  await expect(sheet(page)).toHaveCount(0);
+  await openActions(page, active(page), testInfo);
+  await expect(sheet(page).locator('.chain')).toHaveCount(0);
 });
 
 test('a benched Pokémon with an Ability shows it before its moves', async ({ page }, testInfo) => {
@@ -374,17 +392,14 @@ const kinds = [
       damage,
       ['Conditions', ['Asleep', 'Burned', 'Confused', 'Paralyzed', 'Poisoned']],
       devolve,
+      // Last: every attached card, the Basic Energy too (a dot on the board).
+      ['Attached', ['Fighting Energy · Energy']],
     ],
   },
   {
     kind: 'a benched Pokémon',
     open: (page) => titled(region(page, 'p1 bench 1'), 'Riolu (p1-1)'),
     menu: [['Ability', ['Focus']], ['Move', ['Switch into Active']], damage, devolve],
-  },
-  {
-    kind: 'an attached Energy',
-    open: (page) => titled(region(page, 'p1 Active'), 'Fighting Energy (p1-15)'),
-    menu: [['Move', ['Move to ›', 'To hand', 'Discard']]],
   },
   {
     kind: 'the deck',
@@ -399,8 +414,9 @@ const kinds = [
 
 for (const k of kinds) {
   test(`${k.kind} offers the same actions by touch and by mouse`, async ({ page }, testInfo) => {
-    await openActions(page, k.open(page), testInfo);
-    expect(await menuOf(page)).toEqual(k.menu);
+    await openActions(page, await k.open(page, testInfo), testInfo);
+    const menu = k.menu.flatMap((g) => (g.phone ? (isPhone(testInfo) ? [g.phone] : []) : [g]));
+    expect(await menuOf(page)).toEqual(menu);
     await expect(sheet(page)).not.toContainText('Zoom');
   });
 }

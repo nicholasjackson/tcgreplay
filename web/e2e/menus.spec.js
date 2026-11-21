@@ -161,8 +161,11 @@ test('your Active opens its menu in the Studio look, Knock Out last in the dange
   // A move that ends on the board shows the target ring.
   await expect(group(page, 'Move').locator('.item .go svg')).toHaveCount(2);
 
-  const last = sheet(page).locator('section[role="group"]').last().locator('button').last();
+  // Knock Out ends the Pokémon's own actions (Other); only the Attached
+  // list, the cards attached to it, comes after.
+  const last = group(page, 'Other').locator('button').last();
   await expect(last).toHaveText('Knock Out');
+  await expect(sheet(page).locator('section[role="group"]').last()).toHaveAttribute('aria-label', 'Attached');
   const k = await style(last);
   expect(k.color).toBe(STUDIO.danger);
   if (mode(testInfo) !== 'popover') {
@@ -417,7 +420,7 @@ test('Look at top N… is a Studio count panel and still opens the look view', a
   await press(button(page, 'Look at the top 4'), testInfo);
   const view = page.locator('.modal');
   await expect(view.locator('h2')).toHaveText('Top 4 of p1 deck');
-  await expect(view.locator('.grid .card')).toHaveCount(4);
+  await expect(view.locator('.plist .card')).toHaveCount(4);
   // The view is a raised Studio panel over the scrim, full screen on a
   // phone.
   const v = await style(view);

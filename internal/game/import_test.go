@@ -605,3 +605,23 @@ func TestImportedLoneHalfWarns(t *testing.T) {
 		t.Errorf("warnings %q lack %q", ws, want)
 	}
 }
+
+// TestParseDeckLogNames: list entries are named as a battle log names the
+// card, so an import can match them: by the resolved card's name when
+// known ("riolu" is the database's "Riolu"; SVE's "Fighting Energy" is the
+// log's "Basic Fighting Energy"), else with the export's energy symbols
+// spelled out ("Rocky {F} Energy" is "Rocky Fighting Energy").
+func TestParseDeckLogNames(t *testing.T) {
+	db := cardstest.New()
+	entries, _, err := parseDeck(context.Background(), db, "1 riolu TST 1\n4 Basic {F} Energy SVE 6\n2 Rocky {F} Energy POR 87\n", "deck")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, e := range entries {
+		got = append(got, e.Name)
+	}
+	if want := []string{"Riolu", "Basic Fighting Energy", "Rocky Fighting Energy"}; !slices.Equal(got, want) {
+		t.Errorf("names %q, want %q", got, want)
+	}
+}

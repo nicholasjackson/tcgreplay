@@ -1,13 +1,14 @@
 ---
-// The home page, in the Studio style: what tcgreplay is in one sentence,
-// the playmat in action and "Get started", all within the first screen on
-// a laptop; then how it works in three steps, what it does on a slate band,
-// four coaching workflows with an example prompt each (read from their
-// pages' frontmatter), and the playmat's address for those who already use
-// connectors.
+// The home page, as the Studio design's HomePage draws it: the Hero (what
+// tcgreplay is in one sentence, Get started, a line of fine print and the
+// picture of the board mid-review), all within the first screen on a
+// laptop; then HowItWorks in three steps, the WhatItDoesBand on slate, four
+// GuideCards with an example prompt each (read from their pages'
+// frontmatter), and the AddressBlock for those who already use connectors.
+// Each section sets its own spacing, 48px to 80px apart.
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import Playmat from '../components/Playmat.astro';
+import BoardPicture from '../components/BoardPicture.astro';
 import CopyBlock from '../components/CopyBlock.astro';
 import { site } from '../lib/facts';
 
@@ -43,7 +44,10 @@ const guides = featured.map(({ guide, prompt }) => {
   return { href: `/docs/workflows/${guide}`, title: page.data.title, prompt: text };
 });
 ---
-<Base description="Paste a Pokémon TCG Live battle log, and your AI assistant rebuilds the game on a live board, coaches you through it, and rewinds to try better lines.">
+<Base
+  description="Paste a Pokémon TCG Live battle log, and your AI assistant rebuilds the game on a live board, coaches you through it, and rewinds to try better lines."
+  mainClass="home"
+>
   <section class="hero">
     <div class="pitch">
       <span class="badge"><span class="dot" aria-hidden="true"></span>Works with Claude and ChatGPT</span>
@@ -56,8 +60,9 @@ const guides = featured.map(({ guide, prompt }) => {
         <a class="cta" href="/docs/connect">Get started</a>
         <a class="cta secondary" href="/docs/example">See an example game</a>
       </p>
+      <p class="fineprint">Sign in with Google · the board runs in your browser</p>
     </div>
-    <Playmat />
+    <BoardPicture />
   </section>
 
   <section class="how" aria-labelledby="how-heading">
@@ -77,7 +82,7 @@ const guides = featured.map(({ guide, prompt }) => {
     <h2 id="what-heading">What it does</h2>
     <p class="band-lede">
       tcgreplay is a playmat, not a rules engine: the assistant runs the game and the board shows it, live in your
-      browser. <a href="/docs/connect">Connect it to your assistant</a> to start.
+      browser.
     </p>
     <ul class="features">
       <li>
@@ -134,35 +139,36 @@ const guides = featured.map(({ guide, prompt }) => {
 </Base>
 
 <style>
-  section { margin: 0 0 clamp(48px, 6vw, 80px); }
+  /* Each section sets its own spacing: main has none above or below here. */
+  :global(main.home) { padding-top: 0; padding-bottom: 0; }
+  section { margin: 0; padding-bottom: clamp(48px, 6vw, 80px); }
   h2 {
     margin: 0 0 24px;
-    font-size: clamp(var(--fs-24), 2.6vw, var(--fs-section-title));
+    font-size: clamp(var(--fs-24), 2.6vw, var(--fs-30));
     font-weight: var(--fw-section-title);
     line-height: var(--lh-section-title);
     letter-spacing: var(--ls-section-title);
   }
-  h3 { margin: 4px 0 0; font-size: var(--fs-card-title); font-weight: var(--fw-card-title); line-height: var(--lh-card-title); }
+  h3 { margin: 4px 0 0; font-size: var(--fs-19); font-weight: 700; line-height: 1.35; }
   ol, ul { list-style: none; margin: 0; padding: 0; }
 
-  /* The hero: the pitch beside the scene, the scene under it on a phone. */
+  /* The hero: the pitch beside the picture, 48px apart; the picture under
+     it when they don't fit side by side. */
   .hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 40px;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    margin-bottom: clamp(40px, 6vw, 80px);
+    gap: 40px 48px;
+    padding-top: clamp(32px, 6vw, 72px);
+    padding-bottom: clamp(40px, 6vw, 80px);
   }
-  @media (min-width: 56rem) {
-    .hero { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; }
-  }
-  .pitch { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; min-width: 0; }
+  .pitch { flex: 1 1 400px; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; min-width: 0; }
   .badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 4px 12px 4px 8px;
-    border-radius: 16px;
+    border-radius: var(--radius-pill);
     background: var(--current);
     color: var(--primary);
     font-size: var(--fs-13);
@@ -177,7 +183,7 @@ const guides = featured.map(({ guide, prompt }) => {
     line-height: var(--lh-display);
     letter-spacing: var(--ls-display);
   }
-  .lede { margin: 0; max-width: 34em; font-size: clamp(var(--fs-18), 1.6vw, var(--fs-19)); color: var(--ink-soft); }
+  .lede { margin: 0; max-width: 34em; font-size: clamp(var(--fs-17), 1.6vw, var(--fs-19)); line-height: 1.55; color: var(--ink-soft); }
   .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; }
   /* The main action in the primary colour (the accent is the board's End
      turn alone), and the example beside it as a quiet button. */
@@ -186,7 +192,7 @@ const guides = featured.map(({ guide, prompt }) => {
     align-items: center;
     height: 48px;
     padding: 0 22px;
-    border-radius: 10px;
+    border-radius: var(--radius-m);
     background: var(--primary);
     color: var(--on-primary);
     font-weight: 600;
@@ -201,6 +207,7 @@ const guides = featured.map(({ guide, prompt }) => {
     box-shadow: inset 0 0 0 1px var(--control-line);
   }
   .cta.secondary:hover { filter: none; background: var(--hover); }
+  .fineprint { margin: 0; font: 500 var(--fs-13) var(--font-mono); color: var(--muted); }
 
   /* How it works: three numbered cards. */
   .steps, .features, .guide-cards { display: flex; flex-wrap: wrap; gap: 16px; }
@@ -210,7 +217,7 @@ const guides = featured.map(({ guide, prompt }) => {
     flex-direction: column;
     gap: 10px;
     padding: 24px;
-    border-radius: 14px;
+    border-radius: var(--radius-l);
     background: var(--panel);
     box-shadow: 0 0 0 1px var(--line);
   }
@@ -219,23 +226,24 @@ const guides = featured.map(({ guide, prompt }) => {
     height: 36px;
     display: grid;
     place-items: center;
-    border-radius: 10px;
+    border-radius: var(--radius-m);
     background: var(--brand-navy);
     color: var(--turn-tag-ink);
     font: var(--fw-num) var(--fs-15) / 1 var(--font-mono);
   }
-  .steps p, .guide-card { margin: 0; color: var(--ink-soft); }
+  .steps p { margin: 0; line-height: 1.55; color: var(--ink-soft); }
 
   /* What it does: a slate band the full width of the window (the shadow
      and clip widen its colour past main's gutters without widening the
-     page). It carries data-theme="dark", so links and soft text inside
-     take their dark values. */
+     page). It carries data-theme="dark", so soft text inside takes its
+     dark value. */
   .what {
     padding-block: clamp(48px, 6vw, 80px);
     background: var(--slate-surface);
     box-shadow: 0 0 0 100vmax var(--slate-surface);
     clip-path: inset(0 -100vmax);
     color: var(--slate-ink);
+    line-height: 1.55;
   }
   .what h2 { margin-bottom: 8px; }
   .band-lede { margin: 0 0 28px; max-width: 40em; color: var(--slate-muted); }
@@ -245,7 +253,7 @@ const guides = featured.map(({ guide, prompt }) => {
     flex-direction: column;
     gap: 10px;
     padding: 24px;
-    border-radius: 14px;
+    border-radius: var(--radius-l);
     background: var(--slate-zone);
   }
   .features svg {
@@ -259,7 +267,9 @@ const guides = featured.map(({ guide, prompt }) => {
   }
   .features p { margin: 0; color: var(--ink-soft); }
 
-  /* The workflows: a card each, with an example prompt as a chat bubble. */
+  /* The workflows: a card each, with an example prompt as a chat bubble
+     that hugs its text. */
+  .guides { padding-top: clamp(48px, 6vw, 80px); }
   .guides-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 24px; }
   .guides-head h2 { margin: 0; }
   .guides-head a { font-weight: 600; }
@@ -270,15 +280,16 @@ const guides = featured.map(({ guide, prompt }) => {
     flex-direction: column;
     gap: 12px;
     padding: 20px;
-    border-radius: 14px;
+    border-radius: var(--radius-l);
     background: var(--panel);
     box-shadow: 0 0 0 1px var(--line);
     color: var(--ink);
     text-decoration: none;
   }
   .guide-card:hover { box-shadow: 0 0 0 1px var(--primary); }
-  .guide-title { font-size: var(--fs-card-title); font-weight: var(--fw-card-title); line-height: var(--lh-card-title); }
+  .guide-title { font-size: var(--fs-17); font-weight: 600; line-height: 1.35; }
   .guide-prompt {
+    align-self: flex-start;
     padding: 10px 12px;
     border-radius: 10px 10px 10px 2px;
     background: var(--note-bg);
@@ -294,14 +305,15 @@ const guides = featured.map(({ guide, prompt }) => {
     flex-wrap: wrap;
     align-items: center;
     gap: 20px 32px;
+    margin-bottom: clamp(48px, 6vw, 80px);
     padding: clamp(20px, 3vw, 32px);
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     background: var(--brand-navy);
     color: var(--ink);
   }
   .address-text { flex: 1 1 320px; display: flex; flex-direction: column; gap: 6px; }
-  .address h2 { margin: 0; font-size: var(--fs-22); }
-  .address p { margin: 0; color: var(--ink-soft); }
+  .address h2 { margin: 0; font-size: var(--fs-22); line-height: 1.25; }
+  .address p { margin: 0; line-height: 1.55; color: var(--ink-soft); }
   .address :global(.address-copy.copy-block.wrap) {
     flex: 1 1 340px;
     min-width: 0;
@@ -320,4 +332,5 @@ const guides = featured.map(({ guide, prompt }) => {
     white-space: nowrap;
   }
   .address :global(.address-copy pre) { color: var(--turn-tag-ink); font-size: var(--fs-16); }
+  .address :global(.address-copy button.copy) { height: 40px; }
 </style>

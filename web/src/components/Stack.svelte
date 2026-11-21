@@ -1,16 +1,21 @@
 <script>
-  // A Pokémon slot: the evolution chain's top card, attachments tucked
-  // underneath, and its readout: on the Bench, HP left and Energy dots
-  // under the card; in the Active Spot, a panel edged in the player's
-  // colour with the name, HP left over maximum, an HP bar, the damage tag
-  // and the Energy. Special Conditions turn the card and mark it.
-  import { app, openSheet } from '../lib/store.svelte.js';
-  import { dropOnStack, stackMenu, attachmentMenu, energyType, hpLeft, hpOf } from '../lib/actions.js';
+  // A Pokémon slot: the evolution chain's top card (the chain itself is in
+  // its sheet's header), its Tools and Special
+  // Energy tucked behind it, and its readout: on the Bench, HP left and
+  // Energy dots under the card; in the Active Spot, a panel edged in the
+  // player's colour with the name, HP left over maximum, an HP bar, the
+  // damage tag, the Energy and the Tools' names. Special Conditions turn
+  // the card and mark it.
+  import { app, openSheet, pointerTypeOf } from '../lib/store.svelte.js';
+  import { dropOnStack, stackMenu, attachmentMenu, tuckedOf, providedEnergy, hpLeft, hpOf, TUCK_CAP } from '../lib/actions.js';
   import { draggable, dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
 
-  let { seat, slot, stack, label = '' } = $props();
+  // reserve is how many tucked strips a benched slot leaves room for above
+  // its card: the most any slot in its Bench row shows, so the row's cards
+  // stay level. The Active leaves room for its own.
+  let { seat, slot, stack, label = '', reserve = 0 } = $props();
 
   const spec = $derived(`${seat}:${slot}`);
   const active = $derived(slot === 'active');
@@ -25,10 +30,37 @@
   const damage = $derived(stack?.damage || 0);
   const pct = $derived(hp && shown !== null ? Math.round((shown / hp) * 100) : 0);
 
-  const energy = $derived((stack?.energy || []).map((e) => ({ iid: e.iid, type: energyType(e) })));
+  // One dot per Energy provided (a Double Colorless Energy gives two), a
+  // Special Energy's ringed.
+  const energy = $derived(providedEnergy(stack));
+  // The phone draws no attachments on the board, as its design has it: the
+  // Energy shows as dots, and every attachment is listed in the Pokémon's
+  // sheet (stackMenu's Attached section), which reaches its own menu.
+  const phone = $derived(app.layout === 'phone');
+  // Elsewhere a Basic Energy is a dot only, and the Tools and Special
+  // Energy are tucked behind the card, a strip of each showing above it
+  // (at most TUCK_CAP; the Pokémon's Attached list has every one).
+  const strips = $derived(phone || !stack ? [] : tuckedOf(stack).slice(0, TUCK_CAP));
+  const tucks = $derived(phone ? 0 : active ? strips.length : reserve);
+  const tools = $derived(stack?.tools || []);
 
   function menu(ev, pointerType) {
     if (stack) openSheet(ev, () => stackMenu(seat, slot, stack), pointerType);
+  }
+  // With a mouse a tucked card's strip is its own: a click opens its view
+  // (the zoom, with its actions), a right-click its menu, and it drags off.
+  // On a touch screen the strips are part of the Pokémon (CSS lets taps
+  // through them to the pile): a tap opens the Pokémon's sheet, whose
+  // Attached list reaches each card.
+  const tuckMenu = (t) => (ev, pointerType) => {
+    if ((pointerType ?? pointerTypeOf(ev)) === 'mouse') openSheet(ev, () => attachmentMenu(t.card, t.role), 'mouse');
+    else menu(ev, pointerType);
+  };
+  // pileTap opens the Pokémon's sheet for a tap on its strips (they let a
+  // touch through to the pile), never for a tap that reached a card or a
+  // button inside it.
+  function pileTap(ev) {
+    if (ev.target === ev.currentTarget && strips.length && pointerTypeOf(ev) !== 'mouse') menu(ev);
   }
   const dmg = (amount) => act('place_damage', { target: spec, amount });
 </script>
@@ -36,7 +68,7 @@
 {#snippet dots(size)}
   {#if energy.length}
     <span class="dots {size}" aria-label="{energy.length} Energy">
-      {#each energy as e (e.iid)}<i data-e={e.type}></i>{/each}
+      {#each energy as e (e.key)}<i data-e={e.type} class:special={e.special}></i>{/each}
     </span>
   {/if}
 {/snippet}
@@ -45,30 +77,28 @@
   class="slot {seat}"
   class:empty={!stack}
   class:active
+  class:reserve={tucks > 0}
+  style:--tucks={tucks || null}
   {@attach dropZone(spec, (data) => dropOnStack(data, seat, slot, !!stack))}
   role="region"
   aria-label={label || spec}
 >
   {#if stack}
-    <div class="pile" {@attach draggable(app.opponent !== 'acting' && { kind: 'stack', from: spec })} role="group">
-      {#if stack.tools?.length || stack.energy?.length}
-      <div class="attachments">
-        {#each stack.tools || [] as t (t.iid)}
-          <div class="att tool">
-            <Card card={t} size="xs" from={spec} role="tool" onmenu={(ev, type) => openSheet(ev, () => attachmentMenu(t, 'tool'), type)} />
-          </div>
-        {/each}
-        {#each stack.energy || [] as e (e.iid)}
-          <div class="att">
-            <Card card={e} size="xs" from={spec} role="energy" onmenu={(ev, type) => openSheet(ev, () => attachmentMenu(e, 'energy'), type)} />
-          </div>
-        {/each}
-      </div>
-      {/if}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="pile" {@attach draggable(app.opponent !== 'acting' && { kind: 'stack', from: spec })} role="group" onclick={pileTap}>
       <div class="main">
         <Card card={top} size={active ? 'lg' : 'md'} from={spec} rotate={rot} draggable={false} onmenu={menu} />
-        {#if stack.pokemon.length > 1}
-          <span class="chain" title={stack.pokemon.map((p) => p.name).join(' → ')}>{stack.pokemon.length}</span>
+        {#if strips.length}
+          <!-- Tucked behind the card, as at a table: each strip is a box
+               the height of what shows of its card, the card hanging down
+               from it behind the Pokémon. -->
+          <div class="tucks" style:--rot="{rot}deg">
+            {#each strips as t, i (t.card.iid)}
+              <div class="tuck" class:first={i === 0} style:--i={i} style:z-index={TUCK_CAP - i}>
+                <Card card={t.card} from={spec} role={t.role} onmenu={tuckMenu(t)} onclick={() => (app.zoom = t.card)} />
+              </div>
+            {/each}
+          </div>
         {/if}
         <div class="badges">
           {#if stack.damage_turn}<span class="dmg" title="{stack.damage_turn} damage this turn; {stack.damage} in total">+{stack.damage_turn}</span>{/if}
@@ -89,13 +119,14 @@
       <div class="readout">
         <span class="name">{top?.name || ''}</span>
         {#if hp && shown !== null}
-          <span class="hp"><span class="hpleft" class:low={shown <= hp * 0.3}><b>{shown}</b><span class="of"><span class="slash">/</span>{hp}</span></span><span class="unit">HP</span></span>
+          <span class="hp"><span class="hpleft" class:low={shown <= hp * 0.3}><b>{shown}</b><span class="of"><span class="slash">/</span>{hp}</span></span>{#if !phone}<span class="unit">HP</span>{/if}</span>
           <span class="bar" aria-hidden="true"><span style:width="{pct}%"></span></span>
         {/if}
         <span class="tags">
           {#if damage}<span class="tag" title="{damage} damage">−{damage}</span>{/if}
           {@render dots('lg')}
-          {#if energy.length}<span class="count">{energy.length} Energy</span>{/if}
+          {#if energy.length && !phone}<span class="count">{energy.length} Energy</span>{/if}
+          {#if !phone}{#each tools as t (t.iid)}<span class="tool" title="Tool: {t.name}">{t.name}</span>{/each}{/if}
         </span>
       </div>
     {:else}
@@ -113,10 +144,10 @@
 
 <style>
   /* A slot is as wide as its card; an empty one is a recessed box in the
-     card's shape. --sw is the card width, --att-w an attachment's. */
+     card's shape. --sw is the slot's width, --pw its Pokémon card's. */
   .slot {
     --sw: var(--cw);
-    --att-w: calc(var(--cw) * 0.42);
+    --pw: var(--sw);
     --seat-c: var(--seat-p1-mat);
     width: var(--sw);
     display: flex;
@@ -128,19 +159,60 @@
     transition: background 0.15s, box-shadow 0.15s;
   }
   .slot.p2 { --seat-c: var(--seat-p2-mat); }
+  /* Today's mat: a benched card is a little under a mat card width (62px
+     beside the desktop's 72px hand), the Active a little over it. */
+  :global(.side.mat) .slot:not(.active) { --sw: calc(var(--cw) * 0.88); }
+  :global(.side.mat) .slot:not(.active) .main :global(.card) { --w: var(--sw); }
   @media (pointer: coarse) {
-    .slot { --sw: max(44px, var(--cw)); --att-w: max(44px, calc(var(--cw) * 0.42)); }
-    /* Today's mat only: the phone has its own rule (app.css), and the
-       landscape mat's cards are large enough to keep the attachments
-       tucked in; hanging below them there, the attachments make its fit
-       to the screen (fitBoard) stall for seconds after a resize. */
-    :global(.app:not(.phone, .landscape)) .pile .attachments { margin-top: calc(var(--sw) * -0.3); }
+    .slot { --sw: max(44px, var(--cw)); }
+    :global(.side.mat) .slot:not(.active) { --sw: max(44px, calc(var(--cw) * 0.88)); }
+  }
+
+  /* Tucked cards (Tools and Special Energy). Each is 84% of the Pokémon
+     card's width, centred behind it; the first shows a strip 0.42 of the
+     Pokémon's width tall above it (the name band and the top of the art),
+     the second a band 0.2 of the width higher. --tuck-r is the room a slot
+     leaves above its card for --tucks strips: on the Bench, the most any
+     slot in the row shows (Side.svelte), so the row's cards stay level. */
+  .slot {
+    --tuck-w: calc(var(--pw) * 0.84);
+    --tuck-s: calc(var(--pw) * 0.42);
+    --tuck-b: calc(var(--pw) * 0.2);
+    --tuck-r: calc(var(--tuck-s) + (var(--tucks, 1) - 1) * var(--tuck-b));
+  }
+  .slot.reserve:not(.empty) .pile { padding-top: var(--tuck-r); }
+  .slot.empty.reserve:not(.active) { margin-top: var(--tuck-r); }
+  /* The tucks share the card's box (and turn with it), behind the card. */
+  .tucks {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    rotate: var(--rot);
+    transition: rotate 0.25s ease;
+  }
+  /* A strip: the box of what shows of its card, the card hanging from it. */
+  .tuck {
+    position: absolute;
+    left: 50%;
+    width: var(--tuck-w);
+    translate: -50% 0;
+    top: calc(-1 * (var(--tuck-s) + var(--i) * var(--tuck-b)));
+    height: var(--tuck-b);
+  }
+  .tuck.first { height: var(--tuck-s); }
+  .tuck :global(.card) { --w: var(--tuck-w); position: absolute; top: 0; left: 0; }
+  /* On a touch screen the strips are not targets of their own: a tap goes
+     through them to the pile, which opens the Pokémon's sheet. */
+  @media (pointer: coarse) {
+    .tucks { pointer-events: none; }
+  }
+  /* With a mouse, a strip rolled over comes out in front, enlarged. */
+  @media (hover: hover) {
+    :global(body:not(.dragging)) .tucks:has(:global(.card.lift:hover)) { z-index: 2; }
   }
   /* The landscape mat's readouts are sized to its larger cards, a little
      under its text. */
   :global(.board) .readout { font-size: 0.8em; }
-  /* The phone's Bench readouts are a slim line. */
-  :global(.app.phone) .bench-readout { min-height: 12px; }
   .slot.empty {
     align-self: flex-start;
     aspect-ratio: 63 / 88;
@@ -151,35 +223,6 @@
   .hint { color: var(--mat-muted); font-size: max(var(--fs-label), 0.85em); font-weight: var(--fw-label); text-transform: uppercase; letter-spacing: var(--ls-label); }
   .pile { display: flex; flex-direction: column; align-items: center; cursor: grab; touch-action: none; }
   .main { position: relative; z-index: 1; order: 0; }
-  /* Energy and Tools tuck over the bottom of the Pokémon, as at a table,
-     instead of taking a row of their own; on a touch screen, where they are
-     a fingertip wide, most of each shows below it, clear of the middle of
-     the card a finger taps. */
-  .attachments {
-    order: 1;
-    display: flex;
-    justify-content: center;
-    max-width: calc(var(--sw) * 1.4);
-    margin-top: calc(var(--att-w) * -88 / 63 - 2px);
-    position: relative;
-    z-index: 2;
-  }
-  .att { margin-left: calc(var(--att-w) * -0.3); }
-  .att:first-child { margin-left: 0; }
-  .chain {
-    position: absolute;
-    top: calc(var(--space-1) * -1);
-    left: calc(var(--space-1) * -1);
-    background: var(--mat-strip);
-    color: var(--mat-ink);
-    border-radius: 50%;
-    width: 1.6em;
-    height: 1.6em;
-    display: grid;
-    place-items: center;
-    font: var(--fw-num) max(var(--fs-num-s), 0.85em) var(--font-mono);
-    box-shadow: 0 0 0 2px var(--accent);
-  }
   .badges {
     position: absolute;
     top: var(--space-1);
@@ -215,7 +258,6 @@
      sheet's Damage stepper does their job. */
   @media (hover: hover) {
     .main:hover .controls { opacity: 1; }
-    .att:hover { z-index: 3; }
   }
   @media (hover: none) {
     .controls { display: none; }
@@ -243,6 +285,10 @@
   .dots i[data-e='fighting'] { background: var(--energy-fighting); }
   .dots i[data-e='darkness'] { background: var(--energy-darkness); }
   .dots i[data-e='metal'] { background: var(--energy-metal); }
+  /* Energy of every type (Rainbow Energy) in every type's colour. */
+  .dots i[data-e='any'] { background: conic-gradient(var(--energy-grass), var(--energy-fire), var(--energy-lightning), var(--energy-fighting), var(--energy-psychic), var(--energy-water), var(--energy-darkness), var(--energy-metal), var(--energy-grass)); }
+  /* A Special Energy's dots are ringed, apart from the Basic ones. */
+  .dots i.special { outline: 1.5px solid var(--mat-ink); outline-offset: 1px; margin: 0 1.5px; }
 
   /* The Bench readout: HP left in mono, pink when damaged, and the dots. */
   /* It sits at the slot's foot, so a row's readouts line up whether or
@@ -263,6 +309,7 @@
   /* The Active Spot: a zone panel edged in the player's colour, the card
      on the left and the readout beside it. */
   .slot.active {
+    --pw: calc(var(--cw) * 1.25);
     width: auto;
     flex-direction: row;
     align-items: center;
@@ -275,7 +322,9 @@
   .slot.active.empty { aspect-ratio: auto; justify-content: center; min-width: calc(var(--sw) * 1.25 + var(--space-6)); min-height: calc(var(--sw) * 1.25 * 88 / 63 + var(--space-4)); }
   /* Today's mat gives the Active a little less than its full size, so
      both halves and the strip fit the screen. */
-  :global(.side.mat) .slot.active :global(.card.lg) { --w: calc(var(--cw) * 1.1); }
+  :global(.side.mat) .slot.active,
+  :global(.strip.wide) .slot.active { --pw: calc(var(--cw) * 1.1); }
+  :global(.side.mat) .slot.active .main > :global(.card.lg) { --w: var(--pw); }
   /* The readout is as wide as its damage tag, dots and "2 Energy" on one
      line, and at least the design's 150px; a long name does not widen it
      (contain), but ends in an ellipsis. */
@@ -295,5 +344,39 @@
   .bar { display: block; height: max(6px, 0.5em); border-radius: var(--radius-pill); background: var(--mat-track); overflow: hidden; }
   .bar span { display: block; height: 100%; border-radius: inherit; background: var(--hp); }
   .tags { display: flex; align-items: center; gap: 0.6em; white-space: nowrap; min-height: 1.4em; font-size: max(var(--fs-ui-s), 1em); color: var(--mat-muted); }
+  /* A Tool's name, so the Active's readout says what it holds. */
+  .tool { padding: 1px 0.5em; border-radius: var(--radius-xs); background: var(--mat-chip); color: var(--mat-ink); font: var(--fw-ui) max(var(--fs-ui-s), 0.92em) var(--font-sans); }
   .tag { padding: 1px 0.5em; border-radius: var(--radius-xs); background: var(--damage-bg); color: var(--damage-ink); font: var(--fw-num) max(var(--fs-ui-s), 1em) var(--font-mono); }
+
+  /* The phone (the PhoneBoard design): flat cards. A benched card is one
+     --cw (56px on a 390 × 844 phone) with a 14px line under it, 3px below
+     the card: HP left in 10px mono and 7px Energy dots. The Active panel
+     spans the width, 8px by 12px inside, with the card on the left (yours
+     1.25 --cw, 70px; the opponent's 60px) and the readout beside it: the
+     name in 13px, HP left in 22px over "/ 80" in 12px, a 5px bar, then the
+     damage tag in 11px and 9px dots, 5px between the lines. */
+  :global(.app.phone) .slot :global(.card) { box-shadow: none; }
+  :global(.app.phone) .slot:not(.active) { gap: 3px; }
+  :global(.app.phone) .bench-readout { min-height: 14px; height: 14px; padding: 0 1px; }
+  :global(.app.phone) .left { font: var(--fw-num) var(--fs-10)/1 var(--font-mono); }
+  :global(.app.phone) .dots.sm i { width: 7px; }
+  :global(.app.phone) .dots i.special { outline-width: 1px; margin: 0 1px; }
+  :global(.app.phone) .slot.active {
+    flex: 1;
+    justify-content: center;
+    padding: var(--space-2) var(--space-3);
+    border-radius: 12px;
+  }
+  :global(.app.phone .side.mirrored) .slot.active .main :global(.card.lg) { --w: calc(var(--cw) * 60 / 56); }
+  :global(.app.phone) .readout:not(.bench-readout) { flex: 1; width: auto; min-width: 0; gap: 5px; }
+  :global(.app.phone) .name { font-size: var(--fs-13); line-height: normal; }
+  :global(.app.phone) .hp { gap: var(--space-1); line-height: 1; }
+  :global(.app.phone) .hpleft b { font-size: var(--fs-22); line-height: 1; }
+  :global(.app.phone) .hpleft .of { font-size: var(--fs-12); }
+  :global(.app.phone) .slash { margin: 0 var(--space-1); }
+  :global(.app.phone) .bar { height: 5px; border-radius: 3px; }
+  :global(.app.phone) .tags { gap: 6px; min-height: 0; font-size: var(--fs-11); line-height: normal; }
+  :global(.app.phone) .tag { padding: 0 5px; font-size: var(--fs-11); line-height: normal; }
+  :global(.app.phone) .dots.lg { gap: 6px; }
+  :global(.app.phone) .dots.lg i { width: 9px; }
 </style>

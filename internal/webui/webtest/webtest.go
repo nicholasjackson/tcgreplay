@@ -23,10 +23,13 @@ var Names = map[state.Seat]string{state.P1: "Alice", state.P2: "Bob"}
 // Deck is both players' list. Instances are numbered in list order, so
 // p1-1 and p1-2 are Riolu, p1-3 and p1-4 Lucario, p1-5 and p1-6 Makuhita,
 // p1-7 and p1-8 Iono, p1-9 and p1-10 Band, p1-11 Arena, p1-12 Deep Zone,
-// p1-13 and p1-14 Ultra Ball, p1-15 to p1-58 Fighting Energy, and p1-59
-// and p1-60 the two prints of Twin Peak (TST 10 and TST 11), a made-up
-// Stadium played as a pair. The Twin Peaks come last so every other card
-// keeps its number; they start in the deck (see TwinPeak).
+// p1-13 and p1-14 Ultra Ball, p1-15 to p1-57 Fighting Energy, p1-58 a
+// Double Colorless Energy (TST 12, a Special Energy providing two), and
+// p1-59 and p1-60 the two prints of Twin Peak (TST 10 and TST 11), a
+// made-up Stadium played as a pair. The Twin Peaks come last so every
+// other card keeps its number; they start in the deck (see TwinPeak), as
+// does the Double Colorless Energy (see DoubleColorless), which took the
+// place of the last Fighting Energy so the deck shuffles as before.
 const Deck = `Pokémon: 6
 2 Riolu TST 1
 2 Lucario TST 2
@@ -40,7 +43,8 @@ Trainer: 8
 2 Ultra Ball TST 3
 
 Energy: 44
-44 Basic {F} Energy SVE 6
+43 Basic {F} Energy SVE 6
+1 Double Colorless Energy TST 12
 
 Trainer: 2
 1 Twin Peak TST 10
@@ -52,6 +56,10 @@ Total Cards: 60`
 // start in the deck, so the fixed position is unchanged; pair tests move
 // them where they need them.
 var TwinPeak = [2]state.IID{"p1-59", "p1-60"}
+
+// DoubleColorless is p1's Double Colorless Energy, a Special Energy that
+// provides two. It starts in the deck; tests move it where they need it.
+const DoubleColorless state.IID = "p1-58"
 
 // Layout is where each seat's cards start, by iid.
 type Layout struct {

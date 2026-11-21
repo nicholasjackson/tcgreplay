@@ -1,18 +1,19 @@
-// The home page: on a laptop, the one-sentence pitch, the playmat scene and
-// "Get started" are all on the first screen, and the scene is the board's
-// look with plain stand-in cards, never card artwork or logos. Below the
-// hero: How it works in three steps, What it does on a slate band, four
-// guide cards with prompts from their workflow pages, and the address.
+// The home page: on a laptop, the one-sentence pitch, the picture of the
+// board and "Get started" are all on the first screen, and the picture is
+// the board drawn in its own tokens with text card faces, never card
+// artwork or logos. Below the hero: How it works in three steps, What it
+// does on a slate band, four guide cards with prompts from their workflow
+// pages, and the address.
 import { test, expect } from './fixtures.js';
 
-test('the pitch, the playmat scene and Get started fit the first laptop screen', async ({ page }, testInfo) => {
+test('the pitch, the board picture and Get started fit the first laptop screen', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'laptop', 'the above-the-fold check is for the 1366x768 laptop');
   await page.goto('/');
   expect(page.viewportSize()).toEqual({ width: 1366, height: 768 });
   const items = {
     heading: page.getByRole('heading', { level: 1 }),
     pitch: page.locator('[data-pitch]'),
-    scene: page.locator('[data-playmat]'),
+    picture: page.locator('[data-board-picture]'),
     start: page.locator('main').getByRole('link', { name: 'Get started' }),
   };
   for (const [name, loc] of Object.entries(items)) {
@@ -40,10 +41,11 @@ test('Get started opens the connecting instructions, and is the only Get started
   await expect(start).toHaveAttribute('href', '/docs/connect');
 });
 
-test('the hero says who it works with and offers the example game', async ({ page }) => {
+test('the hero says who it works with, offers the example game and has its fine print', async ({ page }) => {
   await page.goto('/');
   const hero = page.locator('main .hero');
   await expect(hero).toContainText('Works with Claude and ChatGPT');
+  await expect(hero.locator('.fineprint')).toHaveText('Sign in with Google · the board runs in your browser');
   await expect(hero.getByRole('link', { name: 'See an example game' })).toHaveAttribute('href', '/docs/example');
   // In order: the badge, the heading, the pitch, then the actions.
   const order = await hero.evaluate((el) =>
@@ -104,16 +106,20 @@ test('four guide cards each show a workflow and one of its own example prompts',
   }
 });
 
-test('the scene is the board in its own style, with stand-in cards and no artwork or logos', async ({ page }) => {
+test('the picture is the board mid-review in its own style, with text card faces and no artwork or logos', async ({ page }) => {
   await page.goto('/');
-  const scene = page.locator('[data-playmat]');
-  await expect(scene.getByRole('img')).toHaveAttribute('aria-label', /playmat/i);
-  // The board's no-art card look: text cards, Studio card backs and an energy token.
-  expect(await scene.locator('.text-card').count()).toBeGreaterThanOrEqual(5);
-  expect(await scene.locator('.back-art').count()).toBeGreaterThanOrEqual(1);
-  expect(await scene.locator('.token').count()).toBeGreaterThanOrEqual(1);
-  // The Studio card back, as the board draws it: navy, framed in cyan, with
-  // the mark drawn inline (hidden from assistive technology), never an image.
+  const picture = page.locator('[data-board-picture]');
+  // One image to assistive technology, described; the board inside is hidden.
+  const img = picture.getByRole('img');
+  await expect(img).toHaveCount(1);
+  await expect(img).toHaveAttribute('aria-label', /board/i);
+  await expect(picture.locator('.mb')).toHaveAttribute('aria-hidden', 'true');
+  await expect(picture.locator('figcaption')).toHaveText('The live board your assistant drives, mid-review: step 217 of an imported game.');
+  // The board's no-art card look: text card faces on the slate mat, the
+  // turn strip, and the timeline at step 217.
+  expect(await picture.locator('.mb-card').count()).toBeGreaterThanOrEqual(10);
+  await expect(picture.locator('.mb-tag')).toHaveText('T5');
+  await expect(picture.locator('.mb-row.now')).toContainText('#217');
   const colour = (token) =>
     page.evaluate((t) => {
       const probe = document.createElement('div');
@@ -123,20 +129,20 @@ test('the scene is the board in its own style, with stand-in cards and no artwor
       probe.remove();
       return c;
     }, token);
-  const back = scene.locator('.back-art').first();
-  const backStyle = await back.evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, frame: getComputedStyle(el).boxShadow }));
-  expect(backStyle.bg).toBe(await colour('brand-navy'));
-  expect(backStyle.frame).toContain(await colour('brand-cyan'));
-  await expect(back.locator('svg.mark')).toHaveAttribute('aria-hidden', 'true');
-  // The board's felt and seat colours.
-  const felt = await scene.locator('.stage').evaluate((el) => getComputedStyle(el).backgroundImage);
-  expect(felt).toContain('radial-gradient');
-  // A battle log and the coach's message are part of the scene.
-  await expect(scene.locator('.log li').first()).toBeVisible();
-  await expect(scene.locator('.coach')).toContainText('Turn 3');
-  // No images at all in the scene, and nothing on the page from TCGdex or Pokémon sites.
-  expect(await scene.locator('img, svg image, picture, video').count()).toBe(0);
-  const bgImages = await scene.evaluate((root) =>
+  expect(await picture.locator('.mb-mat').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(await colour('mat-surface'));
+  expect(await picture.locator('.mb-card').first().evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(await colour('card-face'));
+  // The frame: radius-l corners, the hero shadow and the picture scaled to fit.
+  const frame = await picture.locator('.frame').evaluate((el) => {
+    const board = el.querySelector('.mb').getBoundingClientRect();
+    return { width: el.getBoundingClientRect().width, boardWidth: board.width, shadow: getComputedStyle(el).boxShadow };
+  });
+  expect(Math.abs(frame.boardWidth - frame.width)).toBeLessThanOrEqual(1);
+  expect(frame.shadow).not.toBe('none');
+  // The mark in its header is drawn inline, hidden from assistive technology.
+  await expect(picture.locator('svg.mark')).toHaveAttribute('aria-hidden', 'true');
+  // No images at all in the picture, and nothing on the page from TCGdex or Pokémon sites.
+  expect(await picture.locator('img, svg image, picture, video, iframe').count()).toBe(0);
+  const bgImages = await picture.evaluate((root) =>
     [root, ...root.querySelectorAll('*')].map((el) => getComputedStyle(el).backgroundImage).filter((b) => b.includes('url(')),
   );
   expect(bgImages).toEqual([]);

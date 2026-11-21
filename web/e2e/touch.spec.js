@@ -1,7 +1,7 @@
 // Touch-friendly controls: fingertip-sized targets, no hover-only effects
 // on a touch screen (hover kept for the mouse), the timeline's buttons
 // shown without a hover, and cards a long touch cannot select.
-import { test, expect, isTouch, pile, isPhone } from './fixtures.js';
+import { test, expect, act, isTouch, pile, isPhone } from './fixtures.js';
 
 const hand = (page) => page.getByRole('list', { name: 'p1 hand' });
 const region = (page, name) => page.getByRole('region', { name, exact: true });
@@ -18,7 +18,9 @@ function tooSmall(page) {
       .filter((el) => {
         const r = el.getBoundingClientRect();
         const style = getComputedStyle(el);
-        return r.width > 0 && r.height > 0 && style.visibility !== 'hidden' && el.checkVisibility({ opacityProperty: true });
+        // A tap passes through an element with pointer-events: none (a
+        // Pokémon's tucked cards on a touch screen), so it is no target.
+        return r.width > 0 && r.height > 0 && style.visibility !== 'hidden' && style.pointerEvents !== 'none' && el.checkVisibility({ opacityProperty: true });
       })
       .map((el) => {
         const r = el.getBoundingClientRect();
@@ -30,6 +32,15 @@ function tooSmall(page) {
 
 test('every control and card on the board is at least 44×44 on a touch screen', async ({ page }, testInfo) => {
   test.skip(!isTouch(testInfo), 'touch screens');
+  expect(await tooSmall(page)).toEqual([]);
+});
+
+test('tucked cards are no targets of their own on a touch screen, so they need no 44px', async ({ page }, testInfo) => {
+  test.skip(!isTouch(testInfo), 'touch screens');
+  await act(page, 'move', { iid: 'p1-9', to: 'bench:0', as: 'tool' });
+  await act(page, 'move', { iid: 'p1-58', to: 'active', as: 'energy' });
+  await page.reload();
+  if (!isPhone(testInfo)) await expect(page.locator('.tuck')).toHaveCount(2);
   expect(await tooSmall(page)).toEqual([]);
 });
 
@@ -82,14 +93,22 @@ test('the timeline shows its rewind and play buttons on a touch screen, and they
     await page.getByRole('button', { name: 'Menu' }).tap();
     await page.getByRole('menuitem', { name: 'Show timeline' }).tap();
   }
+  // A tablet's timeline beside the board has no per-line or heading
+  // buttons (the Studio design): tapping a line shows its two. A phone's
+  // sheet keeps them on every line and heading.
+  const tablet = testInfo.project.name === 'tablet';
   const line = page.locator('.line').filter({ hasText: 'Move Riolu' }).first();
   const rewind = line.getByRole('button', { name: /^Rewind to just after #/ });
   const play = line.getByRole('button', { name: /^Play from #/ });
   await line.scrollIntoViewIfNeeded();
+  if (tablet) {
+    await expect(rewind).toHaveCount(0);
+    await line.locator('.row').tap();
+  }
   await expect(rewind).toHaveCSS('opacity', '1');
   await expect(play).toBeVisible();
-  // The turn heading's rewind and play show too.
-  await expect(page.locator('h3 .rw, h4 .rw').first()).toHaveCSS('opacity', '1');
+  // The heading's rewind and play show too, on a phone.
+  if (!tablet) await expect(page.locator('h3 .rw').first()).toHaveCSS('opacity', '1');
 
   const id = Number((await line.locator('.id').innerText()).slice(1));
   await rewind.tap();
@@ -106,7 +125,9 @@ test('the timeline shows its rewind and play buttons on a touch screen, and they
     await page.getByRole('menuitem', { name: 'Show timeline' }).tap();
   }
 
-  await page.locator('.line').filter({ hasText: 'Move Riolu' }).first().getByRole('button', { name: /^Play from #/ }).tap();
+  const again = page.locator('.line').filter({ hasText: 'Move Riolu' }).first();
+  if (tablet && (await again.locator('.row').getAttribute('aria-expanded')) !== 'true') await again.locator('.row').tap();
+  await again.getByRole('button', { name: /^Play from #/ }).tap();
   await expect(page.locator('.line.now')).toHaveCount(1);
 });
 
@@ -122,7 +143,7 @@ test('tapping a card in a pile or search view shows it large with its actions', 
 
   await pile(page, 'Deck').tap();
   await sheet(page).getByRole('button', { name: 'Search…', exact: true }).tap();
-  const first = page.locator('.modal .row .card').first();
+  const first = page.locator('.modal .prow .card').first();
   const title = await first.getAttribute('title');
   await first.tap();
   await expect(titled(sheet(page), title)).toBeVisible();

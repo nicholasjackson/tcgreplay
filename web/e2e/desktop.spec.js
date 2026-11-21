@@ -27,6 +27,9 @@ async function offCentre(page) {
 test('during a replay the playback controls head the timeline beside or below the board, and with it hidden float centred on the board, the caption centred throughout', async ({ page }, testInfo) => {
   test.skip(isPhone(testInfo), 'the phone timeline is a sheet');
   const aside = page.locator('aside');
+  // A tablet's lines show their Play from here when tapped (the Studio
+  // design has no per-line buttons on a touch screen's timeline).
+  if (testInfo.project.name === 'tablet') await aside.locator('.line .row').first().click();
   await aside.locator('.line').first().getByTitle('Play from here').click();
   const controls = aside.getByRole('toolbar', { name: 'Playback' });
   // Pause so the replay holds still while it is measured.
@@ -43,7 +46,9 @@ test('during a replay the playback controls head the timeline beside or below th
   await expect(controls).toBeVisible();
   await check('beside');
 
-  await aside.getByRole('button', { name: 'Move timeline below the board' }).click();
+  // Beside the board, the dock button is in ☰ (the Studio design).
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('menuitem', { name: 'Move timeline below the board' }).click();
   await expect(page.locator('.body')).toHaveClass(/\bbottom\b/);
   await expect(controls).toBeVisible();
   await check('below');
@@ -66,31 +71,48 @@ test('during a replay the playback controls head the timeline beside or below th
 async function textSizes(page) {
   return page.evaluate(() => {
     const px = (sel) => parseFloat(getComputedStyle(document.querySelector(sel)).fontSize);
-    return { header: px('header'), timeline: px('aside .timeline'), line: px('aside .line .text'), heading: px('aside h2') };
+    return { header: px('header'), timeline: px('aside .timeline'), line: px('aside .line .text'), heading: px('aside .timeline h3') };
   });
 }
 
-test('header and timeline text keep today\'s size up to 1920px wide and grow above it', async ({ page }, testInfo) => {
+test('header and timeline text keep today\'s size up to 1920px wide and grow only a little above it', async ({ page }, testInfo) => {
   test.skip(isPhone(testInfo), 'the phone timeline is a sheet');
   await page.setViewportSize({ width: 1440, height: 900 });
-  expect(await textSizes(page)).toEqual({ header: 13, timeline: 12, line: 12, heading: 13 });
+  // The Studio design: lines at 13px, each half's heading at 12px.
+  expect(await textSizes(page)).toEqual({ header: 13, timeline: 13, line: 13, heading: 12 });
   await page.setViewportSize({ width: 1920, height: 1080 });
   const hd = await textSizes(page);
-  expect(hd).toEqual({ header: 13, timeline: 12, line: 12, heading: 13 });
+  expect(hd).toEqual({ header: 13, timeline: 13, line: 13, heading: 12 });
   await page.setViewportSize({ width: 3840, height: 2160 });
+  // At 3840px they are 1.15 times the size, no more (13px lines at about
+  // 15px): readable on a 4K panel without the lines turning huge.
   const uhd = await textSizes(page);
-  for (const k of Object.keys(hd)) expect(uhd[k], k).toBeGreaterThanOrEqual(hd[k] * 1.5);
+  for (const k of Object.keys(hd)) {
+    expect(uhd[k], k).toBeGreaterThan(hd[k]);
+    expect(uhd[k], k).toBeLessThanOrEqual(hd[k] * 1.15 + 0.05);
+    expect(uhd[k], k).toBeCloseTo(hd[k] * 1.15, 0);
+  }
+  // Halfway, at 2880px, halfway there.
+  await page.setViewportSize({ width: 2880, height: 1620 });
+  const mid = await textSizes(page);
+  expect(mid.line).toBeCloseTo(13 * 1.075, 0);
 });
 
-test('on a very wide screen the timeline beside the board grows past 480px', async ({ page }, testInfo) => {
+test('on a wide screen the timeline beside the board grows with it, to at most 520px', async ({ page }, testInfo) => {
   test.skip(isPhone(testInfo), 'the phone timeline is a sheet');
   await page.setViewportSize({ width: 3840, height: 2160 });
   const [aside, main] = [await page.locator('aside').boundingBox(), await page.locator('main').boundingBox()];
   expect(aside.x).toBeGreaterThanOrEqual(main.x + main.width - 1);
-  expect(aside.width).toBeGreaterThan(480);
-  // Up to about 2667px wide it keeps today's width: 18vw, at most 480px.
+  // Capped (timeline-width-max): the board keeps the rest of a 4K screen.
+  expect(Math.round(aside.width)).toBe(520);
+  // Up to about 2111px wide it keeps the design's timeline width, 380px
+  // (362px on a touch screen: the design's 310px plus a Play button), and
+  // grows with the screen (18vw) above it.
   await page.setViewportSize({ width: 1920, height: 1080 });
-  expect(Math.round((await page.locator('aside').boundingBox()).width)).toBe(Math.round(1920 * 0.18));
+  const base = testInfo.project.name === 'tablet' ? 362 : 380;
+  expect(Math.round((await page.locator('aside').boundingBox()).width)).toBe(base);
+  await page.setViewportSize({ width: 2560, height: 1440 });
+  expect(Math.round((await page.locator('aside').boundingBox()).width)).toBe(Math.round(2560 * 0.18));
 });
 
 const wide = (page) => page.locator('.app').getAttribute('data-wide');
@@ -114,7 +136,9 @@ test('the board is wide when its area beside the timeline is 1600px or more, and
   await page.setViewportSize({ width: 1800, height: 1000 });
   await expect(page.locator('.app')).toHaveAttribute('data-wide', 'false');
   // ...but moving the timeline below gives the board the full width,
-  await page.locator('aside').getByRole('button', { name: 'Move timeline below the board' }).click();
+  // Beside the board, the dock button is in ☰ (the Studio design).
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('menuitem', { name: 'Move timeline below the board' }).click();
   await expect(page.locator('.app')).toHaveAttribute('data-wide', 'true');
   await page.locator('aside').getByRole('button', { name: 'Move timeline beside the board' }).click();
   await expect(page.locator('.app')).toHaveAttribute('data-wide', 'false');

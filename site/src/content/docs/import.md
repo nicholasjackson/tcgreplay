@@ -1,7 +1,7 @@
 ---
 title: Importing a game
 description: Import a Pokémon TCG Live battle log with your decklist, check the import is complete, and keep the game.
-order: 40
+order: 30
 ---
 
 To review a game, your assistant needs two things from Pokémon TCG Live: the game's **battle log** and the **decklist** you played. Paste both into the chat and ask it to import the game.
@@ -39,7 +39,7 @@ Some chat apps shorten a long paste, showing something like "141 lines hidden" a
 
 ## Keeping the game
 
-Imported games don't last forever on the hosted playmat (see [its limits](/docs/limits)). To keep one, ask:
+Imported games don't last forever on the hosted playmat: a game is dropped after a while without activity, and whenever the playmat is updated or restarted. To keep one, ask:
 
 ```prompt
 Give me this game's record so I can keep it.

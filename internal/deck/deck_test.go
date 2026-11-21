@@ -41,3 +41,23 @@ Total Cards: 19`)
 		}
 	}
 }
+
+// TestLogName maps decklist names to the names TCG Live's battle log
+// uses: energy symbols as words, and Basic Energy always "Basic X Energy".
+func TestLogName(t *testing.T) {
+	for in, want := range map[string]string{
+		"Basic {F} Energy":       "Basic Fighting Energy",
+		"Rocky {F} Energy":       "Rocky Fighting Energy",
+		"Telepathic {P} Energy":  "Telepathic Psychic Energy",
+		"Basic Fighting Energy":  "Basic Fighting Energy",
+		"Fighting Energy":        "Basic Fighting Energy", // the card database's name
+		"Psychic Energy":         "Basic Psychic Energy",
+		"Prism Energy":           "Prism Energy",
+		"Lillie’s Determination": "Lillie's Determination",
+		"Mega  Lucario ex":       "Mega Lucario ex",
+	} {
+		if got := LogName(in); got != want {
+			t.Errorf("LogName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

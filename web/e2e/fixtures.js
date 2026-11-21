@@ -227,3 +227,68 @@ export function isWide(testInfo) {
 export function discardTop(page, seat = 'p1') {
   return page.getByRole('region', { name: `${seat} side` }).locator('.discard-top').or(pile(page, 'Discard', seat));
 }
+
+// A phone draws no attached Energy or Tools (its design shows the Energy as
+// dots under the card): each is listed in its Pokémon's sheet instead, in
+// the Attached group, and opens its own menu from there.
+
+// stackOf names the Pokémon a region holds as a seat and a slot:
+// "p1 bench 2" is p1's bench:1, "p2 Active" p2's active.
+function stackOf(regionName) {
+  const [seat, where, n] = regionName.split(' ');
+  return { seat, slot: where === 'Active' ? 'active' : `bench:${Number(n) - 1}` };
+}
+
+// attachedTitles lists the titles ("Fighting Energy (p1-15)") of the
+// cards attached to the Pokémon in a region, from the board's own state.
+export async function attachedTitles(page, regionName) {
+  const { seat, slot } = stackOf(regionName);
+  return page.evaluate(
+    ({ seat, slot }) =>
+      new Promise((resolve) => {
+        const ws = new WebSocket(`ws://${location.host}/ws`);
+        ws.onmessage = (ev) => {
+          const msg = JSON.parse(ev.data);
+          if (msg.type !== 'state' || !msg.snapshot) return;
+          ws.close();
+          const side = msg.snapshot.board.sides[seat];
+          const st = slot === 'active' ? side.active : side.bench[Number(slot.split(':')[1])];
+          resolve([...(st?.tools || []), ...(st?.energy || [])].map((c) => `${c.name} (${c.iid})`));
+        };
+      }),
+    { seat, slot },
+  );
+}
+
+// BASIC_ENERGY matches a Basic Energy's title ("Fighting Energy (p1-15)"):
+// the board draws no card for one, only a dot.
+const BASIC_ENERGY = /^(Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal) Energy \(/;
+
+// expectAttached checks a card is attached to the Pokémon in a region: a
+// Tool or Special Energy tucked behind it on the mat; a Basic Energy (a dot
+// only) or anything on a phone (no tucked cards), in the board's state.
+export async function expectAttached(page, regionName, title, testInfo) {
+  const region = page.getByRole('region', { name: regionName, exact: true });
+  if (isPhone(testInfo) || BASIC_ENERGY.test(title)) await expect.poll(() => attachedTitles(page, regionName)).toContain(title);
+  else await expect(region.locator(`.tuck .card[title="${title}"]`)).toBeVisible();
+}
+
+// tucked finds a tucked card's strip in a region (the box of what shows of
+// the card; a click at its centre lands on the card).
+export function tucked(page, regionName, title) {
+  return page.getByRole('region', { name: regionName, exact: true }).locator('.tuck').filter({ has: page.locator(`.card[title="${title}"]`) });
+}
+
+// attached finds what opens an attached card's view (the zoom with its
+// actions) when tapped or clicked: with a mouse, a tucked card's strip; a
+// Basic Energy, or anything on a touch screen, through the Pokémon's
+// sheet, which this opens to show the card's row in its Attached list.
+export async function attached(page, regionName, title, testInfo) {
+  if (!isTouch(testInfo) && !BASIC_ENERGY.test(title)) return tucked(page, regionName, title);
+  const region = page.getByRole('region', { name: regionName, exact: true });
+  const pokemon = region.locator('.main > .card');
+  if (isTouch(testInfo)) await pokemon.tap();
+  else await pokemon.click({ button: 'right' });
+  const name = title.replace(/ \([^)]*\)$/, '');
+  return page.locator('.sheet section[aria-label="Attached"]').getByRole('button', { name: new RegExp(`^${name}`) }).first();
+}

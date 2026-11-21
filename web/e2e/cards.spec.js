@@ -4,7 +4,7 @@
 // Colours are written out from internal/design/tokens.json, not read back
 // from the page, so a token pointing at the wrong value fails here.
 import { readFileSync } from 'node:fs';
-import { test, expect, isPhone } from './fixtures.js';
+import { test, expect, isPhone, isWide } from './fixtures.js';
 
 const studio = {
   navy: '#13285C', // brand-navy
@@ -59,6 +59,11 @@ test('every face-down card on the board shows the Studio back with the mark', as
   // face-down cards are the prizes, seen in the prize view.
   if (isPhone(testInfo)) {
     await page.getByRole('group', { name: 'p2 counters' }).getByRole('button', { name: /^Prizes / }).click();
+    await expect(page.locator('.modal .card.back').first()).toBeVisible();
+  } else if (!isWide(testInfo)) {
+    // Today's mat counts the opponent's hand in a chip; its view shows the
+    // face-down cards.
+    await page.getByRole('region', { name: 'p2 side' }).getByRole('button', { name: 'Hand 6' }).click();
     await expect(page.locator('.modal .card.back').first()).toBeVisible();
   }
   const found = await backs(page);
