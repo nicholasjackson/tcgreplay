@@ -1,9 +1,13 @@
 ---
 // Docs is the layout of the how-to pages: the shared page layout with a
 // sidebar linking the docs index, then the docs pages (lib/docs-pages.ts),
-// lowest order first.
+// lowest order first; a breadcrumb above the article; and an "On this
+// page" list of the article's h2s (lib/headings.ts gives each h2 an id).
+// The breadcrumb and the list are their own landmarks, outside the
+// sidebar and the article.
 import Base from './Base.astro';
 import { docsPages } from '../lib/docs-pages';
+import { withHeadingIds } from '../lib/headings';
 
 interface Props {
   title: string;
@@ -13,10 +17,24 @@ const { title, description } = Astro.props;
 
 const items = await docsPages();
 const here = Astro.url.pathname.replace(/\/$/, '');
+
+// The trail to this page: the docs index, the workflows page above a
+// workflow's own page, then this page (unlinked).
+const trail: { href?: string; label: string }[] = [];
+if (here === '/docs') {
+  trail.push({ label: 'Docs' });
+} else {
+  trail.push({ href: '/docs', label: 'Docs' });
+  if (here.startsWith('/docs/workflows/')) trail.push({ href: '/docs/workflows', label: 'Coaching workflows' });
+  trail.push({ label: title });
+}
+
+const { html, headings } = withHeadingIds(await Astro.slots.render('default'));
 ---
 <Base title={title} description={description}>
   <div class="docs">
     <nav class="docs-nav" aria-label="Guide">
+      <span class="docs-nav-head">Docs</span>
       <ul>
         <li><a href="/docs" aria-current={here === '/docs' ? 'page' : undefined}>All docs</a></li>
         {items.map((i) => (
@@ -24,28 +42,110 @@ const here = Astro.url.pathname.replace(/\/$/, '');
         ))}
       </ul>
     </nav>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        {trail.map((t) => (
+          <li>{t.href ? <a href={t.href}>{t.label}</a> : <span aria-current="page">{t.label}</span>}</li>
+        ))}
+      </ol>
+    </nav>
+    {headings.length >= 2 && (
+      <nav class="on-this-page" aria-label="On this page">
+        <span class="docs-nav-head">On this page</span>
+        <ul>
+          {headings.map((h) => <li><a href={`#${h.id}`}>{h.text}</a></li>)}
+        </ul>
+      </nav>
+    )}
     <article class="prose">
-      <slot />
+      <Fragment set:html={html} />
     </article>
   </div>
 </Base>
 
 <style>
+  /* Phone: the trail, the sidebar, the page's headings, then the article.
+     From 52rem the sidebar stands beside them; from 76rem the headings
+     move to their own column on the right. */
   .docs {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 1rem 2rem;
+    grid-template-areas: 'crumbs' 'side' 'toc' 'main';
+    gap: var(--space-4) var(--space-10);
   }
+  .docs-nav { grid-area: side; }
+  .breadcrumb { grid-area: crumbs; }
+  .on-this-page { grid-area: toc; }
+  .prose { grid-area: main; }
   @media (min-width: 52rem) {
-    .docs { grid-template-columns: 13rem minmax(0, 1fr); }
-    .docs-nav { position: sticky; top: 1rem; align-self: start; }
+    .docs {
+      grid-template-columns: 15rem minmax(0, 1fr);
+      grid-template-rows: auto auto 1fr;
+      grid-template-areas: 'side crumbs' 'side toc' 'side main';
+      row-gap: var(--space-2);
+    }
+    .docs-nav { position: sticky; top: var(--space-4); align-self: start; }
+    .on-this-page { margin-bottom: var(--space-4); }
   }
-  .docs-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; }
-  @media (min-width: 52rem) { .docs-nav ul { display: grid; gap: 0.35rem; } }
-  .docs-nav a { text-decoration: none; }
-  .docs-nav a[aria-current='page'] { font-weight: 700; text-decoration: underline; }
-  .prose { min-width: 0; max-width: 46rem; }
-  .prose :global(h1) { margin-top: 0; }
-  .prose :global(li) { margin: 0.3rem 0; }
-  .prose :global(ol), .prose :global(ul) { padding-left: 1.4rem; }
+  @media (min-width: 76rem) {
+    .docs {
+      grid-template-columns: 15rem minmax(0, var(--prose-width)) 12.5rem;
+      grid-template-rows: auto 1fr;
+      grid-template-areas: 'side crumbs toc' 'side main toc';
+    }
+    .on-this-page { position: sticky; top: var(--space-4); align-self: start; margin-bottom: 0; }
+  }
+
+  .docs-nav-head {
+    display: block;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* The sidebar: the same links, as Studio rows. */
+  .docs-nav { font-size: var(--fs-14); line-height: 1.4; }
+  .docs-nav .docs-nav-head { padding: 0 10px 6px; }
+  .docs-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px; }
+  @media (min-width: 52rem) { .docs-nav ul { display: grid; } }
+  .docs-nav a {
+    display: block;
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+  .docs-nav a:hover { background: var(--hover); color: var(--ink); }
+  .docs-nav a[aria-current='page'] { background: var(--selected); color: var(--primary); font-weight: 600; }
+
+  .breadcrumb { font-size: var(--fs-13); color: var(--muted); }
+  .breadcrumb ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; }
+  .breadcrumb li + li::before { content: '/'; padding: 0 0.4em; }
+  .breadcrumb a { color: var(--muted); }
+
+  .on-this-page { font-size: var(--fs-13); }
+  .on-this-page ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+  .on-this-page a { color: var(--ink-soft); text-decoration: none; }
+  .on-this-page a:hover { color: var(--primary); text-decoration: underline; }
+  @media (min-width: 76rem) {
+    .on-this-page { padding-left: var(--space-4); box-shadow: inset 1px 0 0 var(--line); }
+  }
+  @media (max-width: 51.99rem) {
+    /* Phone: the sidebar's rows line up with the trail, and the page's
+       headings run on in a line rather than one per row. */
+    .docs-nav { margin-left: -10px; }
+    .on-this-page ul { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+  }
+  @media (max-width: 75.99rem) {
+    .on-this-page {
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-m);
+      background: var(--panel);
+      box-shadow: 0 0 0 1px var(--line);
+    }
+  }
+
+  .prose { min-width: 0; max-width: var(--prose-width); }
 </style>

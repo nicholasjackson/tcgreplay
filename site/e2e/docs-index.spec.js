@@ -1,9 +1,11 @@
 // The docs index: the docs' own address (/docs/ and /docs) answers with a
 // page listing every docs page, not the 404 page; the index lists the same
 // pages as the docs sidebar, in the same order, each with its one-line
-// description; and every docs page's sidebar starts with a link to it.
+// description; every docs page's sidebar starts with a link to it; and
+// every docs page shows a breadcrumb and an "On this page" list of its
+// sections, each in its own landmark outside the sidebar.
 import { readFileSync } from 'node:fs';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // The docs sidebar, in order, after its "All docs" link.
 const sidebar = [
@@ -69,4 +71,39 @@ test("every docs page's sidebar starts with a link to the docs index, then the d
   await expect(page.getByRole('navigation', { name: 'Guide' }).getByRole('link', { name: 'All docs' })).toHaveAttribute('aria-current', 'page');
   await page.goto('/docs/connect');
   await expect(page.getByRole('navigation', { name: 'Guide' }).getByRole('link', { name: 'All docs' })).not.toHaveAttribute('aria-current', 'page');
+});
+
+test('every docs page shows a breadcrumb to it and lists its sections on this page, outside the sidebar', async ({ page }) => {
+  const paths = ['/docs', ...sidebar.map((s) => s.href).filter((h) => !h.includes('#')), '/docs/workflows/review-game'];
+  for (const path of paths) {
+    await page.goto(path);
+    const title = (await page.getByRole('heading', { level: 1 }).innerText()).trim();
+
+    const crumbs = page.getByRole('navigation', { name: 'Breadcrumb' });
+    await expect(crumbs, `${path}: breadcrumb`).toBeVisible();
+    await expect(crumbs.locator('[aria-current="page"]'), `${path}: breadcrumb ends at the page`).toHaveText(path === '/docs' ? 'Docs' : title);
+    if (path !== '/docs') await expect(crumbs.getByRole('link').first(), `${path}: breadcrumb starts at the docs`).toHaveAttribute('href', '/docs');
+    if (path.startsWith('/docs/workflows/')) {
+      await expect(crumbs.getByRole('link', { name: 'Coaching workflows' }), `${path}: through the workflows`).toHaveAttribute('href', '/docs/workflows');
+    }
+
+    const ids = await page.locator('article.prose h2').evaluateAll((hs) => hs.map((h) => h.id));
+    const onPage = page.getByRole('navigation', { name: 'On this page' });
+    if (ids.length < 2) {
+      await expect(onPage, `${path}: no list for fewer than two sections`).toHaveCount(0);
+    } else {
+      await expect(onPage, `${path}: on this page`).toBeVisible();
+      const hrefs = await onPage.getByRole('link').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+      expect(ids.every((id) => id !== ''), `${path}: every section has an id`).toBe(true);
+      expect(hrefs, `${path}: one link per section, in order`).toEqual(ids.map((id) => `#${id}`));
+      expect(new Set(ids).size, `${path}: section ids are unique`).toBe(ids.length);
+    }
+
+    // Both are outside the sidebar and the article.
+    const sidebar = page.getByRole('navigation', { name: 'Guide' });
+    for (const name of ['Breadcrumb', 'On this page']) {
+      expect(await sidebar.getByRole('navigation', { name }).count(), `${path}: ${name} outside the sidebar`).toBe(0);
+      expect(await page.locator('article.prose').getByRole('navigation', { name }).count(), `${path}: ${name} outside the article`).toBe(0);
+    }
+  }
 });

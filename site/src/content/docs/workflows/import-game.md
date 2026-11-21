@@ -1,5 +1,6 @@
 ---
 guide: import-game
+group: after-a-game
 title: Import a game
 prompts:
   - "Here's my last game from TCG Live and my decklist. Import it: (paste the battle log, then the decklist)"

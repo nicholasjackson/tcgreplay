@@ -83,8 +83,8 @@ test('the timeline shows its rewind and play buttons on a touch screen, and they
     await page.getByRole('menuitem', { name: 'Show timeline' }).tap();
   }
   const line = page.locator('.line').filter({ hasText: 'Move Riolu' }).first();
-  const rewind = line.getByRole('button', { name: '↺' });
-  const play = line.getByRole('button', { name: '▶' });
+  const rewind = line.getByRole('button', { name: /^Rewind to just after #/ });
+  const play = line.getByRole('button', { name: /^Play from #/ });
   await line.scrollIntoViewIfNeeded();
   await expect(rewind).toHaveCSS('opacity', '1');
   await expect(play).toBeVisible();
@@ -106,7 +106,7 @@ test('the timeline shows its rewind and play buttons on a touch screen, and they
     await page.getByRole('menuitem', { name: 'Show timeline' }).tap();
   }
 
-  await page.locator('.line').filter({ hasText: 'Move Riolu' }).first().getByRole('button', { name: '▶' }).tap();
+  await page.locator('.line').filter({ hasText: 'Move Riolu' }).first().getByRole('button', { name: /^Play from #/ }).tap();
   await expect(page.locator('.line.now')).toHaveCount(1);
 });
 
@@ -149,15 +149,17 @@ test('a long touch on a card selects nothing and opens no callout', async ({ pag
   expect(css).toMatch(/\.card\.svelte-[a-z0-9]+\{[^}]*-webkit-touch-callout:none/);
 });
 
-test('on a touch screen the pile and deck views close with a round ✕, full screen on a phone', async ({ page }, testInfo) => {
+test('on a touch screen the pile and deck views close with an X icon, full screen on a phone', async ({ page }, testInfo) => {
   test.skip(!isTouch(testInfo), 'touch screens');
   const modal = page.locator('.modal');
   for (const open of [() => pile(page, 'Discard').tap(), () => openSearch(page)]) {
     await open();
     await expect(modal).toBeVisible();
-    // One close, the round ✕: no Close or Done text button.
+    // One close, the X icon (as in the action sheet): no Close or Done
+    // text button.
     await expect(modal.getByRole('button', { name: /^(Close|Done)$/ })).toHaveCount(1);
-    await expect(modal.getByRole('button', { name: 'Close' })).toHaveText('✕');
+    await expect(modal.getByRole('button', { name: 'Close' })).toHaveText('');
+    await expect(modal.getByRole('button', { name: 'Close' }).locator('svg')).toHaveCount(1);
     if (isPhone(testInfo)) expect(await modal.boundingBox()).toEqual({ x: 0, y: 0, width: 390, height: 844 });
     await modal.getByRole('button', { name: 'Close' }).tap();
     await expect(modal).toHaveCount(0);

@@ -4,66 +4,36 @@
      10 card widths wide beside the timeline. Everything on the board
      scales from it, text included (--fs). */
   --cw: clamp(48px, min((100vh - 115px) / 11.1, (100vw - 360px) / 10), 240px);
-  --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
-  --bg: #17321f;
-  --felt: radial-gradient(ellipse at center, #22492d 0%, #17321f 70%, #10241a 100%);
-  --panel: #1c2421;
-  --strip: #0f1d16cc;
-  --input: #0f1512;
-  --text: #e8efe9;
-  --muted: #9bb0a2;
-  --line: #2f3b35;
-  --slot-line: #ffffff2e;
-  --drop: #e3b34133;
-  --accent: #e3b341;
-  --accent-glow: #e3b341aa;
-  --hover: #ffffff14;
-  --fresh: #e3b34122;
-  --note: #2c3a52;
-  --p1: #4fc3f7;
-  --p2: #ef5350;
-  --reveal: #e91e63;
-  --card-bg: #2a2f2c;
-  color-scheme: dark;
+  --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
 }
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) {
-    --bg: #2c5a3a;
-    --felt: radial-gradient(ellipse at center, #3a7a4e 0%, #2c5a3a 70%, #234a2f 100%);
-    --panel: #f4f6f4;
-    --input: #fff;
-    --text: #1d2420;
-    --muted: #5b6b61;
-    --line: #d5dcd7;
-    --hover: #0000000d;
-    --note: #e3ecfa;
-    color-scheme: light;
-  }
-  :root:not([data-theme='dark']) main { color: #f2f6f3; --muted: #cfe0d5; }
-}
+/* The colour tokens come from internal/design/tokens.css (imported first,
+   in main.js). The mat is dark in every interface theme, so text on it
+   uses the mat's own colours. */
+main { color: var(--mat-ink); --muted: var(--mat-muted); }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font: var(--fs-14)/1.4 var(--font-sans);
   background: var(--bg);
-  color: var(--text);
+  color: var(--ink);
 }
-main { background: var(--felt); }
+/* The mat: one flat surface in the chosen mat colour. */
+main { background: var(--mat-surface); }
 button {
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-13);
   padding: 5px 10px;
   border-radius: 6px;
   border: 1px solid var(--line);
   background: var(--panel);
-  color: var(--text);
+  color: var(--ink);
   cursor: pointer;
 }
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { opacity: 0.45; cursor: default; }
-button.primary { background: var(--accent); color: #1a1a1a; border-color: var(--accent); font-weight: 700; }
-select { font: inherit; background: var(--input); color: var(--text); border: 1px solid var(--line); border-radius: 4px; }
-code { background: #0005; padding: 1px 5px; border-radius: 4px; }
+button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
+select { font: inherit; background: var(--panel); color: var(--ink); border: 1px solid var(--control-line); border-radius: var(--radius-xs); }
+code { background: var(--panel-sunk); padding: 1px 5px; border-radius: 4px; }
 
 /* A card enlarged on hover sits above the cards around it. */
 :where(.slot, .main, .att, .pile, .prize, .entry):has(> * .card.lift:hover, > .card.lift:hover) {
@@ -79,12 +49,12 @@ code { background: #0005; padding: 1px 5px; border-radius: 4px; }
    and the one under the pointer lit, and a ghost follows the pointer. */
 .card { touch-action: none; }
 .dragging [data-drop] { outline: 2px dashed var(--accent); outline-offset: -2px; }
-.dragging [data-drop].drop-lit { background: var(--drop); border-color: var(--accent); outline-style: solid; }
+.dragging [data-drop].drop-lit { background: var(--drop-target); border-color: var(--accent); outline-style: solid; }
 .dragging, .dragging * { cursor: grabbing !important; }
 .drag-source { opacity: 0.35; pointer-events: none; }
 /* The ghost's position and size are set inline (lib/pointer.svelte.js),
    where no card style can override them. */
-.drag-ghost { box-shadow: 0 16px 36px #000c; }
+.drag-ghost { box-shadow: var(--shadow-drag); }
 
 /* On a phone, Energy and Tools tuck further under their Pokémon, so less
    of them hangs below it, and fan in close so several stay within the
@@ -103,7 +73,7 @@ code { background: #0005; padding: 1px 5px; border-radius: 4px; }
 @media (pointer: coarse) {
   button,
   select,
-  input:not([type='checkbox']),
-  label:has(> input[type='checkbox']) { min-height: 44px; min-width: 44px; }
-  label:has(> input[type='checkbox']) { display: inline-flex; align-items: center; }
+  input:not([type='checkbox'], [type='radio']),
+  label:has(> input[type='checkbox'], > input[type='radio']) { min-height: 44px; min-width: 44px; }
+  label:has(> input[type='checkbox'], > input[type='radio']) { display: inline-flex; align-items: center; }
 }

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 30 30" fill="none">
+  <title>TCG Replay</title>
+  <!-- The TCG Replay mark, from the Studio design system's Logos group
+       (studio-mark.svg): a navy rounded square holding two cards and a
+       replay arrow, in brand-navy #13285C, brand-cyan #5CC8F2 and white.
+       It is the source of every logo and icon; render them with:
+         rsvg-convert -w 512 -h 512 internal/design/mark.svg -o site/public/logo.png
+         rsvg-convert -w 256 -h 256 internal/design/mark.svg -o site/public/icon.png
+         rsvg-convert -w 512 -h 512 internal/design/mark.svg -o docs/logo.png
+         rsvg-convert -w 256 -h 256 internal/design/mark.svg -o docs/icon.png
+       The listing icon (plugin/assets/icon.svg) is the same drawing at 512px. -->
+  <rect width="30" height="30" rx="8" fill="#13285C"/>
+  <rect x="7" y="8" width="10" height="14" rx="2" transform="rotate(-12 12 15)" stroke="#5CC8F2" stroke-width="1.8"/>
+  <rect x="12" y="8" width="10" height="14" rx="2" fill="#13285C" stroke="#FFFFFF" stroke-width="1.8"/>
+  <path d="M15.2 17.2a2.2 2.2 0 1 0 2.2-2.2h-1" stroke="#5CC8F2" stroke-width="1.6" stroke-linecap="round"/>
+</svg>

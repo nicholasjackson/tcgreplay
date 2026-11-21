@@ -1,5 +1,6 @@
 ---
 guide: review-game
+group: after-a-game
 title: Review a game
 prompts:
   - "Review this game with me."

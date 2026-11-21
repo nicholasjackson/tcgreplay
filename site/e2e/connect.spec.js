@@ -7,7 +7,7 @@
 // starts with the Plugin Directory steps only once lib/listing.ts says TCG
 // Replay is listed. One refresh section (#refresh) covers each assistant,
 // and each assistant's troubleshooting text links to it.
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { site } from '../src/lib/facts.ts';
 import { chatgptDirectory, chatgptPlans } from '../src/lib/listing.ts';
 

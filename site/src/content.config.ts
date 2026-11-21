@@ -38,6 +38,10 @@ const workflows = defineCollection({
   schema: z.object({
     // The guide this page documents: must equal a guide's name.
     guide: z.string(),
+    // The group the workflows page lists it under (lib/workflows.ts gives
+    // each group its heading and the order): after a game (import and
+    // review), practice (drills) or play (playing a game).
+    group: z.enum(['after-a-game', 'practice', 'play']),
     title: z.string(),
     // Example prompts, each shown with a copy button: at least one.
     prompts: z.array(z.string().min(1)).min(1, 'a workflow page needs at least one example prompt'),

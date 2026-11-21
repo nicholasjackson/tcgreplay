@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // idleFromAppSpec reads TCGREPLAY_IDLE_TIMEOUT from .do/app.yaml and renders
 // it as the playmat does for people (minutes under two hours, else hours).
@@ -26,7 +26,7 @@ test('the privacy page is at /privacy and linked from every page', async ({ page
   const resp = await request.get('/privacy');
   expect(resp.status()).toBe(200);
   await page.goto('/');
-  await expect(page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
+  await expect(page.locator('footer').getByRole('navigation', { name: 'Footer' }).getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
 });
 
 test('it says what is collected at sign-in, kept while playing, for how long, by whom, and never', async ({ page }) => {
@@ -122,8 +122,8 @@ test('its older statements match the playmat: sign-ins, disconnecting, card imag
   await expect(signIn).toContainText('keeps your sign-ins in its memory');
   await expect(signIn).toContainText('encrypted');
   await expect(signIn).toContainText('stay signed in when the playmat is updated');
-  await expect(signIn).toContainText('four display settings');
-  for (const word of ['replay speed', 'autoplay', 'where the panel sits', 'prize reminders']) await expect(signIn, word).toContainText(word);
+  await expect(signIn).toContainText('six display settings');
+  for (const word of ['replay speed', 'autoplay', 'where the panel sits', 'prize reminders', 'the interface theme', 'the mat']) await expect(signIn, word).toContainText(word);
 
   const howLong = section('How long it is kept');
   await expect(howLong).toContainText('does not tell the playmat');
@@ -135,6 +135,9 @@ test('its older statements match the playmat: sign-ins, disconnecting, card imag
   await expect(outside).toContainText('fetches them from TCGdex and malie.io');
   await expect(outside).toContainText('DigitalOcean Spaces');
   await expect(outside).toContainText('Cloudflare Web Analytics');
+  // The typeface comes from Google Fonts, on the website and the board.
+  await expect(outside).toContainText('Google Fonts serves the typeface the website and the board use (IBM Plex)');
+  await expect(outside).toContainText('no cookies are sent');
   await expect(outside).toContainText('The playmat sends nothing about you to TCGdex or malie.io');
   await expect(outside).toContainText('when your browser loads an image from them, they see that request');
   // The assistant is given the Google account ID (get_account), never the email.
@@ -143,14 +146,16 @@ test('its older statements match the playmat: sign-ins, disconnecting, card imag
   );
 });
 
-test('its cookie statement names whose cookies they are, and the only outside script', async ({ page }) => {
+test('its cookie statement names whose cookies they are, and the only outside loads', async ({ page }) => {
   await page.goto('/privacy');
   const intro = page.locator('main article > p', { hasText: '__cf_bm' });
   await expect(intro).toContainText('sets no cookies on this website');
   await expect(intro).toContainText('two sign-in cookies');
   await expect(intro).toContainText('short-lived bot-protection cookie');
   await expect(intro).toContainText('not used for visitor counting and is not tied to your account');
-  await expect(intro).toContainText("only thing this website may load from another site is Cloudflare's visitor-counting script");
+  await expect(intro).toContainText('The only things this website and the board load from other sites are their typeface, IBM Plex, from Google Fonts');
+  await expect(intro).toContainText("and Cloudflare's visitor-counting script");
+  await expect(intro).not.toContainText('only thing this website may load');
 });
 
 test('it shows a last-updated date and links to the GitHub issues for questions', async ({ page }) => {
@@ -166,4 +171,28 @@ test('its idle time is the one in the App Platform definition', async ({ page })
   await page.goto('/privacy');
   await expect(page.locator('[data-idle]')).toHaveText(want);
   await expect(page.getByRole('region', { name: 'How long it is kept' })).toContainText(`after ${want} without activity`);
+});
+
+test('it keeps the space before its inline code and figures', async ({ page }) => {
+  await page.goto('/privacy');
+  const section = (name) => page.getByRole('region', { name });
+  await expect(section('When you sign in')).toContainText('the openid and email permissions');
+  await expect(section('Diagnostics')).toContainText('usage and error records for 7 days');
+  await expect(section('Outside services')).toContainText('The playmat tells it your Google account ID');
+});
+
+test('an On this page card lists every section, in order, linking to it', async ({ page }) => {
+  const sections = ['When you sign in', 'While you play', 'Visitor counting', 'Diagnostics', 'How long it is kept', 'Outside services', 'What it never collects', 'Removing your data', 'Questions'];
+  await page.goto('/privacy');
+  const toc = page.getByRole('navigation', { name: 'On this page' });
+  await expect(toc).toBeVisible();
+  await expect(toc.getByRole('listitem')).toHaveText(sections);
+  for (const name of sections) {
+    const href = await toc.getByRole('link', { name, exact: true }).getAttribute('href');
+    expect(href, name).toMatch(/^#/);
+    await expect(page.locator(`main ${href}`).getByRole('heading', { level: 2 }), `${href} is the ${name} section`).toHaveText(name);
+  }
+  await expect(toc.getByRole('link', { name: /Terms of service/ })).toHaveAttribute('href', '/terms');
+  // A card: its own white surface, apart from the text column.
+  expect(await toc.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
 });

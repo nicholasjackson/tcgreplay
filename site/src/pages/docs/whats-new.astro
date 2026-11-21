@@ -1,7 +1,9 @@
 ---
 // What's new: every release that changed what players see, newest first,
 // from src/data/whats-new.yaml (lib/whats-new.ts), each saying whether
-// players need to refresh their assistant's connection.
+// players need to refresh their assistant's connection: a timeline, each
+// update a dot on the rail with its date, its title, its refresh callout
+// and its changes.
 import Docs from '../../layouts/Docs.astro';
 import { whatsNew, changeHTML } from '../../lib/whats-new';
 
@@ -13,19 +15,22 @@ const human = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
   description="What changed in each tcgreplay update, and whether you need to refresh your assistant's connection."
 >
   <h1>What's new</h1>
-  <p>
+  <p class="intro">
     What changed in each update, newest first. When an update says a refresh is needed, <a href="/docs/connect#refresh">refresh your assistant's connection</a> to see new or changed tools.
   </p>
   <ol class="whats-new" data-whats-new>
     {whatsNew.map((e) => (
       <li data-entry data-date={e.date}>
-        <h2><time datetime={e.date}>{human(e.date)}</time> — {e.title}</h2>
+        <h2><time datetime={e.date}>{human(e.date)}</time><span class="sr-only"> — </span>{e.title}</h2>
         {e.refresh ? (
-          <p data-refresh><strong>Refresh needed.</strong> <a href="/docs/connect#refresh">Refresh your assistant's connection</a> to see the changes.</p>
+          <p class="refresh needed" data-refresh>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"></path><path d="M4 4v4.5h4.5"></path></svg>
+            <span><strong>Refresh needed.</strong> <a href="/docs/connect#refresh">Refresh your assistant's connection</a> to see the changes.</span>
+          </p>
         ) : (
-          <p data-refresh>No refresh needed.</p>
+          <p class="refresh" data-refresh>No refresh needed.</p>
         )}
-        <ul>
+        <ul class="changes">
           {e.changes.map((c) => <li set:html={changeHTML(c)} />)}
         </ul>
       </li>
@@ -34,7 +39,68 @@ const human = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
 </Docs>
 
 <style>
-  .whats-new { list-style: none; padding-left: 0; }
-  .whats-new > li { margin: 1.5rem 0; }
-  .whats-new h2 { font-size: 1.2rem; margin-bottom: 0.4rem; }
+  .intro { margin: 0 0 var(--space-8); color: var(--ink-soft); }
+
+  /* The timeline: each update hangs from a dot on a rail down the left. */
+  .whats-new { list-style: none; margin: 0; padding: 0; }
+  .whats-new > li { position: relative; margin: 0; padding: 0 0 var(--space-8) 34px; }
+  .whats-new > li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 0 4px var(--selected);
+  }
+  .whats-new > li::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 26px;
+    bottom: 0;
+    width: 2px;
+    background: var(--line);
+  }
+  .whats-new h2 { margin: 0 0 12px; font-size: var(--fs-heading); line-height: 1.25; }
+  .whats-new time { display: block; margin-bottom: 4px; font: 600 var(--fs-13) var(--font-mono); letter-spacing: 0; color: var(--muted); }
+
+  /* Whether it needs a refresh: a warning callout when it does. */
+  .refresh { margin: 0; color: var(--muted); font-size: var(--fs-15); }
+  .refresh.needed {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-m);
+    background: var(--warn-bg);
+    box-shadow: inset 0 0 0 1px var(--warn-line);
+    color: var(--warn-ink);
+  }
+  .refresh.needed svg { flex: none; width: 18px; height: 18px; margin-top: 3px; }
+  .refresh.needed a { color: inherit; font-weight: 600; }
+
+  /* The changes: one white row each, with a cyan dot. */
+  .changes { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .changes li {
+    position: relative;
+    margin: 0;
+    padding: 12px 14px 12px 32px;
+    border-radius: var(--radius-m);
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+    font-size: var(--fs-15);
+  }
+  .changes li::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 22px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--brand-cyan);
+  }
 </style>

@@ -1,12 +1,13 @@
 // Every coaching workflow the playmat offers has a page with at least one
-// copyable example prompt, listed in the playmat's own order, showing the
+// copyable example prompt, listed in groups (after a game, practice, play)
+// and in the playmat's own order within each group, showing the
 // description from its guide; the rewind page explains branching with a
 // prompt. The guides are read here from the playmat's files, independently
 // of the site's own loader.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 const guidesDir = join(process.cwd(), '..', 'internal', 'guides');
 
@@ -19,6 +20,30 @@ function readGuides() {
       return parse(m[1]);
     });
 }
+
+const pagesDir = join(process.cwd(), 'src', 'content', 'docs', 'workflows');
+
+// readGroups maps each guide to the group its workflow page names, read
+// from the pages' frontmatter independently of the site's loader.
+function readGroups() {
+  return Object.fromEntries(
+    readdirSync(pagesDir)
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => {
+        const m = /^---\n([\s\S]*?)\n---/.exec(readFileSync(join(pagesDir, f), 'utf8'));
+        expect(m, `${f} frontmatter`).not.toBeNull();
+        const fm = parse(m[1]);
+        return [fm.guide, fm.group];
+      }),
+  );
+}
+
+// The groups in the order the workflows page shows them, with their headings.
+const groups = [
+  { id: 'after-a-game', title: 'After a game' },
+  { id: 'practice', title: 'Practice' },
+  { id: 'play', title: 'Play' },
+];
 
 function readOrder() {
   const src = readFileSync(join(guidesDir, 'guides.go'), 'utf8');
@@ -45,17 +70,44 @@ test('every workflow has a page with a copyable example prompt and its guide des
   }
 });
 
-test('the workflows page lists them in the playmat order with their guide descriptions', async ({ page }) => {
+test('each workflow page names its group: import and review after a game, the drills practice, playing a game play', () => {
+  // Hand-maintained, like the list of seven above: a new guide must be given a group.
+  expect(readGroups()).toEqual({
+    'import-game': 'after-a-game',
+    'opponent-deck': 'after-a-game',
+    'review-game': 'after-a-game',
+    'replay-drill': 'practice',
+    'before-you-move': 'practice',
+    'numbers-drill': 'practice',
+    'play-game': 'play',
+  });
+});
+
+test('the workflows page lists them in groups, After a game, Practice and Play, each in the playmat order, with their guide descriptions', async ({ page }) => {
   await page.goto('/docs/workflows');
+  const sections = page.locator('[data-workflow-group]');
+  expect(await sections.evaluateAll((ss) => ss.map((s) => s.dataset.workflowGroup))).toEqual(groups.map((g) => g.id));
+  const order = readOrder();
+  const byGroup = readGroups();
+  for (const g of groups) {
+    const section = page.locator(`[data-workflow-group="${g.id}"]`);
+    await expect(section.getByRole('heading', { level: 2 })).toHaveText(g.title);
+    const names = await section.locator('[data-workflows] > li').evaluateAll((lis) => lis.map((li) => li.dataset.guide));
+    expect(names, `${g.title}: the playmat order`).toEqual(order.filter((n) => byGroup[n] === g.id));
+  }
+  // Every guide is listed exactly once, across the groups.
   const items = page.locator('[data-workflows] > li');
   const names = await items.evaluateAll((lis) => lis.map((li) => li.dataset.guide));
-  expect(names).toEqual(readOrder());
+  expect([...names].sort()).toEqual([...order].sort());
   const guides = Object.fromEntries(readGuides().map((g) => [g.name, g.description]));
   for (const name of names) {
     const li = page.locator(`[data-workflows] > li[data-guide="${name}"]`);
     await expect(li).toContainText(guides[name]);
     await expect(li.getByRole('link')).toHaveAttribute('href', `/docs/workflows/${name}`);
   }
+  // The group headings are the page's On this page entries.
+  const toc = page.getByRole('navigation', { name: 'On this page' }).getByRole('link');
+  await expect(toc).toHaveText(groups.map((g) => g.title));
 });
 
 test('a workflow prompt copies exactly its text', async ({ context, page, baseURL }) => {

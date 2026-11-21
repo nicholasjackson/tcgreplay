@@ -8,6 +8,7 @@
   import { startTarget } from '../lib/target.js';
   import Card from './Card.svelte';
   import Stepper from './Stepper.svelte';
+  import Icon from './Icon.svelte';
 
   const s = $derived(app.sheet);
   const model = $derived(s ? s.build() : null);
@@ -89,10 +90,15 @@
   }
 </script>
 
+
 <svelte:window onkeydown={(ev) => ev.key === 'Escape' && s && !s.hidden && close()} onpopstate={popstate} />
 
 {#snippet text()}
   <pre class="text">{model.text ?? info?.text ?? (model.card.def ? 'Loading card text…' : 'No card text.')}</pre>
+{/snippet}
+
+{#snippet back()}
+  <button class="back" onclick={() => (panel = null)}>‹ Actions</button>
 {/snippet}
 
 {#if model}
@@ -123,22 +129,40 @@
     {/if}
     <div class="main">
       {#if mode === 'popover'}
-        <div class="ptitle">{model.title}</div>
-        {#if model.summary}<div class="psum">{model.summary}</div>{/if}
+        <div class="phead">
+          <div class="ptitle">{model.title}</div>
+          {#if model.summary}<div class="psum">{model.summary}</div>{/if}
+        </div>
       {:else}
-        <header onpointerdown={(ev) => (y0 = ev.clientY)} onpointerup={swipeEnd} onpointercancel={() => (y0 = null)}>
+        <header class:sub={!!panel} onpointerdown={(ev) => (y0 = ev.clientY)} onpointerup={swipeEnd} onpointercancel={() => (y0 = null)}>
           {#if mode === 'phone'}<span class="grab"></span>{/if}
-          {#if mode === 'phone' && model.card}
-            <div class="art"><Card card={model.card} draggable={false} lift={false} onclick={() => (showText = !showText)} /></div>
-          {/if}
-          <div class="meta">
-            <h3>{model.title}</h3>
-            {#if model.summary}<div class="sum">{model.summary}</div>{/if}
+          {#if panel}
+            <!-- A panel's header: back to the actions, then the card it
+                 belongs to (on a phone, where the card is not beside it). -->
+            {@render back()}
+            <span class="ctx">{mode === 'phone' ? model.title : ''}</span>
+          {:else}
             {#if mode === 'phone' && model.card}
-              <button class="linkish" aria-expanded={showText} onclick={() => (showText = !showText)}>{showText ? 'Actions ›' : 'Card text ›'}</button>
+              <div class="art"><Card card={model.card} draggable={false} lift={false} onclick={() => (showText = !showText)} /></div>
             {/if}
-          </div>
-          <button class="close" aria-label="Close" onclick={close}>✕</button>
+            <div class="meta">
+              <h3>{model.title}</h3>
+              <div class="facts">
+                <!-- Each fact stays on one line; the line wraps between them. -->
+                {#if model.summary}<span class="sum">{#each model.summary.split(' · ') as part, i (i)}{i ? ' · ' : ''}<span class="part">{part}</span>{/each}</span>{/if}
+                {#if model.damage || (mode === 'phone' && model.energy?.length)}
+                  <span class="tags">
+                    {#if model.damage}<span class="tag" aria-label="{model.damage} damage">−{model.damage}</span>{/if}
+                    {#if mode === 'phone'}{#each model.energy || [] as e, i (i)}<i class="dot" data-e={e}></i>{/each}{/if}
+                  </span>
+                {/if}
+              </div>
+              {#if mode === 'phone' && model.card}
+                <button class="linkish" aria-expanded={showText} onclick={() => (showText = !showText)}>{showText ? 'Actions ›' : 'Card text ›'}</button>
+              {/if}
+            </div>
+          {/if}
+          <button class="close" aria-label="Close" onclick={close}><Icon name="close" /></button>
         </header>
       {/if}
       <div class="body">
@@ -148,14 +172,14 @@
           <!-- A panel can close the sheet as it acts, which clears panel
                while it is still on screen. -->
           {@const Panel = panel?.component}
-          <button class="back" onclick={() => (panel = null)}>‹ Actions</button>
+          {#if mode === 'popover'}{@render back()}{/if}
           <Panel {...panel?.props} {close} />
         {:else}
           {#each model.sections as sec (sec.label)}
-            <section class="sec" role="group" aria-label={sec.label}>
+            <section class="sec" class:other={sec.label === 'Other'} role="group" aria-label={sec.label}>
               <div class="label">{sec.label}</div>
               {#if sec.stepper}
-                <Stepper {...sec.stepper} label="{sec.label} total" hint={mode !== 'popover'} />
+                <Stepper {...sec.stepper} label="{sec.label} total" />
               {:else if sec.toggles}
                 <div class="row" {@attach mode === 'phone' && fade}>
                   {#each sec.toggles as t (t.label)}
@@ -163,12 +187,17 @@
                   {/each}
                 </div>
               {:else}
-                <div class="row" {@attach mode === 'phone' && fade}>
+                <div class="row" class:grid={sec.grid} {@attach mode === 'phone' && fade}>
                   {#each sec.items as item (item.label)}
-                    <button class="item" class:primary={item.primary} class:danger={item.danger} onclick={() => choose(item)}>
-                      <span>{item.label}</span>
+                    <!-- The label stays the first child: the cost, icon,
+                         damage and chevron are placed around it by order. -->
+                    <button class="item" class:primary={item.primary} class:danger={item.danger} class:opens={!!item.panel} onclick={() => choose(item)}>
+                      <span class="lbl">{item.label}</span>
                       {#if item.detail}<span class="detail">{item.detail}</span>{/if}
-                      {#if item.target}<span class="go" aria-hidden="true">›</span>{/if}
+                      {#if item.cost?.length}<span class="cost" aria-hidden="true">{#each item.cost as c, i (i)}<i class="dot" data-e={c.toLowerCase()}></i>{/each}</span>{/if}
+                      {#if item.icon}<span class="ico" aria-hidden="true"><Icon name={item.icon} /></span>{/if}
+                      {#if item.target}<span class="go" aria-hidden="true"><Icon name="target" /></span>{/if}
+                      {#if item.panel && mode === 'popover'}<span class="chev" aria-hidden="true"><Icon name="chevron" /></span>{/if}
                     </button>
                   {/each}
                 </div>
@@ -183,12 +212,13 @@
 
 <style>
   .backdrop { position: fixed; inset: 0; z-index: 40; }
-  .backdrop.tablet { background: #000a; backdrop-filter: blur(1.5px); }
+  .backdrop.tablet { background: var(--scrim); }
   .sheet {
     position: fixed;
     z-index: 41;
-    background: var(--panel);
-    color: var(--text);
+    background: var(--panel-raised);
+    color: var(--ink);
+    font-family: var(--font-sans);
     display: flex;
   }
   /* Hidden while the attack panel's target is chosen on the board. */
@@ -196,47 +226,119 @@
   .backdrop[hidden] { display: none; }
   .main { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
   .body { flex: 1; min-height: 0; overflow-y: auto; }
-  .label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0 16px 6px; }
-  .sec { padding: 10px 0 6px; }
-  .row { display: flex; gap: 8px; padding: 0 16px; }
-  .sec button {
-    min-height: 44px;
-    padding: 0 14px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 14px;
+  button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+  /* Groups: an uppercase label over a row of buttons. */
+  .label {
+    font: var(--fw-label) var(--fs-label)/var(--lh-label) var(--font-sans);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 var(--space-4) 6px;
+  }
+  .sec { padding: 10px 0 4px; }
+  .row { display: flex; gap: var(--space-2); padding: 0 var(--space-4); }
+
+  /* The touch buttons: 44px, outlined; the primary one filled. */
+  .item,
+  .tog {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-m);
+    border: 1px solid var(--control-line);
+    background: var(--panel-raised);
+    color: var(--ink);
+    font: 500 var(--fs-14) var(--font-sans);
     white-space: nowrap;
     flex: none;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
   }
-  .item.danger { color: #ff8a80; border-color: #6b2b2b; background: #3a1f1f; }
-  .detail { font-weight: 800; color: var(--accent); }
-  .item.primary .detail { color: #1b1b1b; }
-  .go { opacity: 0.7; font-size: 15px; }
-  .tog { border-radius: 22px; min-height: 40px; background: transparent; }
-  .tog.on { background: #6a3fa833; border-color: #a77be0; color: #e6d4ff; }
-  /* The check is decoration; aria-pressed carries the state. */
-  .tog.on::before { content: '✓ ' / ''; }
-  .text { white-space: pre-wrap; font: 14px/1.5 system-ui, sans-serif; margin: 0; padding: 12px 16px; }
-  header { position: relative; display: flex; gap: 14px; padding: 16px 64px 12px 16px; border-bottom: 1px solid var(--line); }
-  .meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  h3 { margin: 0; font-size: 19px; line-height: 1.2; }
-  .sum { color: var(--muted); font-size: 12px; }
-  .linkish { align-self: flex-start; background: none; border: none; padding: 0; color: var(--accent); font-weight: 600; font-size: 13px; min-height: 44px; }
-  .close { position: absolute; right: 12px; top: 12px; width: 44px; height: 44px; border-radius: 50%; border: none; background: #ffffff12; font-size: 18px; padding: 0; }
+  .item:hover:not(:disabled),
+  .tog:hover:not(:disabled) { border-color: var(--control-line); background: var(--hover); }
+  .lbl { text-align: left; }
+  .detail { font: 600 var(--fs-14) var(--font-mono); color: var(--muted); margin-left: auto; }
+  .cost { order: -1; display: flex; gap: 3px; }
+  .ico { order: -1; display: flex; }
+  .go,
+  .chev { display: flex; color: var(--muted); margin-left: auto; }
+  .detail ~ .chev { margin-left: 0; }
+  .dot { display: block; width: 12px; height: 12px; border-radius: 50%; background: var(--energy-colorless); }
+  .dot[data-e='grass'] { background: var(--energy-grass); }
+  .dot[data-e='fire'] { background: var(--energy-fire); }
+  .dot[data-e='water'] { background: var(--energy-water); }
+  .dot[data-e='lightning'] { background: var(--energy-lightning); }
+  .dot[data-e='psychic'] { background: var(--energy-psychic); }
+  .dot[data-e='fighting'] { background: var(--energy-fighting); }
+  .dot[data-e='darkness'] { background: var(--energy-darkness); }
+  .dot[data-e='metal'] { background: var(--energy-metal); }
+  .item.primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); font-weight: 600; }
+  .item.primary:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); }
+  .item.primary .detail,
+  .item.primary .go { color: inherit; }
+  .item.primary .dot { box-shadow: 0 0 0 1.5px var(--on-primary); }
+  .item.danger { color: var(--danger); border-color: var(--danger-line); background: var(--danger-bg); font-weight: 600; }
+  .item.danger:hover:not(:disabled) { border-color: var(--danger-line); background: var(--danger-bg); }
+  /* An attack: taller, its cost, name and damage. */
+  .sec[aria-label='Attack'] .item { min-height: 52px; min-width: 200px; font-size: var(--fs-15); font-weight: 600; }
+  .tog { border-radius: var(--radius-pill); }
+  .tog.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .tog.on:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); }
+  .text { white-space: pre-wrap; font: var(--fs-14)/1.5 var(--font-sans); margin: 0; padding: var(--space-3) var(--space-4); }
+
+  /* The touch header: the title, a mono line of facts, the damage tag. */
+  header { position: relative; display: flex; align-items: flex-start; gap: 14px; border-bottom: 1px solid var(--line); }
+  .meta { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+  h3 { margin: 0; font-weight: 600; line-height: 1.2; }
+  .facts { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font: 500 var(--fs-13) var(--font-mono); color: var(--muted); }
+  .part { white-space: nowrap; }
+  .tags { display: flex; align-items: center; gap: 6px; }
+  .tag { padding: 0 6px; border-radius: var(--radius-xs); background: var(--damage-bg); color: var(--damage-ink); font-weight: 600; }
+  .tags .dot { width: 10px; height: 10px; }
+  .linkish {
+    align-self: flex-start;
+    min-height: var(--touch-target);
+    padding: 0 var(--space-1);
+    border: none;
+    background: none;
+    color: var(--primary);
+    font: 600 var(--fs-14) var(--font-sans);
+  }
+  .close,
+  .back {
+    flex: none;
+    min-height: var(--touch-target);
+    border-radius: var(--radius-m);
+    border: 1px solid var(--control-line);
+    background: var(--panel-raised);
+    color: var(--ink);
+  }
+  .close { display: grid; place-items: center; width: var(--touch-target); height: var(--touch-target); padding: 0; font-size: var(--fs-18); }
+  .back { padding: 0 14px 0 10px; font: 600 var(--fs-14) var(--font-sans); }
+  .close:hover:not(:disabled),
+  .back:hover:not(:disabled),
+  .linkish:hover:not(:disabled) { border-color: var(--control-line); background: var(--hover); }
+  .linkish:hover:not(:disabled) { background: none; text-decoration: underline; }
+  header.sub { align-items: center; }
+  .ctx { flex: 1; min-width: 0; text-align: center; font: 600 var(--fs-14) var(--font-sans); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .art { flex: none; }
 
-  /* Phone: the whole screen, each group one row that scrolls sideways,
-     fading at the edge while more is off screen. */
+  /* Phone: the whole screen, each group one row of buttons that fill it
+     or, past its width, scroll sideways, fading at the edge while more is
+     off screen. */
   .sheet.phone { inset: 0; flex-direction: column; }
-  .phone header { padding-top: 24px; touch-action: none; }
-  .phone .grab { position: absolute; top: 8px; left: 50%; translate: -50% 0; width: 40px; height: 5px; border-radius: 3px; background: #ffffff33; }
-  .phone .art { --cw: 104px; }
-  .phone .body { padding: 6px 0 30px; }
+  .phone header { padding: 22px 12px 14px var(--space-4); touch-action: none; }
+  .phone header.sub { padding: 22px 12px 12px; gap: var(--space-2); }
+  .phone .grab { position: absolute; top: var(--space-2); left: 50%; translate: -50% 0; width: 40px; height: 5px; border-radius: 3px; background: var(--control-line); }
+  .phone .art { --cw: 110px; }
+  .phone h3 { font-size: var(--fs-19); margin-top: var(--space-1); }
+  .phone .facts { flex-direction: column; align-items: flex-start; gap: 6px; font-size: var(--fs-12); }
+  .phone .body { padding: var(--space-1) 0 30px; }
   .phone .row { overflow-x: auto; scrollbar-width: none; }
-  .phone .row:global(.more) { mask-image: linear-gradient(90deg, #000 85%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .phone .row .item { flex: 1 0 auto; justify-content: center; }
+  .phone .sec[aria-label='Attack'] .item { min-width: 0; justify-content: flex-start; }
+  .phone .row:global(.more) { mask-image: var(--mask-fade); -webkit-mask-image: var(--mask-fade); }
 
   /* Tablet: a centred panel, the card on the left; only the actions scroll. */
   .sheet.tablet {
@@ -244,67 +346,124 @@
     top: 50%;
     translate: -50% -50%;
     width: min(900px, 94vw);
-    height: min(620px, 90vh);
-    border-radius: 18px;
+    height: min(660px, 90vh);
+    border-radius: var(--radius-xl);
     overflow: hidden;
-    box-shadow: 0 20px 60px #000c;
+    box-shadow: var(--shadow-dialog);
   }
   .tablet .side {
-    width: 340px;
+    width: 320px;
     flex: none;
-    padding: 24px;
-    background: var(--input);
+    padding: var(--space-6);
+    background: var(--panel-sunk);
+    border-right: 1px solid var(--line);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-4);
     align-items: center;
     min-height: 0;
   }
-  .tablet .side .text { overflow-y: auto; flex: 1; padding: 0; }
-  .tablet .art { --cw: min(280px, calc((90vh - 140px) * 63 / 88)); }
-  .tablet header { padding: 22px 64px 10px 20px; border-bottom: none; }
-  .tablet h3 { font-size: 22px; }
-  .tablet .body { padding: 0 4px 16px; }
+  .tablet .side .text { overflow-y: auto; flex: 1; padding: 0; align-self: stretch; }
+  .tablet .art { --cw: min(260px, calc((90vh - 140px) * 63 / 88)); }
+  .tablet header { padding: var(--space-5) var(--space-5) 14px var(--space-6); }
+  .tablet header.sub { padding: var(--space-4) var(--space-5) 14px var(--space-4); }
+  .tablet h3 { font-size: var(--fs-22); }
+  .tablet .body { padding: 6px var(--space-2) var(--space-5); }
+  .tablet .sec { padding: var(--space-3) 0 2px; }
+  .tablet .label { font-size: var(--fs-12); padding-bottom: var(--space-2); }
   .tablet .row { flex-wrap: wrap; }
-  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .seg button { border: none; border-radius: 0; background: none; padding: 8px 18px; min-height: 44px; font-weight: 600; }
-  .seg button.on { background: #ffffff18; }
-
-  /* Desktop popover: at the pointer, a compact list. */
-  .sheet.popover {
-    width: 264px;
-    max-height: 80vh;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    box-shadow: 0 12px 30px #000b;
-    padding: 6px 0 8px;
-    font-size: 13px;
+  .seg { display: flex; border: 1px solid var(--control-line); border-radius: var(--radius-m); overflow: hidden; }
+  .seg button {
+    border: none;
+    border-radius: 0;
+    background: var(--panel-raised);
+    color: var(--ink);
+    padding: 0 22px;
+    min-height: var(--touch-target);
+    font: 600 var(--fs-14) var(--font-sans);
   }
-  .ptitle { padding: 6px 12px 4px; font-weight: 800; }
-  .psum { padding: 0 12px 6px; color: var(--muted); font-size: 11px; }
+  .seg button + button { border-left: 1px solid var(--control-line); }
+  .seg button:hover:not(:disabled) { background: var(--hover); }
+  .seg button.on,
+  .seg button.on:hover:not(:disabled) { background: var(--primary); color: var(--on-primary); }
+
+  /* Desktop popover: at the pointer, compact rows. */
+  .sheet.popover {
+    width: var(--popover-width);
+    max-height: 80vh;
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-menu);
+    overflow: hidden;
+    font-size: var(--fs-13);
+  }
+  .phead { padding: var(--space-3) 14px 10px; border-bottom: 1px solid var(--line); }
+  .ptitle { font: var(--fw-ui-title) var(--fs-ui-title)/var(--lh-ui-title) var(--font-sans); }
+  .psum { margin-top: 2px; font: 500 var(--fs-12) var(--font-mono); color: var(--muted); }
+  .popover .body { padding-bottom: var(--space-1); }
   .popover .sec { padding: 0; }
-  .popover .label { font-size: 10px; padding: 8px 12px 2px; }
+  .popover .label { padding: var(--space-2) 14px 2px; }
   .popover .row { flex-direction: column; gap: 0; padding: 0; }
   .popover .item {
-    min-height: 0;
-    padding: 5px 12px;
+    min-height: 34px;
+    min-width: 0;
+    padding: 0 14px;
     border: none;
     border-radius: 0;
     background: none;
-    font-weight: 400;
-    font-size: 13px;
-    justify-content: space-between;
-    text-align: left;
+    font: 500 var(--fs-13) var(--font-sans);
+    justify-content: flex-start;
   }
-  .popover .item:hover { background: var(--hover); }
-  .popover .item.primary { background: none; color: var(--text); font-weight: 700; }
-  .popover .item.danger { background: none; }
-  .popover .detail { color: var(--muted); font-weight: 400; }
-  .popover .row:has(.tog),
-  .popover :global(.stepper) { flex-direction: row; flex-wrap: wrap; gap: 4px; padding: 4px 12px; }
-  .popover .sec button.tog,
-  .popover :global(.stepper button) { min-height: 0; padding: 2px 7px; border-radius: 6px; font-weight: 400; font-size: 13px; }
-  .popover .tog.on::before { content: none; }
-  .popover :global(.stepper input) { width: 46px; min-height: 0; font-size: 13px; border-radius: 6px; padding: 2px 0; }
-  .back { background: none; border: none; color: var(--accent); font-weight: 600; min-height: 44px; padding: 0 16px; }
+  .popover .item:hover:not(:disabled) { background: var(--hover); }
+  .popover .sec[aria-label='Attack'] .item { min-height: 34px; min-width: 0; font-size: var(--fs-13); }
+  .popover .sec[aria-label='Attack'] .item:not(.primary) { font-weight: 500; }
+  .popover .detail { font: 600 var(--fs-12) var(--font-mono); }
+  .popover .dot { width: 10px; height: 10px; }
+  .popover .cost { gap: 2px; }
+  .popover .ico,
+  .popover .go,
+  .popover .chev { font-size: var(--fs-14); }
+  /* The common action: a full-width filled button. */
+  .popover .item.primary:not(.opens) {
+    min-height: 32px;
+    margin: var(--space-1) 14px 6px;
+    border-radius: var(--radius-s);
+    justify-content: center;
+    background: var(--primary);
+    color: var(--on-primary);
+    font-weight: 600;
+  }
+  /* The first attack: a highlighted row. */
+  .popover .item.primary.opens { background: var(--hover); color: var(--ink); font-weight: 600; }
+  .popover .item.primary.opens .detail { color: var(--muted); }
+  .popover .item.primary .dot { box-shadow: none; }
+  .popover .item.danger { color: var(--danger); background: none; font-weight: 600; }
+  .popover .item.danger:hover:not(:disabled) { background: var(--hover); }
+  /* Plain moves: a grid of small outlined buttons. */
+  .popover .row.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1); padding: var(--space-1) 14px var(--space-2); }
+  .popover .row.grid .item {
+    min-height: 28px;
+    padding: 0 6px;
+    justify-content: center;
+    border: 1px solid var(--control-line);
+    border-radius: var(--radius-s);
+    background: var(--panel-raised);
+    font-size: var(--fs-12);
+  }
+  .popover .row.grid .item:hover:not(:disabled) { background: var(--hover); }
+  /* Other comes last, under a divider, without its label. */
+  .popover .sec.other { margin-top: 6px; border-top: 1px solid var(--line); }
+  .popover .sec.other .label { display: none; }
+  .popover .row:has(.tog) { flex-direction: row; flex-wrap: wrap; gap: var(--space-1); padding: var(--space-1) 14px var(--space-2); }
+  .popover .tog { min-height: 26px; padding: 0 9px; font-size: var(--fs-12); }
+  .popover .back { min-height: 28px; margin: var(--space-2) 14px 0; padding: 0 10px 0 var(--space-2); border-radius: var(--radius-s); font-size: var(--fs-12); }
+  .popover :global(.stepper) { flex-wrap: nowrap; gap: var(--space-1); padding: var(--space-1) 14px 6px; }
+  .popover :global(.stepper .sp) { flex: 1; width: auto; }
+  .popover :global(.stepper button) { min-height: 28px; min-width: 30px; padding: 0 var(--space-2); border-radius: var(--radius-s); font-size: var(--fs-12); }
+  .popover :global(.stepper input) { width: 52px; min-height: 28px; height: 28px; border-radius: var(--radius-s); font-size: var(--fs-13); }
+  .phone :global(.stepper) { flex-wrap: nowrap; gap: 6px; }
+  .phone :global(.stepper .sp) { display: none; }
+  .phone :global(.stepper button) { min-height: 48px; min-width: 52px; padding: 0 var(--space-2); }
+  /* The field takes the row's spare width; width 0 keeps its own width
+     from pushing the row past the screen. */
+  .phone :global(.stepper input) { flex: 1; min-width: 0; width: 0; min-height: 48px; font-size: var(--fs-19); }
 </style>

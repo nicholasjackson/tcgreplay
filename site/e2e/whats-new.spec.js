@@ -6,7 +6,7 @@
 // it is; the first entry is the public launch. The page is linked from the
 // docs sidebar and the docs index.
 import { readFileSync } from 'node:fs';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { loadWhatsNew, changeHTML, whatsNew } from '../src/lib/whats-new.ts';
 
 const realFile = () => readFileSync(new URL('../src/data/whats-new.yaml', import.meta.url), 'utf8');
@@ -125,6 +125,54 @@ test.describe("the What's new page", () => {
     await expect(launch.locator('time')).toHaveText(/^\d{1,2} [A-Z][a-z]+ \d{4}$/);
     // Links keep the space before them.
     await expect(launch).toContainText('see the note on connecting');
+  });
+
+  test('the Studio redesign is announced as a new look with themes, needing no refresh', async ({ page }) => {
+    await page.goto('/docs/whats-new');
+    const entry = page.locator('[data-entry]', { has: page.locator('h2', { hasText: 'A new look' }) });
+    await expect(entry).toHaveCount(1);
+    await expect(entry.locator('[data-refresh]')).toHaveText(/^No refresh needed/);
+    await expect(entry.locator('a[href="/docs/connect#refresh"]')).toHaveCount(0);
+    await expect(entry).toContainText('The board has a new look');
+    await expect(entry).toContainText('light or dark interface');
+    await expect(entry).toContainText('slate, felt or navy mat');
+    await expect(entry).toContainText('A new logo');
+  });
+
+  test('the entries hang on a timeline, newest at the top, each dated above its title', async ({ page }) => {
+    await page.goto('/docs/whats-new');
+    const entries = page.locator('[data-whats-new] > li[data-entry]');
+    await expect(entries).toHaveCount(whatsNew.length);
+    const shape = await entries.evaluateAll((lis) =>
+      lis.map((li) => {
+        const dot = getComputedStyle(li, '::before');
+        const rail = getComputedStyle(li, '::after');
+        const time = li.querySelector('h2 time').getBoundingClientRect();
+        const title = li.querySelector('h2').getBoundingClientRect();
+        return {
+          top: li.getBoundingClientRect().top,
+          date: li.dataset.date,
+          dot: dot.content !== 'none' && dot.borderRadius === '50%' && parseFloat(dot.width) > 0,
+          rail: rail.content !== 'none' && parseFloat(rail.width) > 0 && rail.position === 'absolute',
+          // The date is its own line above the title, inside the heading.
+          dateAbove: time.bottom <= title.bottom - 1 && time.height < title.height,
+        };
+      }),
+    );
+    expect(shape.map((e) => e.date)).toEqual(whatsNew.map((e) => e.date));
+    for (const [i, e] of shape.entries()) {
+      expect(e.dot, `entry ${i + 1} has its dot`).toBe(true);
+      expect(e.rail, `entry ${i + 1} has its rail`).toBe(true);
+      expect(e.dateAbove, `entry ${i + 1} is dated above its title`).toBe(true);
+      if (i > 0) expect(e.top, `entry ${i + 1} is below entry ${i}`).toBeGreaterThan(shape[i - 1].top);
+    }
+    // A refresh-needed entry shows it as a callout, its link kept.
+    const needed = page.locator('[data-entry] [data-refresh].needed').first();
+    if (whatsNew.some((e) => e.refresh)) {
+      await expect(needed).toBeVisible();
+      await expect(needed.locator('a[href="/docs/connect#refresh"]')).toHaveCount(1);
+      expect(await needed.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+    }
   });
 
   test('the docs sidebar, the docs index and the refresh steps link to it', async ({ page }) => {

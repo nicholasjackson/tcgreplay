@@ -1,6 +1,6 @@
 <script>
   import { openDeckList } from './lib/actions.js';
-  import { app, benchSlots, setPanelAt, setPrizeReminders } from './lib/store.svelte.js';
+  import { app, benchSlots, setPanelAt, setPrizeReminders, setTheme, setMat, THEMES, MATS } from './lib/store.svelte.js';
   import { act } from './lib/ws.js';
   import { setAutoplay } from './lib/playback.svelte.js';
   import Side from './components/Side.svelte';
@@ -12,6 +12,7 @@
   import TargetBanner from './components/TargetBanner.svelte';
   import Modal from './components/Modal.svelte';
   import Zoom from './components/Zoom.svelte';
+  import markUrl from '../../internal/design/mark.svg';
 
   const snap = $derived(app.snap);
   const review = $derived(snap?.mode === 'review');
@@ -19,8 +20,8 @@
   // sheet opened from ☰ rather than a column beside the board.
   const phone = $derived(app.layout === 'phone');
   let timelineOpen = $state(false);
-  // fit is how many pixels the phone board, or the landscape mat, gives up
-  // so it never scrolls: the cards shrink when the board would run past
+  // fit is how many pixels the phone board, the landscape mat or today's
+  // mat above the docked timeline gives up so it never scrolls: the cards shrink when the board would run past
   // the screen (a two-row strip, Pokémon with many attachments) and grow
   // back as room returns. Only the rows in the flow count: the landscape
   // mat's peeking hand and corner name sit over it.
@@ -66,6 +67,61 @@
   const benchN = $derived(app.board ? Math.max(...Object.values(app.board.sides).map((s) => benchSlots(s).length)) : 5);
   const showTimeline = $derived(!app.landscapePhone && (phone ? timelineOpen : app.panelOpen));
   const bottom = $derived(!phone && app.panelOpen && app.panelAt === 'bottom');
+  // The playback controls head the timeline beside or below the board;
+  // with it hidden, or a phone's sheet, they float over the board.
+  const docked = $derived(showTimeline && !phone);
+
+  // The docked timeline's height follows its handle, dragged or keyed,
+  // within bounds that leave the board room for its smallest cards:
+  // today's mat is about 540px tall at 40px cards, the landscape mat
+  // about 6.9 card widths and 80px at 48px. A touch screen's mat (48px
+  // cards) seldom fits under a docked timeline anyway, so there the board
+  // scrolls and keeps at least half the room. bodyRoom is the height the
+  // board and the timeline share. The height starts at a default (220px,
+  // or 28% of the screen on the landscape mat), always within the bounds,
+  // and is kept in memory only (app.dockHeight).
+  const DOCK_MIN = 160;
+  let screenH = $state(0);
+  let bodyRoom = $state(0);
+  function measureBody(body) {
+    const ro = new ResizeObserver(() => {
+      const cs = getComputedStyle(body);
+      bodyRoom = body.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    });
+    ro.observe(body);
+    return () => ro.disconnect();
+  }
+  const boardMin = $derived(app.wide ? 6.9 * 48 + 80 : app.layout === 'tablet' ? bodyRoom / 2 : 540);
+  const dockMax = $derived(Math.max(DOCK_MIN, Math.floor(bodyRoom - boardMin)));
+  const dockDefault = $derived(app.wide ? Math.min(480, Math.max(200, screenH * 0.28)) : 220);
+  const dockPx = $derived(Math.round(Math.min(dockMax, Math.max(DOCK_MIN, app.dockHeight ?? dockDefault))));
+  function setDock(h) {
+    app.dockHeight = Math.round(Math.min(dockMax, Math.max(DOCK_MIN, h)));
+  }
+  function dragDock(ev) {
+    if (ev.button !== 0) return;
+    ev.preventDefault();
+    const handle = ev.currentTarget;
+    handle.setPointerCapture(ev.pointerId);
+    const [y, h] = [ev.clientY, dockPx];
+    const move = (e) => setDock(h + y - e.clientY);
+    const end = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', end);
+      handle.removeEventListener('pointercancel', end);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+  }
+  function keyDock(ev) {
+    const by = { ArrowUp: 16, ArrowDown: -16, PageUp: 80, PageDown: -80 }[ev.key];
+    if (by) setDock(dockPx + by);
+    else if (ev.key === 'Home') setDock(DOCK_MIN);
+    else if (ev.key === 'End') setDock(dockMax);
+    else return;
+    ev.preventDefault();
+  }
   // menuOpen shows the header's menu of less frequent actions.
   let menuOpen = $state(false);
   function menu(run) {
@@ -75,6 +131,9 @@
 
   function setMode(ev) {
     act('set_mode', { mode: ev.target.checked ? 'review' : 'play' });
+  }
+  function pickMode(mode) {
+    act('set_mode', { mode });
   }
   function setReveal(ev) {
     act('set_reveal', { reveal: ev.target.checked });
@@ -104,47 +163,92 @@
 <!-- The board, top to bottom: the opponent's name, hand and half, the
      strip, your half, hand and name. -->
 {#snippet board()}
-  {#if !phone || app.opponent}
+  <!-- Today's mat names each player in their player block; the landscape
+       mat in the corner and under the hand. -->
+  {#if app.wide || (phone && app.opponent)}
     <div class="seat-name top">
-      {#if !phone}{nameOf(app.claude)} · {app.claude}{/if}
+      {#if app.wide}{nameOf(app.claude)} · {app.claude}{/if}
       {#if app.opponent}<span class="opp-status {app.opponent}">{oppStatus[app.opponent]}</span>{/if}
     </div>
   {/if}
   {#if !phone}<Hand seat={app.claude} small />{/if}
-  <Side seat={app.claude} name={nameOf(app.claude)} mirrored />
+  <Side seat={app.claude} name={nameOf(app.claude)} mirrored status={!phone && !app.wide && app.opponent ? oppStatus[app.opponent] : ''} />
   <Strip />
   <Side seat={app.human} name={nameOf(app.human)} />
   <Hand seat={app.human} />
-  {#if !phone}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
+  {#if app.wide}<div class="seat-name">{nameOf(app.human)} · {app.human}</div>{/if}
 {/snippet}
 
-<svelte:window onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
+<svelte:window bind:innerHeight={screenH} onkeydown={(ev) => ev.key === 'Escape' && (menuOpen = false)} />
 
-<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone style:--fit="{fit}px">
+<div class="app" class:reveal={app.reveal} class:wide={!app.panelOpen || bottom} class:panel-bottom={bottom} class:panel-side={showTimeline && !phone && !bottom} class:landscape={app.wide} data-wide={app.wide} class:phone style:--fit="{fit}px" style:--dock-h={bottom ? `${dockPx}px` : null}>
   <header>
-    <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
-    {#if !phone}<strong>tcgreplay</strong>{/if}
+    {#if phone}
+      <!-- A phone's header: the connection, whose turn it is, the
+           warnings and ☰, which holds the rest. -->
+      <span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>
+      {#if app.board}
+        {#if app.board.phase === 'setup'}
+          <strong class="whose">Setup</strong>
+        {:else}
+          <span class="turn-tag">T{app.board.turn}</span>
+          <strong class="whose">{app.board.current === app.human ? 'Your turn' : `${nameOf(app.board.current)}'s turn`}</strong>
+        {/if}
+      {/if}
+      <span class="spacer"></span>
+      {#if snap?.warnings?.length}
+        {@const n = snap.warnings.length}
+        <button class="warn" aria-label="{n} {n === 1 ? 'warning' : 'warnings'}" title={snap.warnings.join('\n')} onclick={() => (menuOpen = true)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z" /><path d="M12 10v4" /><path d="M12 17.5v.01" /></svg>{n}
+        </button>
+      {/if}
+    {:else}
+      <span class="brand"><img src={markUrl} alt="" /><strong>tcgreplay</strong></span>
+    {/if}
     {#if snap && !phone}
       <span class="game">{snap.game}</span>
       <label class="branch">
-        branch
-        <select value={snap.branch} onchange={checkout}>
+        Branch
+        <select value={snap.branch} onchange={checkout} aria-label="branch">
           {#each snap.branches as b (b.name)}
-            <option value={b.name}>{b.name} (#{b.head})</option>
+            <option value={b.name}>{b.name} · #{b.head}</option>
           {/each}
         </select>
       </label>
-      <label class="toggle"><input type="checkbox" checked={review} onchange={setMode} /> Review mode</label>
+      <!-- Play or Review: a segmented switch over two radios, each named
+           for its mode. -->
+      <div class="mode" role="radiogroup" aria-label="Mode">
+        <label class:on={!review}><input type="radio" name="mode" aria-label="Play mode" checked={!review} onchange={() => pickMode('play')} />Play</label>
+        <label class:on={review}><input type="radio" name="mode" aria-label="Review mode" checked={review} onchange={() => pickMode('review')} />Review</label>
+      </div>
       {#if review}
         <label class="toggle reveal-toggle"><input type="checkbox" checked={app.reveal} onchange={setReveal} /> Reveal all</label>
       {/if}
     {/if}
-    {#if snap?.warnings?.length && !phone}
-      <span class="warn" title={snap.warnings.join('\n')}>⚠ {snap.warnings.length}</span>
+    {#if !phone}
+      <span class="spacer"></span>
+      {#if snap?.warnings?.length}
+        {@const n = snap.warnings.length}
+        <span class="warn" title={snap.warnings.join('\n')}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9.5 17h-19z" /><path d="M12 10v4" /><path d="M12 17.5v.01" /></svg>
+          {n}<span class:sr={app.layout === 'tablet'}> {n === 1 ? 'warning' : 'warnings'}</span>
+        </span>
+      {/if}
+      <span class="conn"><span class="dot" class:on={app.connected} title={app.connected ? 'Connected' : 'Reconnecting…'}></span>{app.connected ? 'Live' : 'Reconnecting…'}</span>
+      {#if app.layout === 'tablet'}
+        <!-- On a touch screen the timeline hides and shows from the header,
+             as from ☰. -->
+        <button class="panel-toggle" aria-label="{app.panelOpen ? 'Hide' : 'Show'} timeline" aria-pressed={app.panelOpen} onclick={() => (app.panelOpen = !app.panelOpen)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            {#if app.panelAt === 'bottom'}<path d="M3 14h18" />{:else}<path d="M15 4v16" />{/if}
+          </svg>
+        </button>
+      {/if}
     {/if}
     <div class="more">
       <button class="burger" aria-label="Menu" aria-haspopup="menu" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
-        ☰{#if phone && snap?.warnings?.length}<span class="badge" aria-label="{snap.warnings.length} warnings">{snap.warnings.length}</span>{/if}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>{#if phone && snap?.warnings?.length}<span class="badge" aria-label="{snap.warnings.length} warnings">{snap.warnings.length}</span>{/if}
       </button>
       {#if menuOpen}
         <div class="backdrop" onclick={() => (menuOpen = false)} role="presentation"></div>
@@ -159,7 +263,7 @@
               Branch
               <select value={snap.branch} onchange={checkout} aria-label="branch">
                 {#each snap.branches as b (b.name)}
-                  <option value={b.name}>{b.name} (#{b.head})</option>
+                  <option value={b.name}>{b.name} · #{b.head}</option>
                 {/each}
               </select>
             </label>
@@ -183,6 +287,19 @@
           <label class="menu-check" title="Play the assistant's moves on the board as they arrive">
             <input type="checkbox" checked={app.autoplay} onchange={(ev) => setAutoplay(ev.target.checked)} /> Autoplay {app.assistant}'s moves
           </label>
+          <div class="sep"></div>
+          <div class="menu-group" role="radiogroup" aria-label="Interface">
+            <span class="menu-label">Interface</span>
+            {#each THEMES as t (t)}
+              <label class="menu-check"><input type="radio" name="theme" value={t} checked={app.theme === t} onchange={() => setTheme(t)} /> {t === 'light' ? 'Light' : 'Dark'}</label>
+            {/each}
+          </div>
+          <div class="menu-group" role="radiogroup" aria-label="Mat">
+            <span class="menu-label">Mat</span>
+            {#each MATS as m (m)}
+              <label class="menu-check"><input type="radio" name="mat" value={m} checked={app.mat === m} onchange={() => setMat(m)} /> {m[0].toUpperCase() + m.slice(1)}</label>
+            {/each}
+          </div>
           <!-- At every layout and in the desktop app alike, outside the hosted-only account block. -->
           <div class="sep"></div>
           <button role="menuitem" onclick={() => menu(() => (app.modal = { kind: 'about' }))}>About tcgreplay</button>
@@ -203,7 +320,7 @@
     <div class="reveal-banner">REVEAL VIEW: both hands, prizes and decks are face up. Post-mortem only.</div>
   {/if}
 
-  <div class="body" class:panel={showTimeline && !phone} class:bottom>
+  <div class="body" class:panel={showTimeline && !phone} class:bottom {@attach measureBody}>
     {#if app.landscapePhone}
       <!-- A phone held sideways is too short for the board. -->
       <div class="upright" role="status">
@@ -211,7 +328,7 @@
         <p>Turn your phone upright to see the board.</p>
       </div>
     {:else}
-    <main {@attach phone ? fitBoard : measureBoard}>
+    <main {@attach phone ? fitBoard : measureBoard} {@attach bottom && !app.wide && fitBoard}>
       {#if app.board && app.wide}
         <!-- The landscape mat sizes its cards from the board area, so it
              sits in a box whose container units measure <main>. -->
@@ -232,16 +349,38 @@
     </main>
     {/if}
     {#if showTimeline}
-      <aside class:sheet={phone}>
+      <aside class:sheet={phone} aria-label="Timeline">
         {#if phone}
           <h2>Timeline</h2>
           <button class="close" aria-label="Close the timeline" onclick={() => (timelineOpen = false)}>✕</button>
+          <Timeline />
         {:else}
+          {#if bottom}
+            <!-- Drag (or key) the handle to share the height between the
+                 board and the timeline. A focusable separator is a
+                 widget, which Svelte's check does not know. -->
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+            <div
+              class="grip"
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="Resize the timeline"
+              aria-valuenow={dockPx}
+              aria-valuemin={DOCK_MIN}
+              aria-valuemax={dockMax}
+              tabindex="0"
+              onpointerdown={dragDock}
+              onkeydown={keyDock}
+            >
+              <span></span>
+            </div>
+          {/if}
           <!-- Like a dev tools dock button: the icon shows where the
                timeline goes next. -->
           {@const where = bottom ? 'beside' : 'below'}
-          <div class="aside-head">
+          <div class="aside-head" class:dock-row={bottom}>
             <h2>Timeline</h2>
+            {#if bottom}<PlaybackBar where="dock" />{/if}
             <button class="dock" aria-label="Move timeline {where} the board" title="Move timeline {where} the board" onclick={() => setPanelAt(bottom ? 'side' : 'bottom')}>
               <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
                 <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" />
@@ -253,16 +392,20 @@
               </svg>
             </button>
           </div>
+          {#if !bottom}<PlaybackBar where="side" />{/if}
+          <div class="aside-body">
+            <Timeline rail={bottom} />
+          </div>
         {/if}
-        <Timeline />
       </aside>
     {/if}
   </div>
 
   <!-- The caption stacks under the playback bar, however many rows the bar
-       wraps to. -->
+       wraps to. With the timeline beside or below the board, the bar heads
+       the timeline instead and only the caption floats. -->
   <div class="overlay">
-    <PlaybackBar />
+    {#if !docked}<PlaybackBar />{/if}
     {#if app.caption}
       <div class="caption">{app.caption}</div>
     {/if}
@@ -292,35 +435,51 @@
        playback overlay can centre on the board rather than the window. */
     --panel-col: clamp(320px, 18vw, 960px);
     --panel-w: 0px;
+    /* The gutter of page background around the mat and the timeline,
+       thinner above and below on a short screen, where the mat's cards
+       (sized by the root --cw) need the height. */
+    --gutter: var(--space-3);
+    --gutter-y: var(--gutter);
   }
-  .app.panel-side { --panel-w: var(--panel-col); }
-  .app.reveal { border: 6px solid var(--reveal); }
+  @media (max-height: 820px) { .app { --gutter-y: var(--space-1); } }
+  @media (max-height: 740px) { .app { --gutter-y: 0px; } }
+  .app.panel-side { --panel-w: calc(var(--panel-col) + var(--gutter)); }
+  .app.reveal { border: 6px solid var(--warn-line); }
   /* With no timeline beside the board, the board takes the full width (see
      --cw in app.css). With the timeline below, the board also keeps 200px of
      height for it, and the timeline fills whatever height the board leaves. */
   .app.wide {
-    --cw: clamp(48px, min((100vh - 115px) / 11.1, (100vw - 40px) / 10), 240px);
-    --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
+    --cw: clamp(48px, min((100vh - 140px) / 11.1, (100vw - 64px) / 10), 240px);
+    --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
   }
+  /* Docked below, the timeline takes --dock-h (its handle sets it) and the
+     board the rest: its cards fit the height left, about 11.1 card widths
+     under 120px of header, gutters and padding, less --fit when the board
+     would still scroll (fitBoard). */
   .app.panel-bottom {
     height: 100vh;
-    --cw: clamp(48px, min((100vh - 315px) / 11.1, (100vw - 40px) / 10), 240px);
+    --dock-h: 220px;
+    --cw: clamp(40px, min((100vh - 120px - var(--dock-h) - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10), 240px);
+  }
+  @media (pointer: coarse) {
+    .app.panel-bottom { --cw: clamp(48px, min((100vh - 120px - var(--dock-h) - var(--fit, 0px)) / 11.1, (100vw - 64px) / 10), 240px); }
   }
   /* The landscape mat (app.wide) fills the window and sizes its cards
      from the board area: <main> is a size container, and .board inside it
      takes the largest card width at which the four rows fit main's height
      and the widest row (the longer bench, the prize fan and the piles)
      fits its width. */
-  .app.landscape { height: 100vh; min-height: 0; }
+  /* The landscape mat gives its cards the room of a thinner gutter. */
+  .app.landscape { height: 100vh; min-height: 0; --gutter: var(--space-1); --gutter-y: var(--space-1); }
   .app.landscape main { container-type: size; }
-  .app.landscape .body.panel.bottom { grid-template-rows: minmax(0, 1fr) clamp(200px, 28vh, 480px); }
+  .app.landscape.panel-bottom { --dock-h: clamp(200px, 28vh, 480px); }
   /* The rows are about 6.8 card widths tall: two player rows, the middle
      row with its captions, your hand and the opponent's peeking hand above
      them; plus your name. A busy board (Energy under benched Pokémon) gives
      up --fit (see fitBoard). */
   .board {
     --cw: max(48px, min((100cqh - 50px - var(--fit, 0px)) / 6.9, (100cqw - 80px) / (4.6 + 1.16 * var(--bench-n, 5))));
-    --fs: clamp(12px, calc(var(--cw) * 0.15), 28px);
+    --fs: clamp(var(--fs-12), calc(var(--cw) * 0.15), var(--fs-28));
     font-size: var(--fs);
     position: relative;
     height: 100%;
@@ -342,146 +501,291 @@
      each Active. */
   .app.phone {
     --cw: max(40px, min(calc((100vw - 32px) / 5.6), calc((100dvh - 372px - var(--fit, 0px)) / 6.6)));
-    --fs: 13px;
+    --fs: var(--fs-13);
+    --gutter: 0px;
+    --gutter-y: 0px;
     height: 100dvh;
     min-height: 0;
   }
-  .app.phone main { justify-content: flex-start; overflow: hidden; }
-  /* No header bar on a phone: the dot and ☰ sit at the start of the
-     opponent's counters (CounterBar leaves room for them). */
-  .app.phone { position: relative; }
+  .app.phone main { justify-content: flex-start; overflow: hidden; border-radius: 0; }
+  /* A phone's header: a slim light bar of the dot, the turn tag and whose
+     turn it is, then the warnings and ☰. */
   .app.phone header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 6;
-    gap: 6px;
-    padding: 2px 4px 2px 8px;
-    background: none;
-    border: 0;
+    flex-wrap: nowrap;
+    min-height: calc(var(--space-12) + var(--space-1));
+    gap: var(--space-2);
+    padding: 0 var(--space-2) 0 var(--space-4);
+    font-size: var(--fs-ui);
   }
-  .badge {
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 4px;
-    border-radius: 9px;
-    background: #ffb300;
-    color: #222;
-    font: 700 11px/18px system-ui;
+  .turn-tag {
+    padding: 3px 7px;
+    border-radius: var(--radius-xs);
+    background: var(--brand-navy);
+    color: var(--turn-tag-ink);
+    font: var(--fw-num) var(--fs-ui-s) var(--font-mono);
   }
+  .whose { font-size: var(--fs-ui-title); font-weight: var(--fw-ui-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* A short phone has no room for the bar: the dot and ☰ sit at the start
+     of the opponent's counters (CounterBar leaves room for them), the
+     warnings counted on ☰, and the turn tag and whose turn it is move to
+     the strip, over the Stadium's name (Strip.svelte). */
+  .badge { display: none; }
+  @media (max-height: 739px) {
+    .app.phone { position: relative; }
+    .app.phone header { position: absolute; top: 0; left: 0; z-index: 6; min-height: 0; gap: 6px; padding: 2px 4px 2px 8px; background: none; border: 0; }
+    .app.phone header :is(.turn-tag, .whose, .spacer, .warn) { display: none; }
+    .app.phone .dropdown { right: auto; left: 0; }
+    .app.phone .badge {
+      display: block;
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--warn-line);
+      background: var(--warn-bg);
+      color: var(--warn-ink);
+      font: var(--fw-num) var(--fs-num-s)/16px var(--font-mono);
+    }
+  }
+  header button.warn { width: auto; gap: var(--space-1); padding: 0 var(--space-2); border-color: var(--warn-line); background: var(--warn-bg); color: var(--warn-ink); font-weight: 600; }
+  header button.warn:hover:not(:disabled) { border-color: var(--warn-line); background: var(--warn-bg); }
   .burger { position: relative; }
-  .warning { padding: 6px 12px; font-size: 12px; color: var(--muted); max-width: 260px; }
+  .warning {
+    margin: 2px 4px;
+    padding: 6px 10px;
+    max-width: 260px;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--warn-line);
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-size: var(--fs-ui-s);
+  }
   aside.sheet {
     position: fixed;
     inset: 0;
     z-index: 65;
     max-height: none;
     border: 0;
+    border-radius: 0;
   }
-  aside.sheet .close { position: absolute; top: 4px; right: 8px; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
-  .upright { background: var(--felt); color: #f2f6f3; font-size: 16px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
-  .phone-icon { font-size: 40px; display: inline-block; transform: rotate(90deg); }
+  aside.sheet .close { position: absolute; top: 4px; right: 8px; z-index: 3; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+  .upright { background: var(--mat-surface); color: var(--mat-ink); font-size: var(--fs-16); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
+  .phone-icon { font-size: var(--fs-40); display: inline-block; transform: rotate(90deg); }
+
+  /* The header: a light bar of the mark, the game, its branch, the mode,
+     Reveal all, then warnings, the connection and ☰ at the end. Its sizes
+     are in em, so the whole bar grows with its text above 1920px. */
   header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 6px 14px;
+    gap: var(--space-2) var(--space-4);
+    min-height: var(--header-height);
+    padding: var(--space-1) var(--space-5);
     background: var(--panel);
+    color: var(--ink);
     border-bottom: 1px solid var(--line);
     flex-wrap: wrap;
     /* Header text is today's 13px up to 1920px wide and grows above it. */
-    font-size: max(13px, 0.677vw);
+    font-size: max(var(--fs-ui), 0.677vw);
   }
-  header button:not(.burger), header select { font-size: inherit; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: #c62828; }
-  .dot.on { background: #43a047; }
-  .game { color: var(--muted); }
-  .branch select { margin-left: 4px; }
-  .toggle { display: flex; gap: 4px; align-items: center; cursor: pointer; }
-  .reveal-toggle { color: var(--reveal); font-weight: 700; }
-  .warn { color: #ffb300; cursor: help; }
-  .more { margin-left: auto; position: relative; }
-  .burger { font-size: max(16px, 0.833vw); line-height: 1; padding: 4px 9px; }
+  header button, header select { font-size: inherit; }
+  header svg { width: 1.38em; height: 1.38em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .brand { display: flex; align-items: center; gap: 0.77em; }
+  .brand img { width: 2.3em; height: 2.3em; display: block; }
+  .brand strong { font-size: 1.3em; font-weight: 700; }
+  .game { font-weight: var(--fw-ui-title); }
+  .branch { display: flex; align-items: center; gap: 0.6em; color: var(--muted); font-size: 0.92em; }
+  .branch select {
+    height: 2.5em;
+    padding: 0 0.77em;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--control-line);
+    background: var(--panel);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 1.09em;
+  }
+  /* Play | Review: the mode in force is filled in primary. */
+  .mode { display: flex; border: 1px solid var(--control-line); border-radius: var(--radius-s); overflow: hidden; }
+  .mode label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.3em;
+    padding: 0 1.08em;
+    background: var(--panel);
+    color: var(--muted);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .mode label + label { border-left: 1px solid var(--control-line); }
+  .mode label:hover { background: var(--hover); }
+  .mode label.on { background: var(--primary); color: var(--on-primary); cursor: default; }
+  .mode label:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: -4px; }
+  .mode input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+  .toggle { display: flex; gap: 0.6em; align-items: center; cursor: pointer; }
+  .toggle input { width: 1.23em; height: 1.23em; margin: 0; accent-color: var(--primary); }
+  .spacer { flex: 1; }
+  header .warn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.46em;
+    height: 2.3em;
+    padding: 0 0.77em;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--warn-line);
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    font-weight: 600;
+    cursor: help;
+  }
+  header .warn svg { width: 1.15em; height: 1.15em; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .conn { display: inline-flex; align-items: center; gap: 0.46em; color: var(--muted); }
+  .dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--danger); }
+  .dot.on { background: var(--live); }
+  .app.phone .dot { width: 10px; height: 10px; }
+  header button {
+    display: grid;
+    place-items: center;
+    width: 2.6em;
+    height: 2.6em;
+    padding: 0;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--control-line);
+    background: var(--panel);
+    color: var(--ink);
+  }
+  header button:hover:not(:disabled) { border-color: var(--control-line); background: var(--hover); }
+  header button[aria-pressed='true'] { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
+  header button[aria-pressed='true']:hover:not(:disabled) { border-color: var(--primary); background: var(--primary); }
+  .more { position: relative; }
   .backdrop { position: fixed; inset: 0; z-index: 70; }
+
+  /* ☰'s menu: a raised panel of rows. */
   .dropdown {
     position: absolute;
     right: 0;
     top: calc(100% + 6px);
     z-index: 71;
-    min-width: 230px;
+    min-width: var(--popover-width);
     display: flex;
     flex-direction: column;
-    padding: 4px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    box-shadow: 0 6px 20px #0008;
+    padding: var(--space-1);
+    background: var(--panel-raised);
+    color: var(--ink);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-menu);
+    font-size: max(var(--fs-ui), 0.677vw);
   }
-  /* On a phone ☰ sits at the left, so its menu opens rightwards, and
-     scrolls if it is taller than the screen. */
-  .app.phone .dropdown { right: auto; left: 0; max-height: calc(100dvh - 60px); overflow-y: auto; max-width: calc(100vw - 16px); }
-  .dropdown button { width: 100%; text-align: left; border-color: transparent; background: none; }
-  .dropdown button:hover { background: var(--hover); }
+  /* On a phone the menu scrolls if it is taller than the screen. */
+  .app.phone .dropdown { max-height: calc(100dvh - 60px); overflow-y: auto; max-width: calc(100vw - 16px); }
+  .dropdown button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 34px;
+    padding: 0 var(--space-3);
+    text-align: left;
+    font-size: inherit;
+    border: 0;
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--ink);
+  }
+  .dropdown button:hover:not(:disabled) { background: var(--hover); }
   .dropdown form { margin: 0; }
-  .menu-check { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-size: max(13px, 0.677vw); cursor: pointer; border-radius: 6px; }
+  .menu-check { display: flex; align-items: center; gap: var(--space-2); min-height: 34px; padding: 0 var(--space-3); cursor: pointer; border-radius: var(--radius-s); }
   .menu-check:hover { background: var(--hover); }
-  .sep { height: 1px; background: var(--line); margin: 4px 0; }
-  .account { color: var(--muted); padding: 4px 10px; font-size: 12px; }
+  .menu-check input { margin: 0; accent-color: var(--primary); }
+  .menu-check select { height: 30px; padding: 0 var(--space-2); border-radius: var(--radius-s); border: 1px solid var(--control-line); background: var(--panel); color: var(--ink); font-family: var(--font-mono); font-size: var(--fs-ui); }
+  .sep { height: 1px; background: var(--line); margin: var(--space-1) 0; }
+  .menu-group { display: flex; flex-wrap: wrap; align-items: center; }
+  .menu-label { flex-basis: 100%; padding: var(--space-2) var(--space-3) var(--space-1); color: var(--muted); font-size: var(--fs-label); font-weight: var(--fw-label); letter-spacing: var(--ls-label); text-transform: uppercase; }
+  .account { color: var(--muted); padding: var(--space-1) var(--space-3); font-size: var(--fs-ui-s); }
+
   .over-banner {
-    background: var(--accent);
-    color: #111;
-    font-weight: 800;
+    background: var(--primary);
+    color: var(--on-primary);
+    font-weight: 700;
     text-align: center;
-    padding: 4px;
+    padding: var(--space-1) var(--space-3);
   }
   .reveal-banner {
-    background: var(--reveal);
-    color: #fff;
-    font-weight: 800;
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    border-bottom: 1px solid var(--warn-line);
+    font-weight: 700;
     text-align: center;
-    padding: 4px;
+    padding: var(--space-1) var(--space-3);
     letter-spacing: 0.04em;
   }
-  .body { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; }
+
+  /* The mat and the timeline are rounded panels on the page background. */
+  .body { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; padding: var(--gutter-y) var(--gutter); gap: var(--gutter); }
   .body.panel { grid-template-columns: 1fr var(--panel-col); }
-  main { overflow: auto; display: flex; flex-direction: column; justify-content: center; font-size: var(--fs); }
+  /* safe: a board taller than its area scrolls from its top, rather than
+     centring and cutting the top off out of reach. */
+  main { overflow: auto; display: flex; flex-direction: column; justify-content: safe center; font-size: var(--fs); border-radius: var(--radius-l); }
+  /* Today's mat keeps a margin of mat above the opponent's fanned hand and
+     below yours, whose turned cards reach past their rows. */
+  .app:not(.landscape, .phone) main { padding-block: var(--space-3); }
   aside {
     background: var(--panel);
-    border-left: 1px solid var(--line);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
     display: flex;
     flex-direction: column;
     min-height: 0;
-    max-height: calc(100vh - 44px);
+    max-height: calc(100vh - var(--header-height) - 2 * var(--gutter-y));
     position: sticky;
-    top: 0;
+    top: var(--gutter-y);
+    overflow: hidden;
   }
-  .body.panel.bottom { grid-template-columns: 1fr; grid-template-rows: auto minmax(200px, 1fr); }
+  /* Docked below, the board and the timeline join into one panel. */
+  /* Rows of a set height, never auto: the landscape mat's <main> is a size
+     container, which takes no height from its content. */
+  .body.panel.bottom { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) var(--dock-h); gap: 0; }
+  .body.bottom main { border-radius: var(--radius-l) var(--radius-l) 0 0; }
   .body.bottom aside {
-    border-left: 0;
-    border-top: 1px solid var(--line);
+    border-radius: 0 0 var(--radius-l) var(--radius-l);
     max-height: none;
     position: static;
   }
-  aside h2 { font-size: max(13px, 0.677vw); margin: 10px 12px 0; text-transform: uppercase; letter-spacing: 0.08em; }
-  .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: 8px; }
+  aside h2 { font-size: max(var(--fs-ui), 0.677vw); font-weight: var(--fw-label); color: var(--muted); margin: var(--space-3) var(--space-3) 0; text-transform: uppercase; letter-spacing: var(--ls-label); }
+  .aside-head { display: flex; align-items: center; justify-content: space-between; padding-right: var(--space-2); }
   aside .dock {
-    display: grid; place-items: center; width: 26px; height: 22px; padding: 0; margin-top: 8px;
-    background: none; border: 1px solid transparent; border-radius: 4px; color: var(--muted); cursor: pointer;
+    display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0; margin-top: var(--space-2);
+    background: var(--panel); border: 1px solid var(--control-line); border-radius: var(--radius-s); color: var(--ink); cursor: pointer;
   }
-  aside .dock:hover, aside .dock:focus-visible { color: var(--text); border-color: var(--line); }
-  .seat-name { text-align: center; color: var(--muted); font-size: 0.85em; padding: 0.15em; }
-  .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: 999px; border: 1px solid var(--line); color: var(--text); }
+  /* Docked, one row: the heading, the playback controls and the dock
+     button, under the handle. */
+  .aside-head.dock-row { gap: var(--space-2); padding: 2px 14px var(--space-2); border-bottom: 1px solid var(--line); }
+  .aside-head.dock-row h2 { margin: 0 var(--space-2) 0 0; }
+  .aside-head.dock-row .dock { margin: 0; }
+  .aside-body { flex: 1; min-height: 0; display: flex; }
+  /* The handle: a strip with a centred grip, a fingertip tall on touch. */
+  .grip { flex: none; height: 10px; display: flex; justify-content: center; align-items: center; cursor: row-resize; touch-action: none; }
+  .grip span { width: 44px; height: 4px; border-radius: 2px; background: var(--control-line); }
+  .grip:hover span, .grip:focus-visible span { background: var(--muted); }
+  .grip:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+  aside .dock:hover, aside .dock:focus-visible { color: var(--ink); background: var(--hover); border-color: var(--control-line); }
+  .seat-name { text-align: center; color: var(--mat-muted); font-size: 0.85em; padding: 0.15em; }
+  .opp-status { margin-left: 0.6em; padding: 0.05em 0.6em; border-radius: var(--radius-pill); border: 1px solid var(--mat-slot-line); color: var(--mat-ink); }
   .opp-status.acting { border-color: var(--accent); color: var(--accent); }
   .opp-status.deciding { border-color: var(--accent); color: var(--accent); border-style: dashed; }
-  .opp-status.stopped { border-color: var(--reveal); color: var(--reveal); }
+  .opp-status.stopped { border-color: var(--damage-ink); color: var(--damage-ink); }
   .landing { text-align: center; padding: 60px 20px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
   .muted { color: var(--muted); }
   .overlay {
     position: fixed;
-    top: 52px;
+    top: calc(var(--header-height) + var(--gutter-y) + var(--space-2));
     /* Centred on the board area: the window less the timeline beside it. */
     left: calc(50% - var(--panel-w) / 2);
     transform: translateX(-50%);
@@ -497,36 +801,54 @@
   .overlay > :global(*) { pointer-events: auto; }
   .caption {
     white-space: pre-line;
-    font-size: 15px;
-    line-height: 1.45;
-    background: #000d;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 2px solid var(--accent);
+    font-size: var(--fs-body-s);
+    line-height: var(--lh-body-s);
+    background: var(--panel-raised);
+    color: var(--ink);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-menu);
     max-width: min(80vw, calc(100vw - var(--panel-w) - 32px));
     text-align: center;
   }
   .toasts {
     position: fixed;
-    right: 16px;
-    bottom: 16px;
+    right: var(--space-4);
+    bottom: var(--space-4);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-2);
     z-index: 60;
     max-width: min(420px, calc(100vw - 32px));
     /* A toast never takes a touch: on a phone it lies over the hand, where
        the card it talks about (a pair's second half) waits to be dragged. */
     pointer-events: none;
   }
-  .toast { padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 16px #0008; font-size: 13px; }
-  .toast.error { background: #b71c1c; color: #fff; }
-  .toast.warn { background: #ffb300; color: #222; }
-  .toast.info { background: #263238; color: #fff; }
+  .toast {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-m);
+    border: 1px solid var(--line);
+    background: var(--panel-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-menu);
+    font-size: var(--fs-ui);
+    font-weight: var(--fw-ui);
+  }
+  .toast.error { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); }
+  .toast.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); }
   @media (max-width: 900px) {
     .body.panel { grid-template-columns: 1fr; }
     aside { max-height: 40vh; position: static; }
     .app.panel-side { --panel-w: 0px; }
+  }
+  /* On a touch screen every header control is at least a fingertip's 44px. */
+  @media (pointer: coarse) {
+    header .warn, .mode { min-height: var(--touch-target); }
+    header .warn { min-width: var(--touch-target); justify-content: center; }
+    .mode label { height: auto; }
+    header button { width: var(--touch-target); height: var(--touch-target); }
+    .branch select { height: var(--touch-target); }
+    aside .dock { width: var(--touch-target); height: var(--touch-target); }
+    .grip { height: var(--touch-target); }
   }
 </style>

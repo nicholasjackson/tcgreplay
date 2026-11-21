@@ -20,6 +20,13 @@ export default defineConfig({
   workers: 1,
   forbidOnly: !!process.env.CI,
   reporter: [['list']],
+  // Screenshot baselines (e2e/screenshots.spec.js) live per project under
+  // e2e/__screenshots__, Chromium only, taken on the developer's machine.
+  snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{arg}{ext}',
+  // threshold 0: Playwright's default per-pixel threshold (0.2) passes a
+  // change between two dark shades (gotcha playwright-screenshot-threshold);
+  // maxDiffPixelRatio absorbs Chromium's run-to-run noise instead.
+  expect: { toHaveScreenshot: { threshold: 0, maxDiffPixelRatio: 0.002, scale: 'css', animations: 'disabled', caret: 'hide' } },
   use: {
     baseURL: `http://${addr}`,
     trace: 'retain-on-failure',

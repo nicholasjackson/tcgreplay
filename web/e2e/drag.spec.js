@@ -2,7 +2,7 @@
 // mouse on the desktop, through the one pointer layer. Each drop expects
 // the same hand-written timeline line in every profile, so a touch drop
 // and a mouse drop are held to the same result.
-import { test, expect, act, drag, press, timelineLines, isTouch, pile, pileLabel, isPhone, touchStart } from './fixtures.js';
+import { test, expect, act, drag, press, timelineLines, isTouch, pile, pileLabel, discardTop, isPhone, touchStart } from './fixtures.js';
 
 const hand = (page) => page.getByRole('list', { name: 'p1 hand' });
 const region = (page, name) => page.getByRole('region', { name, exact: true });
@@ -104,7 +104,7 @@ const drops = [
     // where a finger moving up or down scrolls the list, so it is lifted
     // sideways.
     from: async (page, testInfo) => {
-      if (!isPhone(testInfo)) return titled(pile(page, 'Discard'), 'Fighting Energy (p1-16)');
+      if (!isPhone(testInfo)) return titled(discardTop(page), 'Fighting Energy (p1-16)');
       await hand(page).scrollIntoViewIfNeeded();
       await pile(page, 'Discard').tap();
       return titled(page.locator('.modal'), 'Fighting Energy (p1-16)');

@@ -7,6 +7,7 @@
 //   with highlights and captions; it can be paused, stepped and scrubbed.
 import { app } from './store.svelte.js';
 import { request } from './ws.js';
+import { groupTurns, replayFrom } from './timeline.js';
 
 // BASE_MS is how long one move shows at 1×; moves with notes stay longer.
 const BASE_MS = 1400;
@@ -101,8 +102,9 @@ export function heldMoves() {
 
 // startReplay plays the current branch from just after event from to event
 // until (0 for the head). auto marks an autoplay of held moves, which the
-// viewer can skip but not scrub.
-export async function startReplay(from, until = 0, auto = false) {
+// viewer can skip but not scrub. at, when given, picks a step from the
+// replay's steps to show paused there instead of playing.
+export async function startReplay(from, until = 0, auto = false, at = null) {
   stopTimer();
   let r;
   try {
@@ -115,8 +117,49 @@ export async function startReplay(from, until = 0, auto = false) {
   if (auto && !app.held) return;
   app.held = null;
   app.replay = { ...r.data, index: -1, playing: false, auto };
+  if (at) return show(Math.max(-1, Math.min(r.data.steps.length - 1, at(r.data.steps))));
   show(-1);
   play();
+}
+
+// The playback controls work with no replay too: they start one from the
+// position on the board. liveFrom is where that replay starts, the start
+// of the latest player's half before event id.
+const liveFrom = (id) => replayFrom(groupTurns(app.snap?.log || []), id);
+
+// playOrPause is the controls' Play: it pauses or resumes a replay, plays
+// moves that are held, or replays the board's current half from its start.
+export function playOrPause() {
+  const r = app.replay;
+  if (r) return r.playing ? pause() : play();
+  if (app.held) return startReplay(app.held.from);
+  if (app.snap) startReplay(liveFrom(app.snap.head));
+}
+
+// stepBy is the controls' Previous and Next step. Off a replay, Previous
+// opens one at the move before the board's position, and Next at the
+// first move held.
+export function stepBy(delta) {
+  if (app.replay) return step(delta);
+  if (!app.snap) return;
+  const at = app.viewHead;
+  if (delta < 0) return startReplay(liveFrom(at), 0, false, (steps) => steps.findLastIndex((s) => s.last < at));
+  if (app.held) return startReplay(app.held.from, 0, false, () => 0);
+}
+
+// seekEvent moves the board to event id, the scrubber's position. Within
+// the replay it seeks at once; past it, only when commit (the scrubber let
+// go), as that fetches a replay from the start of id's half. The head is
+// the live board.
+export function seekEvent(id, commit) {
+  const r = app.replay;
+  const head = app.snap?.head ?? 0;
+  if (r && !r.auto && id >= r.from && id <= r.steps.at(-1).last) {
+    return seek(id === r.from ? -1 : r.steps.findIndex((s) => s.last >= id));
+  }
+  if (!commit) return;
+  if (id >= head) return goLive();
+  startReplay(liveFrom(id), 0, false, (steps) => steps.findIndex((s) => s.last >= id));
 }
 
 export function play() {
