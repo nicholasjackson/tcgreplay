@@ -1,81 +1,323 @@
 ---
-// The home page: what tcgreplay is in one sentence, the playmat in action
-// and "Get started", all within the first screen on a laptop.
+// The home page, in the Studio style: what tcgreplay is in one sentence,
+// the playmat in action and "Get started", all within the first screen on
+// a laptop; then how it works in three steps, what it does on a slate band,
+// four coaching workflows with an example prompt each (read from their
+// pages' frontmatter), and the playmat's address for those who already use
+// connectors.
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Playmat from '../components/Playmat.astro';
 import CopyBlock from '../components/CopyBlock.astro';
 import { site } from '../lib/facts';
+
+const steps = [
+  {
+    title: 'Connect the playmat',
+    text: 'Add tcgreplay to Claude or ChatGPT as a connector and sign in with Google the first time it is used.',
+  },
+  {
+    title: 'Paste a battle log',
+    text: 'Copy the log from Pokémon TCG Live, paste it with your decklist, and the assistant rebuilds the game on the board.',
+  },
+  {
+    title: 'Review it together',
+    text: 'Step through the game turn by turn, talk through your decisions, and rewind to try a better line.',
+  },
+];
+
+// The workflows shown as cards, in order, and which of each page's example
+// prompts to show. A missing page or prompt stops the build.
+const featured: { guide: string; prompt: number }[] = [
+  { guide: 'import-game', prompt: 0 },
+  { guide: 'review-game', prompt: 1 },
+  { guide: 'replay-drill', prompt: 0 },
+  { guide: 'play-game', prompt: 0 },
+];
+const workflows = await getCollection('workflows');
+const guides = featured.map(({ guide, prompt }) => {
+  const page = workflows.find((w) => w.data.guide === guide);
+  if (!page) throw new Error(`home page: no workflow page for the guide ${guide}`);
+  const text = page.data.prompts[prompt];
+  if (!text) throw new Error(`home page: the ${guide} workflow page has no prompt ${prompt}`);
+  return { href: `/docs/workflows/${guide}`, title: page.data.title, prompt: text };
+});
 ---
 <Base description="Paste a Pokémon TCG Live battle log, and your AI assistant rebuilds the game on a live board, coaches you through it, and rewinds to try better lines.">
   <section class="hero">
     <div class="pitch">
+      <span class="badge"><span class="dot" aria-hidden="true"></span>Works with Claude and ChatGPT</span>
       <h1>Replay your Pokémon TCG Live games with an AI coach</h1>
       <p class="lede" data-pitch>
         Paste a Pokémon TCG Live battle log, and your AI assistant rebuilds the game on a live board, coaches you
         through it, and rewinds to try better lines.
       </p>
       <p class="actions">
-        <a class="button" href="/docs/connect">Get started</a>
-        <span class="works-with">Works with Claude and ChatGPT</span>
+        <a class="cta" href="/docs/connect">Get started</a>
+        <a class="cta secondary" href="/docs/example">See an example game</a>
       </p>
     </div>
     <Playmat />
   </section>
 
-  <section class="what" aria-labelledby="what-heading">
+  <section class="how" aria-labelledby="how-heading">
+    <h2 id="how-heading">How it works</h2>
+    <ol class="steps">
+      {steps.map((s, i) => (
+        <li>
+          <span class="step-n" aria-hidden="true">{i + 1}</span>
+          <h3>{s.title}</h3>
+          <p>{s.text}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="what" aria-labelledby="what-heading" data-theme="dark" data-band="slate">
     <h2 id="what-heading">What it does</h2>
-    <ul>
-      <li>
-        <strong>Imports your games.</strong> Paste a battle log and your decklist, and step through the game turn by
-        turn, with the opponent's unseen cards filled in from a likely list built from what they showed.
-      </li>
-      <li>
-        <strong>Reviews them with you.</strong> The assistant asks why you made a play before giving its view, rates
-        decisions apart from how they turned out, and notes what you did well as well as your mistakes.
-      </li>
-      <li>
-        <strong>Rewinds, drills and plays.</strong> Go back to any decision and try another line, practise the ideas
-        behind your mistakes in short drills, or play a game against the assistant on the board.
-      </li>
-    </ul>
-    <p>
+    <p class="band-lede">
       tcgreplay is a playmat, not a rules engine: the assistant runs the game and the board shows it, live in your
       browser. <a href="/docs/connect">Connect it to your assistant</a> to start.
     </p>
+    <ul class="features">
+      <li>
+        <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M4 19h16" /></svg>
+        <h3>Imports your games</h3>
+        <p>
+          Paste a battle log and your decklist, and step through the game turn by turn, with the opponent's unseen
+          cards filled in from a likely list built from what they showed.
+        </p>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /><path d="M8 10h8" /></svg>
+        <h3>Reviews them with you</h3>
+        <p>
+          The assistant asks why you made a play before giving its view, rates decisions apart from how they turned
+          out, and notes what you did well as well as your mistakes.
+        </p>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7" /><path d="M4 4v4.5h4.5" /></svg>
+        <h3>Rewinds, drills and plays</h3>
+        <p>
+          Go back to any decision and try another line, practise the ideas behind your mistakes in short drills, or
+          play a game against the assistant on the board.
+        </p>
+      </li>
+    </ul>
   </section>
 
-  <section class="address" aria-labelledby="address-heading">
-    <h2 id="address-heading">Already use connectors?</h2>
-    <p>Add the hosted playmat to your assistant as a custom connector at this address, then sign in with Google.</p>
-    <CopyBlock text={site.mcpURL} label="The playmat's address" wrap />
+  <section class="guides" aria-labelledby="guides-heading">
+    <div class="guides-head">
+      <h2 id="guides-heading">Ask in your own words</h2>
+      <a href="/docs/workflows">All coaching workflows →</a>
+    </div>
+    <ul class="guide-cards">
+      {guides.map((g) => (
+        <li>
+          <a class="guide-card" href={g.href}>
+            <span class="guide-title">{g.title}</span>
+            <span class="guide-prompt">{g.prompt}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="address" aria-labelledby="address-heading" data-theme="dark">
+    <div class="address-text">
+      <h2 id="address-heading">Already use connectors?</h2>
+      <p>Add the hosted playmat to your assistant as a custom connector at this address, then sign in with Google.</p>
+    </div>
+    <CopyBlock text={site.mcpURL} label="The playmat's address" wrap class="address-copy" />
   </section>
 </Base>
 
 <style>
+  section { margin: 0 0 clamp(48px, 6vw, 80px); }
+  h2 {
+    margin: 0 0 24px;
+    font-size: clamp(var(--fs-24), 2.6vw, var(--fs-section-title));
+    font-weight: var(--fw-section-title);
+    line-height: var(--lh-section-title);
+    letter-spacing: var(--ls-section-title);
+  }
+  h3 { margin: 4px 0 0; font-size: var(--fs-card-title); font-weight: var(--fw-card-title); line-height: var(--lh-card-title); }
+  ol, ul { list-style: none; margin: 0; padding: 0; }
+
+  /* The hero: the pitch beside the scene, the scene under it on a phone. */
   .hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
+    gap: 40px;
     align-items: center;
-    padding: 0.25rem 0 1rem;
+    margin-bottom: clamp(40px, 6vw, 80px);
   }
   @media (min-width: 56rem) {
-    .hero { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 2rem; }
+    .hero { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; }
   }
-  h1 { font-size: clamp(var(--fs-r160), 3.2vw, var(--fs-r230)); margin: 0 0 0.5rem; }
-  .lede { font-size: var(--fs-r110); margin: 0 0 1rem; }
-  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin: 0; }
-  .button {
-    display: inline-block;
-    padding: 0.6rem 1.4rem;
-    border-radius: 6px;
-    background: var(--accent);
-    color: var(--button-ink);
-    font-weight: 700;
+  .pitch { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; min-width: 0; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 8px;
+    border-radius: 16px;
+    background: var(--current);
+    color: var(--primary);
+    font-size: var(--fs-13);
+    font-weight: 600;
+  }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-cyan); }
+  h1 {
+    margin: 0;
+    /* The display style, down to 32px on a phone. */
+    font-size: clamp(calc(var(--fs-16) * 2), 4.4vw, var(--fs-display));
+    font-weight: var(--fw-display);
+    line-height: var(--lh-display);
+    letter-spacing: var(--ls-display);
+  }
+  .lede { margin: 0; max-width: 34em; font-size: clamp(var(--fs-18), 1.6vw, var(--fs-19)); color: var(--ink-soft); }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; }
+  /* The main action in the primary colour (the accent is the board's End
+     turn alone), and the example beside it as a quiet button. */
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 22px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: var(--on-primary);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .cta:hover { filter: brightness(1.15); }
+  .cta.secondary {
+    padding: 0 20px;
+    background: var(--panel);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--control-line);
+  }
+  .cta.secondary:hover { filter: none; background: var(--hover); }
+
+  /* How it works: three numbered cards. */
+  .steps, .features, .guide-cards { display: flex; flex-wrap: wrap; gap: 16px; }
+  .steps li {
+    flex: 1 1 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 24px;
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  .step-n {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--brand-navy);
+    color: var(--turn-tag-ink);
+    font: var(--fw-num) var(--fs-15) / 1 var(--font-mono);
+  }
+  .steps p, .guide-card { margin: 0; color: var(--ink-soft); }
+
+  /* What it does: a slate band the full width of the window (the shadow
+     and clip widen its colour past main's gutters without widening the
+     page). It carries data-theme="dark", so links and soft text inside
+     take their dark values. */
+  .what {
+    padding-block: clamp(48px, 6vw, 80px);
+    background: var(--slate-surface);
+    box-shadow: 0 0 0 100vmax var(--slate-surface);
+    clip-path: inset(0 -100vmax);
+    color: var(--slate-ink);
+  }
+  .what h2 { margin-bottom: 8px; }
+  .band-lede { margin: 0 0 28px; max-width: 40em; color: var(--slate-muted); }
+  .features li {
+    flex: 1 1 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 24px;
+    border-radius: 14px;
+    background: var(--slate-zone);
+  }
+  .features svg {
+    width: 28px;
+    height: 28px;
+    fill: none;
+    stroke: var(--brand-cyan);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .features p { margin: 0; color: var(--ink-soft); }
+
+  /* The workflows: a card each, with an example prompt as a chat bubble. */
+  .guides-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 24px; }
+  .guides-head h2 { margin: 0; }
+  .guides-head a { font-weight: 600; }
+  .guide-cards li { flex: 1 1 250px; display: flex; }
+  .guide-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+    color: var(--ink);
     text-decoration: none;
   }
-  .button:hover { filter: brightness(1.08); }
-  .works-with { color: var(--muted); font-size: var(--fs-r95); }
-  .what ul { padding-left: 1.2rem; }
-  .what li { margin: 0.5rem 0; }
+  .guide-card:hover { box-shadow: 0 0 0 1px var(--primary); }
+  .guide-title { font-size: var(--fs-card-title); font-weight: var(--fw-card-title); line-height: var(--lh-card-title); }
+  .guide-prompt {
+    padding: 10px 12px;
+    border-radius: 10px 10px 10px 2px;
+    background: var(--note-bg);
+    color: var(--note-ink);
+    font-size: var(--fs-14);
+    line-height: 1.45;
+  }
+
+  /* The address: a navy band, dark inside, with the address in a deeper
+     navy field and its Copy button in the dark theme's primary (cyan). */
+  .address {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px 32px;
+    padding: clamp(20px, 3vw, 32px);
+    border-radius: 16px;
+    background: var(--brand-navy);
+    color: var(--ink);
+  }
+  .address-text { flex: 1 1 320px; display: flex; flex-direction: column; gap: 6px; }
+  .address h2 { margin: 0; font-size: var(--fs-22); }
+  .address p { margin: 0; color: var(--ink-soft); }
+  .address :global(.address-copy.copy-block.wrap) {
+    flex: 1 1 340px;
+    min-width: 0;
+    margin: 0;
+    background: var(--navy-strip);
+    box-shadow: inset 0 0 0 1px var(--navy-slot-line);
+  }
+  /* The heading and text name the address; its label stays for screen
+     readers and the Copy button's name. */
+  .address :global(.address-copy .label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .address :global(.address-copy pre) { color: var(--turn-tag-ink); font-size: var(--fs-16); }
 </style>

@@ -1,5 +1,6 @@
 ---
 guide: opponent-deck
+group: after-a-game
 title: The opponent's likely deck
 prompts:
   - "What was my opponent probably playing? Build their likely list."

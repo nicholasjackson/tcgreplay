@@ -1,9 +1,11 @@
 ---
 // Playmat is the home page's scene of the playmat in action, drawn in the
-// board's own colours and its no-art card style (the text card, the card
-// back and the energy token, copied from web/src/components/Card.svelte).
-// It never shows card artwork or Pokémon logos: the cards are plain
-// stand-ins.
+// Studio board's colours: the slate mat with its zone panels, the turn
+// strip with its navy turn tag, the timeline panel beside it, and the
+// board's no-art cards (the text card, the Studio card back and the energy
+// token, copied from web/src/components/Card.svelte). It never shows card
+// artwork or Pokémon logos: the cards are plain stand-ins, and the card
+// back's mark is drawn inline, never loaded as an image.
 //
 // Without script, and for visitors who ask for reduced motion, it is a still:
 // the last moment of the story (a battle log imported, the board filled,
@@ -53,12 +55,21 @@ const label =
   'A playmat in the board’s colours with plain stand-in cards. A battle log sits beside the board, and the assistant suggests benching a second attacker on turn 3; the board shows that line played.';
 const sides: Side[] = ['p2', 'p1'];
 
+// The mark on the card back: the two cards and the replay arrow of
+// internal/design/mark.svg, inline and coloured by the styles below (its
+// navy square melts into the navy back, so it is left out).
+const mark =
+  '<svg class="mark" viewBox="0 0 30 30" aria-hidden="true" focusable="false">' +
+  '<rect class="mark-back" x="7" y="8" width="10" height="14" rx="2" transform="rotate(-12 12 15)"/>' +
+  '<rect class="mark-front" x="12" y="8" width="10" height="14" rx="2"/>' +
+  '<path class="mark-arrow" d="M15.2 17.2a2.2 2.2 0 1 0 2.2-2.2h-1"/></svg>';
+
 const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 // render draws one card the way the board draws a card without artwork.
 function render(c: Card): string {
   switch (c.kind) {
     case 'back':
-      return '<div class="back-art"><span></span></div>';
+      return `<div class="back-art">${mark}</div>`;
     case 'energy':
       return `<div class="token" data-type="${esc(c.type)}" title="${esc(c.type)} Energy">${esc(c.type.slice(0, 1))}</div>`;
     case 'text':
@@ -67,11 +78,11 @@ function render(c: Card): string {
       }<small>${esc(c.stage)}</small></div>`;
   }
 }
+const back = render({ kind: 'back' });
 ---
 <figure class="scene" data-playmat data-beat="line">
   <div class="stage" role="img" aria-label={label}>
     <div class="mat">
-      <div class="turn" data-turn aria-hidden="true">Turn 3</div>
       <div class="sweep" aria-hidden="true"></div>
       {sides.map((side) => (
         <div class:list={['side', side]}>
@@ -79,20 +90,19 @@ function render(c: Card): string {
           {side === 'p2' && (
             <>
               <div class="row hand">
-                {Array.from({ length: opponent.hand }, (_, i) => (
-                  <div class="card" style={`--i:${i}`}><div class="back-art"><span></span></div></div>
-                ))}
+                {Array.from({ length: opponent.hand }, (_, i) => <div class="card" style={`--i:${i}`} set:html={back} />)}
               </div>
-              <div class="row bench">
+              <div class="row bench zone">
                 {opponent.bench.map((c, i) => <div class="card" style={`--i:${i + 4}`} set:html={render(c)} />)}
+                <div class="slot" aria-hidden="true"></div>
               </div>
-              <div class="row active"><div class="card" style="--i:6" set:html={render(opponent.active)} /></div>
+              <div class="row active zone"><div class="card" style="--i:6" set:html={render(opponent.active)} /></div>
             </>
           )}
           {side === 'p1' && (
             <>
-              <div class="row active"><div class="card" style="--i:7" set:html={render(you.active)} /></div>
-              <div class="row bench">
+              <div class="row active zone"><div class="card" style="--i:7" set:html={render(you.active)} /></div>
+              <div class="row bench zone">
                 {you.bench.map((c, i) =>
                   i === 0 ? (
                     <div class="card new" data-line style="--i:0" set:html={render(c)} />
@@ -105,6 +115,13 @@ function render(c: Card): string {
                 {you.hand.map((c, i) => <div class="card" style={`--i:${i + 10}`} set:html={render(c)} />)}
               </div>
             </>
+          )}
+          {side === 'p2' && (
+            <div class="strip" aria-hidden="true">
+              <span class="turn" data-turn>Turn 3</span>
+              <span class="whose">Your turn</span>
+              <span class="end-turn">End turn</span>
+            </div>
           )}
         </div>
       ))}
@@ -193,84 +210,141 @@ function render(c: Card): string {
     margin: 0;
     width: 100%;
     max-width: 40rem;
+    justify-self: center;
   }
+  /* The frame: the slate mat (mat-* are the slate mat on the website, which
+     has no data-mat), lit from the middle like the board's surface. */
   .stage {
     --w: clamp(30px, 6.4vw, 46px);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 0.62fr);
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 10px;
-    background: var(--felt);
-    border: 1px solid var(--line);
-    color: var(--on-felt);
-    font-size: var(--fs-r75);
-    line-height: 1.3;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 14px;
+    background: radial-gradient(ellipse at 35% 50%, var(--mat-zone) 0%, var(--mat-surface) 70%);
+    box-shadow: var(--shadow-hero), 0 0 0 1px var(--control-line);
+    color: var(--mat-ink);
+    font-family: var(--font-sans);
+    font-size: var(--fs-12);
+    line-height: 1.35;
     overflow: hidden;
   }
   .mat {
     position: relative;
     display: grid;
-    gap: 0.4rem;
+    gap: 6px;
     min-width: 0;
-  }
-  .turn {
-    position: absolute;
-    top: 50%;
-    right: 0.25rem;
-    transform: translateY(-50%);
-    padding: 0.1rem 0.5rem;
-    border-radius: 999px;
-    background: var(--strip);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    font-weight: 700;
-    z-index: 1;
   }
   .side {
     position: relative;
     display: grid;
     justify-items: center;
-    gap: 0.3rem;
-    padding: 0.35rem 0.25rem;
-    border-radius: 8px;
-    border: 1px solid var(--slot-line);
+    gap: 6px;
+    padding: 2px 0;
   }
-  .side.p1 { box-shadow: inset 0 -3px 0 var(--p1); }
-  .side.p2 { box-shadow: inset 0 3px 0 var(--p2); }
   .seat {
     position: absolute;
-    left: 0.4rem;
-    top: 0.25rem;
-    font-weight: 700;
+    left: 2px;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: var(--fw-ui-title);
   }
-  .p1 .seat { color: var(--p1); top: auto; bottom: 0.3rem; }
-  .p2 .seat { color: var(--p2); }
+  .seat::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--seat-c);
+  }
+  .p1 { --seat-c: var(--seat-p1-mat); }
+  .p2 { --seat-c: var(--seat-p2-mat); }
+  .p1 .seat { top: auto; bottom: 0; }
   .row {
     display: flex;
-    gap: calc(var(--w) * 0.12);
+    gap: calc(var(--w) * 0.14);
     justify-content: center;
     min-height: calc(var(--w) * 1.4);
   }
   .row.hand { --w: calc(clamp(30px, 6.4vw, 46px) * 0.72); min-height: calc(var(--w) * 1.4); }
+  /* The board's zone panels: the Bench and the Active, the Active outlined
+     in its player's colour. */
+  .zone {
+    padding: calc(var(--w) * 0.16);
+    border-radius: 10px;
+    background: var(--mat-zone);
+  }
+  .active.zone { box-shadow: inset 0 0 0 1.5px var(--seat-c); }
+  .slot {
+    width: var(--w);
+    aspect-ratio: 63 / 88;
+    border-radius: calc(var(--w) * 0.1);
+    background: var(--mat-slot);
+    box-shadow: inset 0 0 0 1px var(--mat-slot-line);
+  }
+  /* The turn strip between the halves: the navy turn tag, whose turn, and
+     End turn in the accent the board keeps for it alone. */
+  .strip {
+    position: relative;
+    z-index: 1;
+    align-self: stretch;
+    justify-self: stretch;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 5px 6px;
+    border-radius: 10px;
+    background: var(--mat-strip);
+  }
+  .turn {
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--brand-navy);
+    color: var(--turn-tag-ink);
+    font: var(--fw-num) var(--fs-11) / 1.3 var(--font-mono);
+    white-space: nowrap;
+  }
+  .whose { flex: 1; font-weight: var(--fw-ui-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .end-turn {
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+    font-size: var(--fs-10);
+    white-space: nowrap;
+  }
   .card {
     width: var(--w);
     aspect-ratio: 63 / 88;
-    border-radius: calc(var(--w) * 0.08);
+    border-radius: calc(var(--w) * 0.1);
     flex: none;
+    box-shadow: var(--shadow-card);
   }
-  .card.new { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* The card the better line brings in, lit as the board lights the cards
+     an action touched. */
+  .card.new { box-shadow: 0 0 0 2px var(--highlight-glow), var(--shadow-card); }
 
-  /* The board's no-art card look (web/src/components/Card.svelte). */
+  /* The board's no-art cards (web/src/components/Card.svelte). The Studio
+     back: navy, framed in cyan inside a navy edge, the mark in the middle. */
   .card :global(.back-art) {
     width: 100%;
     height: 100%;
     border-radius: inherit;
-    background: radial-gradient(circle at 50% 50%, var(--card-back-light) 0 13%, var(--card-back-band) 13% 17%, transparent 17%),
-      linear-gradient(var(--card-back-red) 0 47%, var(--card-back-band) 47% 53%, var(--card-back-blue) 53%);
-    border: calc(var(--w) * 0.05) solid var(--card-back-edge);
+    display: grid;
+    place-items: center;
+    background: var(--brand-navy);
+    border: calc(var(--w) * 0.05) solid var(--brand-navy);
+    box-shadow: inset 0 0 0 max(1px, calc(var(--w) * 0.025)) var(--brand-cyan);
     box-sizing: border-box;
+    overflow: hidden;
   }
+  .card :global(.back-art .mark) { width: 78%; height: auto; aspect-ratio: 1; fill: none; pointer-events: none; }
+  .card :global(.mark-back) { stroke: var(--brand-cyan); stroke-width: 1.8; }
+  .card :global(.mark-front) { fill: var(--brand-navy); stroke: var(--glyph-ink); stroke-width: 1.8; }
+  .card :global(.mark-arrow) { stroke: var(--brand-cyan); stroke-width: 1.6; stroke-linecap: round; }
   .card :global(.text-card) {
     width: 100%;
     height: 100%;
@@ -280,16 +354,16 @@ function render(c: Card): string {
     display: flex;
     flex-direction: column;
     gap: 4%;
-    background: linear-gradient(160deg, var(--card-text-face), var(--card-text-face-end));
-    color: var(--card-text-ink);
+    background: var(--card-face);
+    color: var(--card-face-ink);
     font-size: calc(var(--w) * 0.15);
     line-height: 1.15;
     overflow: hidden;
-    border: calc(var(--w) * 0.04) solid var(--card-text-edge);
+    border: calc(var(--w) * 0.04) solid var(--card-border-pokemon);
   }
-  .card :global(.text-card[data-cat='Trainer']) { border-color: var(--card-text-edge-trainer); background: linear-gradient(160deg, var(--card-text-face-trainer), var(--card-text-face-trainer-end)); }
-  .card :global(.text-card strong) { overflow-wrap: anywhere; }
-  .card :global(.text-card .hp) { font-weight: 700; color: var(--card-text-hp); }
+  .card :global(.text-card[data-cat='Trainer']) { border-color: var(--card-border-trainer); background: var(--card-face-trainer); }
+  .card :global(.text-card strong) { font-weight: var(--fw-ui-title); overflow-wrap: anywhere; }
+  .card :global(.text-card .hp) { font-weight: 700; color: var(--card-hp); }
   .card :global(.text-card small) { opacity: 0.7; font-size: 0.9em; }
   .card :global(.token) {
     width: 100%;
@@ -297,34 +371,66 @@ function render(c: Card): string {
     border-radius: inherit;
     display: grid;
     place-items: center;
-    font: 800 calc(var(--w) * 0.5) / 1 system-ui;
-    color: var(--on-color);
+    font: 800 calc(var(--w) * 0.5) / 1 var(--font-sans);
+    color: var(--glyph-ink);
     text-shadow: var(--shadow-text-energy);
     background: radial-gradient(circle at 50% 45%, var(--ec) 0 38%, var(--energy-ring) 39% 44%, var(--ec) 45%);
-    --ec: var(--energy-special);
+    --ec: var(--energy-colorless);
   }
   .card :global(.token[data-type='Fighting']) { --ec: var(--energy-fighting); }
 
+  /* The timeline panel beside the mat: the battle log, then the coach's
+     note, in the board's panel and note colours. */
   .panel {
     display: grid;
     grid-template-rows: 1fr auto;
-    gap: 0.5rem;
+    gap: 10px;
     min-width: 0;
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+    color: var(--ink);
   }
-  .log, .coach {
-    border-radius: 8px;
-    padding: 0.4rem 0.5rem;
-    min-width: 0;
+  .log, .coach { min-width: 0; }
+  .log ol { position: relative; list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; }
+  .log li { overflow-wrap: anywhere; padding: 2px 6px; border-radius: 4px; }
+  /* The turn's heading, as the timeline heads a turn: its number and the
+     player's dot. */
+  .log li:first-child {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-inline: 0;
+    font-family: var(--font-mono);
+    font-weight: var(--fw-num);
   }
-  .log { background: var(--strip); border: 1px solid var(--log-line); }
-  .log ol { position: relative; list-style: none; margin: 0.25rem 0 0; padding: 0; display: grid; gap: 0.2rem; }
-  .log li { overflow-wrap: anywhere; }
-  .log li:first-child { color: var(--accent); font-weight: 700; }
-  /* The board's dark note colour in both schemes: the scene is always on the felt. */
-  .coach { background: var(--coach-bg); border: 1px solid var(--accent); color: var(--on-felt); }
-  .coach p { margin: 0.2rem 0 0; }
-  .panel-title { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: var(--fs-r65); opacity: 0.8; }
-  figcaption { margin-top: 0.4rem; color: var(--muted); font-size: var(--fs-r90); }
+  .log li:first-child::after {
+    content: '';
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--seat-p1);
+  }
+  /* The better line's step, shown as the timeline shows the step the board
+     is on. */
+  .log li[data-log='line'] { background: var(--current); }
+  .coach {
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--note-bg);
+    border: 1px solid var(--note-line);
+    color: var(--note-ink);
+  }
+  .coach p { margin: 4px 0 0; }
+  .panel-title {
+    font: var(--fw-label) var(--fs-10) / var(--lh-label) var(--font-sans);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  figcaption { margin-top: 10px; color: var(--muted); font-size: var(--fs-13); }
 
   /* The beats. The default (no script, reduced motion) is the last beat,
      "line": everything shown. Earlier beats hide what hasn't happened yet.
@@ -340,8 +446,8 @@ function render(c: Card): string {
   .sweep {
     position: absolute;
     inset: 0;
-    border-radius: 8px;
-    background: var(--sweep);
+    border-radius: 10px;
+    background: linear-gradient(90deg, transparent, var(--scrim) 35%, var(--scrim) 65%, transparent);
     opacity: 0;
     transform: translateX(-100%);
     transition: opacity 0.5s ease, transform 0.9s ease;
@@ -377,12 +483,12 @@ function render(c: Card): string {
   /* Until then its log line takes no room, so the log reads as played. */
   .scene:not([data-beat='line']) .log li[data-log='line'] { position: absolute; visibility: hidden; transition-delay: 0s; }
   .scene[data-beat='line'] [data-line] { transition-delay: 0.3s; }
-  /* The rewind: a sweep across the board and the turn counter ticking back. */
+  /* The rewind: a sweep across the board and the turn tag ticking back. */
   .scene[data-beat='rewind'] .sweep {
     opacity: 1;
     transform: translateX(0);
   }
-  .scene[data-beat='rewind'] .turn { transform: translateY(-50%) scale(1.25); }
+  .scene[data-beat='rewind'] .turn { transform: scale(1.25); }
   .scene[data-beat='rewind'] .coach { opacity: 0.6; }
 
   @media (prefers-reduced-motion: reduce) {

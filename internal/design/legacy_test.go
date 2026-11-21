@@ -10,9 +10,24 @@ import (
 	"testing"
 )
 
-// legacyMark opens the usage note of every token kept only for the
-// website: a name from the token step that no board style may use.
+// legacyMark opened the usage note of every token kept only for the
+// website while its pages still used names from the token step. The
+// website is restyled and those tokens are gone; a token marked this way
+// must not come back.
 const legacyMark = "Legacy name"
+
+// retiredNames are the token-step names the Studio redesign retired, once
+// neither the board nor the website used them. Neither app may name them
+// again: each has a Studio name (see tokens.json), such as mat-surface for
+// felt, card-face for card-text-face, or the Studio card back's brand-navy
+// and brand-cyan for card-back-*.
+var retiredNames = []string{
+	"felt", "strip", "input", "text", "slot-line", "p1", "p2", "on-color",
+	"card-back-light", "card-back-band", "card-back-red", "card-back-blue", "card-back-edge",
+	"card-text-face", "card-text-face-end", "card-text-ink", "card-text-edge", "card-text-edge-trainer",
+	"card-text-face-trainer", "card-text-face-trainer-end", "card-text-hp",
+	"energy-special", "on-felt", "link-light", "button-ink", "log-line", "coach-bg", "sweep",
+}
 
 // legacyNames returns the tokens whose usage marks them legacy.
 func legacyNames(t Tokens) map[string]bool {
@@ -42,43 +57,93 @@ func legacyRefs(files map[string]string, legacy map[string]bool) []string {
 	return hits
 }
 
-// TestBoardUsesNoLegacyTokens: the board (web/src) styles itself with
-// Studio token names only. The legacy names left in tokens.json are the
-// website's until its pages are restyled.
-func TestBoardUsesNoLegacyTokens(t *testing.T) {
-	toks, err := Load()
-	if err != nil {
-		t.Fatal(err)
-	}
-	legacy := legacyNames(toks)
+// sources reads every file under dir (relative to the repo root) with one
+// of exts, keyed by its slash path from the root, skipping node_modules.
+func sources(t *testing.T, dir string, exts ...string) map[string]string {
+	t.Helper()
+	root := filepath.Join("..", "..")
 	files := map[string]string{}
-	web := filepath.Join("..", "..", "web", "src")
-	err = filepath.WalkDir(web, func(p string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(filepath.Join(root, dir), func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.IsDir() && d.Name() == "node_modules" {
 			return filepath.SkipDir
 		}
-		if d.IsDir() || !(strings.HasSuffix(p, ".svelte") || strings.HasSuffix(p, ".css") || strings.HasSuffix(p, ".js")) {
+		if d.IsDir() || !hasExt(p, exts) {
 			return nil
 		}
 		b, err := os.ReadFile(p)
 		if err != nil {
 			return err
 		}
-		rel, _ := filepath.Rel(filepath.Join("..", ".."), p)
+		rel, _ := filepath.Rel(root, p)
 		files[filepath.ToSlash(rel)] = string(b)
 		return nil
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(files) < 10 {
-		t.Fatalf("found only %d board sources under web/src: the check would pass by finding nothing", len(files))
+	return files
+}
+
+func hasExt(p string, exts []string) bool {
+	for _, e := range exts {
+		if strings.HasSuffix(p, e) {
+			return true
+		}
 	}
-	for _, h := range legacyRefs(files, legacy) {
-		t.Errorf("%s is a legacy token: use its Studio name (see its usage note in internal/design/tokens.json)", h)
+	return false
+}
+
+// TestNoLegacyTokens: tokens.json holds Studio names only. No token is
+// marked legacy and no retired name is defined again.
+func TestNoLegacyTokens(t *testing.T) {
+	toks, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name := range legacyNames(toks) {
+		t.Errorf("tokens.json: --%s is marked %q: the legacy names are retired, give it a Studio name", name, legacyMark)
+	}
+	retired := map[string]bool{}
+	for _, n := range retiredNames {
+		retired[n] = true
+	}
+	for _, tok := range toks.all() {
+		if retired[tok.Name] {
+			t.Errorf("tokens.json: --%s is a retired token-step name: use its Studio name", tok.Name)
+		}
+	}
+}
+
+// TestAppsUseNoLegacyTokens: the board (web/src) and the website
+// (site/src) style themselves with Studio token names only: neither names
+// a retired token or one marked legacy.
+func TestAppsUseNoLegacyTokens(t *testing.T) {
+	toks, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy := legacyNames(toks)
+	for _, n := range retiredNames {
+		legacy[n] = true
+	}
+	for _, app := range []struct {
+		dir  string
+		exts []string
+		min  int
+	}{
+		{"web/src", []string{".svelte", ".css", ".js"}, 10},
+		{"site/src", []string{".astro", ".css", ".ts", ".js"}, 10},
+	} {
+		files := sources(t, app.dir, app.exts...)
+		if len(files) < app.min {
+			t.Fatalf("found only %d sources under %s: the check would pass by finding nothing", len(files), app.dir)
+		}
+		for _, h := range legacyRefs(files, legacy) {
+			t.Errorf("%s is a retired legacy token: use its Studio name (see internal/design/tokens.json)", h)
+		}
 	}
 }
 
@@ -87,10 +152,12 @@ func TestBoardUsesNoLegacyTokens(t *testing.T) {
 func TestLegacyRefsFinder(t *testing.T) {
 	legacy := map[string]bool{"felt": true, "p1": true}
 	got := legacyRefs(map[string]string{
-		"web/src/a.css":    ".a { color: var(--ink); }\n.b { background: var(--felt); }\n",
-		"web/src/B.svelte": "<style>.c { color: var(--p1, var(--seat-p1)); border-color: var(--p1-mat); }</style>\n",
+		"web/src/a.css":       ".a { color: var(--ink); }\n.b { background: var(--felt); }\n",
+		"web/src/B.svelte":    "<style>.c { color: var(--p1, var(--seat-p1)); border-color: var(--p1-mat); }</style>\n",
+		"site/src/C.astro":    "<style>.d { background: var(--mat-surface); color: var( --felt); }</style>\n",
+		"site/src/pages/e.ts": "const ok = 'var(--seat-p1-mat)';\n",
 	}, legacy)
-	want := []string{"web/src/B.svelte:1: --p1", "web/src/a.css:2: --felt"}
+	want := []string{"site/src/C.astro:1: --felt", "web/src/B.svelte:1: --p1", "web/src/a.css:2: --felt"}
 	if strings.Join(got, "|") != strings.Join(want, "|") {
 		t.Errorf("legacyRefs = %v, want %v", got, want)
 	}

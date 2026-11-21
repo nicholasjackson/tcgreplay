@@ -52,6 +52,39 @@ test('the example page suggests a prompt and the long log scrolls inside its box
   expect(['auto', 'scroll']).toContain(box.overflowY);
 });
 
+// luminance is a CSS colour's relative luminance, 0 (black) to 1 (white).
+const luminance = (rgb) => {
+  const [r, g, b] = rgb.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+test('the decklist and the log sit in two copy panels, the decklist light and the log dark, each with its heading and Copy button', async ({ page }) => {
+  await page.goto('/docs/example');
+  const deck = page.locator('[data-panel="deck"]');
+  const log = page.locator('[data-panel="log"]');
+  await expect(deck.getByRole('heading', { level: 2 })).toHaveText('The decklist');
+  await expect(log.getByRole('heading', { level: 2 })).toHaveText('The battle log');
+  await expect(deck.getByRole('button', { name: 'Copy Example decklist' })).toBeVisible();
+  await expect(log.getByRole('button', { name: 'Copy Example battle log' })).toBeVisible();
+  // The decklist panel is light: nothing in it takes the dark theme.
+  expect(await deck.evaluate((el) => el.closest('[data-theme="dark"]') === null && el.querySelector('[data-theme="dark"]') === null)).toBe(true);
+  await expect(log).toHaveAttribute('data-theme', 'dark');
+  const bg = (panel) => panel.locator('pre').evaluate((pre) => getComputedStyle(pre).backgroundColor);
+  expect(luminance(await bg(deck)), 'the decklist is light').toBeGreaterThan(0.8);
+  expect(luminance(await bg(log)), 'the log is dark').toBeLessThan(0.05);
+  // The steps are numbered cards, the prompt in the second.
+  await expect(page.locator('[data-steps] > li')).toHaveCount(2);
+  await expect(page.locator('[data-steps] > li').nth(1).locator('.copy-block.prompt')).toHaveCount(1);
+});
+
+test('the example page keeps the space before its link to the import page', async ({ page }) => {
+  await page.goto('/docs/example');
+  await expect(page.locator('.prose')).toContainText('See importing a game for what to expect.');
+});
+
 test('the import page says where to copy, what a complete import looks like and what to do about missing lines', async ({ page }) => {
   await page.goto('/docs/import');
   const prose = page.locator('.prose');

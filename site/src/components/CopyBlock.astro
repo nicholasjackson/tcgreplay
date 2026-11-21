@@ -4,17 +4,20 @@
 // (prompts, addresses); otherwise lines are kept and scroll inside the box.
 // tall: cap the height and scroll (long logs). Code and logs (not wrap)
 // sit in a dark box: data-theme="dark" gives the tokens inside it their
-// dark values.
+// dark values. theme: 'light' or 'dark' overrides that choice (the example
+// page's light decklist panel); left out, wrap decides as before.
 interface Props {
   text: string;
   label?: string;
   wrap?: boolean;
   tall?: boolean;
+  theme?: 'light' | 'dark';
   class?: string;
 }
-const { text, label, wrap = false, tall = false, class: extra } = Astro.props;
+const { text, label, wrap = false, tall = false, theme, class: extra } = Astro.props;
+const dark = theme ? theme === 'dark' : !wrap;
 ---
 <div class:list={['copy-block', { wrap, tall }, extra]}>
   {label && <span class="label">{label}</span>}
-  <div class="copy-box" data-theme={wrap ? undefined : 'dark'}><pre data-copy data-copy-label={label}><code>{text}</code></pre></div>
+  <div class="copy-box" data-theme={dark ? 'dark' : undefined}><pre data-copy data-copy-label={label}><code>{text}</code></pre></div>
 </div>

@@ -1,5 +1,6 @@
 ---
 guide: before-you-move
+group: practice
 title: Before you move
 prompts:
   - "Let's practise my before-you-move checklist on this game."

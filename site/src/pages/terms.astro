@@ -7,18 +7,34 @@
 // from the App Platform definition (.do/app.yaml, through lib/facts); the
 // fan-project notice, the card-data credit and the help address come from
 // internal/notice/notice.json (through lib/notice). None is typed in.
+// Laid out as a docs text column with an On this page card (beside it on
+// a wide screen, above the sections on a narrow one) listing the sections.
 import Base from '../layouts/Base.astro';
 import { limits, site } from '../lib/facts';
 import { notice } from '../lib/notice';
 
 const updated = '13 November 2026';
 const host = site.publicURL.replace('https://', '');
+
+// The On this page card: each section's id and its heading, in page order.
+const toc = [
+  { id: 'who', label: 'Who runs tcgreplay' },
+  { id: 'as-is', label: 'Free, and provided as is' },
+  { id: 'games', label: 'Your games' },
+  { id: 'limits', label: 'Hosted limits' },
+  { id: 'acceptable-use', label: 'Acceptable use' },
+  { id: 'age', label: 'Age' },
+  { id: 'trademarks', label: 'Trademarks and card images' },
+  { id: 'privacy', label: 'Privacy' },
+  { id: 'changes', label: 'Changes' },
+  { id: 'help', label: 'Help' },
+];
 ---
 <Base
   title="Terms of service"
   description="The terms for using the hosted tcgreplay playmat and this website: free and as is, the hosted limits, acceptable use and where to get help."
 >
-  <article class="terms">
+  <article class="terms prose">
     <h1>Terms of service</h1>
     <p class="updated" data-updated>Last updated {updated}.</p>
     <p>
@@ -26,11 +42,17 @@ const host = site.publicURL.replace('https://', '');
       agree to these terms. If you don't agree, please don't use them.
     </p>
 
+    <nav class="toc" aria-label="On this page">
+      <span class="toc-head">On this page</span>
+      <ul>
+        {toc.map((t) => <li><a href={`#${t.id}`}>{t.label}</a></li>)}
+      </ul>
+    </nav>
+
     <section id="who" aria-labelledby="h-who">
       <h2 id="h-who">Who runs tcgreplay</h2>
       <p>
-        tcgreplay is run by the tcgreplay project, an open-source fan project. Its source is on
-        <a href={site.repoURL}>GitHub</a>.
+        tcgreplay is run by the tcgreplay project, an open-source fan project. Its source is on <a href={site.repoURL}>GitHub</a>.
       </p>
     </section>
 
@@ -108,16 +130,44 @@ const host = site.publicURL.replace('https://', '');
     <section id="help" aria-labelledby="h-help">
       <h2 id="h-help">Help</h2>
       <p>
-        For help, questions or to report a problem, open an issue on <a href={notice.help.url}>the project's
-        {notice.help.label}</a>. There is no support email.
+        For help, questions or to report a problem, open an issue on <a href={notice.help.url}>the project's {notice.help.label}</a>. There is no support email.
       </p>
     </section>
   </article>
 </Base>
 
 <style>
-  .terms { max-width: 46rem; }
-  .updated { color: var(--muted); }
-  section { margin-top: 1.5rem; }
-  li { margin: 0.3rem 0; }
+  /* A text column; from 60rem the On this page card stands beside it,
+     staying in view as the page scrolls. */
+  .terms { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .terms > * { grid-column: 1; }
+  @media (min-width: 60rem) {
+    .terms { grid-template-columns: minmax(0, var(--prose-width)) 15rem; column-gap: var(--space-10); }
+    .terms > .toc { grid-column: 2; grid-row: 1 / span 20; position: sticky; top: var(--space-4); margin-top: var(--space-2); }
+  }
+  .updated { margin-top: 0; color: var(--muted); }
+  section { scroll-margin-top: var(--space-4); }
+
+  .toc {
+    margin: var(--space-2) 0 var(--space-4);
+    padding: var(--space-4);
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+    font-size: var(--fs-14);
+    line-height: 1.4;
+  }
+  .toc-head {
+    display: block;
+    margin-bottom: 10px;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+  .toc li { margin: 0; }
+  .toc a { color: var(--ink-soft); text-decoration: none; }
+  .toc a:hover { color: var(--primary); text-decoration: underline; }
 </style>

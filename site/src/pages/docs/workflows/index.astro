@@ -1,32 +1,114 @@
 ---
-// Lists every coaching workflow the playmat offers, in the playmat's own
-// order, with the one-line description from its guide.
+// Lists every coaching workflow the playmat offers as cards, in groups
+// (after a game, practice, play: lib/workflows.ts), each group in the
+// playmat's own order. A card shows the workflow's title, the guide's name
+// and its one-line description, and the page's first example prompt; the
+// whole card opens the workflow's page. Each group's h2 is an entry in the
+// docs layout's On this page list.
 import Docs from '../../../layouts/Docs.astro';
-import { pairWorkflows } from '../../../lib/workflows';
+import { groupWorkflows } from '../../../lib/workflows';
 
-const workflows = await pairWorkflows();
+const groups = await groupWorkflows();
 ---
 <Docs title="Coaching workflows" description="Every coaching workflow the tcgreplay playmat offers, with example prompts.">
   <h1>Coaching workflows</h1>
-  <p>
+  <p class="intro">
     The playmat has a built-in guide for each of these. You don't need to name it: ask in your own words, like the
     example prompts on each page, and your assistant follows the right guide.
   </p>
-  <ol class="workflows" data-workflows>
-    {workflows.map((w) => (
-      <li data-guide={w.name}>
-        <a href={`/docs/workflows/${w.name}`}>{w.page.title}</a>
-        <p class="guide-line"><span class="guide-name">{w.name}</span> {w.description}</p>
-      </li>
-    ))}
-  </ol>
-  <p>You can also <a href="/docs/rewind">rewind a game and try another line</a> at any point.</p>
+  {groups.map((g) => (
+    <section class="group" data-workflow-group={g.id}>
+      <h2>{g.title}</h2>
+      <ol class="cards" data-workflows>
+        {g.workflows.map((w) => (
+          <li class="card" data-guide={w.name}>
+            <div class="card-head">
+              <a class="card-link" href={`/docs/workflows/${w.name}`}>{w.page.title}</a>
+              <span class="guide-name">{w.name}</span>
+            </div>
+            <p class="guide-line">{w.description}</p>
+            <p class="bubble">{w.page.prompts[0]}</p>
+            <span class="more" aria-hidden="true">Read the guide →</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  ))}
+  <p class="rewind" data-theme="dark">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"></path><path d="M4 4v4.5h4.5"></path></svg>
+    <span>You can also <a href="/docs/rewind">rewind a game and try another line</a> at any point.</span>
+  </p>
 </Docs>
 
 <style>
-  .workflows { padding-left: 1.4rem; }
-  .workflows li { margin: 0.9rem 0; }
-  .workflows a { font-weight: 700; font-size: var(--fs-r105); }
-  .guide-line { margin: 0.2rem 0 0; color: var(--muted); }
-  .guide-name { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85em; margin-right: 0.3rem; }
+  .intro { margin: 0 0 36px; max-width: 44em; color: var(--ink-soft); }
+
+  /* A group: its heading as a small capital label, then its cards. */
+  .group { margin-bottom: 36px; }
+  .group h2 {
+    margin: 0 0 14px;
+    font-size: var(--fs-13);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  /* Equal columns: a group's odd card keeps its neighbours' width. */
+  .cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--space-4); }
+
+  /* A card: the title is the link, stretched over the whole card. */
+  .card {
+    position: relative;
+    min-width: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-radius: var(--radius-l);
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+    color: var(--ink);
+  }
+  .card:hover { box-shadow: 0 0 0 1px var(--control-line); }
+  .card:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) 10px; }
+  .card-link {
+    flex: 1 1 auto;
+    font-size: var(--fs-card-title);
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .card-link:focus-visible { outline: none; }
+  .card-link::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-l); }
+  .guide-name { font: 500 var(--fs-12) var(--font-mono); color: var(--muted); }
+  .guide-line { margin: 0; font-size: var(--fs-14); line-height: 1.5; color: var(--ink-soft); }
+  .bubble {
+    align-self: flex-start;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px 10px 10px 2px;
+    background: var(--note-bg);
+    color: var(--note-ink);
+    font-size: var(--fs-14);
+    line-height: 1.45;
+  }
+  .more { margin-top: auto; font-size: var(--fs-14); font-weight: 600; color: var(--primary); }
+  .card:hover .more { text-decoration: underline; }
+
+  /* Rewinding: a dark band under the groups. */
+  .rewind {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0;
+    padding: var(--space-4) 18px;
+    border-radius: 12px;
+    background: var(--panel-raised);
+    color: var(--ink);
+  }
+  .rewind svg { flex: none; width: 22px; height: 22px; color: var(--primary); }
+  .rewind a { color: var(--primary); font-weight: 600; }
 </style>

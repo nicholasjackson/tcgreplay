@@ -1,36 +1,186 @@
 ---
 // The ready-made example game: a real TCG Live game with the opponent's
-// name replaced by "Rival", and the decklist that was played, each with a
-// copy button.
+// name replaced by "Rival", and the decklist that was played. Two step
+// cards (the second holding the prompt), then two copy panels side by
+// side: the decklist on a light panel, the battle log on a dark one
+// (data-theme="dark"), each with its Copy button in the panel's head.
 import Docs from '../../layouts/Docs.astro';
 import CopyBlock from '../../components/CopyBlock.astro';
 import Prompt from '../../components/Prompt.astro';
 import { example } from '../../lib/example';
+
+// The decklist's own count ("Total Cards: 60"), shown in its panel's head.
+const total = /^Total Cards:\s*(\d+)\s*$/m.exec(example.deck)?.[1];
 ---
 <Docs
   title="Example game"
   description="A complete Pokémon TCG Live game and its decklist to copy, so you can try tcgreplay without a game of your own."
 >
   <h1>Example game</h1>
-  <p>
+  <p class="intro">
     No game of your own to hand? Use this one. It is a real game from Pokémon TCG Live: NicJackson playing Mega Lucario
     ex against a Mew ex, Bronzong and Mega Lopunny ex deck, a close loss, 4 prizes to 6. The opponent's player name has
     been replaced with <strong>Rival</strong>.
   </p>
-  <ol>
-    <li>Copy the decklist and the battle log below.</li>
-    <li>Paste both into a chat with your assistant, with a prompt like this one:</li>
+  <ol class="steps" data-steps>
+    <li class="step">Copy the decklist and the battle log below.</li>
+    <li class="step wide">
+      <span>Paste both into a chat with your assistant, with a prompt like this one:</span>
+      <Prompt text="Here's a game from TCG Live and my decklist. Import it and review it with me." />
+    </li>
   </ol>
-  <Prompt text="Here's a game from TCG Live and my decklist. Import it and review it with me." />
-  <p>
-    The assistant imports the game, says whether the import was complete, and gives you a link to the board. See
-    <a href="/docs/import">importing a game</a> for what to expect.
+  <p class="after">
+    The assistant imports the game, says whether the import was complete, and gives you a link to the board. See <a href="/docs/import">importing a game</a> for what to expect.
   </p>
 
-  <h2>The decklist</h2>
-  <CopyBlock text={example.deck} label="Example decklist" tall />
-
-  <h2>The battle log</h2>
-  <p>Every line of the game, from setup to the result.</p>
-  <CopyBlock text={example.log} label="Example battle log" tall class="example-log" />
+  <div class="panels">
+    <section class="panel" data-panel="deck">
+      <div class="panel-head">
+        <h2>The decklist</h2>
+        {total && <span class="meta">{total} cards</span>}
+      </div>
+      <CopyBlock text={example.deck} label="Example decklist" tall theme="light" class="example-deck" />
+    </section>
+    <section class="panel" data-panel="log" data-theme="dark">
+      <div class="panel-head">
+        <h2>The battle log</h2>
+        <span class="meta">Every line of the game, from setup to the result.</span>
+      </div>
+      <CopyBlock text={example.log} label="Example battle log" tall theme="dark" class="example-log" />
+    </section>
+  </div>
 </Docs>
+
+<style>
+  .intro { margin: 0; max-width: 44em; color: var(--ink-soft); }
+  .after { margin: var(--space-4) 0 0; font-size: var(--fs-15); color: var(--ink-soft); }
+
+  /* The steps: white cards side by side, each number in a round badge. */
+  .steps {
+    list-style: none;
+    margin: var(--space-6) 0 0;
+    padding: 0;
+    counter-reset: step;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .step {
+    counter-increment: step;
+    position: relative;
+    flex: 1 1 240px;
+    min-width: 0;
+    margin: 0;
+    padding: var(--space-4) var(--space-4) var(--space-4) 56px;
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  .step.wide { flex: 2 1 380px; display: flex; flex-direction: column; gap: 10px; }
+  .step::before {
+    content: counter(step);
+    position: absolute;
+    left: var(--space-4);
+    top: var(--space-4);
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--selected);
+    color: var(--primary);
+    font: 600 var(--fs-13) var(--font-mono);
+  }
+  /* The prompt sits in the step card as a bare bubble and button: the
+     step's own words introduce it, so its label is for screen readers. */
+  .step :global(.copy-block.prompt) { margin: 0; padding: 0; background: transparent; box-shadow: none; }
+  .step :global(.copy-block.prompt .label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* The copy panels: a head with the title, a note and the Copy button,
+     then the text, which scrolls inside the panel. */
+  .panels { margin: var(--space-8) 0 0; display: flex; flex-wrap: wrap; gap: var(--space-4); }
+  .panel {
+    position: relative;
+    flex: 1 1 280px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--panel);
+    color: var(--ink);
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  .panel[data-panel='log'] { flex: 1.6 1 380px; }
+  .panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+    min-height: 55px;
+    padding: 10px 96px 10px var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+  .panel-head h2 { margin: 0; flex: 1 1 auto; font-size: var(--fs-16); font-weight: 600; letter-spacing: 0; color: var(--ink); }
+  .meta { font: 500 var(--fs-12) var(--font-mono); color: var(--muted); }
+  .panel :global(.copy-block) { margin: 0; }
+  .panel :global(.copy-block .label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .panel :global(.copy-block .copy-box) { display: block; padding: 0; border-radius: 0; background: transparent; }
+  .panel :global(.copy-block pre) {
+    height: 32.5rem;
+    max-height: none;
+    overflow: auto;
+    margin: 0;
+    padding: 14px var(--space-4);
+    border: 0;
+    border-radius: 0;
+    background: var(--panel-sunk);
+    color: var(--note-ink);
+    font: 500 var(--fs-13) / 1.6 var(--font-mono);
+    white-space: pre-wrap;
+  }
+  .panel[data-panel='log'] :global(.copy-block pre) { background: var(--panel); color: var(--ink-soft); }
+  .panel :global(.copy-block button.copy) {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 0;
+    background: var(--primary);
+    color: var(--on-primary);
+    font-size: var(--fs-13);
+  }
+  .panel :global(.copy-block button.copy::before) {
+    content: '';
+    width: 14px;
+    height: 14px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M5 15V5a1 1 0 0 1 1-1h9'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M5 15V5a1 1 0 0 1 1-1h9'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .panel :global(.copy-block button.copy:hover) { filter: brightness(1.15); }
+  .panel :global(.copy-block button.copy[data-copied]) { color: var(--on-primary); }
+  @media (max-width: 40rem) {
+    .panel :global(.copy-block pre) { height: 24rem; }
+  }
+</style>

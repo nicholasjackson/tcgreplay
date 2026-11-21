@@ -1,5 +1,6 @@
 ---
 guide: numbers-drill
+group: practice
 title: Numbers drill
 prompts:
   - "Quiz me on damage maths for the cards in this game."

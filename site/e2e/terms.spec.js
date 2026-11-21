@@ -115,3 +115,24 @@ test('it links to the privacy page and to the GitHub issues for help, and shows 
   expect(new URL(shared.help.url).host).toBe('github.com');
   await expect(page.locator('main [data-updated]')).toHaveText(/^Last updated \d{1,2} [A-Z][a-z]+ \d{4}\.$/);
 });
+
+test('an On this page card lists every section, in order, linking to it', async ({ page }) => {
+  await page.goto('/terms');
+  const toc = page.getByRole('navigation', { name: 'On this page' });
+  await expect(toc).toBeVisible();
+  const links = toc.getByRole('link');
+  await expect(links).toHaveText(sections);
+  for (const name of sections) {
+    const href = await toc.getByRole('link', { name, exact: true }).getAttribute('href');
+    expect(href, name).toMatch(/^#/);
+    await expect(page.locator(`main ${href}`).getByRole('heading', { level: 2 }), `${href} is the ${name} section`).toHaveText(name);
+  }
+  // A card: its own white surface, apart from the text column.
+  expect(await toc.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+});
+
+test('it keeps the space before its links', async ({ page }) => {
+  await page.goto('/terms');
+  await expect(page.getByRole('region', { name: 'Who runs tcgreplay' })).toContainText('Its source is on GitHub.');
+  await expect(page.getByRole('region', { name: 'Help', exact: true })).toContainText("the project's GitHub issues");
+});

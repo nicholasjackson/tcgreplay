@@ -127,6 +127,42 @@ test.describe("the What's new page", () => {
     await expect(launch).toContainText('see the note on connecting');
   });
 
+  test('the entries hang on a timeline, newest at the top, each dated above its title', async ({ page }) => {
+    await page.goto('/docs/whats-new');
+    const entries = page.locator('[data-whats-new] > li[data-entry]');
+    await expect(entries).toHaveCount(whatsNew.length);
+    const shape = await entries.evaluateAll((lis) =>
+      lis.map((li) => {
+        const dot = getComputedStyle(li, '::before');
+        const rail = getComputedStyle(li, '::after');
+        const time = li.querySelector('h2 time').getBoundingClientRect();
+        const title = li.querySelector('h2').getBoundingClientRect();
+        return {
+          top: li.getBoundingClientRect().top,
+          date: li.dataset.date,
+          dot: dot.content !== 'none' && dot.borderRadius === '50%' && parseFloat(dot.width) > 0,
+          rail: rail.content !== 'none' && parseFloat(rail.width) > 0 && rail.position === 'absolute',
+          // The date is its own line above the title, inside the heading.
+          dateAbove: time.bottom <= title.bottom - 1 && time.height < title.height,
+        };
+      }),
+    );
+    expect(shape.map((e) => e.date)).toEqual(whatsNew.map((e) => e.date));
+    for (const [i, e] of shape.entries()) {
+      expect(e.dot, `entry ${i + 1} has its dot`).toBe(true);
+      expect(e.rail, `entry ${i + 1} has its rail`).toBe(true);
+      expect(e.dateAbove, `entry ${i + 1} is dated above its title`).toBe(true);
+      if (i > 0) expect(e.top, `entry ${i + 1} is below entry ${i}`).toBeGreaterThan(shape[i - 1].top);
+    }
+    // A refresh-needed entry shows it as a callout, its link kept.
+    const needed = page.locator('[data-entry] [data-refresh].needed').first();
+    if (whatsNew.some((e) => e.refresh)) {
+      await expect(needed).toBeVisible();
+      await expect(needed.locator('a[href="/docs/connect#refresh"]')).toHaveCount(1);
+      expect(await needed.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+    }
+  });
+
   test('the docs sidebar, the docs index and the refresh steps link to it', async ({ page }) => {
     await page.goto('/docs/connect');
     await expect(page.getByRole('navigation', { name: 'Guide' }).getByRole('link', { name: "What's new" })).toHaveAttribute('href', '/docs/whats-new');

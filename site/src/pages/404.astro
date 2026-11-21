@@ -1,7 +1,94 @@
 ---
+// The page for any address with no page: a stack of cards drawn in CSS
+// (a card turned away, the 404 card, an empty dashed slot) beside the
+// message and the ways back, the home page and all the docs.
 import Base from '../layouts/Base.astro';
 ---
 <Base title="Page not found">
-  <h1>Page not found</h1>
-  <p>There is no page at this address. <a href="/">Go to the home page</a>.</p>
+  <div class="not-found">
+    <div class="stack" aria-hidden="true">
+      <span class="card back"></span>
+      <span class="card face">404</span>
+      <span class="card slot"></span>
+    </div>
+    <div class="message">
+      <h1>Page not found</h1>
+      <p>There is no page at this address.</p>
+      <div class="ways" data-ways-back>
+        <a class="way main" href="/">Go to the home page</a>
+        <a class="way" href="/docs">All docs</a>
+      </div>
+    </div>
+  </div>
 </Base>
+
+<style>
+  .not-found {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-10) 64px;
+    padding: clamp(var(--space-4), 6vw, 64px) 0;
+  }
+
+  /* The stack: three cards fanned out, the 404 card on top. */
+  .stack { flex: 0 1 auto; position: relative; width: 300px; max-width: 100%; height: 230px; }
+  .card {
+    position: absolute;
+    width: 120px;
+    height: 168px;
+    border-radius: 10px;
+  }
+  .back {
+    left: 20px;
+    top: 40px;
+    background: var(--mat-zone);
+    box-shadow: inset 0 0 0 1.5px var(--mat-slot-line);
+    transform: rotate(-10deg);
+  }
+  .face {
+    left: 96px;
+    top: 20px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    background: var(--mat-surface);
+    box-shadow: inset 0 0 0 2px var(--brand-cyan), var(--shadow-hero);
+    font: 600 var(--fs-40) var(--font-mono);
+    color: var(--brand-cyan);
+  }
+  .slot {
+    left: 176px;
+    top: 50px;
+    border: 2px dashed var(--control-line);
+    transform: rotate(10deg);
+  }
+  @media (max-width: 22rem) {
+    .stack { transform: scale(0.85); transform-origin: left center; }
+  }
+
+  .message { flex: 1 1 340px; display: flex; flex-direction: column; gap: 14px; }
+  h1 {
+    margin: 0;
+    font-size: clamp(var(--fs-28), 3.4vw, var(--fs-page-title));
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  p { margin: 0; color: var(--ink-soft); }
+  .ways { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .way {
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: var(--radius-m);
+    border: 1px solid var(--control-line);
+    background: var(--panel);
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .way:hover { background: var(--hover); }
+  .way.main { padding: 0 20px; border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
+  .way.main:hover { background: var(--primary); filter: brightness(1.15); }
+</style>

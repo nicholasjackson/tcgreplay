@@ -1,5 +1,6 @@
 ---
 guide: replay-drill
+group: practice
 title: Replay drill
 prompts:
   - "Give me a drill based on the mistakes from this game."

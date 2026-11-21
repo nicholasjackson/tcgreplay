@@ -1,5 +1,6 @@
 ---
 guide: play-game
+group: play
 title: Play a game
 prompts:
   - "Let's play a game. Here's my deck: (paste your TCG Live decklist). You play a deck of your choice."
