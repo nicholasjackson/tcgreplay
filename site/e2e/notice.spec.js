@@ -4,7 +4,7 @@
 // with a message naming the problem; every page's build reads it through
 // the shared layout. No browser page is needed.
 import { readFileSync } from 'node:fs';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { loadNotice, notice } from '../src/lib/notice.ts';
 
 const noticeJSON = () => readFileSync(new URL('../../internal/notice/notice.json', import.meta.url), 'utf8');

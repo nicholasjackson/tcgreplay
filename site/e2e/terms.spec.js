@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // appSpecLimits reads the three limits from .do/app.yaml, independently of
 // the site's loader, rendering the idle time as the playmat does.

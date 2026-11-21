@@ -6,7 +6,7 @@
 // it is; the first entry is the public launch. The page is linked from the
 // docs sidebar and the docs index.
 import { readFileSync } from 'node:fs';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { loadWhatsNew, changeHTML, whatsNew } from '../src/lib/whats-new.ts';
 
 const realFile = () => readFileSync(new URL('../src/data/whats-new.yaml', import.meta.url), 'utf8');

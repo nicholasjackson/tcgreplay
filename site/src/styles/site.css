@@ -1,7 +1,9 @@
-/* Site-wide layout. System fonts only; nothing is fetched from elsewhere.
-   No fixed widths: every page fits a 375px phone without sideways
-   scrolling, and long code, addresses and prompts wrap or scroll inside
-   their own box. */
+/* Site-wide layout in the Studio style: IBM Plex (from Google Fonts, with
+   system fonts standing in) and the shared design tokens. No fixed widths:
+   every page fits a 375px phone without sideways scrolling, and long code,
+   addresses and prompts wrap or scroll inside their own box. Surfaces that
+   are dark in every theme (the footer, code blocks) carry
+   data-theme="dark", so the tokens inside them take their dark values. */
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 html { -webkit-text-size-adjust: 100%; }
@@ -9,105 +11,285 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font: var(--fs-16)/1.6 var(--font-site);
-  background: var(--panel);
-  color: var(--text);
+  font: var(--fs-body)/1.6 var(--font-site);
+  background: var(--bg);
+  color: var(--ink);
   overflow-wrap: break-word;
 }
-a { color: var(--accent); }
-@media (prefers-color-scheme: light) {
-  :where(:root:not([data-theme='dark'])) a { color: var(--link-light); }
-}
-a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--primary); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
+/* A main action: Get started in the header. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+  font-size: var(--fs-15);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.button:hover { filter: brightness(1.15); }
+
+/* The header: the mark and wordmark, the site navigation, Get started. On
+   a phone the navigation takes its own row under the mark and the button. */
 .site-header {
-  background: var(--felt);
-  color: var(--on-felt);
+  background: var(--panel);
+  color: var(--ink);
   border-bottom: 1px solid var(--line);
 }
 .site-header .bar {
-  max-width: 64rem;
+  max-width: var(--content-width);
   margin: 0 auto;
-  padding: 0.5rem 1rem;
+  padding: var(--space-3) clamp(var(--space-4), 4vw, var(--space-8));
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1.25rem;
+  gap: 10px 28px;
 }
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--on-felt);
+  gap: 10px;
+  color: var(--ink);
   text-decoration: none;
   font-weight: 700;
-  font-size: var(--fs-r115);
+  font-size: var(--fs-18);
 }
-.brand img { width: 36px; height: 36px; }
+.brand img { width: 32px; height: 32px; border-radius: 8px; }
+.site-nav { flex: 1 1 auto; }
 .site-nav ul {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1rem;
+  gap: 4px 22px;
   list-style: none;
   margin: 0;
   padding: 0;
+  font-size: var(--fs-15);
 }
-.site-nav a { color: var(--on-felt); text-decoration: none; }
-.site-nav a:hover, .site-nav a[aria-current='page'] { color: var(--accent); text-decoration: underline; }
+.site-nav a { display: inline-block; padding: 6px 0; color: var(--ink-soft); text-decoration: none; }
+.site-nav a:hover { color: var(--primary); }
+.site-nav a[aria-current='page'] { color: var(--primary); font-weight: 600; box-shadow: inset 0 -2px 0 var(--primary); }
+@media (max-width: 40rem) {
+  .site-header .bar { row-gap: var(--space-1); }
+  .site-header .start { margin-left: auto; }
+  .site-nav { order: 3; flex-basis: 100%; }
+}
+@media (pointer: coarse) {
+  .button { height: var(--touch-target); }
+  .site-nav a { padding: 10px 0; }
+}
 
 main {
   flex: 1;
   width: 100%;
-  max-width: 64rem;
+  max-width: var(--content-width);
   margin: 0 auto;
-  padding: 1rem;
+  padding: var(--space-8) clamp(var(--space-4), 4vw, var(--space-8)) var(--space-12);
   min-width: 0;
 }
 main > * { max-width: 100%; }
 img, svg, video { max-width: 100%; height: auto; }
 h1, h2, h3 { line-height: 1.25; }
 
-code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
-:not(pre) > code { background: var(--hover); padding: 0.1em 0.3em; border-radius: 4px; overflow-wrap: anywhere; }
-/* A short aside in a docs page, set off from the steps around it. */
-.note { border-left: 3px solid var(--accent); background: var(--hover); padding: 0.5rem 1rem; margin: 1rem 0; border-radius: 0 4px 4px 0; }
-.note > :first-child { margin-top: 0; }
-.note > :last-child { margin-bottom: 0; }
+code, pre { font-family: var(--font-mono); }
+:not(pre) > code {
+  font-size: 0.9em;
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--line);
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-xs);
+  overflow-wrap: anywhere;
+}
 pre {
   max-width: 100%;
   overflow-x: auto;
-  background: var(--input);
-  color: var(--text);
+  background: var(--panel);
+  color: var(--ink);
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.75rem;
+  border-radius: var(--radius-m);
+  padding: var(--space-3) var(--space-4);
   margin: 0;
+  font-size: var(--fs-14);
+  font-weight: 500;
+  line-height: 1.6;
 }
 table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
 
-/* Copyable blocks: copy.ts adds the button. Prompts and addresses wrap;
-   code and logs keep their lines and scroll inside the box. */
-.copy-block { margin: 1rem 0; }
-.copy-box { position: relative; }
-.copy-block pre { padding-right: 5rem; }
+/* A docs article: the page title, section headings and running text. */
+.prose h1 {
+  margin: 6px 0 20px;
+  font-size: clamp(var(--fs-28), 3.4vw, var(--fs-page-title));
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.prose h2 {
+  margin: var(--space-8) 0 var(--space-4);
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  scroll-margin-top: var(--space-4);
+}
+.prose h3 { margin: var(--space-6) 0 var(--space-2); font-size: var(--fs-card-title); font-weight: 600; }
+.prose li { margin: 0.3rem 0; }
+.prose ol, .prose ul { padding-left: 1.4rem; }
+
+/* Steps: a docs page's numbered lists, each number in a round badge. */
+.prose > ol:not([class]) {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-4) 0;
+  counter-reset: step;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.prose > ol:not([class]) > li {
+  counter-increment: step;
+  position: relative;
+  margin: 0;
+  min-height: 28px;
+  padding: 1px 0 0 42px;
+}
+.prose > ol:not([class]) > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--selected);
+  color: var(--primary);
+  font: 600 var(--fs-13) var(--font-mono);
+}
+.prose > ol:not([class]) > li > p:first-child { margin-top: 0; }
+.prose > ol:not([class]) > li > :last-child { margin-bottom: 0; }
+
+/* A callout set off from the steps around it (Connected before?). */
+.note {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: var(--space-3);
+  margin: var(--space-5) 0;
+  padding: 14px var(--space-4);
+  border-radius: var(--radius-m);
+  background: var(--warn-bg);
+  box-shadow: inset 0 0 0 1px var(--warn-line);
+  color: var(--warn-ink);
+  font-size: var(--fs-15);
+}
+.note::before {
+  content: '';
+  grid-column: 1;
+  grid-row: 1 / span 9;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 8v5M12 16.5v.01'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 8v5M12 16.5v.01'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.note > * { grid-column: 2; }
+.note > :first-child { margin-top: 0; }
+.note > :last-child { margin-bottom: 0; }
+.note code { background: transparent; box-shadow: none; padding: 0; }
+
+/* Copyable blocks: copy.ts adds the button beside the text, in the box.
+   Code and logs keep their lines and scroll inside a dark box (the box
+   carries data-theme="dark"); the playmat's address sits in a white band
+   with its label; prompts are chat bubbles. */
+.copy-block { margin: var(--space-4) 0; }
+.copy-block .label { display: block; font-size: var(--fs-13); color: var(--muted); margin-bottom: var(--space-1); }
+.copy-box { display: flex; align-items: flex-start; gap: var(--space-2); }
+.copy-box pre { flex: 1 1 auto; min-width: 0; }
 .copy-block.wrap pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .copy-block.tall pre { max-height: 24rem; overflow: auto; }
-.copy-block .label { display: block; font-size: var(--fs-r85); color: var(--muted); margin-bottom: 0.25rem; }
 button.copy {
-  position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
+  flex: none;
   font: inherit;
-  font-size: var(--fs-r85);
-  padding: 0.2rem 0.7rem;
-  border-radius: 4px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--text);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--control-line);
+  background: var(--panel-raised);
+  color: var(--ink);
   cursor: pointer;
 }
 button.copy:hover { background: var(--hover); }
-button.copy[data-copied] { border-color: var(--accent); color: var(--accent); }
+button.copy[data-copied] { border-color: var(--primary); color: var(--primary); }
+
+/* Code and logs: the dark box. */
+.copy-box[data-theme='dark'] {
+  padding: 10px 10px 10px 14px;
+  border-radius: var(--radius-m);
+  background: var(--panel);
+  color: var(--ink);
+}
+.copy-box[data-theme='dark'] pre { padding: 6px 0; border: 0; background: transparent; color: var(--ink); }
+
+/* The playmat's address: label, address and button in one white band. */
+.copy-block.wrap:not(.prompt) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: 6px 6px 6px var(--space-4);
+  border-radius: var(--radius-m);
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--control-line);
+}
+.copy-block.wrap:not(.prompt) .label { flex: none; margin: 0; font-size: var(--fs-12); white-space: nowrap; }
+.copy-block.wrap:not(.prompt) .copy-box { flex: 1 1 14rem; min-width: 0; align-items: center; }
+.copy-block.wrap:not(.prompt) pre {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: var(--fs-15);
+  font-weight: 600;
+}
+.copy-block.wrap:not(.prompt) button.copy {
+  height: 38px;
+  border: 0;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.copy-block.wrap:not(.prompt) button.copy:hover { filter: brightness(1.15); }
+.copy-block.wrap:not(.prompt) button.copy[data-copied] { color: var(--on-primary); }
+
+/* An example prompt: a chat bubble with its button beside it, on a white
+   card with its label. */
+.copy-block.prompt {
+  padding: var(--space-4);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.copy-block.prompt .label { margin-bottom: 10px; font-size: var(--fs-14); font-weight: 600; color: var(--ink); }
+.copy-block.prompt .copy-box { align-items: center; gap: 10px; }
+.copy-block.prompt pre code { font: inherit; }
+.copy-block.prompt pre {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px 12px 12px 3px;
+  background: var(--note-bg);
+  color: var(--note-ink);
+  font-family: var(--font-site);
+  font-size: var(--fs-15);
+  font-weight: 400;
+  line-height: 1.5;
+}
+.copy-block.prompt button.copy { height: 40px; background: var(--panel); }
 
 .sr-only {
   position: absolute;
@@ -121,19 +303,48 @@ button.copy[data-copied] { border-color: var(--accent); color: var(--accent); }
   border: 0;
 }
 
+/* The footer: dark in every theme, with the mark and a line about the
+   playmat, the Docs and Project link columns, then the fan notice and the
+   card-data credit. */
 .site-footer {
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: var(--fs-r90);
+  background: var(--panel);
+  color: var(--ink-soft);
+  line-height: 1.55;
 }
-.site-footer .bar { max-width: 64rem; margin: 0 auto; padding: 1rem; }
-.site-footer p { margin: 0.4rem 0; }
-.site-footer a { color: inherit; }
-.footer-links ul {
+.site-footer .bar {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--space-10) clamp(var(--space-4), 4vw, var(--space-8)) var(--space-8);
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 1.2rem;
-  list-style: none;
-  margin: 0.6rem 0 0.4rem;
-  padding: 0;
+  flex-direction: column;
+  gap: 28px;
 }
+.footer-top { display: flex; flex-wrap: wrap; gap: 28px clamp(var(--space-8), 5vw, 64px); }
+.footer-about { flex: 1 1 260px; display: flex; flex-direction: column; gap: 10px; }
+.footer-brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; font-size: var(--fs-18); }
+.footer-brand img { width: 28px; height: 28px; border-radius: 7px; }
+.footer-tagline { font-size: var(--fs-14); color: var(--muted); }
+.footer-col { flex: 1 0 140px; max-width: 180px; font-size: var(--fs-14); }
+.footer-head {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.footer-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.footer-col a { color: var(--ink); text-decoration: none; }
+.footer-col a:hover { text-decoration: underline; }
+.footer-small {
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--fs-13);
+  color: var(--muted);
+}
+.footer-small p { margin: 0; max-width: 60em; }
+.footer-small a { color: var(--ink-soft); }

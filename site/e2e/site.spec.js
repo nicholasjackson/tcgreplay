@@ -1,16 +1,17 @@
 // Checks every page of the built website, served by the Go site handler:
-// the shared layout (logo, navigation, and the footer's fan notice and
-// card-data credit from the shared notice file, with its Privacy, Terms,
-// help and source links), no sideways scrolling on a 375px phone, no
-// cookies, nothing fetched from any other host (no web fonts, analytics or
-// third-party resources) in a run without the visitor-counting token, and
-// copy buttons that copy exactly their block's text. The pages with
-// counting on are checked by analytics.spec.js.
+// the shared layout (logo, navigation, Get started, and the footer's fan
+// notice and card-data credit from the shared notice file, with its
+// Privacy, Terms, help and source links), no sideways scrolling on a 375px
+// phone, no cookies, nothing fetched from any other host but Google Fonts
+// (no analytics or other third-party resources) in a run without the
+// visitor-counting token, and copy buttons that copy exactly their block's
+// text. The pages with counting on are checked by analytics.spec.js. The
+// fonts are served locally (fixtures.js), so no test reaches Google.
 //
 // The pages are found by crawling same-origin links from /. Every page the
 // site links to must exist: a link to a missing page fails the suite.
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { test, expect } from '@playwright/test';
+import { test, expect, fontHosts } from './fixtures.js';
 import { site } from '../src/lib/facts.ts';
 import { chatgptDirectory } from '../src/lib/listing.ts';
 import { crawl } from './crawl.js';
@@ -21,14 +22,15 @@ const companies = ['Nintendo', 'The Pokémon Company', 'Creatures', 'Game Freak'
 // loader), so a footer that drifts from it fails.
 const shared = JSON.parse(readFileSync(new URL('../../internal/notice/notice.json', import.meta.url), 'utf8'));
 
+// The site navigation; Get started is a button beside it, and the logo
+// goes home.
 const navLinks = [
-  { name: 'Home', href: '/' },
-  { name: 'Get started', href: '/docs/connect' },
   { name: 'Guides', href: '/docs/workflows' },
   { name: 'Example', href: '/docs/example' },
   { name: 'Limits', href: '/docs/limits' },
-  { name: 'Privacy', href: '/privacy' },
+  { name: "What's new", href: '/docs/whats-new' },
 ];
+const start = { name: 'Get started', href: '/docs/connect' };
 
 let pages;
 test.beforeAll(async ({ browser }, testInfo) => {
@@ -40,6 +42,8 @@ test('the crawl reaches the home page, every nav link and the terms', async () =
   expect(paths[0]).toBe('/');
   expect(pages[0].status).toBe(200);
   for (const { href } of navLinks) expect(paths).toContain(href);
+  expect(paths).toContain(start.href);
+  expect(paths).toContain('/privacy');
   expect(paths).toContain('/terms');
   // Paths are unique.
   expect(new Set(paths).size).toBe(paths.length);
@@ -73,10 +77,16 @@ test('the playmat addresses are not part of the website test server', async ({ r
   }
 });
 
-test('every page shows the logo, the site navigation, the shared fan notice and credit, and the footer links', async ({ page }) => {
+test('every page shows the logo, the site navigation, Get started, the shared fan notice and credit, and the footer links', async ({ page }) => {
   for (const { path } of pages) {
     await page.goto(path);
     await expect(page.locator('header img[src="/logo.png"]'), `${path}: logo`).toBeVisible();
+    await expect(page.locator('header a.brand'), `${path}: the logo goes home`).toHaveAttribute('href', '/');
+
+    const button = page.locator('header a.button');
+    await expect(button, `${path}: Get started button`).toBeVisible();
+    await expect(button, `${path}: Get started button`).toHaveText(start.name);
+    await expect(button, `${path}: Get started button`).toHaveAttribute('href', start.href);
 
     const nav = page.getByRole('navigation', { name: 'Site' });
     await expect(nav, `${path}: site nav`).toBeAttached();
@@ -147,7 +157,7 @@ test('no page scrolls sideways at 375px, and code blocks scroll or wrap in their
   }
 });
 
-test('without the analytics token, a fresh visit to every page sets no cookie, carries no beacon and asks no other host for anything', async ({ context, page, baseURL }) => {
+test('without the analytics token, a fresh visit to every page sets no cookie, carries no beacon and asks no other host but Google Fonts for anything', async ({ context, page, baseURL }) => {
   const host = new URL(baseURL).host;
   const requests = [];
   context.on('request', (r) => requests.push({ url: r.url(), type: r.resourceType() }));
@@ -163,16 +173,21 @@ test('without the analytics token, a fresh visit to every page sets no cookie, c
   const elsewhere = requests.filter(({ url }) => {
     const u = new URL(url);
     if (u.protocol === 'data:' || u.protocol === 'blob:') return false;
-    return u.host !== host;
+    return u.host !== host && !fontHosts.includes(u.host);
   });
   expect(elsewhere, 'requests to other hosts').toEqual([]);
 });
 
-test('no page loads a web font or a script, stylesheet or image from another host', async ({ context, page, baseURL }) => {
+// Google Fonts is the one exception: its stylesheet from
+// fonts.googleapis.com and its font files from fonts.gstatic.com.
+test('no page loads a web font, script, stylesheet or image from another host, except Google Fonts', async ({ context, page, baseURL }) => {
   const origin = new URL(baseURL).origin;
   const fonts = [];
+  const google = [];
   context.on('request', (r) => {
+    const host = new URL(r.url()).host;
     if (r.resourceType() === 'font') fonts.push(r.url());
+    if (fontHosts.includes(host)) google.push({ host, type: r.resourceType() });
   });
   for (const { path } of pages) {
     await page.goto(path);
@@ -184,10 +199,16 @@ test('no page loads a web font or a script, stylesheet or image from another hos
         try {
           rules = sheet.cssRules;
         } catch {
-          fontFaces.push(`unreadable stylesheet ${sheet.href}`);
+          // A cross-origin stylesheet: only its address can be checked.
+          fontFaces.push({ sheet: sheet.href });
           continue;
         }
-        for (const rule of rules) if (rule instanceof CSSFontFaceRule) fontFaces.push(rule.cssText);
+        for (const rule of rules) {
+          if (rule instanceof CSSFontFaceRule) {
+            const srcs = [...rule.style.getPropertyValue('src').matchAll(/url\(\s*["']?([^"')]+)/g)].map((m) => new URL(m[1], sheet.href ?? location.href).href);
+            fontFaces.push({ sheet: sheet.href, srcs });
+          }
+        }
       }
       const resources = [
         ...[...document.querySelectorAll('script[src]')].map((e) => e.src),
@@ -197,13 +218,28 @@ test('no page loads a web font or a script, stylesheet or image from another hos
           e.srcset.split(',').map((s) => new URL(s.trim().split(/\s+/)[0], location.href).href),
         ),
       ];
-      return { fontFaces, fontSet: document.fonts.size, resources };
+      return { fontFaces, resources };
     });
-    expect(found.fontFaces, `${path}: @font-face rules`).toEqual([]);
-    expect(found.fontSet, `${path}: document.fonts`).toBe(0);
-    for (const r of found.resources) expect(new URL(r).origin, `${path}: ${r}`).toBe(origin);
+    // @font-face rules come only from the Google Fonts stylesheet, and
+    // name only fonts on fonts.gstatic.com.
+    for (const f of found.fontFaces) {
+      expect(f.sheet, `${path}: @font-face rules come from Google Fonts`).not.toBeNull();
+      expect(new URL(f.sheet).host, `${path}: stylesheet ${f.sheet}`).toBe('fonts.googleapis.com');
+      for (const src of f.srcs ?? []) expect(new URL(src).host, `${path}: font ${src}`).toBe('fonts.gstatic.com');
+    }
+    for (const r of found.resources) {
+      const u = new URL(r);
+      if (u.origin === origin) continue;
+      expect(fontHosts, `${path}: ${r} is on a Google Fonts host`).toContain(u.host);
+      expect(u.protocol, `${path}: ${r}`).toBe('https:');
+    }
   }
-  expect(fonts, 'font requests').toEqual([]);
+  expect(fonts.length, 'the fonts were loaded').toBeGreaterThan(0);
+  for (const f of fonts) expect(new URL(f).host, `font ${f}`).toBe('fonts.gstatic.com');
+  // Each Google host is asked only for its own kind of file.
+  for (const g of google) {
+    expect(g.type, `${g.host} request`).toBe(g.host === 'fonts.googleapis.com' ? 'stylesheet' : 'font');
+  }
 });
 
 test('every copy button copies exactly its block text', async ({ context, page, baseURL }) => {

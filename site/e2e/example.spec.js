@@ -3,7 +3,7 @@
 // directions.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 const logFile = readFileSync(join(process.cwd(), 'src', 'content', 'example', 'battle-log.txt'), 'utf8');
 const deckFile = readFileSync(join(process.cwd(), '..', 'testdata', 'decks', 'mega-lucario-ex-v12.txt'), 'utf8');

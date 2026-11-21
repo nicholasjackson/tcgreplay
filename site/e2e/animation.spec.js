@@ -2,7 +2,7 @@
 // plays by itself through its beats in order and starts again; with
 // reduced motion it is a still and nothing moves; the home page stays
 // under 1.5 MB; and the scene uses nothing but the page's own drawing.
-import { test, expect } from '@playwright/test';
+import { test, expect, fontHosts } from './fixtures.js';
 
 const beats = ['log', 'board', 'coach', 'rewind', 'line'];
 
@@ -115,7 +115,12 @@ test('the scene draws everything itself: no images and nothing from another host
     }),
   );
   expect(urls).toEqual([]);
+  // The page's scripts and links are its own, or Google Fonts (the
+  // site's one outside stylesheet, served locally in tests).
   const origin = new URL(baseURL).origin;
   const scripts = await page.locator('script[src], link[href]').evaluateAll((els) => els.map((e) => e.src || e.href));
-  for (const u of scripts) expect(new URL(u).origin).toBe(origin);
+  for (const u of scripts) {
+    if (new URL(u).origin === origin) continue;
+    expect(fontHosts, u).toContain(new URL(u).host);
+  }
 });

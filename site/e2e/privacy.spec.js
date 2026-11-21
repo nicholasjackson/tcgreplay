@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // idleFromAppSpec reads TCGREPLAY_IDLE_TIMEOUT from .do/app.yaml and renders
 // it as the playmat does for people (minutes under two hours, else hours).
@@ -26,7 +26,7 @@ test('the privacy page is at /privacy and linked from every page', async ({ page
   const resp = await request.get('/privacy');
   expect(resp.status()).toBe(200);
   await page.goto('/');
-  await expect(page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
+  await expect(page.locator('footer').getByRole('navigation', { name: 'Footer' }).getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
 });
 
 test('it says what is collected at sign-in, kept while playing, for how long, by whom, and never', async ({ page }) => {

@@ -2,15 +2,17 @@
 // by the second test server (playwright.config.js), which adds Cloudflare
 // Web Analytics' beacon the way hosted mode does with a token: each page
 // carries exactly one beacon, with single-page-app tracking off and
-// nothing but the token; nothing else is fetched from another host;
+// nothing but the token; nothing else is fetched from another host but
+// Google Fonts (served locally, fixtures.js);
 // nothing is stored in the browser; and a visitor who blocks the beacon
 // sees and can do exactly the same as before.
 //
 // No test here sends anything to Cloudflare. Every browser context routes
 // every request for another host before it loads a page: the beacon
-// script to a stub (or an abort, for blocked analytics), and everything
-// else, Cloudflare's reporting address included, to an abort.
-import { test, expect } from '@playwright/test';
+// script to a stub (or an abort, for blocked analytics), the Google Fonts
+// hosts on to the local fonts, and everything else, Cloudflare's
+// reporting address included, to an abort.
+import { test, expect, fontHosts } from './fixtures.js';
 import { crawl } from './crawl.js';
 
 // The analytics server and its token, as playwright.config.js starts it.
@@ -23,8 +25,8 @@ const stub = 'window.__beacon = (window.__beacon || 0) + 1;';
 test.use({ baseURL: base });
 
 // shield routes every request for another host: the beacon to the stub,
-// or to an abort when blocked, and anything else to an abort, recording
-// what it stopped.
+// or to an abort when blocked, Google Fonts on to the fixture's local
+// fonts, and anything else to an abort, recording what it stopped.
 async function shield(context, { blocked = false } = {}) {
   const host = new URL(base).host;
   const stopped = [];
@@ -32,6 +34,7 @@ async function shield(context, { blocked = false } = {}) {
     (url) => url.host !== host,
     (route) => {
       const url = route.request().url();
+      if (fontHosts.includes(new URL(url).host)) return route.fallback();
       if (url === beacon && !blocked) {
         return route.fulfill({ status: 200, contentType: 'text/javascript', body: stub });
       }
@@ -69,7 +72,7 @@ test("the site's own 404 page is not counted", async ({ request }) => {
   expect(await resp.text()).not.toContain('cloudflareinsights');
 });
 
-test('the only other address asked is the stubbed beacon script, and nothing is stored', async ({ context, page }) => {
+test('the only other addresses asked are the stubbed beacon script and Google Fonts, and nothing is stored', async ({ context, page }) => {
   const host = new URL(base).host;
   const stopped = await shield(context);
   const requests = [];
@@ -92,8 +95,11 @@ test('the only other address asked is the stubbed beacon script, and nothing is 
     return u.host !== host;
   });
   expect(elsewhere.length, 'the beacon was loaded').toBeGreaterThan(0);
-  // The beacon's address carries nothing: no query, no page data.
-  expect([...new Set(elsewhere)], 'requests to other hosts').toEqual([beacon]);
+  // The beacon's address carries nothing: no query, no page data. Google
+  // Fonts is the only other host asked.
+  expect(elsewhere, 'the beacon was asked for').toContain(beacon);
+  const others = [...new Set(elsewhere.filter((url) => url !== beacon).map((url) => new URL(url).host))];
+  expect(others.filter((h) => !fontHosts.includes(h)), 'requests to other hosts').toEqual([]);
   expect(stopped, 'requests stopped on their way to another host').toEqual([]);
 });
 

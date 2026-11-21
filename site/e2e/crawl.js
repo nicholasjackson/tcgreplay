@@ -1,6 +1,7 @@
 // The crawl both website suites share: every page reachable from / by
 // same-origin links.
 import { expect } from '@playwright/test';
+import { serveFonts } from './fixtures.js';
 
 // pagePath is a same-origin URL's path, without query or fragment.
 export function pagePath(href, origin) {
@@ -10,11 +11,13 @@ export function pagePath(href, origin) {
 }
 
 // crawl visits / and every same-origin link it reaches, breadth-first and
-// deduplicated, returning each page's path and HTTP status. prepare, if
-// given, sets up the crawl's browser context first (routes, say).
+// deduplicated, returning each page's path and HTTP status. Its browser
+// context serves Google Fonts locally (fixtures.js); prepare, if given,
+// sets up the context further (routes, say).
 export async function crawl(browser, baseURL, prepare) {
   const origin = new URL(baseURL).origin;
   const context = await browser.newContext({ baseURL });
+  await serveFonts(context);
   if (prepare) await prepare(context);
   const page = await context.newPage();
   const seen = new Set(['/']);

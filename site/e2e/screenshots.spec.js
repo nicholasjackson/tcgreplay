@@ -3,7 +3,7 @@
 // deliberately when the look changes
 // (npx playwright test e2e/screenshots.spec.js --update-snapshots).
 // The home page's animated scene is held at its still (reduced motion).
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { crawl } from './crawl.js';
 
 test.use({ reducedMotion: 'reduce' });

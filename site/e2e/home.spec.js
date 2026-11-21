@@ -1,7 +1,7 @@
 // The home page: on a laptop, the one-sentence pitch, the playmat scene and
 // "Get started" are all on the first screen, and the scene is the board's
 // look with plain stand-in cards, never card artwork or logos.
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 test('the pitch, the playmat scene and Get started fit the first laptop screen', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'laptop', 'the above-the-fold check is for the 1366x768 laptop');
@@ -11,7 +11,7 @@ test('the pitch, the playmat scene and Get started fit the first laptop screen',
     heading: page.getByRole('heading', { level: 1 }),
     pitch: page.locator('[data-pitch]'),
     scene: page.locator('[data-playmat]'),
-    start: page.getByRole('link', { name: 'Get started' }).last(),
+    start: page.locator('main').getByRole('link', { name: 'Get started' }),
   };
   for (const [name, loc] of Object.entries(items)) {
     await expect(loc, name).toBeVisible();

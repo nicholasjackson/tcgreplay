@@ -9,6 +9,7 @@ document.body.append(live);
 // Code blocks in the docs' Markdown are copyable too: each gets the same
 // box as a CopyBlock, copying its text without the final newline. A
 // ```prompt fence is an example prompt to say to the assistant: it wraps.
+// Other code sits in a dark box, as a CopyBlock's code does.
 for (const pre of document.querySelectorAll<HTMLElement>('.prose pre:not([data-copy])')) {
   const prompt = pre.querySelector('code.language-prompt') !== null;
   const block = document.createElement('div');
@@ -21,6 +22,7 @@ for (const pre of document.querySelectorAll<HTMLElement>('.prose pre:not([data-c
   }
   const box = document.createElement('div');
   box.className = 'copy-box';
+  if (!prompt) box.dataset.theme = 'dark';
   pre.replaceWith(block);
   box.append(pre);
   block.append(box);

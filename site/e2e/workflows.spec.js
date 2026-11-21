@@ -6,7 +6,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 const guidesDir = join(process.cwd(), '..', 'internal', 'guides');
 

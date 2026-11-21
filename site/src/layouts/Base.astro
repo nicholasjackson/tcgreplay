@@ -1,10 +1,12 @@
 ---
-// Base is every page's layout: the logo and navigation, the page, and the
-// footer with the unofficial fan project notice, the card-data credit and
-// links to the privacy page, the terms, help and the source. The notice, credit and
-// help address come from internal/notice/notice.json, the one wording
-// meant to be shared with the board and the ChatGPT listing. Importing the
-// facts and the notice here makes every page's build check them.
+// Base is every page's layout, in the Studio style: the header (the mark
+// and wordmark going home, the site navigation and Get started as a
+// button), the page, and the dark footer with its link columns, the
+// unofficial fan project notice and the card-data credit. The notice,
+// credit and help address come from internal/notice/notice.json, the one
+// wording meant to be shared with the board and the ChatGPT listing.
+// Importing the facts and the notice here makes every page's build check
+// them.
 import '../../../internal/design/tokens.css';
 import '../styles/site.css';
 import { site } from '../lib/facts';
@@ -23,14 +25,24 @@ const description =
 const fullTitle = title ? `${title} · tcgreplay` : 'tcgreplay';
 
 const nav = [
-  { href: '/', label: 'Home' },
-  { href: '/docs/connect', label: 'Get started' },
   { href: '/docs/workflows', label: 'Guides' },
   { href: '/docs/example', label: 'Example' },
   { href: '/docs/limits', label: 'Limits' },
-  { href: '/privacy', label: 'Privacy' },
+  { href: '/docs/whats-new', label: "What's new" },
+];
+// The footer's Docs column; its Project column (aria-label "Footer") holds
+// the privacy page, the terms, help and the source.
+const docsLinks = [
+  { href: '/docs/connect', label: 'Get started' },
+  { href: '/docs/workflows', label: 'Coaching workflows' },
+  { href: '/docs/example', label: 'Example game' },
+  { href: '/docs/limits', label: 'Limits' },
+  { href: '/docs/whats-new', label: "What's new" },
 ];
 const here = Astro.url.pathname.replace(/\/$/, '') || '/';
+// A nav link is current on its page and on the pages under it (Guides on
+// each workflow's page).
+const current = (href: string) => (here === href || here.startsWith(`${href}/`) ? 'page' : undefined);
 ---
 <!doctype html>
 <html lang="en">
@@ -40,40 +52,61 @@ const here = Astro.url.pathname.replace(/\/$/, '') || '/';
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="icon" type="image/png" href="/icon.png" />
+    <!-- IBM Plex Sans and Mono from Google Fonts; system fonts stand in
+         until they load, and if they cannot. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
   </head>
   <body>
     <header class="site-header">
       <div class="bar">
-        <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" />tcgreplay</a>
+        <a class="brand" href="/"><img src="/logo.png" alt="" width="32" height="32" /><span class="wordmark">TCG Replay</span></a>
         <nav class="site-nav" aria-label="Site">
           <ul>
             {nav.map((n) => (
-              <li><a href={n.href} aria-current={here === n.href ? 'page' : undefined}>{n.label}</a></li>
+              <li><a href={n.href} aria-current={current(n.href)}>{n.label}</a></li>
             ))}
           </ul>
         </nav>
+        <a class="button start" href="/docs/connect" aria-current={current('/docs/connect')}>Get started</a>
       </div>
     </header>
     <main>
       <slot />
     </main>
-    <footer class="site-footer">
+    <footer class="site-footer" data-theme="dark">
       <div class="bar">
-        <p class="fan-notice">{notice.notice}</p>
-        <p class="credit">
-          {notice.credit.lead}{' '}
-          {notice.credit.sources.map((s, i) => (
-            <Fragment>{i > 0 && (i === notice.credit.sources.length - 1 ? ' and ' : ', ')}<a href={s.url}>{s.name}</a></Fragment>
-          ))}.
-        </p>
-        <nav class="footer-links" aria-label="Footer">
-          <ul>
-            <li><a href="/privacy">Privacy</a></li>
-            <li><a href="/terms">Terms</a></li>
-            <li><a href={notice.help.url} aria-label={`Get help on ${notice.help.label}`}>Get help</a></li>
-            <li><a href={site.repoURL}>Source on GitHub</a></li>
-          </ul>
-        </nav>
+        <div class="footer-top">
+          <div class="footer-about">
+            <span class="footer-brand"><img src="/logo.png" alt="" width="28" height="28" />TCG Replay</span>
+            <span class="footer-tagline">A live playmat for reviewing Pokémon TCG Live games with your AI assistant.</span>
+          </div>
+          <nav class="footer-col" aria-label="Docs links">
+            <span class="footer-head">Docs</span>
+            <ul>
+              {docsLinks.map((n) => <li><a href={n.href}>{n.label}</a></li>)}
+            </ul>
+          </nav>
+          <nav class="footer-col footer-links" aria-label="Footer">
+            <span class="footer-head">Project</span>
+            <ul>
+              <li><a href="/privacy">Privacy</a></li>
+              <li><a href="/terms">Terms</a></li>
+              <li><a href={notice.help.url} aria-label={`Get help on ${notice.help.label}`}>Get help</a></li>
+              <li><a href={site.repoURL}>Source on GitHub</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="footer-small">
+          <p class="fan-notice">{notice.notice}</p>
+          <p class="credit">
+            {notice.credit.lead}{' '}
+            {notice.credit.sources.map((s, i) => (
+              <Fragment>{i > 0 && (i === notice.credit.sources.length - 1 ? ' and ' : ', ')}<a href={s.url}>{s.name}</a></Fragment>
+            ))}.
+          </p>
+        </div>
       </div>
     </footer>
     <script>

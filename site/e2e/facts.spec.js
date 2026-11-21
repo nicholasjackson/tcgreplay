@@ -4,7 +4,7 @@
 // naming it; every page's build reads the facts through the shared layout.
 // No browser page is needed.
 import { readFileSync } from 'node:fs';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { loadLimits, loadPublicURL, limits, site, humanDuration, parseGoDuration } from '../src/lib/facts.ts';
 
 const appYaml = () => readFileSync(new URL('../../.do/app.yaml', import.meta.url), 'utf8');
