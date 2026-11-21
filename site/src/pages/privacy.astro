@@ -25,7 +25,7 @@ import Base from '../layouts/Base.astro';
 import { limits, site } from '../lib/facts';
 import { notice } from '../lib/notice';
 
-const updated = '13 November 2026';
+const updated = '21 November 2026';
 
 // The On this page card: each section's id and its heading, in page order.
 const toc = [
@@ -55,7 +55,8 @@ const toc = [
     <p>
       The playmat sets no cookies on this website; its only cookies are the two sign-in cookies (below). Cloudflare,
       which sits in front of the site, may set a short-lived bot-protection cookie, <code>__cf_bm</code>. It is not used
-      for visitor counting and is not tied to your account. The only thing this website may load from another site is
+      for visitor counting and is not tied to your account. The only things this website and the board load from other
+      sites are their typeface, IBM Plex, from Google Fonts (see <a href="#outside-services">outside services</a>), and
       Cloudflare's visitor-counting script (see <a href="#visitor-counting">visitor counting</a>).
     </p>
 
@@ -92,8 +93,8 @@ const toc = [
         <li><code>tcgreplay_login_…</code>, which exists only while a Google sign-in is in progress.</li>
       </ul>
       <p>
-        The board also remembers four display settings in your browser (replay speed, autoplay, where the panel sits and
-        prize reminders). They never leave your browser.
+        The board also remembers six display settings in your browser (replay speed, autoplay, where the panel sits,
+        prize reminders, the interface theme and the mat). They never leave your browser.
       </p>
     </section>
 
@@ -197,6 +198,11 @@ const toc = [
       <h2 id="h-outside-services">Outside services</h2>
       <ul class="services">
         <li><strong>Google</strong>, for signing in.</li>
+        <li>
+          <strong>Google Fonts</strong> serves the typeface the website and the board use (IBM Plex). Your browser
+          fetches it from Google, which sees that request and your IP address, as with any visit to a website; no
+          cookies are sent, and nothing ties the request to your account.
+        </li>
         <li>
           <strong>TCGdex</strong> and <strong>malie.io</strong>, the sources of the card data, which the project builds
           and publishes ahead of time; the playmat reads only that published copy.

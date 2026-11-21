@@ -122,8 +122,8 @@ test('its older statements match the playmat: sign-ins, disconnecting, card imag
   await expect(signIn).toContainText('keeps your sign-ins in its memory');
   await expect(signIn).toContainText('encrypted');
   await expect(signIn).toContainText('stay signed in when the playmat is updated');
-  await expect(signIn).toContainText('four display settings');
-  for (const word of ['replay speed', 'autoplay', 'where the panel sits', 'prize reminders']) await expect(signIn, word).toContainText(word);
+  await expect(signIn).toContainText('six display settings');
+  for (const word of ['replay speed', 'autoplay', 'where the panel sits', 'prize reminders', 'the interface theme', 'the mat']) await expect(signIn, word).toContainText(word);
 
   const howLong = section('How long it is kept');
   await expect(howLong).toContainText('does not tell the playmat');
@@ -135,6 +135,9 @@ test('its older statements match the playmat: sign-ins, disconnecting, card imag
   await expect(outside).toContainText('fetches them from TCGdex and malie.io');
   await expect(outside).toContainText('DigitalOcean Spaces');
   await expect(outside).toContainText('Cloudflare Web Analytics');
+  // The typeface comes from Google Fonts, on the website and the board.
+  await expect(outside).toContainText('Google Fonts serves the typeface the website and the board use (IBM Plex)');
+  await expect(outside).toContainText('no cookies are sent');
   await expect(outside).toContainText('The playmat sends nothing about you to TCGdex or malie.io');
   await expect(outside).toContainText('when your browser loads an image from them, they see that request');
   // The assistant is given the Google account ID (get_account), never the email.
@@ -143,14 +146,16 @@ test('its older statements match the playmat: sign-ins, disconnecting, card imag
   );
 });
 
-test('its cookie statement names whose cookies they are, and the only outside script', async ({ page }) => {
+test('its cookie statement names whose cookies they are, and the only outside loads', async ({ page }) => {
   await page.goto('/privacy');
   const intro = page.locator('main article > p', { hasText: '__cf_bm' });
   await expect(intro).toContainText('sets no cookies on this website');
   await expect(intro).toContainText('two sign-in cookies');
   await expect(intro).toContainText('short-lived bot-protection cookie');
   await expect(intro).toContainText('not used for visitor counting and is not tied to your account');
-  await expect(intro).toContainText("only thing this website may load from another site is Cloudflare's visitor-counting script");
+  await expect(intro).toContainText('The only things this website and the board load from other sites are their typeface, IBM Plex, from Google Fonts');
+  await expect(intro).toContainText("and Cloudflare's visitor-counting script");
+  await expect(intro).not.toContainText('only thing this website may load');
 });
 
 test('it shows a last-updated date and links to the GitHub issues for questions', async ({ page }) => {

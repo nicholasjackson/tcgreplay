@@ -127,6 +127,18 @@ test.describe("the What's new page", () => {
     await expect(launch).toContainText('see the note on connecting');
   });
 
+  test('the Studio redesign is announced as a new look with themes, needing no refresh', async ({ page }) => {
+    await page.goto('/docs/whats-new');
+    const entry = page.locator('[data-entry]', { has: page.locator('h2', { hasText: 'A new look' }) });
+    await expect(entry).toHaveCount(1);
+    await expect(entry.locator('[data-refresh]')).toHaveText(/^No refresh needed/);
+    await expect(entry.locator('a[href="/docs/connect#refresh"]')).toHaveCount(0);
+    await expect(entry).toContainText('The board has a new look');
+    await expect(entry).toContainText('light or dark interface');
+    await expect(entry).toContainText('slate, felt or navy mat');
+    await expect(entry).toContainText('A new logo');
+  });
+
   test('the entries hang on a timeline, newest at the top, each dated above its title', async ({ page }) => {
     await page.goto('/docs/whats-new');
     const entries = page.locator('[data-whats-new] > li[data-entry]');
