@@ -19,17 +19,32 @@
 //   for six months) and blog.cloudflare.com/free-privacy-first-analytics-for-a-better-web/
 //   (no cookies or localStorage, no fingerprinting). The "visits" figure is
 //   checked by hand against these pages.
+// Laid out like the terms: a docs text column with an On this page card
+// (beside it on a wide screen, above the sections on a narrow one).
 import Base from '../layouts/Base.astro';
 import { limits, site } from '../lib/facts';
 import { notice } from '../lib/notice';
 
 const updated = '13 November 2026';
+
+// The On this page card: each section's id and its heading, in page order.
+const toc = [
+  { id: 'sign-in', label: 'When you sign in' },
+  { id: 'while-playing', label: 'While you play' },
+  { id: 'visitor-counting', label: 'Visitor counting' },
+  { id: 'diagnostics', label: 'Diagnostics' },
+  { id: 'how-long', label: 'How long it is kept' },
+  { id: 'outside-services', label: 'Outside services' },
+  { id: 'never', label: 'What it never collects' },
+  { id: 'removing', label: 'Removing your data' },
+  { id: 'contact', label: 'Questions' },
+];
 ---
 <Base
   title="Privacy"
   description="What the hosted tcgreplay playmat collects when you sign in and play, what visitor counting and diagnostics record, how long it keeps it, and what it never collects."
 >
-  <article class="privacy">
+  <article class="privacy prose">
     <h1>Privacy</h1>
     <p class="updated" data-updated>Last updated {updated}.</p>
     <p>
@@ -44,17 +59,25 @@ const updated = '13 November 2026';
       Cloudflare's visitor-counting script (see <a href="#visitor-counting">visitor counting</a>).
     </p>
 
+    <nav class="toc" aria-label="On this page">
+      <span class="toc-head">On this page</span>
+      <ul>
+        {toc.map((t) => <li><a href={`#${t.id}`}>{t.label}</a></li>)}
+      </ul>
+      <a class="toc-terms" href="/terms">Terms of service →</a>
+    </nav>
+
     <section id="sign-in" aria-labelledby="h-sign-in">
       <h2 id="h-sign-in">When you sign in</h2>
       <p>
-        You sign in with Google. The playmat asks Google only for your email address (the <code>openid</code> and
-        <code>email</code> permissions) and keeps three things:
+        You sign in with Google. The playmat asks Google only for your email address
+        (the <code>openid</code> and <code>email</code> permissions) and keeps three things:
       </p>
-      <ul>
+      <ol class="kept">
         <li>your Google account ID, a number Google uses to tell accounts apart;</li>
         <li>your email address;</li>
         <li>whether Google has verified that email address.</li>
-      </ul>
+      </ol>
       <p>
         It never asks for or keeps your name, photo or password. Google hands the playmat a token when you sign in,
         which it uses once to confirm who you are and then throws away.
@@ -138,8 +161,8 @@ const updated = '13 November 2026';
         battle logs, decklists or card data.
       </p>
       <p>
-        Both are kept in DigitalOcean's Insights service: usage and error records for
-        <span data-retention="logs">7 days</span>, and the metrics for <span data-retention="metrics">7 days</span>.
+        Both are kept in DigitalOcean's Insights service: usage and error records
+        for <span data-retention="logs">7 days</span>, and the metrics for <span data-retention="metrics">7 days</span>.
       </p>
     </section>
 
@@ -172,7 +195,7 @@ const updated = '13 November 2026';
 
     <section id="outside-services" aria-labelledby="h-outside-services">
       <h2 id="h-outside-services">Outside services</h2>
-      <ul>
+      <ul class="services">
         <li><strong>Google</strong>, for signing in.</li>
         <li>
           <strong>TCGdex</strong> and <strong>malie.io</strong>, the sources of the card data, which the project builds
@@ -193,8 +216,8 @@ const updated = '13 November 2026';
         </li>
         <li>
           <strong>Your AI assistant</strong> (Claude, ChatGPT or another) sees what you share with it and what the
-          playmat tells it, under that assistant's own privacy terms. The playmat tells it your
-          <span data-assistant-id>Google account ID (never your email address), so it can tell your accounts apart</span>.
+          playmat tells it, under that assistant's own privacy terms. The playmat tells
+          it your <span data-assistant-id>Google account ID (never your email address), so it can tell your accounts apart</span>.
         </li>
       </ul>
     </section>
@@ -227,8 +250,92 @@ const updated = '13 November 2026';
 </Base>
 
 <style>
-  .privacy { max-width: 46rem; }
-  .updated { color: var(--muted); }
-  section { margin-top: 1.5rem; }
-  li { margin: 0.3rem 0; }
+  /* A text column; from 60rem the On this page card stands beside it,
+     staying in view as the page scrolls. */
+  .privacy { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .privacy > * { grid-column: 1; }
+  @media (min-width: 60rem) {
+    .privacy { grid-template-columns: minmax(0, var(--prose-width)) 15rem; column-gap: var(--space-10); }
+    .privacy > .toc { grid-column: 2; grid-row: 1 / span 20; position: sticky; top: var(--space-4); margin-top: var(--space-2); }
+  }
+  .privacy h1 { margin-bottom: 6px; }
+  .updated { margin: 0 0 var(--space-6); font: 500 var(--fs-13) var(--font-mono); color: var(--muted); }
+  /* Grid items keep both margins, so the intro paragraphs set their own. */
+  .privacy > p:not(.updated) { margin: 0 0 var(--space-3); }
+  /* The intro's lead in ink, the rest of the running text softer. */
+  .updated + p + p { color: var(--ink-soft); }
+
+  section { margin-top: var(--space-10); scroll-margin-top: var(--space-4); }
+  section h2 { margin: 0 0 10px; }
+  section > p, section > ul { color: var(--ink-soft); }
+  section > h2 + p { color: var(--ink); }
+  .privacy code { color: var(--ink); }
+
+  /* What sign-in keeps: one white card, a numbered row each. */
+  .kept {
+    list-style: none;
+    margin: var(--space-3) 0;
+    padding: 0;
+    counter-reset: kept;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  .kept li {
+    counter-increment: kept;
+    display: flex;
+    gap: var(--space-3);
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+  }
+  .kept li + li { border-top: 1px solid var(--line); }
+  .kept li::before {
+    content: counter(kept, decimal-leading-zero);
+    flex: none;
+    padding-top: 3px;
+    font: 600 var(--fs-12) var(--font-mono);
+    color: var(--primary);
+  }
+
+  /* Outside services: one white card, a row each. */
+  .services {
+    list-style: none;
+    margin: var(--space-3) 0;
+    padding: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  .services li { margin: 0; padding: var(--space-3) var(--space-4); }
+  .services li + li { border-top: 1px solid var(--line); }
+  .services strong { color: var(--ink); }
+
+  .toc {
+    display: flex;
+    flex-direction: column;
+    margin: var(--space-2) 0 var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--radius-l);
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+    font-size: var(--fs-14);
+    line-height: 1.4;
+  }
+  .toc-head {
+    display: block;
+    padding: 0 var(--space-2) var(--space-2);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .toc li { margin: 0; }
+  .toc a { display: block; padding: 6px var(--space-2); border-radius: var(--radius-s); color: var(--ink-soft); text-decoration: none; }
+  .toc a:hover { background: var(--hover); color: var(--primary); }
+  .toc-terms { margin-top: 10px; border-top: 1px solid var(--line); }
+  .toc .toc-terms { border-radius: 0; padding-top: var(--space-3); }
 </style>

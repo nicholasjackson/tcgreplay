@@ -167,3 +167,27 @@ test('its idle time is the one in the App Platform definition', async ({ page })
   await expect(page.locator('[data-idle]')).toHaveText(want);
   await expect(page.getByRole('region', { name: 'How long it is kept' })).toContainText(`after ${want} without activity`);
 });
+
+test('it keeps the space before its inline code and figures', async ({ page }) => {
+  await page.goto('/privacy');
+  const section = (name) => page.getByRole('region', { name });
+  await expect(section('When you sign in')).toContainText('the openid and email permissions');
+  await expect(section('Diagnostics')).toContainText('usage and error records for 7 days');
+  await expect(section('Outside services')).toContainText('The playmat tells it your Google account ID');
+});
+
+test('an On this page card lists every section, in order, linking to it', async ({ page }) => {
+  const sections = ['When you sign in', 'While you play', 'Visitor counting', 'Diagnostics', 'How long it is kept', 'Outside services', 'What it never collects', 'Removing your data', 'Questions'];
+  await page.goto('/privacy');
+  const toc = page.getByRole('navigation', { name: 'On this page' });
+  await expect(toc).toBeVisible();
+  await expect(toc.getByRole('listitem')).toHaveText(sections);
+  for (const name of sections) {
+    const href = await toc.getByRole('link', { name, exact: true }).getAttribute('href');
+    expect(href, name).toMatch(/^#/);
+    await expect(page.locator(`main ${href}`).getByRole('heading', { level: 2 }), `${href} is the ${name} section`).toHaveText(name);
+  }
+  await expect(toc.getByRole('link', { name: /Terms of service/ })).toHaveAttribute('href', '/terms');
+  // A card: its own white surface, apart from the text column.
+  expect(await toc.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+});
