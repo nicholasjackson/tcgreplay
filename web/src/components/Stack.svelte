@@ -4,8 +4,8 @@
   // under the card; in the Active Spot, a panel edged in the player's
   // colour with the name, HP left over maximum, an HP bar, the damage tag
   // and the Energy. Special Conditions turn the card and mark it.
-  import { app, cardInfo, openSheet } from '../lib/store.svelte.js';
-  import { dropOnStack, stackMenu, attachmentMenu } from '../lib/actions.js';
+  import { app, openSheet } from '../lib/store.svelte.js';
+  import { dropOnStack, stackMenu, attachmentMenu, energyType, hpLeft, hpOf } from '../lib/actions.js';
   import { draggable, dropZone } from '../lib/pointer.svelte.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
@@ -19,20 +19,12 @@
   // Asleep turns the card counter-clockwise, Paralyzed clockwise, Confused
   // upside down, as at a real table.
   const rot = $derived(conds.includes('confused') ? 180 : conds.includes('asleep') ? -90 : conds.includes('paralyzed') ? 90 : 0);
-  const info = $derived(top ? cardInfo(top.def) : null);
-  const hp = $derived(stack?.hp || info?.hp || 0);
-  const left = $derived(stack?.hp_left ?? (hp ? hp - (stack?.damage || 0) : null));
+  const hp = $derived(hpOf(stack));
+  const left = $derived(hpLeft(stack));
   const shown = $derived(left === null ? null : Math.max(left, 0));
   const damage = $derived(stack?.damage || 0);
   const pct = $derived(hp && shown !== null ? Math.round((shown / hp) * 100) : 0);
 
-  // energyType is an attached Energy's type, from its name ("Basic Fighting
-  // Energy"); a Special Energy shows as Colorless.
-  const TYPES = ['grass', 'fire', 'water', 'lightning', 'psychic', 'fighting', 'darkness', 'metal'];
-  function energyType(card) {
-    const name = (cardInfo(card.def)?.name || card.name || '').toLowerCase();
-    return TYPES.find((t) => name.includes(t)) || 'colorless';
-  }
   const energy = $derived((stack?.energy || []).map((e) => ({ iid: e.iid, type: energyType(e) })));
 
   function menu(ev, pointerType) {

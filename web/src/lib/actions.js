@@ -127,15 +127,37 @@ export function knockOut(spec) {
   return act('knock_out', { target: spec });
 }
 
+// hpOf is a Pokémon in play's maximum HP: the server's, else its top
+// card's printed HP; 0 when neither is known.
+export function hpOf(stack) {
+  return stack?.hp || cardInfo(stack?.pokemon?.at(-1)?.def)?.hp || 0;
+}
+
+// hpLeft is a Pokémon in play's HP left: the server's hp_left, else its HP
+// less its damage; null when its HP is unknown. It can be below 0.
+export function hpLeft(stack) {
+  if (!stack) return null;
+  const hp = hpOf(stack);
+  return stack.hp_left ?? (hp ? hp - (stack.damage || 0) : null);
+}
+
+// energyType is an attached Energy's type, from its name ("Basic Fighting
+// Energy"), lower case; a Special Energy counts as colorless.
+const TYPES = ['grass', 'fire', 'water', 'lightning', 'psychic', 'fighting', 'darkness', 'metal'];
+export function energyType(card) {
+  const name = (cardInfo(card.def)?.name || card.name || '').toLowerCase();
+  return TYPES.find((t) => name.includes(t)) || 'colorless';
+}
+
 // ownStacks lists the seat's occupied Pokémon slots as target candidates:
-// {spec, name, iid} of each one's top card.
+// {spec, name, iid} of each one's top card, and the stack itself.
 export function ownStacks(seat) {
   const s = app.board?.sides[seat];
   if (!s) return [];
   const out = [];
   const add = (spec, st) => {
     const top = st.pokemon.at(-1);
-    out.push({ spec, name: top?.name ?? '?', iid: top?.iid });
+    out.push({ spec, name: top?.name ?? '?', iid: top?.iid, stack: st });
   };
   if (s.active) add(`${seat}:active`, s.active);
   s.bench.forEach((b, i) => b && add(`${seat}:bench:${i}`, b));
@@ -147,12 +169,16 @@ function benchStacks(seat) {
   return ownStacks(seat).filter((c) => c.spec.includes(':bench:'));
 }
 
-// Menus are data: a builder returns {title, card, text, summary, sections}
-// ActionSheet.svelte shows it as the phone sheet, the tablet panel or the
-// desktop popover. A section holds items ({label, detail, primary, danger}
-// and one of run, target or panel), a stepper ({value, step, quick, min, set}) or toggles ({label,
-// on, set}); the groups follow the design's order and empty ones are left
-// out.
+// Menus are data: a builder returns {title, card, text, summary, damage,
+// energy, sections}. ActionSheet.svelte shows it as the phone sheet, the
+// tablet panel or the desktop popover; damage (a number) and energy (the
+// attached Energy's types) tag a Pokémon's touch header. A section holds
+// items ({label, detail, primary, danger, cost, icon} and one of run,
+// target or panel), a stepper ({value, step, quick, min, set}) or toggles
+// ({label, on, set}); grid lays its items out as a grid of small buttons
+// in the popover. cost is an attack's Energy cost (type names), icon one
+// of the sheet's icons ('eye', 'text'). The groups follow the design's
+// order and empty ones are left out.
 function sections(...list) {
   return list.filter((s) => s.stepper || s.toggles?.length || s.items?.length);
 }
@@ -205,21 +231,37 @@ export function handMenu(card) {
   return {
     title: card.name || card.iid,
     card,
-    summary: seat === app.human ? 'In your hand' : `In ${seat}'s hand`,
+    summary: [seat === app.human ? 'Hand' : `${seat}'s hand`, kindOf(info), info?.hp && `${info.hp} HP`].filter(Boolean).join(' · '),
     sections: sections(
       { label: 'Play', items: playable },
       {
         label: 'Move',
+        grid: true,
         items: [
           { label: 'Discard', run: move('discard') },
+          { label: 'Lost Zone', run: move('lost') },
           { label: 'Deck top', run: move('deck:top') },
           { label: 'Deck bottom', run: move('deck:bottom') },
-          { label: 'Lost Zone', run: move('lost') },
         ],
       },
-      { label: 'Other', items: [{ label: 'Reveal to opponent', run: () => act('reveal', { iids: [card.iid], ...sa }) }] },
+      {
+        label: 'Other',
+        items: [
+          { label: 'Reveal to opponent', icon: 'eye', run: () => act('reveal', { iids: [card.iid], ...sa }) },
+          { label: 'Card text', icon: 'text', run: () => (app.zoom = card) },
+        ],
+      },
     ),
   };
+}
+
+// kindOf names a card's kind for a menu's summary: "Basic Pokémon",
+// "Supporter", "Basic Energy"; empty while its data is unknown.
+function kindOf(info) {
+  if (info?.category === 'Pokemon') return `${info.stage || ''} Pokémon`.trim();
+  if (info?.category === 'Trainer') return info.trainer_type || 'Trainer';
+  if (info?.category === 'Energy') return info.energy_type === 'Special' ? 'Special Energy' : 'Basic Energy';
+  return '';
 }
 
 const CONDITIONS = ['asleep', 'burned', 'confused', 'paralyzed', 'poisoned'];
@@ -236,8 +278,9 @@ export function stackMenu(seat, slot, stack) {
   const attacks = [];
   if (mine && slot === 'active') {
     const panel = (attack) => ({ component: AttackPanel, props: { seat, attack, card: top } });
-    for (const a of info?.attacks || []) attacks.push({ label: a.name, detail: a.damage || '', panel: panel(a) });
+    for (const a of info?.attacks || []) attacks.push({ label: a.name, detail: a.damage || '', cost: a.cost || [], panel: panel(a) });
     if (!info?.attacks?.length) attacks.push({ label: 'Attack…', panel: panel(null) });
+    attacks[0].primary = true;
   }
   const abilities = mine
     ? (info?.abilities || []).map((ab) => ({ label: ab.name, run: () => act('use_ability', { target: spec, name: ab.name, ...sa }) }))
@@ -292,19 +335,21 @@ export function stackMenu(seat, slot, stack) {
   if (damage) other.push({ label: `Heal all (${damage} damage)`, run: () => act('place_damage', { target: spec, amount: -damage }) });
   other.push({ label: 'Knock Out', danger: true, run: () => act('knock_out', { target: spec }) });
   const where = slot === 'active' ? 'Active' : `Bench ${Number(slot.split(':')[1]) + 1}`;
-  const hp = stack.hp || info?.hp;
+  const hp = hpOf(stack);
+  const left = hpLeft(stack);
   const energy = stack.energy?.length;
   return {
     title: top?.name ?? spec,
     card: top,
     summary: [
       seat === app.human ? where : `${seat} ${where}`,
-      hp && `HP ${hp}`,
-      damage ? `${damage} damage` : 'no damage',
+      hp && left !== null && `${Math.max(left, 0)}/${hp} HP`,
       energy && `${energy} Energy`,
     ]
       .filter(Boolean)
       .join(' · '),
+    damage,
+    energy: (stack.energy || []).map(energyType),
     sections: sections(
       { label: 'Attack', items: attacks },
       { label: 'Ability', items: abilities },

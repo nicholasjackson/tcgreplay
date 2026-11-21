@@ -20,23 +20,41 @@
 {/if}
 
 <style>
+  /* A raised bar at the top centre, edged in the primary colour: the card,
+     the action and what to tap, and Cancel. .target-banner is what
+     lib/target.js lets a click through to. */
   .target-banner {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: var(--space-2);
+    left: 50%;
+    translate: -50% 0;
+    width: min(560px, calc(100vw - 2 * var(--space-2)));
     z-index: 35;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: var(--banner-bg);
-    color: var(--banner-text);
-    border-bottom: 2px solid var(--accent);
-    box-shadow: var(--shadow-banner);
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+    border-radius: var(--radius-l);
+    border-left: 4px solid var(--primary);
+    background: var(--panel-raised);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    box-shadow: var(--shadow-menu);
   }
   .target-banner :global(.card) { --cw: 34px; filter: none; opacity: 1; }
-  .text { display: flex; flex-direction: column; flex: 1; min-width: 0; font-size: var(--fs-13); line-height: 1.3; }
-  .hint { color: var(--accent); font-weight: 700; }
-  button { min-height: 44px; padding: 0 16px; }
+  .text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; line-height: 1.3; }
+  strong { font: var(--fw-ui-title) var(--fs-ui-title)/var(--lh-ui-title) var(--font-sans); }
+  .hint { font-size: var(--fs-13); color: var(--ink-soft); }
+  button {
+    flex: none;
+    min-height: var(--touch-target);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-m);
+    border: 1px solid var(--control-line);
+    background: var(--panel-raised);
+    color: var(--ink);
+    font: 600 var(--fs-14) var(--font-sans);
+  }
+  button:hover:not(:disabled) { border-color: var(--control-line); background: var(--hover); }
+  button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 </style>

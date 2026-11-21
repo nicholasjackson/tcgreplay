@@ -33,10 +33,14 @@ test('an attack shows its printed damage, takes a changed damage and target, and
   const damage = sheet(page).getByRole('textbox', { name: 'Attack damage' });
   await expect(damage).toHaveValue('60');
   await expect(button(page, 'Attack Makuhita for 60')).toBeVisible();
-  // Adjust: +10 then ×2 for Weakness.
+  // Adjust: +10 then Weakness, which doubles the stepper's damage.
   await press(button(page, '+10'), testInfo);
-  await press(button(page, '×2'), testInfo);
-  await expect(damage).toHaveValue('140');
+  const weakness = button(page, '×2 Weakness');
+  await expect(weakness).toHaveAttribute('aria-pressed', 'false');
+  await press(weakness, testInfo);
+  await expect(weakness).toHaveAttribute('aria-pressed', 'true');
+  await expect(damage).toHaveValue('70');
+  await expect(button(page, 'Attack Makuhita for 140')).toBeVisible();
 
   // Change the target on the board: the sheet steps aside, the
   // opponent's Pokémon light, and the panel comes back with the choice.
@@ -46,7 +50,8 @@ test('an attack shows its printed damage, takes a changed damage and target, and
   expect(await page.locator('main .card.lit').evaluateAll((cs) => cs.map((c) => c.title).sort())).toEqual(['Makuhita (p2-5)', 'Riolu (p2-1)']);
   await press(titled(region(page, 'p2 bench 1'), 'Riolu (p2-1)'), testInfo);
   await expect(sheet(page)).toBeVisible();
-  await expect(damage).toHaveValue('140');
+  await expect(damage).toHaveValue('70');
+  await expect(weakness).toHaveAttribute('aria-pressed', 'true');
   await expect(sheet(page).getByText("Bob's Bench 1")).toBeVisible();
 
   await press(button(page, 'Attack Riolu for 140'), testInfo);

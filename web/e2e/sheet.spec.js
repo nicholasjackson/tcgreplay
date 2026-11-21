@@ -337,8 +337,10 @@ test('each Special Condition toggles on and off with one tap and shows its state
 // items listed once per Pokémon ("Attach to Bench 1 (Riolu)", "Evolve …",
 // "Retreat to …", "Switch with … (no cost)", "Move to …") became one item
 // each, finished by tapping the Pokémon on the board.
-const moveFromHand = ['Move', ['Discard', 'Deck top', 'Deck bottom', 'Lost Zone']];
-const reveal = ['Other', ['Reveal to opponent']];
+// The moves from the hand follow the Studio design's order, and every card
+// in hand can show its text.
+const moveFromHand = ['Move', ['Discard', 'Lost Zone', 'Deck top', 'Deck bottom']];
+const reveal = ['Other', ['Reveal to opponent', 'Card text']];
 const damage = ['Damage', ['−10', 'Damage total', '+10', '+30', '+50']];
 const devolve = ['Other', ['Return to hand', 'Devolve', 'Knock Out']];
 

@@ -40,9 +40,9 @@
       <div class="text">
         <h2>{card.name || 'Unknown card'}</h2>
         {#if pair}
-          <p class="meta">Played as a pair: {pair.map((h) => `${h.iid}${h.def ? ` · ${h.def}` : ''}`).join(' + ')}</p>
+          <p class="meta id">Played as a pair: {pair.map((h) => `${h.iid}${h.def ? ` · ${h.def}` : ''}`).join(' + ')}</p>
         {:else}
-          <p class="meta">{card.iid}{#if card.def} · {card.def}{/if}{#if card.basis} · assumed ({card.basis}){/if}</p>
+          <p class="meta id">{[card.iid, card.def, card.basis && `assumed (${card.basis})`].filter(Boolean).join(' · ')}</p>
         {/if}
         {#if info}
           <pre>{info.text}</pre>
@@ -62,7 +62,7 @@
   .backdrop {
     position: fixed;
     inset: 0;
-    background: var(--scrim-zoom);
+    background: var(--scrim);
     z-index: 50;
     display: grid;
     place-items: center;
@@ -76,10 +76,11 @@
     gap: clamp(16px, 2.5vh, 40px);
     max-width: min(96vw, calc(var(--zw) * 2.4));
     max-height: 94vh;
-    background: var(--panel);
-    border-radius: var(--radius-l);
+    background: var(--panel-raised);
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-dialog);
     color: var(--ink);
+    font-family: var(--font-sans);
     padding: clamp(16px, 2vh, 32px);
     overflow: auto;
     flex-wrap: wrap;
@@ -94,7 +95,8 @@
   .joined img:last-child { border-radius: 0 calc(var(--zw) * 0.036) calc(var(--zw) * 0.036) 0; }
   .zoom.pair { max-width: min(96vw, calc(var(--zw) * 3)); }
   .text { flex: 1; min-width: min(18em, 100%); max-width: 40em; }
-  h2 { margin: 0 0 0.2em; font-size: 1.6em; font-weight: var(--fw-ui-title); }
+  h2 { margin: 0 0 0.2em; font-size: 1.6em; font-weight: 600; line-height: 1.2; }
   .meta { color: var(--muted); font-size: 0.85em; margin: 0 0 0.8em; }
+  .id { font-family: var(--font-mono); font-weight: 500; }
   pre { white-space: pre-wrap; font: 1em/1.5 var(--font-sans); margin: 0; }
 </style>

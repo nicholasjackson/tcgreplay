@@ -7,11 +7,12 @@
   import { openDeckList, openSearch, pileCardActions } from '../lib/actions.js';
   import { act } from '../lib/ws.js';
   import Card from './Card.svelte';
+  import Icon from './Icon.svelte';
   import notice from '../../../internal/notice/notice.json';
 
   const m = $derived(app.modal);
-  // On a touch screen a view closes like the action sheet, with a round ✕
-  // in the corner; on a phone it fills the screen.
+  // On a touch screen a view closes like the action sheet, with an
+  // outlined X in the corner; on a phone it fills the screen.
   const touch = $derived(app.layout !== 'desktop');
   const phone = $derived(app.layout === 'phone');
   let filter = $state('');
@@ -51,7 +52,7 @@
           title: c.name || c.iid,
           card: c,
           summary: `In ${m.seat}'s ${from === 'lost' ? 'Lost Zone' : from}`,
-          sections: [{ label: 'Move', items: pileCardActions(c, m.seat, from).map((a) => ({ label: a.label, run: () => run(a.run) })) }],
+          sections: [{ label: 'Move', grid: true, items: pileCardActions(c, m.seat, from).map((a) => ({ label: a.label, run: () => run(a.run) })) }],
         }),
         type,
       );
@@ -132,7 +133,7 @@
 {#if m}
   <div class="backdrop" onclick={close} role="presentation"></div>
   <div class="modal" class:touch class:phone role="dialog" aria-modal="true">
-    {#if touch}<button class="x" aria-label="Close" onclick={close}>✕</button>{/if}
+    {#if touch}<button class="x" aria-label="Close" onclick={close}><Icon name="close" /></button>{/if}
     {#if m.kind === 'pile'}
       <header><h2>{m.seat} {m.zone === 'lost' ? 'Lost Zone' : 'discard'} · {pileCards.length}</h2>{#if !touch}<button onclick={close}>Close</button>{/if}</header>
       <div class="grid">
@@ -261,7 +262,7 @@
 {/if}
 
 <style>
-  .backdrop { position: fixed; inset: 0; background: var(--scrim-modal); z-index: 30; }
+  .backdrop { position: fixed; inset: 0; background: var(--scrim); z-index: 30; }
   /* A card dragged out of a view lands on the board: the view lets the
      pointer through and fades while the drag lasts. Its cards still let a
      finger scroll the list. */
@@ -269,20 +270,20 @@
   :global(.dragging) .modal { pointer-events: none; opacity: 0.2; }
   .modal :global(.card) { touch-action: pan-y; }
   .modal, .preview { --mw: min(1000px, 94vw); }
-  /* The touch close: round, in the top-right corner, staying in view as
+  /* The touch close: outlined, in the top-right corner, staying in view as
      the view scrolls. */
   .x {
     position: sticky;
     top: 0;
     float: right;
     z-index: 2;
-    width: 44px;
-    height: 44px;
-    margin: -6px -8px 0 8px;
+    display: grid;
+    place-items: center;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    margin: -6px -8px 0 var(--space-2);
     padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: var(--close-bg);
+    border-radius: var(--radius-m);
     font-size: var(--fs-18);
   }
   .modal.phone {
@@ -302,42 +303,73 @@
     width: var(--mw);
     max-height: 86vh;
     overflow-y: auto;
-    background: var(--panel);
+    background: var(--panel-raised);
+    color: var(--ink);
+    font-family: var(--font-sans);
     border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 14px 18px 18px;
+    border-radius: var(--radius-xl);
+    padding: var(--space-5) var(--space-6) var(--space-6);
     box-shadow: var(--shadow-dialog);
   }
-  header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  header h2 { margin: 0 auto 0 0; font-size: var(--fs-16); }
-  form { display: flex; gap: 4px; }
-  select {
-    background: var(--input);
-    color: var(--text);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 6px 8px;
+  header { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
+  header h2 { margin: 0 auto 0 0; font: 600 var(--fs-18)/1.3 var(--font-sans); }
+  form { display: flex; gap: var(--space-1); }
+  /* Secondary buttons: outlined, like the menus'. */
+  button {
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--control-line);
+    background: var(--panel-raised);
+    color: var(--ink);
+    font: 500 var(--fs-12) var(--font-sans);
+  }
+  header button { min-height: 32px; font-size: var(--fs-13); }
+  /* On a touch screen every control stays a fingertip's 44px. */
+  @media (pointer: coarse) {
+    button,
+    header button,
+    select,
+    input { min-height: var(--touch-target); min-width: var(--touch-target); }
+  }
+  button:hover:not(:disabled) { border-color: var(--control-line); background: var(--hover); }
+  button:focus-visible,
+  select:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+  select,
+  input,
+  textarea {
+    min-height: 32px;
+    background: var(--panel-sunk);
+    color: var(--ink);
+    border: 1px solid var(--control-line);
+    border-radius: var(--radius-s);
+    padding: 6px var(--space-2);
     font: inherit;
   }
-  input, textarea {
-    background: var(--input);
-    color: var(--text);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 6px 8px;
-    font: inherit;
-  }
-  textarea { width: 100%; margin-top: 10px; box-sizing: border-box; }
+  textarea { width: 100%; margin-top: 10px; box-sizing: border-box; font-family: var(--font-mono); font-size: var(--fs-13); }
   .about { max-width: 40rem; overflow-wrap: anywhere; }
   .about p { margin: 10px 0 0; line-height: 1.45; }
-  .about a { color: var(--accent); }
-  .note { color: var(--muted); font-size: var(--fs-12); margin: 6px 0; }
-  .grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
-  .entry { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
-  .pos { position: absolute; top: -6px; left: -6px; z-index: 2; background: var(--accent); color: var(--accent-label-ink); border-radius: 50%; width: 18px; height: 18px; display: grid; place-items: center; font: 700 var(--fs-11) system-ui; }
+  .about a { color: var(--primary); }
+  .note { color: var(--muted); font-size: var(--fs-12); margin: var(--space-2) 0 6px; }
+  .grid { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
+  .entry { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); position: relative; }
+  /* Numbers on the cards: a position in the top N, copies in the deck list. */
+  .pos,
+  .count {
+    position: absolute;
+    top: -6px;
+    z-index: 2;
+    background: var(--primary);
+    color: var(--on-primary);
+    font: 600 var(--fs-11) var(--font-mono);
+  }
+  .pos { left: -6px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; }
+  .count { right: 14px; border-radius: var(--radius-s); padding: 1px 6px; font-size: var(--fs-12); }
   .acts { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; max-width: calc(var(--cw) * 1.4); }
-  .list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
-  .row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 3px 4px; border-radius: 6px; }
+  .list { display: flex; flex-direction: column; gap: var(--space-1); margin-top: var(--space-2); }
+  .row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 3px var(--space-1); border-radius: var(--radius-s); }
   .row:hover { background: var(--hover); }
   .row .acts { max-width: none; justify-content: flex-end; }
   .name { font-weight: 600; }
@@ -355,14 +387,27 @@
     box-shadow: var(--shadow-dialog);
     pointer-events: none;
   }
-  .section { font-size: var(--fs-13); margin: 14px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .section {
+    margin: var(--space-4) 0 0;
+    font: var(--fw-label) var(--fs-label)/var(--lh-label) var(--font-sans);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--muted);
+  }
   .dl { width: calc(var(--cw) * 0.62 + 40px); }
-  .count { position: absolute; top: -6px; right: 14px; z-index: 2; background: var(--accent); color: var(--accent-label-ink); border-radius: 10px; padding: 1px 6px; font: 700 var(--fs-12) system-ui; }
   .where { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
-  .place { font-size: var(--fs-11); padding: 1px 6px; border-radius: 8px; background: var(--place-bg); white-space: nowrap; }
-  .place.active, .place.bench { background: var(--place-board); color: var(--on-color); }
-  .place.hand { background: var(--place-hand); color: var(--on-color); }
-  .place.prizes { background: var(--place-prizes); color: var(--on-color); }
-  .place.discard, .place.lost { background: var(--place-discard); color: var(--on-color); }
-  button { font-size: var(--fs-12); }
+  /* Where each copy is: a chip per place, tinted by kind of place. */
+  .place {
+    font: 500 var(--fs-11) var(--font-sans);
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--control-line);
+    background: var(--panel-sunk);
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .place.active, .place.bench { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .place.hand { background: var(--selected); color: var(--ink); }
+  .place.prizes { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); }
+  .place.discard, .place.lost { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); }
 </style>
