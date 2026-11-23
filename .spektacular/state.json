@@ -1,32 +1,25 @@
 {
-  "kind": "plan",
-  "run_id": "c56fa89d240d41718474e9db816c4f58",
+  "kind": "spec",
+  "run_id": "c68369a90ea70c65e0eb68c5fe1c876f",
   "current_step": "finished",
   "completed_steps": [
     "new",
+    "interview",
     "overview",
-    "discovery",
-    "architecture",
-    "components",
-    "data_structures",
-    "implementation_detail",
-    "dependencies",
-    "testing_approach",
-    "milestones",
-    "tasks",
-    "open_questions",
-    "out_of_scope",
-    "assemble",
+    "requirements",
+    "acceptance_criteria",
+    "constraints",
+    "technical_approach",
+    "success_metrics",
+    "non_goals",
     "verification",
-    "write_plan",
-    "write_context",
-    "write_research",
-    "walkthrough",
+    "split",
     "finished"
   ],
-  "created_at": "2026-11-20T14:48:55.342523258Z",
-  "updated_at": "2026-11-20T16:00:06.265866272Z",
+  "created_at": "2026-11-23T11:42:25.409473793Z",
+  "updated_at": "2026-11-23T11:59:56.983821009Z",
   "data": {
-    "name": "20261120140830-52277437-studio-redesign"
+    "epic": "20261111093348-e1b5c2b4-public-launch",
+    "name": "20261123114225-5cf4d0df-grafana-observability"
   }
 }

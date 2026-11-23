@@ -1,44 +1,44 @@
-# Working context: studio-redesign
+# Working context: grafana-observability (20261123114225-5cf4d0df-grafana-observability)
 
 ## Problem and motivation
-- The user wanted to update tcgreplay's design. Their reasons, all four: the general look feels dated, mobile/touch, brand consistency, and board readability.
-- The brand doesn't match: logo.png is navy and cyan with a Poké Ball, but the app is green felt with gold.
-- Code today: colour tokens are in web/src/app.css, hand-copied to site/src/styles/tokens.css ("Keep in step with that file"). Colours only: no type, spacing or radius tokens. The Svelte components contain about 94 hard-coded hex colours and about 53 fixed px font sizes.
-- Considered and rejected:
-  - `/design-sync` to Claude Design: React-only, and web/ is Svelte 5.
-  - Porting to React: the wrong motive. Svelte's fine-grained updates suit the live board, and the 97 Playwright e2e tests are framework-agnostic anyway.
-  - Offering all three design directions as user choices: tripled maintenance, and it dilutes the brand.
+- User (2026-11-23): "no logs or traces are being captured by insights". Then: "I would like logs and traces to work, this will help diagnose, we need this before launch".
+- Known cause (knowledge gotcha `gotchas/app-platform-logs-only-in-insights.md`): App Platform sends only metrics to DigitalOcean Insights. On 2026-11-19 Insights Logs showed 0 results over 7 days in AMS3, although Insights settings listed Logs and Traces as enabled. The app's Runtime Logs tab is live only and keeps no history across deploys (every push to main redeploys).
+- There is no tracing at all today: no OpenTelemetry in the code or in go.mod.
+- The earlier spec 20261112090330-4ac2ea19-observability (public-launch epic) built structured JSON usage and error records on stdout (internal/telemetry; player IDs keyed with TCGREPLAY_PLAYER_ID_KEY, never emails; event catalogue in docs/observability.md) and assumed Insights would hold them. This spec corrects that.
+- The sign-in-page plan (20261122190321-c6d9d90a-sign-in-page, approved today) has a success metric (Google sign-ins two weeks before vs after release) that depends on logs being kept. Its plan notes the dependency on log forwarding. It adds a `provider` field to sign_in records.
 
-## Decisions (user-confirmed)
-- Direction: **Studio**, a light interface around a dark mat, IBM Plex Sans and Mono.
-- Themes: interface light/dark × mat slate/felt/navy. The default is light + slate. Set in the board's ☰ menu, not the header. Only colour changes between themes.
-- Logo: the new card-stack mark replaces logo.png, with no Pokémon imagery.
-- Menu proposals kept: the Knock Out hint in the attack panel (arithmetic only), and the "Card text" item in the hand-card mouse popover.
-- Website: accept the nav changes (Get started as a button, What's new in the top links, Home and Privacy out of the top bar) and the guides grouped into After a game / Practice / Play. The site's browser tests need updating.
-- The timeline must keep play-from-here and rewind on every line, plus per-turn and per-half rewind/play. The user flagged this as already possible today ("this is currently possible").
-- Narrow PC: the user has a vertical second monitor with the timeline docked below (panelAt=bottom in their browser). The new turn-list rail in the timeline was accepted with the narrow board.
-- Order the user agreed earlier: tokens first, with components moved onto tokens without visual change, then apply Studio.
+## Decisions so far
+- Provider: **Grafana Cloud** (user: "ok we do grafana cloud").
+  - Logs, traces and metrics go via OpenTelemetry/OTLP straight from the Go server. No App Platform log_destinations.
+  - Config as encrypted env vars, like the other secrets.
+  - The free tier is believed to be about 50 GB logs and 50 GB traces with 14-day retention (unverified).
+  - EU region available.
+- Joins the public-launch epic (20261111093348-e1b5c2b4-public-launch), which this reopens (the user agreed).
+- Optional: Cloudflare edge traces (Cloudflare Observability, open beta) if tcgreplay.app is the maintainer's own Cloudflare zone (unknown). Cloudflare can pass W3C trace context to the origin. Cloudflare cannot ingest logs or traces from a non-Cloudflare server: its OTel support is export only.
 
-## Interview answers (spec workflow)
-- Ship as ONE release, with tokens-first and no-visual-change as an internal checkpoint proven by screenshots.
-- New Studio card back replaces the Poké Ball-like back.
-- One mark everywhere: redraw plugin/assets/icon.svg/png and the site/docs icons from the Studio mark.
-- Proof: screenshot comparisons + a stray colour/font-size test + a contrast check + existing suites passing (updated only for nav/guide changes).
+## Alternatives rejected (and why)
+- DigitalOcean Insights: holds no App Platform logs, and its traces are for Action Gateway only.
+- Better Stack: an App Platform forwarding destination, but the token is plain text in the app spec, forwarded lines are cut at 2,000 bytes, traces still need OTel, and its free tier is smaller.
+- Self-hosting on DigitalOcean (Grafana stack on a Droplet, or Managed OpenSearch): monthly cost and ops burden for a one-maintainer project, and logs are lost when it falls over.
+- A Cloudflare Worker log relay into Workers Logs: an extra service, no app traces.
 
-## Artifacts
-- Canvas: https://claude.ai/artifact/5esddCvKjxHT9WiFw9u7MJ (board layouts, themes, menus, website pages, components).
-- Design doc: `studio/design.md` in the `design` source (authored, draft). Earlier designs mobile-board/design.md and wide-board/design.md still govern behaviour and layout.
-- Design system artifact: https://claude.ai/artifact/8uqeTrkeXAc2YYTUvwtEjK (tokens.json, README brand book, Logos asset, 12 components).
-- Dev playmat game `design-narrow-check` imported into .dev for inspection.
+## Points to settle in the spec (raised in discussion)
+- Retention vs the 28-day sign-in comparison: count sign-ins as a metric, not only as log lines.
+- What is traced (MCP tool calls, board requests, sign-in steps, card fetches) and the sample rate.
+- Keep emails, card text, tokens and secrets out of spans and log attributes (same "player ID, never email" rule).
+- Privacy page and docs/observability.md must name Grafana Cloud, what it receives and the retention (privacy convention). Same for the retention figures (gotcha says runbook and privacy page retention go together).
+- Hosted only; the desktop playmat has no telemetry export.
+- Needed before launch. It can run in parallel with the sign-in page work (different code).
 
-## Workflow preference
-- The user asked to see the full spec at once rather than section by section ("just show me the full spec"). The full draft was approved ("Yes, finish it"); all section working files hold the approved content. Advance through the section steps without re-asking.
-- Fonts: the user said "I think it is ok to load fonts", so IBM Plex loads from Google Fonts (not self-hosted). The privacy page must name Google Fonts as an outside service (today it says only the Cloudflare script loads from another site). The design system README's "from Google Fonts" is therefore correct.
-- Split offered at the split step (3 specs: tokens, board, website); the user declined and kept one spec.
-
-## Plan workflow (studio-redesign), discovery decisions from the user
-- Fonts: "Change the tests, web fonts are fine". IBM Plex loads from Google Fonts on the board and the site; update site tests (site.spec.js 150-207, analytics.spec.js 72-98, animation.spec.js 118-120) to allow Google Fonts hosts only, and reword the privacy page.
-- Home hero: restyle the existing animated Playmat scene in Studio (keep its tests); do NOT embed the real board. Design doc studio/design.md updated to match.
-- Wide landscape mat: "Land it first". The user commits and merges the uncommitted wide-board work (worktree ../tcgreplay-wide-board, branch spek/20261104090653-...) before Studio starts; the plan restyles it. A precondition, not a plan task.
-- Test edits: allowed where a spec requirement forces them (privacy "four display settings" count, the Cloudflare-only sentence), each recorded in the plan. Spec constraint "Existing suites" amended to say so.
-- Plan 20261120140830-52277437-studio-redesign approved by the user at the walkthrough ("plan is good").
+## Interview answers (2026-11-23)
+- Platform metrics and alerts stay in DigitalOcean (split). Grafana holds app logs, traces and app metrics.
+- No Grafana alerts.
+- tcgreplay.app is the maintainer's own Cloudflare zone, so Cloudflare edge traces are in scope.
+- The Grafana Cloud stack already exists, in Germany (EU).
+- Defaults accepted: keep stdout logs too; trace everything at launch (no sampling); a Grafana outage never hurts players; free-tier retention is fine (longer counts as metrics).
+- Privacy page: the user is indifferent ("not sure I give much of a shit about the privacy page"), so keep only the minimal factual update the convention requires (it currently claims Insights keeps logs 7 days).
+- Epic dependency recorded: grafana-observability depends on 20261112090330-4ac2ea19-observability.
+- The earlier observability spec's constraint "everything in DigitalOcean, no second vendor" is reversed by the user's decision.
+- User asked (2026-11-23) to draft the whole spec without per-section confirmations and give a summary at the end.
+- Spec drafted and reviewed; reviewer fixes applied without asking (user delegated): edge tracing conditional on current Cloudflare plan (no paid plan), sampling allowed past free tier, distinct players added, 5% latency threshold, export-failure record after 5 min.
+- Split check: not offered (one capability; logs, traces and metrics share one export path and link to each other; edge traces depend on app traces).
