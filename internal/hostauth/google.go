@@ -91,8 +91,8 @@ func (a *Auth) serveGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		errorPage(w, http.StatusUnauthorized, "Google sign-in could not be confirmed. Please try again.")
 		return
 	}
-	if err := a.signIn(w, acct); err != nil {
-		a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.SignInRefused, Email: acct.Email, Reason: err.Error()})
+	if err := a.signIn(r.Context(), w, acct); err != nil {
+		a.cfg.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.SignInRefused, Email: acct.Email, Reason: err.Error()})
 		var b busyError
 		if errors.As(err, &b) {
 			busyPage(w, b.max)
@@ -214,9 +214,9 @@ func audienceHas(aud json.RawMessage, id string) bool {
 // claude.ai can open a board link without signing in again. It is also
 // where the user cap is applied, once for both flows: the places provider
 // may refuse the account with an error wrapping ErrBusy.
-func (a *Auth) signIn(w http.ResponseWriter, acct Account) error {
+func (a *Auth) signIn(ctx context.Context, w http.ResponseWriter, acct Account) error {
 	if p := a.cfg.Places; p != nil {
-		if err := p.Admit(acct); err != nil {
+		if err := p.Admit(ctx, acct); err != nil {
 			return err
 		}
 	}
@@ -230,7 +230,7 @@ func (a *Auth) signIn(w http.ResponseWriter, acct Account) error {
 		Secure:   a.secure(),
 		SameSite: http.SameSiteLaxMode,
 	})
-	a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.SignIn, Email: acct.Email})
+	a.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.SignIn, Email: acct.Email, Provider: "google"})
 	return nil
 }
 

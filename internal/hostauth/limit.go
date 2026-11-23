@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
@@ -71,8 +72,9 @@ func (s *store) take(now time.Time, id string, limit int) (ok bool, wait time.Du
 	return false, wait, logIt
 }
 
-// allow counts one request for acct against the request limit.
-func (a *Auth) allow(acct Account) error {
+// allow counts one request for acct against the request limit; a refusal
+// it records carries the trace of the request in ctx.
+func (a *Auth) allow(ctx context.Context, acct Account) error {
 	if a.cfg.RateLimit <= 0 {
 		return nil
 	}
@@ -83,7 +85,7 @@ func (a *Auth) allow(acct Account) error {
 	err := fmt.Errorf("%w: this account is limited to %d requests a minute; try again in %ds",
 		ErrRateLimited, a.cfg.RateLimit, int(math.Ceil(wait.Seconds())))
 	if logIt {
-		a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "rate", Message: err.Error()})
+		a.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "rate", Message: err.Error()})
 	}
 	return err
 }
@@ -107,7 +109,7 @@ func (a *Auth) MCPMiddleware() mcp.Middleware {
 				// The HTTP layer has already refused anonymous requests.
 				return next(ctx, method, req)
 			}
-			if err := a.allow(acct); err != nil {
+			if err := a.allow(ctx, acct); err != nil {
 				if method == "tools/call" {
 					return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}}}, nil
 				}
@@ -125,5 +127,5 @@ func (a *Auth) BoardLimit(ctx context.Context) error {
 	if !ok {
 		return nil
 	}
-	return a.allow(acct)
+	return a.allow(ctx, acct)
 }

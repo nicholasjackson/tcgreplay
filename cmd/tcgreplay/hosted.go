@@ -22,6 +22,7 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
+	"github.com/nicholasjackson/tcgreplay/internal/observe"
 	"github.com/nicholasjackson/tcgreplay/internal/site"
 	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
@@ -117,8 +118,9 @@ func envDuration(key string, def time.Duration) (time.Duration, error) {
 // list of Google account emails). places keeps the user cap (nil for
 // none); rec records sign-ins and refusals. Hosted mode must not run open,
 // so missing credentials are an error. google is Google's endpoints; the
-// zero value means the real Google.
-func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostauth.Places, rec *telemetry.Recorder) (*hostauth.Auth, error) {
+// zero value means the real Google. Calls to Google go through tel's
+// tracing client (nil tel: untraced).
+func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostauth.Places, rec *telemetry.Recorder, tel *observe.Telemetry) (*hostauth.Auth, error) {
 	secret := os.Getenv("TCGREPLAY_GOOGLE_CLIENT_SECRET")
 	if c.googleClientID == "" || secret == "" {
 		return nil, errors.New("hosted mode needs Google sign-in: set TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET")
@@ -133,6 +135,7 @@ func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostau
 		Google:         google,
 		Admins:         strings.Split(os.Getenv("TCGREPLAY_ADMINS"), ","),
 		Recorder:       rec,
+		HTTPClient:     tel.Client(nil),
 	})
 }
 
@@ -255,15 +258,17 @@ func idleText(d time.Duration) string {
 // counted wraps the pages people read, the website and the board page,
 // and nothing else: with visitor analytics on it adds Cloudflare's beacon
 // to them (see hostedAnalytics); otherwise it is the identity.
-func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service, counted func(http.Handler) http.Handler, challenge string) http.Handler {
+//
+// tel carries each MCP request's trace into its tool calls (nil: none).
+func hostedHandler(srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service, counted func(http.Handler) http.Handler, challenge string, tel *observe.Telemetry) http.Handler {
 	mux := http.NewServeMux()
 	a.Routes(mux)
 	mux.Handle("GET "+openAIChallengePath, openAIChallengeHandler(challenge))
-	mux.Handle("/mcp", a.RequireToken(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
+	mux.Handle("/mcp", a.RequireToken(tel.CarryContext(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
 		SessionTimeout: mcpSessionTimeout,
 		// Hosted mode is public; the request's Host is the proxy's business.
 		DisableLocalhostProtection: true,
-	})))
+	}))))
 	adminPage := a.RequireAdmin(admin.Handler())
 	mux.Handle("/admin", adminPage)
 	mux.Handle("/admin/", adminPage)
@@ -316,7 +321,7 @@ func toBoard() http.Handler {
 // account's games pin their snapshots from (a *catalog.Loader); images,
 // when not nil, is where every board loads card images from (see
 // hostedImages). google is as for hostedAuth.
-func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *url.URL, google oauth2.Endpoint) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
+func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *url.URL, google oauth2.Endpoint, tel *observe.Telemetry) (*usergames.Registry, *mcp.Server, *hostauth.Auth, error) {
 	human := state.Seat(c.seat).Other()
 	rec, err := hostedRecorder(c)
 	if err != nil {
@@ -331,7 +336,14 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 			return m
 		},
 		NewBoard: func(m *game.Manager) *webui.Server {
-			return hostedBoard(m, human, public, reg.BoardLimit(a.BoardLimit), reg.BoardError, images)
+			ui := hostedBoard(m, human, public, reg.BoardLimit(a.BoardLimit), reg.BoardError, images)
+			if tel.Enabled() {
+				ui.Trace = func(ctx context.Context, verb string) (context.Context, func(error)) {
+					acct, _ := hostauth.AccountFrom(ctx)
+					return tel.BoardSpan(ctx, verb, rec.ID(acct.Email))
+				}
+			}
+			return ui
 		},
 		Public:   public,
 		Idle:     c.idleTimeout,
@@ -340,18 +352,71 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 		Now:      c.now,
 		Recorder: rec,
 	})
-	a, err = hostedAuth(c, public, google, reg, rec)
+	a, err = hostedAuth(c, public, google, reg, rec, tel)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	// BoardURL keeps the instructions' board-link line; each result's link
 	// comes from Resolve.
 	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/board", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet, Account: reg.AccountID}).MCP()
-	// One call, so the tool-call recorder runs inside the rate limit: a
-	// later AddReceivingMiddleware call would wrap outside it, and a
-	// refused request would be recorded as a tool call.
-	srv.AddReceivingMiddleware(a.MCPMiddleware(), reg.MCPMiddleware())
+	// One call, so tracing is outermost (the limit, the recorder and the
+	// tools run inside each call's span) and the tool-call recorder runs
+	// inside the rate limit: a later AddReceivingMiddleware call would wrap
+	// outside it, and a refused request would be recorded as a tool call.
+	srv.AddReceivingMiddleware(tel.MCPMiddleware(mcpCaller(rec)), a.MCPMiddleware(), reg.MCPMiddleware())
+	if tel.Enabled() {
+		// The tool-call counter's tool label is a closed set: these names.
+		names, err := toolNames(srv)
+		if err != nil {
+			log.Printf("warning: telemetry export: tool names not read (%v); tool calls count as other", err)
+		}
+		tel.SetTools(names)
+	}
 	return reg, srv, a, nil
+}
+
+// toolNames lists the tools srv serves, over an in-memory session.
+func toolNames(srv *mcp.Server) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	st, ct := mcp.NewInMemoryTransports()
+	ss, err := srv.Connect(ctx, st, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer ss.Close()
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "tcgreplay-tools"}, nil).Connect(ctx, ct, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer cs.Close()
+	var names []string
+	for tool, err := range cs.Tools(ctx, nil) {
+		if err != nil {
+			return names, err
+		}
+		names = append(names, tool.Name)
+	}
+	return names, nil
+}
+
+// mcpCaller names an MCP request's player, by pseudonymous ID from the
+// request's token, and its assistant, from its session's client name, for
+// the tool call's span.
+func mcpCaller(rec *telemetry.Recorder) func(mcp.Request) (string, string) {
+	return func(req mcp.Request) (player, assistant string) {
+		if extra := req.GetExtra(); extra != nil {
+			if acct, ok := hostauth.AccountFromToken(extra.TokenInfo); ok {
+				player = rec.ID(acct.Email)
+			}
+		}
+		if s, ok := req.GetSession().(*mcp.ServerSession); ok && s != nil {
+			if p := s.InitializeParams(); p != nil && p.ClientInfo != nil {
+				assistant = mcpserver.AssistantName(p.ClientInfo.Name)
+			}
+		}
+		return player, assistant
+	}
 }
 
 // hostedBoard builds one account's board server: on the public address,
@@ -378,8 +443,9 @@ func hostedBoard(m *game.Manager, human state.Seat, public *url.URL, limit func(
 // stop play. With TCGREPLAY_SPACES_CDN_TOKEN set too, an admin's image
 // clear also purges the bucket's CDN; the token is ignored without the
 // image cache. Card data never comes from these settings: it is published
-// separately (see -cardsets-url).
-func hostedImages(c config) *cards.ImageCache {
+// separately (see -cardsets-url). Its calls to the card source, the bucket
+// and the CDN go through tel's tracing clients (nil tel: untraced).
+func hostedImages(c config, tel *observe.Telemetry) *cards.ImageCache {
 	token := strings.TrimSpace(os.Getenv("TCGREPLAY_SPACES_CDN_TOKEN"))
 	ignored := func() {
 		if token != "" {
@@ -401,6 +467,7 @@ func hostedImages(c config) *cards.ImageCache {
 		ignored()
 		return nil
 	}
+	cfg.HTTP = tel.Client(&http.Client{Timeout: 30 * time.Second})
 	sc, err := spaces.New(cfg)
 	if err != nil {
 		log.Printf("warning: card images: %v; loading images from their sources", err)
@@ -408,6 +475,7 @@ func hostedImages(c config) *cards.ImageCache {
 		return nil
 	}
 	images := cards.NewImageCache(sc, cfg.PublicBase())
+	images.HTTP = tel.Client(images.HTTP)
 	if c.imageBase != "" {
 		images.Source = c.imageBase
 	}
@@ -417,6 +485,7 @@ func hostedImages(c config) *cards.ImageCache {
 		if c.cdnAPI != "" {
 			cdn.API = c.cdnAPI
 		}
+		cdn.HTTP = tel.Client(cdn.HTTP)
 		images.CDN = cdn
 		log.Printf("card images: CDN purge on clear: on")
 	} else {
@@ -446,9 +515,50 @@ func hostedAnalytics(c config, public *url.URL) func(http.Handler) http.Handler 
 	return wrap
 }
 
+// hostedTelemetry starts sending to Grafana Cloud from the TCGREPLAY_GRAFANA_*
+// settings (c.telemetry in tests). Export is optional and must never stop
+// play: missing or bad settings leave it off, with a warning line for bad
+// ones. With export on, the std log package's lines also go to Grafana,
+// beside what it already writes to, starting with c.earlyLog (the lines
+// logged before); the recorder's sink is set by the caller once the
+// recorder exists. It returns the start-up line's export and usage
+// history text, never naming the token.
+func hostedTelemetry(ctx context.Context, c config) (*observe.Telemetry, string) {
+	s := observe.SettingsFromEnv(os.Getenv)
+	if c.telemetry != nil {
+		s = *c.telemetry
+	}
+	s.Version, s.Now, s.Stderr = version, c.now, os.Stderr
+	tel := observe.Start(ctx, s)
+	if tel.Enabled() {
+		w := tel.LogWriter()
+		w.Write(c.earlyLog)
+		log.SetOutput(io.MultiWriter(log.Writer(), w))
+	}
+	export, history := s.Status()
+	for _, st := range []*string{&export, &history} {
+		if strings.HasPrefix(*st, "warning: ") {
+			log.Print(*st)
+			*st = strings.TrimPrefix(*st, "warning: ")
+		}
+	}
+	return tel, export + ", " + history
+}
+
+// hostedServeHandler is everything hosted mode serves: the router behind
+// the moved-host guard, inside tel's tracing wrapper, so every request,
+// moved-host redirects included, is a server span named by its route.
+func hostedServeHandler(c config, tel *observe.Telemetry, moved movedHosts, public *url.URL, srv *mcp.Server, reg *usergames.Registry, a *hostauth.Auth, admin *cacheadmin.Service) http.Handler {
+	return tel.Handler(movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin, hostedAnalytics(c, public), c.openAIChallenge, tel)))
+}
+
 // runHosted serves MCP and the playmat over one plain-HTTP listener until
 // ctx is done, for running in a container behind an HTTPS proxy.
 func runHosted(ctx context.Context, c config) error {
+	// Telemetry first, so every line logged from here on is sent too.
+	tel, exportText := hostedTelemetry(ctx, c)
+	defer tel.Shutdown(context.Background())
+	go tel.Run(ctx)
 	if c.idleErr != nil {
 		return fmt.Errorf("hosted mode: %v", c.idleErr)
 	}
@@ -464,12 +574,14 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	images := hostedImages(c)
+	images := hostedImages(c, tel)
 	loader := newCatalog(c)
-	reg, srv, a, err := newHosted(c, loader, images, public, oauth2.Endpoint{})
+	loader.HTTP = tel.Client(loader.HTTP)
+	reg, srv, a, err := newHosted(c, loader, images, public, oauth2.Endpoint{}, tel)
 	if err != nil {
 		return err
 	}
+	reg.Recorder().SetSink(tel.Sink())
 	// Hosted starts with an empty disk on every deploy: wait (bounded) for
 	// the published card sets before serving, so the first games do not
 	// pin an empty catalogue.
@@ -486,9 +598,9 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, %s, %s, player IDs on", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()), challengeText(c.openAIChallenge), reviewerText(c.reviewer))
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, %s, %s, player IDs on, %s", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()), challengeText(c.openAIChallenge), reviewerText(c.reviewer), exportText)
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
-	hs := &http.Server{Handler: movedGuard(moved, public, movedMCP(c, public), hostedHandler(srv, reg, a, admin, hostedAnalytics(c, public), c.openAIChallenge)), ReadHeaderTimeout: 10 * time.Second}
+	hs := &http.Server{Handler: hostedServeHandler(c, tel, moved, public, srv, reg, a, admin), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)
@@ -500,8 +612,10 @@ func runHosted(ctx context.Context, c config) error {
 	if err := hs.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
-	// Let in-flight requests finish before returning.
+	// Let in-flight requests finish, and send what is queued (for at most
+	// two seconds), before returning.
 	<-stopped
+	tel.Shutdown(context.Background())
 	log.Printf("tcgreplay hosted: stopped")
 	return nil
 }

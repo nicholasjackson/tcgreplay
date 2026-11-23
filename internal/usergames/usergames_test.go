@@ -55,7 +55,7 @@ func newRegistry(t *testing.T, dir string, now func() time.Time) *Registry {
 
 func use(t *testing.T, r *Registry, acct hostauth.Account) *Entry {
 	t.Helper()
-	e, err := r.Use(acct)
+	e, err := r.Use(context.Background(), acct)
 	if err != nil {
 		t.Fatalf("Use(%s): %v", acct.ID, err)
 	}

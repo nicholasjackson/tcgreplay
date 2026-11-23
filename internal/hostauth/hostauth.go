@@ -64,10 +64,14 @@ type Config struct {
 type Places interface {
 	// Admit is asked at every Google sign-in, in both flows, whether acct
 	// may take a place: nil, or an error wrapping ErrBusy (see BusyError).
-	Admit(acct Account) error
+	// ctx is the sign-in request's, so a refusal it records carries that
+	// request's trace.
+	Admit(ctx context.Context, acct Account) error
 	// Release is told that the account's last live sign-in (board session,
-	// pending code or connector refresh token) has ended.
-	Release(id string)
+	// pending code or connector refresh token) has ended. ctx is the
+	// request that ended it (a sign-out), or context.Background when it
+	// expired, so a record it writes carries that request's trace.
+	Release(ctx context.Context, id string)
 }
 
 // Account is the signed-in Google account a request acts for.

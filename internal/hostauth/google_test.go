@@ -1,6 +1,7 @@
 package hostauth
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -434,7 +435,7 @@ func TestCookieAttributes(t *testing.T) {
 				t.Errorf("default Google endpoint host = %q, want accounts.google.com", loc.Host)
 			}
 			rec2 := httptest.NewRecorder()
-			a.signIn(rec2, Account{ID: "sub-1", Email: "one@example.com"})
+			a.signIn(context.Background(), rec2, Account{ID: "sub-1", Email: "one@example.com"})
 
 			cookies := append(rec.Result().Cookies(), rec2.Result().Cookies()...)
 			want := map[string]string{loginCookie: "/auth/google/callback", sessionCookie: "/"}

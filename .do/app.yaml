@@ -233,6 +233,28 @@ envs:
   - key: TCGREPLAY_SPACES_CDN_TOKEN
     scope: RUN_TIME
     type: SECRET
+  # Grafana Cloud telemetry (all optional; set in the console, never by
+  # pasting this file). With the first three set, records, log lines,
+  # request traces and usage counters are sent to the Grafana Cloud stack
+  # over OTLP; unset or incomplete, nothing is sent and the start-up line
+  # says why. The OTLP URL and instance ID come from the stack's
+  # OpenTelemetry tile; the token is an access policy token with
+  # metrics:read, metrics:write, logs:write and traces:write (encrypt
+  # it). The metrics URL and user (the stack's Prometheus query endpoint
+  # and its instance ID) let the playmat keep six weeks of daily usage
+  # totals. Set them only once the privacy page describing Grafana Cloud
+  # is live. Needs only a restart. docs/observability.md has the steps.
+  - key: TCGREPLAY_GRAFANA_OTLP_URL
+    scope: RUN_TIME
+  - key: TCGREPLAY_GRAFANA_INSTANCE_ID
+    scope: RUN_TIME
+  - key: TCGREPLAY_GRAFANA_TOKEN
+    scope: RUN_TIME
+    type: SECRET
+  - key: TCGREPLAY_GRAFANA_METRICS_URL
+    scope: RUN_TIME
+  - key: TCGREPLAY_GRAFANA_METRICS_USER
+    scope: RUN_TIME
 ingress:
   rules:
     - component:

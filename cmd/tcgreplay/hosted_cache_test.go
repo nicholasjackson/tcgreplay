@@ -101,7 +101,7 @@ func TestHostedImagesPartialSettingsWarn(t *testing.T) {
 			t.Setenv("TCGREPLAY_SPACES_CDN_TOKEN", "")
 			c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2"}
 
-			if images := hostedImages(c); images != nil {
+			if images := hostedImages(c, nil); images != nil {
 				t.Error("image cache built with partial settings")
 			}
 			out := logs.String()
@@ -234,7 +234,7 @@ func TestHostedImagesCopiedAndServedFromSharedStore(t *testing.T) {
 	cat := publishedCatalog(t, adminSets()...)
 	c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2"}
 
-	images := hostedImages(c)
+	images := hostedImages(c, nil)
 	if images == nil {
 		t.Fatal("image cache off with all four settings")
 	}
@@ -331,7 +331,7 @@ func TestHostedImagesOffWithoutTheSharedStore(t *testing.T) {
 			cat := publishedCatalog(t, adminSets()...)
 			c := config{dataDir: t.TempDir(), cacheDir: t.TempDir(), seat: "p2", offline: tc.offline}
 
-			images := hostedImages(c)
+			images := hostedImages(c, nil)
 			if images != nil {
 				t.Fatal("image cache built without the shared store")
 			}

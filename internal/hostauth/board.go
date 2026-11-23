@@ -72,7 +72,7 @@ func (a *Auth) RequireSession(next http.Handler) http.Handler {
 			return
 		}
 		if strings.HasPrefix(r.URL.Path, "/api/") {
-			if err := a.allow(s.account); err != nil {
+			if err := a.allow(r.Context(), s.account); err != nil {
 				http.Error(w, err.Error(), http.StatusTooManyRequests)
 				return
 			}
@@ -130,8 +130,8 @@ func (a *Auth) serveLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if id, s := a.sessionFor(r); s != nil {
-		a.st.endSession(id)
-		a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.SignOut, Email: s.account.Email})
+		a.st.endSession(r.Context(), id)
+		a.cfg.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.SignOut, Email: s.account.Email})
 	}
 	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Path: "/", MaxAge: -1, HttpOnly: true, Secure: a.secure(), SameSite: http.SameSiteLaxMode})
 	w.Header().Set("Cache-Control", "no-store")

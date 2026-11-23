@@ -2,6 +2,7 @@ package usergames
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -60,18 +61,18 @@ func (r *Registry) holdsPlace(acct hostauth.Account) bool {
 func TestExpiredGameFreesPlace(t *testing.T) {
 	clock := &fakeClock{t: time.Date(2026, 10, 18, 9, 0, 0, 0, time.UTC)}
 	r := placesRegistry(t, 1, 2*time.Minute, clock.Now)
-	if err := r.Admit(alice); err != nil {
+	if err := r.Admit(context.Background(), alice); err != nil {
 		t.Fatalf("Admit(A) with a free place: %v", err)
 	}
 	a := use(t, r, alice)
 	startGame(t, a.M, "game-a")
 
-	checkBusyErr(t, "Admit(B) at the cap", r.Admit(bob), 1)
+	checkBusyErr(t, "Admit(B) at the cap", r.Admit(context.Background(), bob), 1)
 	clock.Advance(2 * time.Minute)
-	checkBusyErr(t, "Admit(B) with A idle exactly 2 minutes", r.Admit(bob), 1)
+	checkBusyErr(t, "Admit(B) with A idle exactly 2 minutes", r.Admit(context.Background(), bob), 1)
 
 	clock.Advance(time.Second)
-	if err := r.Admit(bob); err != nil {
+	if err := r.Admit(context.Background(), bob); err != nil {
 		t.Fatalf("Admit(B) after A's game expired: %v", err)
 	}
 	checkExpired(t, a.M, "2 minutes")
@@ -96,7 +97,7 @@ func TestSweepFreesPlace(t *testing.T) {
 	if n := r.holding(); n != 0 {
 		t.Fatalf("%d places held after the sweep, want 0", n)
 	}
-	if err := r.Admit(bob); err != nil {
+	if err := r.Admit(context.Background(), bob); err != nil {
 		t.Errorf("Admit(B) after the sweep: %v", err)
 	}
 }
@@ -106,13 +107,13 @@ func TestSweepFreesPlace(t *testing.T) {
 func TestNeverActedGivesUpPlace(t *testing.T) {
 	clock := &fakeClock{t: time.Date(2026, 10, 18, 9, 0, 0, 0, time.UTC)}
 	r := placesRegistry(t, 1, 2*time.Minute, clock.Now)
-	if err := r.Admit(alice); err != nil {
+	if err := r.Admit(context.Background(), alice); err != nil {
 		t.Fatal(err)
 	}
 	clock.Advance(2 * time.Minute)
-	checkBusyErr(t, "Admit(B) within A's idle time", r.Admit(bob), 1)
+	checkBusyErr(t, "Admit(B) within A's idle time", r.Admit(context.Background(), bob), 1)
 	clock.Advance(time.Second)
-	if err := r.Admit(bob); err != nil {
+	if err := r.Admit(context.Background(), bob); err != nil {
 		t.Fatalf("Admit(B) after A sat idle past the idle time: %v", err)
 	}
 	if r.holdsPlace(alice) {
@@ -127,7 +128,7 @@ func TestBusyRefusalIsNotActivity(t *testing.T) {
 	clock := &fakeClock{t: time.Date(2026, 10, 18, 9, 0, 0, 0, time.UTC)}
 	r := placesRegistry(t, 1, 0, clock.Now)
 	use(t, r, alice)
-	if _, err := r.Use(bob); err == nil {
+	if _, err := r.Use(context.Background(), bob); err == nil {
 		t.Fatal("Use(B) at the cap succeeded")
 	}
 	r.mu.Lock()
@@ -140,7 +141,7 @@ func TestBusyRefusalIsNotActivity(t *testing.T) {
 	b := r.Get(bob) // an open board: an entry with no place
 	before := r.LastActive(b)
 	clock.Advance(time.Minute)
-	checkBusyErr(t, "Use(B) with an entry but no place", func() error { _, err := r.Use(bob); return err }(), 1)
+	checkBusyErr(t, "Use(B) with an entry but no place", func() error { _, err := r.Use(context.Background(), bob); return err }(), 1)
 	if got := r.LastActive(b); !got.Equal(before) {
 		t.Errorf("refused Use moved B's last activity from %v to %v", before, got)
 	}
@@ -155,10 +156,10 @@ func TestAdmitRecordsRefusal(t *testing.T) {
 	t.Cleanup(func() { log.SetOutput(prev) })
 	r := placesRegistry(t, 1, 0, nil)
 	rec, events := withRecorder(t, r)
-	if err := r.Admit(alice); err != nil {
+	if err := r.Admit(context.Background(), alice); err != nil {
 		t.Fatal(err)
 	}
-	r.Admit(bob)
+	r.Admit(context.Background(), bob)
 	if want := `"event":"limited","player":"` + rec.ID(bob.Email) + `"`; !strings.Contains(events.String(), want) {
 		t.Errorf("records %q lack %s", events, want)
 	}
@@ -177,18 +178,18 @@ func TestFreedPlaceBackOnNextAction(t *testing.T) {
 	a := use(t, r, alice)
 	startGame(t, a.M, "game-a")
 	clock.Advance(2*time.Minute + time.Second)
-	if err := r.Admit(bob); err != nil {
+	if err := r.Admit(context.Background(), bob); err != nil {
 		t.Fatalf("Admit(B) after A's game expired: %v", err)
 	}
 
-	_, err := r.Use(alice)
+	_, err := r.Use(context.Background(), alice)
 	checkBusyErr(t, "A's next action with B holding the place", err, 1)
 	if r.holdsPlace(alice) {
 		t.Error("A took a place over the cap")
 	}
 
-	r.Release(bob.ID)
-	again, err := r.Use(alice)
+	r.Release(context.Background(), bob.ID)
+	again, err := r.Use(context.Background(), alice)
 	if err != nil {
 		t.Fatalf("A's next action after B's place was released: %v", err)
 	}
@@ -219,26 +220,26 @@ func TestFreedPlaceBackOnNextAction(t *testing.T) {
 func TestHolderAlwaysAdmitted(t *testing.T) {
 	r := placesRegistry(t, 1, 0, nil)
 	for i := 0; i < 3; i++ {
-		if err := r.Admit(alice); err != nil {
+		if err := r.Admit(context.Background(), alice); err != nil {
 			t.Fatalf("Admit(A) #%d holding the place: %v", i+1, err)
 		}
 	}
 	a := use(t, r, alice)
-	checkBusyErr(t, "Admit(B) at the cap", r.Admit(bob), 1)
+	checkBusyErr(t, "Admit(B) at the cap", r.Admit(context.Background(), bob), 1)
 
-	r.Release("no-such-account")
-	checkBusyErr(t, "Admit(B) after releasing an unknown account", r.Admit(bob), 1)
+	r.Release(context.Background(), "no-such-account")
+	checkBusyErr(t, "Admit(B) after releasing an unknown account", r.Admit(context.Background(), bob), 1)
 
-	r.Release(alice.ID)
+	r.Release(context.Background(), alice.ID)
 	select {
 	case <-a.ctx.Done():
 	default:
 		t.Error("A's entry was not closed on Release")
 	}
-	if err := r.Admit(bob); err != nil {
+	if err := r.Admit(context.Background(), bob); err != nil {
 		t.Fatalf("Admit(B) after A's last sign-in ended: %v", err)
 	}
-	checkBusyErr(t, "Admit(A) after B took the place", r.Admit(alice), 1)
+	checkBusyErr(t, "Admit(A) after B took the place", r.Admit(context.Background(), alice), 1)
 }
 
 // TestZeroPlacesIsOff: a cap of 0 never refuses anyone.
@@ -246,7 +247,7 @@ func TestZeroPlacesIsOff(t *testing.T) {
 	r := placesRegistry(t, 0, 0, nil)
 	for i := 0; i < 50; i++ {
 		acct := hostauth.Account{ID: fmt.Sprintf("sub-%d", i), Email: fmt.Sprintf("%d@example.com", i)}
-		if err := r.Admit(acct); err != nil {
+		if err := r.Admit(context.Background(), acct); err != nil {
 			t.Fatalf("Admit for account %d with no cap: %v", i+1, err)
 		}
 	}
@@ -276,16 +277,16 @@ func reviewerRegistry(t *testing.T, max int) *Registry {
 // while C is still refused with the usual busy error.
 func TestReviewerPastTheCap(t *testing.T) {
 	r := reviewerRegistry(t, 1)
-	if err := r.Admit(alice); err != nil {
+	if err := r.Admit(context.Background(), alice); err != nil {
 		t.Fatalf("Admit(A) with a free place: %v", err)
 	}
-	if err := r.Admit(reviewer); err != nil {
+	if err := r.Admit(context.Background(), reviewer); err != nil {
 		t.Fatalf("Admit(reviewer) at the cap: %v", err)
 	}
 	e := use(t, r, reviewer)
 	startGame(t, e.M, "review-game")
-	checkBusyErr(t, "Admit(C) with the reviewer in", r.Admit(carol), 1)
-	if _, err := r.Use(carol); err == nil {
+	checkBusyErr(t, "Admit(C) with the reviewer in", r.Admit(context.Background(), carol), 1)
+	if _, err := r.Use(context.Background(), carol); err == nil {
 		t.Error("Use(C) at the cap with the reviewer in was not refused")
 	}
 }
@@ -297,10 +298,10 @@ func TestUnverifiedReviewerEmailIsRefused(t *testing.T) {
 	r := reviewerRegistry(t, 1)
 	use(t, r, alice)
 	impostor := hostauth.Account{ID: "google-sub-impostor", Email: "reviewer@example.com"}
-	checkBusyErr(t, "Admit(unverified reviewer email) at the cap", r.Admit(impostor), 1)
+	checkBusyErr(t, "Admit(unverified reviewer email) at the cap", r.Admit(context.Background(), impostor), 1)
 	// A verified account with a different email is not the reviewer either.
 	other := hostauth.Account{ID: "google-sub-other", Email: "reviewer@example.org", EmailVerified: true}
-	checkBusyErr(t, "Admit(another verified email) at the cap", r.Admit(other), 1)
+	checkBusyErr(t, "Admit(another verified email) at the cap", r.Admit(context.Background(), other), 1)
 }
 
 // TestReviewerPlaceNotCounted: the reviewer's place does not take one of
@@ -309,12 +310,12 @@ func TestUnverifiedReviewerEmailIsRefused(t *testing.T) {
 func TestReviewerPlaceNotCounted(t *testing.T) {
 	r := reviewerRegistry(t, 1)
 	use(t, r, reviewer)
-	if err := r.Admit(alice); err != nil {
+	if err := r.Admit(context.Background(), alice); err != nil {
 		t.Fatalf("Admit(A) with only the reviewer in: %v", err)
 	}
-	checkBusyErr(t, "Admit(C) with A and the reviewer in", r.Admit(carol), 1)
-	r.Release(alice.ID)
-	if err := r.Admit(carol); err != nil {
+	checkBusyErr(t, "Admit(C) with A and the reviewer in", r.Admit(context.Background(), carol), 1)
+	r.Release(context.Background(), alice.ID)
+	if err := r.Admit(context.Background(), carol); err != nil {
 		t.Fatalf("Admit(C) after A left, the reviewer still in: %v", err)
 	}
 	if !r.holdsPlace(reviewer) || !r.holdsPlace(carol) {
@@ -327,7 +328,7 @@ func TestReviewerPlaceNotCounted(t *testing.T) {
 func TestNoReviewerConfigured(t *testing.T) {
 	r := placesRegistry(t, 1, 0, nil)
 	use(t, r, alice)
-	checkBusyErr(t, "Admit(reviewer account) with no reviewer configured", r.Admit(reviewer), 1)
+	checkBusyErr(t, "Admit(reviewer account) with no reviewer configured", r.Admit(context.Background(), reviewer), 1)
 }
 
 // TestReviewerSettingNormalised: the reviewer setting is matched trimmed

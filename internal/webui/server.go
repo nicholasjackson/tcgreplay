@@ -48,7 +48,13 @@ type Server struct {
 	// and its error. An action the Limit refuses is not a failure. Nil (the
 	// desktop) tells nobody.
 	OnError func(ctx context.Context, action string, err error)
-	hub     *hub
+	// Trace, when set (hosted mode with telemetry on), wraps each board
+	// action: it is handed the live connection's context and the action's
+	// verb and returns the action's context, which Limit, the action and
+	// OnError then get, and a function to call with the action's error
+	// when it ends. Nil (the desktop) traces nothing.
+	Trace func(ctx context.Context, verb string) (context.Context, func(error))
+	hub   *hub
 }
 
 // ImageSource decides where the board loads a card image from. It is
@@ -61,9 +67,10 @@ type Server struct {
 // the image at that address ("" when there is none), which changes
 // whenever its bytes do. Implementations
 // must never block or touch the network: the card endpoint answers on the
-// board's critical path.
+// board's critical path. ctx is the card request's, so a copy the image
+// queues can show in that request's trace.
 type ImageSource interface {
-	Image(src string) (image, fallback, version string)
+	ImageContext(ctx context.Context, src string) (image, fallback, version string)
 }
 
 // New returns a server for m with the UI playing human.
@@ -237,7 +244,7 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 			// A file source image (malie.io) the cache copies resized,
 			// like a TCGdex image: its copy first, the file itself after.
 			if s.Images != nil {
-				if img, _, ver := s.Images.Image(ref.URL); img != ref.URL {
+				if img, _, ver := s.Images.ImageContext(r.Context(), ref.URL); img != ref.URL {
 					images = append(images, CardImage{Image: img, Version: ver})
 				}
 			}
@@ -247,7 +254,7 @@ func (s *Server) serveCard(w http.ResponseWriter, r *http.Request) {
 		img := CardImage{Image: ref.URL}
 		if s.Images != nil {
 			var fb, ver string
-			img.Image, fb, ver = s.Images.Image(ref.URL)
+			img.Image, fb, ver = s.Images.ImageContext(r.Context(), ref.URL)
 			if fb != img.Image {
 				img.Fallback = fb
 			}

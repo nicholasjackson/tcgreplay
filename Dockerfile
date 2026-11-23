@@ -17,7 +17,12 @@
 # also purges the bucket's CDN) and TCGREPLAY_WEB_ANALYTICS_TOKEN (the
 # Cloudflare Web Analytics site token: website and board pages are
 # counted, cookieless; set it only once the privacy page describing
-# visitor counting is live, and clear it to stop counting). The image
+# visitor counting is live, and clear it to stop counting), and
+# TCGREPLAY_GRAFANA_OTLP_URL, TCGREPLAY_GRAFANA_INSTANCE_ID and
+# TCGREPLAY_GRAFANA_TOKEN (all three: send records, log lines, traces and
+# usage counters to Grafana Cloud over OTLP) with
+# TCGREPLAY_GRAFANA_METRICS_URL and TCGREPLAY_GRAFANA_METRICS_USER (keep
+# six weeks of daily usage totals there). The image
 # carries no card data: card sets are loaded from the published copy at
 # start. The shared fan-project
 # notice, card-data credit and help address (internal/notice/notice.json)

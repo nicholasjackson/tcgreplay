@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"strings"
@@ -58,6 +59,7 @@ type Event struct {
 	Message   string
 	Reason    string
 	Idle      string
+	Provider  string // the sign-in provider ("google"), on sign_in
 }
 
 // line is the record as written, in its fixed field order.
@@ -69,9 +71,27 @@ type line struct {
 	Tool      string `json:"tool,omitempty"`
 	Action    string `json:"action,omitempty"`
 	Assistant string `json:"assistant,omitempty"`
+	Provider  string `json:"provider,omitempty"`
 	Message   string `json:"message,omitempty"`
 	Reason    string `json:"reason,omitempty"`
 	Idle      string `json:"idle,omitempty"`
+}
+
+// Line is a record as it was written, handed to the recorder's sink: its
+// fields, already hashed and redacted, and the exact JSON line (with its
+// newline) written to the recorder's writer.
+type Line struct {
+	Time                                                   time.Time
+	Level, Event, Player, Tool, Action, Assistant, Message string
+	Reason, Idle, Provider                                 string
+	JSON                                                   []byte
+}
+
+// Sink receives every record after it is written, with the context of the
+// request it was recorded in (context.Background for background records).
+// It must not block: it is called on the request path.
+type Sink interface {
+	Emit(ctx context.Context, l Line)
 }
 
 // timeFormat is RFC 3339 in UTC with milliseconds.
@@ -88,6 +108,7 @@ type Recorder struct {
 	mu   sync.Mutex
 	day  string
 	seen map[string]struct{}
+	sink Sink
 }
 
 // NewRecorder returns a recorder writing to w, naming players by ids, on
@@ -107,9 +128,25 @@ func (r *Recorder) ID(email string) string {
 	return r.ids.ID(email)
 }
 
-// Record writes e. The email it carries is written only as its player ID;
-// should the address appear in the message or reason, it is cut out too.
-func (r *Recorder) Record(e Event) {
+// SetSink makes the recorder hand every record it writes to s as well (nil
+// for none). Hosted mode sets it once, before serving.
+func (r *Recorder) SetSink(s Sink) {
+	if r == nil {
+		return
+	}
+	r.mu.Lock()
+	r.sink = s
+	r.mu.Unlock()
+}
+
+// Record writes e, as RecordContext with no request.
+func (r *Recorder) Record(e Event) { r.RecordContext(context.Background(), e) }
+
+// RecordContext writes e, recorded while serving the request ctx belongs
+// to, and hands it to the sink with ctx. The email it carries is written
+// only as its player ID; should the address appear in the message or
+// reason, it is cut out too.
+func (r *Recorder) RecordContext(ctx context.Context, e Event) {
 	if r == nil {
 		return
 	}
@@ -117,14 +154,16 @@ func (r *Recorder) Record(e Event) {
 	if e.Name == Error {
 		level = "error"
 	}
+	now := r.now().UTC()
 	l := line{
-		Time:      r.now().UTC().Format(timeFormat),
+		Time:      now.Format(timeFormat),
 		Level:     level,
 		Event:     e.Name,
 		Player:    r.ids.ID(e.Email),
 		Tool:      e.Tool,
 		Action:    e.Action,
 		Assistant: e.Assistant,
+		Provider:  e.Provider,
 		Message:   cut(e.Message, e.Email),
 		Reason:    cut(e.Reason, e.Email),
 		Idle:      e.Idle,
@@ -135,8 +174,17 @@ func (r *Recorder) Record(e Event) {
 	}
 	b = append(b, '\n')
 	r.mu.Lock()
-	defer r.mu.Unlock()
 	r.w.Write(b)
+	sink := r.sink
+	r.mu.Unlock()
+	// Outside the lock, so a slow sink never holds up other records.
+	if sink != nil {
+		sink.Emit(ctx, Line{
+			Time: now, Level: l.Level, Event: l.Event, Player: l.Player, Tool: l.Tool, Action: l.Action,
+			Assistant: l.Assistant, Message: l.Message, Reason: l.Reason, Idle: l.Idle, Provider: l.Provider,
+			JSON: b,
+		})
+	}
 }
 
 // Active notes that the player with email was active. Their first
@@ -144,7 +192,11 @@ func (r *Recorder) Record(e Event) {
 // player_day records is its number of distinct players (a restart during
 // the day forgets who was seen, so a player active again is counted
 // again).
-func (r *Recorder) Active(email string) {
+func (r *Recorder) Active(email string) { r.ActiveContext(context.Background(), email) }
+
+// ActiveContext is Active for activity in the request ctx belongs to, so
+// a player_day record carries that request's trace.
+func (r *Recorder) ActiveContext(ctx context.Context, email string) {
 	if r == nil {
 		return
 	}
@@ -161,7 +213,7 @@ func (r *Recorder) Active(email string) {
 	r.seen[id] = struct{}{}
 	r.mu.Unlock()
 	if !seen {
-		r.Record(Event{Name: PlayerDay, Email: email})
+		r.RecordContext(ctx, Event{Name: PlayerDay, Email: email})
 	}
 }
 

@@ -2,6 +2,7 @@ package hostauth
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"strings"
 	"sync"
@@ -66,7 +67,7 @@ func TestRecordsRateLimit(t *testing.T) {
 	a, _ := newLimited(t, 2)
 	rec, buf := recordTo(t, a)
 	spend(t, a, limitAccount, 2)
-	if err := a.allow(limitAccount); err == nil {
+	if err := a.allow(context.Background(), limitAccount); err == nil {
 		t.Fatal("third request allowed at a limit of 2")
 	}
 	wantRecord(t, buf, telemetry.Limited, rec.ID(limitAccount.Email), `,"message":"too many requests: this account is limited to 2 requests a minute`)

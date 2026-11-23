@@ -33,7 +33,7 @@ func (s *Service) Handler() http.Handler {
 // back to the page, which shows the outcome, or shows the page with why
 // the check failed.
 func (s *Service) serveCheck(w http.ResponseWriter, r *http.Request) {
-	s.Recorder.Record(telemetry.Event{Name: telemetry.AdminAction, Email: email(r), Action: "check"})
+	s.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.AdminAction, Email: email(r), Action: "check"})
 	if _, err := s.CheckNow(r.Context(), s.by(r)); err != nil {
 		s.render(w, http.StatusBadGateway, email(r), "The check for published card sets failed: "+err.Error()+". The loaded card sets are unchanged.")
 		return
@@ -60,7 +60,7 @@ func (s *Service) servePlayer(w http.ResponseWriter, r *http.Request) {
 		s.render(w, http.StatusBadRequest, email(r), "Enter the email address the player signed in with.")
 		return
 	}
-	s.Recorder.Record(telemetry.Event{Name: telemetry.AdminAction, Email: email(r), Action: "lookup"})
+	s.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.AdminAction, Email: email(r), Action: "lookup"})
 	s.renderLookup(w, http.StatusOK, email(r), "", &Lookup{Email: player, ID: s.PlayerID(player)})
 }
 
@@ -94,7 +94,7 @@ func (s *Service) serveClear(w http.ResponseWriter, r *http.Request) {
 		s.render(w, http.StatusBadRequest, email(r), "Name a set by its code (such as MEG) or id (such as me01).")
 		return
 	}
-	s.Recorder.Record(telemetry.Event{Name: telemetry.AdminAction, Email: email(r), Action: "clear"})
+	s.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.AdminAction, Email: email(r), Action: "clear"})
 	_, err := s.Start(r.Context(), s.by(r), set, all)
 	switch {
 	case err == nil:

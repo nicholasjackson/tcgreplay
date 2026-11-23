@@ -6,6 +6,8 @@ import (
 	"errors"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
@@ -20,7 +22,10 @@ import (
 // The account comes from each request's token and the assistant from each
 // request's session, never from anything cached at session creation. It
 // must run inside the rate limit, so a refused request is recorded once,
-// as limited, by the limit. It never changes the result.
+// as limited, by the limit. It never changes the result. Records carry
+// the trace of ctx (the tool call's span, as hosted mode's tracing runs
+// outermost), and a failed call marks that span failed with the same
+// redacted message as its error record.
 func (r *Registry) MCPMiddleware() mcp.Middleware {
 	return func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
@@ -47,7 +52,7 @@ func (r *Registry) MCPMiddleware() mcp.Middleware {
 			res, err := next(ctx, method, req)
 
 			rec := r.cfg.Recorder
-			rec.Record(telemetry.Event{Name: telemetry.ToolCall, Email: acct.Email, Tool: tool, Assistant: assistant})
+			rec.RecordContext(ctx, telemetry.Event{Name: telemetry.ToolCall, Email: acct.Email, Tool: tool, Assistant: assistant})
 			failed, msg := err != nil, ""
 			if failed {
 				msg = err.Error()
@@ -57,11 +62,13 @@ func (r *Registry) MCPMiddleware() mcp.Middleware {
 			switch {
 			case failed:
 				sensitive := append(telemetry.SensitiveFromJSON(args), r.gameNames(acct)...)
-				rec.Record(telemetry.Event{Name: telemetry.Error, Email: acct.Email, Tool: tool, Message: telemetry.Redact(msg, sensitive)})
+				redacted := telemetry.Redact(msg, sensitive)
+				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.Error, Email: acct.Email, Tool: tool, Message: redacted})
+				trace.SpanFromContext(ctx).SetStatus(codes.Error, redacted)
 			case tool == "import_log":
-				rec.Record(telemetry.Event{Name: telemetry.Import, Email: acct.Email, Assistant: assistant})
+				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.Import, Email: acct.Email, Assistant: assistant})
 			case tool == "new_game":
-				rec.Record(telemetry.Event{Name: telemetry.NewGame, Email: acct.Email, Assistant: assistant})
+				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.NewGame, Email: acct.Email, Assistant: assistant})
 			}
 			return res, err
 		}
@@ -80,14 +87,18 @@ func resultText(res *mcp.CallToolResult) string {
 
 // BoardError is the board's error hook (webui.Server.OnError): it records
 // a failed board action as error, naming the action, with the message
-// redacted against the account's current game. Limit refusals, already
-// recorded as limited, are not recorded again.
+// redacted against the account's current game, with the trace of ctx (the
+// board action's span in hosted mode), which it marks failed with the same
+// message. Limit refusals, already recorded as limited, are not recorded
+// again.
 func (r *Registry) BoardError(ctx context.Context, action string, err error) {
 	if r.cfg.Recorder == nil || err == nil || errors.Is(err, hostauth.ErrRateLimited) || errors.Is(err, hostauth.ErrBusy) {
 		return
 	}
 	acct, _ := hostauth.AccountFrom(ctx)
-	r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.Error, Email: acct.Email, Action: action, Message: telemetry.Redact(err.Error(), r.gameNames(acct))})
+	redacted := telemetry.Redact(err.Error(), r.gameNames(acct))
+	r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Error, Email: acct.Email, Action: action, Message: redacted})
+	trace.SpanFromContext(ctx).SetStatus(codes.Error, redacted)
 }
 
 // gameNames returns the player text in acct's current game, for redaction:
