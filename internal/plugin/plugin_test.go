@@ -28,7 +28,14 @@ func realSources(t *testing.T) Sources {
 		Listing:      string(read("plugin/listing.json")),
 		ReleaseNotes: string(read("plugin/release-notes.md")),
 		Icon:         read("plugin/assets/icon.png"),
+		Skills:       map[string]string{"tcgreplay-coach": string(read("plugin/skills/tcgreplay-coach/SKILL.md"))},
 	}
+}
+
+// coachSkill is the real skill with edit applied to its text.
+func coachSkill(t *testing.T, edit func(string) string) map[string]string {
+	t.Helper()
+	return map[string]string{"tcgreplay-coach": edit(realSources(t).Skills["tcgreplay-coach"])}
 }
 
 // unzip returns the package's entries in order, and their contents.
@@ -58,7 +65,8 @@ func unzip(t *testing.T, b []byte) ([]string, map[string][]byte) {
 
 // builtPlugin is the parts of plugin.json the tests read.
 type builtPlugin struct {
-	Name       string `json:"name"`
+	Name       string            `json:"name"`
+	Author     map[string]string `json:"author"`
 	Extensions struct {
 		OpenAI struct {
 			Interface struct {
@@ -93,7 +101,8 @@ const (
 )
 
 // TestBuildFromRealSources: built from the repository's sources, the
-// package holds exactly plugin.json, mcp.json and the icon. plugin.json
+// package holds exactly plugin.json, mcp.json, the icon and the skill,
+// at skills/tcgreplay-coach/SKILL.md unchanged. plugin.json
 // shows "TCG Replay", a long description ending with the shared notice and
 // credit, links built from the App Platform address and the notice's help
 // link, five positive and three negative test cases and the release notes;
@@ -106,16 +115,25 @@ func TestBuildFromRealSources(t *testing.T) {
 		t.Fatal(err)
 	}
 	names, files := unzip(t, b)
-	if strings.Join(names, ",") != "plugin.json,mcp.json,assets/icon.png" {
-		t.Fatalf("package entries %v, want plugin.json, mcp.json, assets/icon.png", names)
+	if strings.Join(names, ",") != "plugin.json,mcp.json,assets/icon.png,skills/tcgreplay-coach/SKILL.md" {
+		t.Fatalf("package entries %v, want plugin.json, mcp.json, assets/icon.png, skills/tcgreplay-coach/SKILL.md", names)
 	}
 	if !bytes.Equal(files["assets/icon.png"], src.Icon) {
 		t.Error("package icon differs from plugin/assets/icon.png")
+	}
+	if string(files["skills/tcgreplay-coach/SKILL.md"]) != src.Skills["tcgreplay-coach"] {
+		t.Error("package skill differs from plugin/skills/tcgreplay-coach/SKILL.md")
+	}
+	if bytes.Contains(files["plugin.json"], []byte(`"skills"`)) {
+		t.Error("plugin.json has a skills field; the schema forbids it and OpenAI discovers skills/")
 	}
 
 	var p builtPlugin
 	if err := json.Unmarshal(files["plugin.json"], &p); err != nil {
 		t.Fatal(err)
+	}
+	if len(p.Author) != 1 || p.Author["name"] != "Nic Jackson" {
+		t.Errorf("author %v, want only the name Nic Jackson (no email)", p.Author)
 	}
 	in := p.Extensions.OpenAI.Interface
 	if p.Name != "tcgreplay" || in.DisplayName != "TCG Replay" {
@@ -295,6 +313,9 @@ func TestBuildRefusesBrokenSources(t *testing.T) {
 		{"test credentials", func(t *testing.T, s *Sources) {
 			s.Listing = editListing(t, func(l map[string]any) { l["review"].(map[string]any)["test_credentials"] = map[string]any{"user": "x"} })
 		}, "test_credentials"},
+		{"author email", func(t *testing.T, s *Sources) {
+			s.Listing = editListing(t, func(l map[string]any) { l["email"] = "someone@example.com" })
+		}, "email"},
 		{"client secret", func(t *testing.T, s *Sources) {
 			s.Listing = editListing(t, func(l map[string]any) { l["clientSecret"] = "x" })
 		}, "clientSecret"},
@@ -323,7 +344,33 @@ func TestBuildRefusesBrokenSources(t *testing.T) {
 		{"unknown field", func(t *testing.T, s *Sources) {
 			s.Listing = editListing(t, func(l map[string]any) { l["subtitle"] = "x" })
 		}, "subtitle"},
+		{"category OpenAI does not list", func(t *testing.T, s *Sources) {
+			s.Listing = editListing(t, func(l map[string]any) { l["category"] = "Games" })
+		}, "category"},
 		{"no release notes", func(t *testing.T, s *Sources) { s.ReleaseNotes = "  \n" }, "release notes"},
+		{"no skill", func(t *testing.T, s *Sources) { s.Skills = nil }, "at least one"},
+		{"skill without frontmatter", func(t *testing.T, s *Sources) {
+			s.Skills = map[string]string{"tcgreplay-coach": "# Just instructions\n"}
+		}, "no frontmatter"},
+		{"skill name not its directory", func(t *testing.T, s *Sources) {
+			s.Skills = coachSkill(t, func(x string) string { return strings.Replace(x, "name: tcgreplay-coach", "name: coach", 1) })
+		}, "must match its directory"},
+		{"skill directory name", func(t *testing.T, s *Sources) {
+			s.Skills = map[string]string{"TCG_Coach": "---\nname: TCG_Coach\ndescription: x\n---\nbody\n"}
+		}, "directory name"},
+		{"skill identity over 64", func(t *testing.T, s *Sources) {
+			n := strings.Repeat("x", 60)
+			s.Skills = map[string]string{n: "---\nname: " + n + "\ndescription: x\n---\nbody\n"}
+		}, "skill identity"},
+		{"skill without description", func(t *testing.T, s *Sources) {
+			s.Skills = map[string]string{"coach": "---\nname: coach\n---\nbody\n"}
+		}, "no description"},
+		{"skill description over 1024", func(t *testing.T, s *Sources) {
+			s.Skills = map[string]string{"coach": "---\nname: coach\ndescription: " + strings.Repeat("x", 1025) + "\n---\nbody\n"}
+		}, "over 1024"},
+		{"skill without instructions", func(t *testing.T, s *Sources) {
+			s.Skills = map[string]string{"coach": "---\nname: coach\ndescription: x\n---\n\n"}
+		}, "no instructions"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			src := realSources(t)

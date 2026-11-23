@@ -21,9 +21,10 @@
   const active = $derived(slot === 'active');
   const top = $derived(stack?.pokemon?.at(-1));
   const conds = $derived(stack?.conditions || []);
-  // Asleep turns the card counter-clockwise, Paralyzed clockwise, Confused
-  // upside down, as at a real table.
-  const rot = $derived(conds.includes('confused') ? 180 : conds.includes('asleep') ? -90 : conds.includes('paralyzed') ? 90 : 0);
+  // Each Special Condition is named in the Active's readout. The card is
+  // not turned as at a real table: an upside-down card read as a fault.
+  const CONDITION_LABELS = [['asleep', 'Asleep'], ['burned', 'Burned'], ['confused', 'Confused'], ['paralyzed', 'Paralyzed'], ['poisoned', 'Poisoned']];
+  const condLabels = $derived(CONDITION_LABELS.filter(([c]) => conds.includes(c)));
   const hp = $derived(hpOf(stack));
   const left = $derived(hpLeft(stack));
   const shown = $derived(left === null ? null : Math.max(left, 0));
@@ -87,12 +88,12 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div class="pile" {@attach draggable(app.opponent !== 'acting' && { kind: 'stack', from: spec })} role="group" onclick={pileTap}>
       <div class="main">
-        <Card card={top} size={active ? 'lg' : 'md'} from={spec} rotate={rot} draggable={false} onmenu={menu} />
+        <Card card={top} size={active ? 'lg' : 'md'} from={spec} draggable={false} onmenu={menu} />
         {#if strips.length}
           <!-- Tucked behind the card, as at a table: each strip is a box
                the height of what shows of its card, the card hanging down
                from it behind the Pokémon. -->
-          <div class="tucks" style:--rot="{rot}deg">
+          <div class="tucks">
             {#each strips as t, i (t.card.iid)}
               <div class="tuck" class:first={i === 0} style:--i={i} style:z-index={TUCK_CAP - i}>
                 <Card card={t.card} from={spec} role={t.role} onmenu={tuckMenu(t)} onclick={() => (app.zoom = t.card)} />
@@ -102,8 +103,6 @@
         {/if}
         <div class="badges">
           {#if stack.damage_turn}<span class="dmg" title="{stack.damage_turn} damage this turn; {stack.damage} in total">+{stack.damage_turn}</span>{/if}
-          {#if conds.includes('poisoned')}<span class="marker poison" title="Poisoned">P</span>{/if}
-          {#if conds.includes('burned')}<span class="marker burn" title="Burned">B</span>{/if}
         </div>
         <div class="controls">
           <button onclick={() => dmg(-10)} title="Heal 10">−</button>
@@ -124,6 +123,7 @@
         {/if}
         <span class="tags">
           {#if damage}<span class="tag" title="{damage} damage">−{damage}</span>{/if}
+          {#each condLabels as [c, name] (c)}<span class="cond" data-c={c}>{name}</span>{/each}
           {@render dots('lg')}
           {#if energy.length && !phone}<span class="count">{energy.length} Energy</span>{/if}
           {#if !phone}{#each tools as t (t.iid)}<span class="tool" title="Tool: {t.name}">{t.name}</span>{/each}{/if}
@@ -187,8 +187,6 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    rotate: var(--rot);
-    transition: rotate 0.25s ease;
   }
   /* A strip: the box of what shows of its card, the card hanging from it. */
   .tuck {
@@ -241,8 +239,6 @@
     box-shadow: var(--shadow-badge);
   }
   .dmg { background: var(--damage-bg); color: var(--damage-ink); }
-  .marker.poison { background: var(--condition-poisoned); color: var(--glyph-ink); }
-  .marker.burn { background: var(--condition-burned); color: var(--glyph-ink); }
   .controls {
     position: absolute;
     bottom: var(--space-1);
@@ -346,6 +342,11 @@
   .tags { display: flex; align-items: center; gap: 0.6em; white-space: nowrap; min-height: 1.4em; font-size: max(var(--fs-ui-s), 1em); color: var(--mat-muted); }
   /* A Tool's name, so the Active's readout says what it holds. */
   .tool { padding: 1px 0.5em; border-radius: var(--radius-xs); background: var(--mat-chip); color: var(--mat-ink); font: var(--fw-ui) max(var(--fs-ui-s), 0.92em) var(--font-sans); }
+  /* A Special Condition's name: Poisoned and Burned in their colours, the
+     others in the mat's chip. */
+  .cond { padding: 1px 0.5em; border-radius: var(--radius-xs); background: var(--mat-chip); color: var(--mat-ink); font: var(--fw-ui) max(var(--fs-ui-s), 0.92em) var(--font-sans); }
+  .cond[data-c='poisoned'] { background: var(--condition-poisoned); color: var(--glyph-ink); }
+  .cond[data-c='burned'] { background: var(--condition-burned); color: var(--glyph-ink); }
   .tag { padding: 1px 0.5em; border-radius: var(--radius-xs); background: var(--damage-bg); color: var(--damage-ink); font: var(--fw-num) max(var(--fs-ui-s), 1em) var(--font-mono); }
 
   /* The phone (the PhoneBoard design): flat cards. A benched card is one
@@ -376,7 +377,7 @@
   :global(.app.phone) .slash { margin: 0 var(--space-1); }
   :global(.app.phone) .bar { height: 5px; border-radius: 3px; }
   :global(.app.phone) .tags { gap: 6px; min-height: 0; font-size: var(--fs-11); line-height: normal; }
-  :global(.app.phone) .tag { padding: 0 5px; font-size: var(--fs-11); line-height: normal; }
+  :global(.app.phone) .tag, :global(.app.phone) .cond { padding: 0 5px; font-size: var(--fs-11); line-height: normal; }
   :global(.app.phone) .dots.lg { gap: 6px; }
   :global(.app.phone) .dots.lg i { width: 9px; }
 </style>

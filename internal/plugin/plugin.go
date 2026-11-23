@@ -1,6 +1,6 @@
 // Package plugin builds the ChatGPT plugin package that is uploaded to
-// OpenAI's plugin dashboard: a ZIP holding plugin.json, mcp.json and the
-// listing icon.
+// OpenAI's plugin dashboard: a ZIP holding plugin.json, mcp.json, the
+// listing icon and the bundled skills.
 //
 // Only the hand-written parts of the listing live in plugin/listing.json.
 // The public address comes from TCGREPLAY_PUBLIC_URL in .do/app.yaml, and
@@ -20,6 +20,7 @@ import (
 	_ "image/png" // registers the PNG decoder for image.DecodeConfig
 	"net/url"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -40,6 +41,8 @@ type Sources struct {
 	ReleaseNotes string
 	// Icon is plugin/assets/icon.png.
 	Icon []byte
+	// Skills are plugin/skills/<name>/SKILL.md, keyed by the directory name.
+	Skills map[string]string
 }
 
 // OpenAI's limits on a plugin package.
@@ -54,6 +57,9 @@ const (
 	minIconPx           = 48
 	maxIconPx           = 4096
 	maxIconBytes        = 5 << 20
+	maxSkillNameChars   = 64
+	maxSkillIDChars     = 64 // "<plugin name>:<skill name>"
+	maxSkillDescChars   = 1024
 )
 
 // Paths inside the package.
@@ -61,6 +67,7 @@ const (
 	iconPath   = "assets/icon.png"
 	pluginPath = "plugin.json"
 	mcpPath    = "mcp.json"
+	skillsDir  = "skills"
 )
 
 // publicPlaceholder is what the listing source writes where it needs the
@@ -71,6 +78,11 @@ const publicPlaceholder = "{public}"
 // the externally hosted demo video.
 const demoRecordingPath = "review.demo_recording_url"
 
+// categories are the listing categories OpenAI accepts
+// (plugin_category_unknown, developers.openai.com/plugins/deploy/submission-errors,
+// read 2026-11-22).
+var categories = []string{"Productivity", "Creativity", "Developer Tools", "Business & Operations", "Data & Analytics", "Communication", "Education & Research", "Security", "Finance", "Healthcare", "Travel", "Entertainment", "Other"}
+
 var (
 	nameRule        = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 	versionRule     = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
@@ -79,7 +91,7 @@ var (
 	// forbiddenKeys may appear nowhere in the listing source: reviewer
 	// credentials go only in the dashboard, and apps and hooks are blocked
 	// in submitted plugins.
-	forbiddenKeys = []string{"clientSecret", "client_secret", "test_credentials", "testCredentials", "reviewer_instructions", "password", "apps", "hooks"}
+	forbiddenKeys = []string{"clientSecret", "client_secret", "test_credentials", "testCredentials", "reviewer_instructions", "password", "apps", "hooks", "email"}
 )
 
 // fixedTime is every ZIP entry's modification time, so two builds from
@@ -124,6 +136,7 @@ type listing struct {
 	ShortDescription string   `json:"shortDescription"`
 	Description      string   `json:"description"`
 	DeveloperName    string   `json:"developerName"`
+	Author           string   `json:"author"`
 	Category         string   `json:"category"`
 	Capabilities     []string `json:"capabilities"`
 	DefaultPrompt    []string `json:"defaultPrompt"`
@@ -159,9 +172,16 @@ type pluginJSON struct {
 	Name        string           `json:"name"`
 	Version     string           `json:"version"`
 	Description string           `json:"description"`
+	Author      *author          `json:"author,omitempty"`
 	Homepage    string           `json:"homepage"`
 	Repository  string           `json:"repository"`
 	Extensions  pluginExtensions `json:"extensions"`
+}
+
+// author is plugin.json's author: a name only, so no email reaches the
+// public listing.
+type author struct {
+	Name string `json:"name"`
 }
 
 type pluginExtensions struct {
@@ -254,11 +274,64 @@ func Build(src Sources) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return writeZip([]zipEntry{
+	skills, err := checkSkills(src.Skills, l.Name)
+	if err != nil {
+		return nil, err
+	}
+	entries := []zipEntry{
 		{pluginPath, append(pj, '\n')},
 		{mcpPath, append(mj, '\n')},
 		{iconPath, src.Icon},
-	})
+	}
+	return writeZip(append(entries, skills...))
+}
+
+// checkSkills refuses a package without a skill (OpenAI rejects a public
+// submission with none) and any skill OpenAI's validator would reject, and
+// returns the skills' package entries, sorted by name. plugin.json does not
+// list them: OpenAI discovers skills from the root skills/ directory.
+func checkSkills(skills map[string]string, pluginName string) ([]zipEntry, error) {
+	if len(skills) == 0 {
+		return nil, errors.New("skills: no skill in plugin/skills/; a public submission needs at least one")
+	}
+	names := make([]string, 0, len(skills))
+	for name := range skills {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	entries := make([]zipEntry, 0, len(names))
+	for _, dir := range names {
+		where := "skills: plugin/skills/" + dir + "/SKILL.md"
+		if !nameRule.MatchString(dir) || len(dir) > maxSkillNameChars {
+			return nil, fmt.Errorf("%s: directory name must be 1 to %d lowercase letters and digits joined by single hyphens", where, maxSkillNameChars)
+		}
+		if id := pluginName + ":" + dir; len(id) > maxSkillIDChars {
+			return nil, fmt.Errorf("%s: skill identity %q is over %d characters", where, id, maxSkillIDChars)
+		}
+		text := skills[dir]
+		head, body, ok := strings.Cut(strings.TrimPrefix(text, "---\n"), "\n---\n")
+		if !ok || !strings.HasPrefix(text, "---\n") {
+			return nil, fmt.Errorf("%s: no frontmatter (YAML between --- lines)", where)
+		}
+		fields := map[string]string{}
+		for _, line := range strings.Split(head, "\n") {
+			if k, v, ok := strings.Cut(line, ":"); ok {
+				fields[strings.TrimSpace(k)] = strings.TrimSpace(v)
+			}
+		}
+		switch desc := fields["description"]; {
+		case fields["name"] != dir:
+			return nil, fmt.Errorf("%s: frontmatter name %q must match its directory %q", where, fields["name"], dir)
+		case desc == "":
+			return nil, fmt.Errorf("%s: frontmatter has no description", where)
+		case utf8.RuneCountInString(desc) > maxSkillDescChars:
+			return nil, fmt.Errorf("%s: description is %d characters, over %d", where, utf8.RuneCountInString(desc), maxSkillDescChars)
+		case strings.TrimSpace(body) == "":
+			return nil, fmt.Errorf("%s: no instructions after the frontmatter", where)
+		}
+		entries = append(entries, zipEntry{skillsDir + "/" + dir + "/SKILL.md", []byte(text)})
+	}
+	return entries, nil
 }
 
 // parseNotice reads the shared notice file.
@@ -320,7 +393,7 @@ func checkSource(v any, path string, n notice) error {
 		for _, k := range keys {
 			for _, bad := range forbiddenKeys {
 				if strings.EqualFold(k, bad) {
-					return fmt.Errorf("listing: %q is not allowed in the listing source (reviewer credentials go only in OpenAI's dashboard; apps and hooks are blocked)", join(path, k))
+					return fmt.Errorf("listing: %q is not allowed in the listing source (reviewer credentials go only in OpenAI's dashboard; apps and hooks are blocked; no email address is published)", join(path, k))
 				}
 			}
 			if err := checkSource(v[k], join(path, k), n); err != nil {
@@ -421,8 +494,8 @@ func compose(l listing, n notice, public *url.URL, notes string) (pluginJSON, mc
 		return p, m, fmt.Errorf("listing: long description (description, notice and credit) is %d characters, over %d", utf8.RuneCountInString(long), maxDescriptionChars)
 	case l.DeveloperName == "":
 		return p, m, errors.New("listing: developerName is empty")
-	case l.Category == "":
-		return p, m, errors.New("listing: category is empty")
+	case !slices.Contains(categories, l.Category):
+		return p, m, fmt.Errorf("listing: category %q must be one of %s", l.Category, strings.Join(categories, ", "))
 	case len(l.DefaultPrompt) > maxPrompts:
 		return p, m, fmt.Errorf("listing: %d starter prompts (defaultPrompt), at most %d", len(l.DefaultPrompt), maxPrompts)
 	case l.BrandColor != "" && !colourRule.MatchString(l.BrandColor):
@@ -497,6 +570,9 @@ func compose(l listing, n notice, public *url.URL, notes string) (pluginJSON, mc
 			Review:      l.Review,
 			Publication: publication{ReleaseNotes: notes},
 		}},
+	}
+	if a := strings.TrimSpace(l.Author); a != "" {
+		p.Author = &author{Name: a}
 	}
 	srv := mcpServer{Type: "streamable-http", URL: base + "/mcp"}
 	srv.Extensions.OpenAI.Auth.Type = "oauth"

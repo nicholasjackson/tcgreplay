@@ -8,9 +8,12 @@ Replay is unlisted.
 1. **Verify your identity** in the OpenAI Platform's organization
    settings. Submission needs a verified developer.
 2. **Build the package**: `make plugin` writes `bin/tcgreplay-plugin.zip`
-   from `listing.json`, `release-notes.md`, `assets/icon.png`, the public
-   address in `.do/app.yaml` and the notice in `internal/notice/notice.json`.
-   Bump `version` in `listing.json` for every new submission.
+   from `listing.json`, `release-notes.md`, `assets/icon.png`, the skills in
+   `skills/` (each `skills/<name>/SKILL.md`), the public address in
+   `.do/app.yaml` and the notice in `internal/notice/notice.json`. OpenAI
+   refuses a public submission without at least one skill, and scans every
+   skill for safety (allow up to 2 hours). Bump `version` in `listing.json`
+   for every new submission.
 3. **Upload the ZIP** in OpenAI's plugin dashboard. Fix any validation error
    in `listing.json` (or the builder, `internal/plugin`) and rebuild.
 4. **Connect the MCP server.** In the dashboard's MCP step:

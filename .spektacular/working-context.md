@@ -42,3 +42,6 @@
 - User asked (2026-11-23) to draft the whole spec without per-section confirmations and give a summary at the end.
 - Spec drafted and reviewed; reviewer fixes applied without asking (user delegated): edge tracing conditional on current Cloudflare plan (no paid plan), sampling allowed past free tier, distinct players added, 5% latency threshold, export-failure record after 5 min.
 - Split check: not offered (one capability; logs, traces and metrics share one export path and link to each other; edge traces depend on app traces).
+
+## Plan-epic run (2026-11-23)
+- Orchestrating spek-plan-epic for epic 20261111093348-e1b5c2b4-public-launch. Only grafana-observability needs a plan (the other 6 are done).

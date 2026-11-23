@@ -1,8 +1,8 @@
 // Command tcgreplay-plugin builds the ChatGPT plugin package for OpenAI's
 // plugin dashboard (see package plugin) from the repository's sources:
 // .do/app.yaml, internal/notice/notice.json, plugin/listing.json,
-// plugin/release-notes.md and plugin/assets/icon.png. Run it with
-// `make plugin`.
+// plugin/release-notes.md, plugin/assets/icon.png and
+// plugin/skills/*/SKILL.md. Run it with `make plugin`.
 package main
 
 import (
@@ -43,6 +43,20 @@ func run(root, out string) error {
 			return err
 		}
 		f.set(b)
+	}
+	// Every plugin/skills/<name>/SKILL.md; none is left to Build, which
+	// names the rule.
+	src.Skills = map[string]string{}
+	paths, err := filepath.Glob(filepath.Join(root, "plugin", "skills", "*", "SKILL.md"))
+	if err != nil {
+		return err
+	}
+	for _, p := range paths {
+		b, err := os.ReadFile(p)
+		if err != nil {
+			return err
+		}
+		src.Skills[filepath.Base(filepath.Dir(p))] = string(b)
 	}
 	// A missing notice file is left to Build, which names the rule.
 	if b, err := read("internal/notice/notice.json"); err == nil {
