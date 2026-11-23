@@ -252,7 +252,7 @@ func TestActiveFromUseOnly(t *testing.T) {
 	if _, _, err := r.ResolveMCP(context.Background(), tokenExtra(alice.ID, alice.Email)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := r.Use(bob); !errors.Is(err, hostauth.ErrBusy) {
+	if _, err := r.Use(context.Background(), bob); !errors.Is(err, hostauth.ErrBusy) {
 		t.Fatalf("Use(bob) at a cap of 1: %v, want busy", err)
 	}
 	d := days()

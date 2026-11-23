@@ -44,7 +44,7 @@ func newLimited(t *testing.T, limit int) (*Auth, *fakeClock) {
 func spend(t *testing.T, a *Auth, acct Account, n int) {
 	t.Helper()
 	for i := 0; i < n; i++ {
-		if err := a.allow(acct); err != nil {
+		if err := a.allow(context.Background(), acct); err != nil {
 			t.Fatalf("request %d of %d for %s refused: %v", i+1, n, acct.Email, err)
 		}
 	}
@@ -75,21 +75,21 @@ func checkLimited(t *testing.T, err error, limit int, want string) {
 func TestLimitRefusesAndRecovers(t *testing.T) {
 	a, clock := newLimited(t, 5)
 	spend(t, a, limitAccount, 5)
-	checkLimited(t, a.allow(limitAccount), 5, "12s")
+	checkLimited(t, a.allow(context.Background(), limitAccount), 5, "12s")
 
 	// Half way to the next request, the wait is half as long.
 	clock.Advance(6 * time.Second)
-	checkLimited(t, a.allow(limitAccount), 5, "6s")
+	checkLimited(t, a.allow(context.Background(), limitAccount), 5, "6s")
 
 	// 60/5 = 12 seconds after running out, one request is back.
 	clock.Advance(6 * time.Second)
 	spend(t, a, limitAccount, 1)
-	checkLimited(t, a.allow(limitAccount), 5, "12s")
+	checkLimited(t, a.allow(context.Background(), limitAccount), 5, "12s")
 
 	// A minute on, the whole allowance is back, and no more.
 	clock.Advance(time.Minute)
 	spend(t, a, limitAccount, 5)
-	checkLimited(t, a.allow(limitAccount), 5, "12s")
+	checkLimited(t, a.allow(context.Background(), limitAccount), 5, "12s")
 }
 
 // TestLimitWaitForHighLimit shows the wait in the message for a high limit
@@ -97,7 +97,7 @@ func TestLimitRefusesAndRecovers(t *testing.T) {
 func TestLimitWaitForHighLimit(t *testing.T) {
 	a, clock := newLimited(t, 300)
 	spend(t, a, limitAccount, 300)
-	checkLimited(t, a.allow(limitAccount), 300, "1s")
+	checkLimited(t, a.allow(context.Background(), limitAccount), 300, "1s")
 	clock.Advance(200 * time.Millisecond)
 	spend(t, a, limitAccount, 1)
 }
@@ -107,9 +107,9 @@ func TestLimitWaitForHighLimit(t *testing.T) {
 func TestLimitAccountsIndependent(t *testing.T) {
 	a, _ := newLimited(t, 3)
 	spend(t, a, limitAccount, 3)
-	checkLimited(t, a.allow(limitAccount), 3, "20s")
+	checkLimited(t, a.allow(context.Background(), limitAccount), 3, "20s")
 	spend(t, a, otherAccount, 3)
-	checkLimited(t, a.allow(otherAccount), 3, "20s")
+	checkLimited(t, a.allow(context.Background(), otherAccount), 3, "20s")
 }
 
 // TestLimitZeroIsOff shows a limit of 0 never refuses, through allow, the
@@ -122,7 +122,7 @@ func TestLimitZeroIsOff(t *testing.T) {
 	})
 	req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{Name: "ping"}, Extra: &mcp.RequestExtra{TokenInfo: tokenFor(limitAccount)}}
 	for i := 0; i < 10000; i++ {
-		if err := a.allow(limitAccount); err != nil {
+		if err := a.allow(context.Background(), limitAccount); err != nil {
 			t.Fatalf("request %d refused with no limit: %v", i+1, err)
 		}
 		if err := a.BoardLimit(ctx); err != nil {
@@ -215,7 +215,7 @@ func TestMCPMiddlewareSkipsNotifications(t *testing.T) {
 		}
 	}
 	spend(t, a, limitAccount, 2)
-	checkLimited(t, a.allow(limitAccount), 2, "30s")
+	checkLimited(t, a.allow(context.Background(), limitAccount), 2, "30s")
 	if _, err := h(context.Background(), "notifications/initialized", note); err != nil {
 		t.Errorf("notification over the limit: %v, want it passed", err)
 	}

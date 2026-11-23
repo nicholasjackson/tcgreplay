@@ -369,7 +369,7 @@ func (a *Auth) serveToken(w http.ResponseWriter, r *http.Request) {
 		if code == nil || now.After(code.expires) || code.clientID != c.id ||
 			code.redirect != r.PostForm.Get("redirect_uri") || s256(r.PostForm.Get("code_verifier")) != code.challenge {
 			if code != nil {
-				a.st.release(code.account.ID)
+				a.st.release(r.Context(), code.account.ID)
 			}
 			writeJSON(w, http.StatusBadRequest, oauthError{"invalid_grant", "the code is unknown, used, expired or not for this client, redirect or verifier"})
 			return

@@ -67,7 +67,7 @@ test('it describes visitor counting: Cloudflare Web Analytics, what it records, 
   await expect(counting).toContainText('Cloudflare keeps the counts for');
 });
 
-test('it describes diagnostics: DigitalOcean metrics and usage and error records by player ID, never-list and retention', async ({ page }) => {
+test('it describes diagnostics: DigitalOcean metrics, usage and error records and traces by player ID in Grafana Cloud, never-list and retention', async ({ page }) => {
   await page.goto('/privacy');
   const diag = page.getByRole('region', { name: 'Diagnostics' });
   await expect(diag).toContainText('DigitalOcean');
@@ -83,8 +83,31 @@ test('it describes diagnostics: DigitalOcean metrics and usage and error records
   for (const word of ['email address', 'name', 'Google tokens', "the playmat's own tokens and cookies", 'battle logs', 'decklists', 'card data']) {
     await expect(never, word).toContainText(word);
   }
-  await expect(diag.locator('[data-retention="logs"]')).toBeVisible();
-  await expect(diag.locator('[data-retention="metrics"]')).toBeVisible();
+  // Kept in Grafana Cloud, in Germany, no longer in DigitalOcean's Insights.
+  await expect(diag).toContainText('Grafana Cloud');
+  await expect(diag).toContainText('Germany');
+  await expect(diag).toContainText('request traces');
+  await expect(diag).not.toContainText('Insights');
+  for (const kind of ['logs', 'traces', 'totals', 'metrics']) {
+    await expect(diag.locator(`[data-retention="${kind}"]`), kind).toBeVisible();
+  }
+  await expect(diag.locator('[data-retention="logs"]')).toHaveText('14 days');
+  await expect(diag.locator('[data-retention="traces"]')).toHaveText('14 days');
+  await expect(diag.locator('[data-retention="totals"]')).toHaveText('six weeks');
+});
+
+test('its outside services name Grafana Cloud for diagnostics and DigitalOcean for hosting', async ({ page }) => {
+  await page.goto('/privacy');
+  const services = page.getByRole('region', { name: 'Outside services' });
+  const grafana = services.locator('li', { hasText: 'Grafana Cloud (Grafana Labs)' });
+  await expect(grafana).toContainText('Germany');
+  for (const word of ['player ID', 'never your email address', 'tokens', 'battle logs', 'decklists', 'card text']) {
+    await expect(grafana, word).toContainText(word);
+  }
+  const digitalocean = services.locator('li', { hasText: 'hosts the playmat' });
+  await expect(digitalocean).toContainText('DigitalOcean');
+  await expect(digitalocean).toContainText('request and performance metrics');
+  await expect(digitalocean).not.toContainText('Insights');
 });
 
 // retentionSection is the observability runbook's Retention section: from
@@ -98,10 +121,12 @@ function retentionSection() {
   return next ? rest.slice(0, next.index) : rest;
 }
 
-test('its logs and metrics retention appear in the observability runbook\'s Retention section', async ({ page }) => {
+test('its retention figures appear in the observability runbook\'s Retention section', async ({ page }) => {
   const section = retentionSection();
   await page.goto('/privacy');
-  for (const kind of ['logs', 'metrics']) {
+  const kinds = await page.locator('[data-retention]').evaluateAll((els) => els.map((el) => el.getAttribute('data-retention')));
+  expect(kinds.sort(), 'every retention figure on the page is checked').toEqual(['logs', 'metrics', 'totals', 'traces', 'visits']);
+  for (const kind of kinds) {
     const figure = (await page.locator(`[data-retention="${kind}"]`).textContent()).trim();
     expect(figure, `${kind} retention`).not.toBe('');
     expect(section, `the runbook's Retention section states the ${kind} figure "${figure}"`).toContain(figure);
@@ -177,7 +202,8 @@ test('it keeps the space before its inline code and figures', async ({ page }) =
   await page.goto('/privacy');
   const section = (name) => page.getByRole('region', { name });
   await expect(section('When you sign in')).toContainText('the openid and email permissions');
-  await expect(section('Diagnostics')).toContainText('usage and error records for 7 days');
+  await expect(section('Diagnostics')).toContainText('the records for 14 days and the traces for 14 days');
+  await expect(section('Diagnostics')).toContainText('metrics for 7 days');
   await expect(section('Outside services')).toContainText('The playmat tells it your Google account ID');
 });
 

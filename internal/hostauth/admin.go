@@ -41,7 +41,7 @@ func (a *Auth) RequireAdmin(next http.Handler) http.Handler {
 			return
 		}
 		if !a.IsAdmin(s.account) {
-			a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AdminRefused, Email: s.account.Email, Reason: "not admin"})
+			a.cfg.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.AdminRefused, Email: s.account.Email, Reason: "not admin"})
 			msg := "This page is for tcgreplay admins. You are signed in as " + s.account.Email + "."
 			if !s.account.EmailVerified {
 				msg += " If you are an admin, sign out and sign in again."
@@ -50,7 +50,7 @@ func (a *Auth) RequireAdmin(next http.Handler) http.Handler {
 			return
 		}
 		if !read && !a.sameSite(r) {
-			a.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AdminRefused, Email: s.account.Email, Reason: "not sent from the playmat"})
+			a.cfg.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.AdminRefused, Email: s.account.Email, Reason: "not sent from the playmat"})
 			w.Header().Set("Cache-Control", "no-store")
 			http.Error(w, "admin changes must come from the playmat", http.StatusForbidden)
 			return

@@ -1,6 +1,7 @@
 package hostauth
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -108,7 +109,7 @@ func TestRestartKeepsBoardSessionWithKey(t *testing.T) {
 	if a.st.session(cookie) != s {
 		t.Error("the cookie names a second session")
 	}
-	a.st.endSession(cookie)
+	a.st.endSession(context.Background(), cookie)
 	if a.st.session(cookie) != nil {
 		t.Error("the cookie works after signing out")
 	}

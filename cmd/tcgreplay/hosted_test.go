@@ -30,6 +30,7 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth/hostauthtest"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
+	"github.com/nicholasjackson/tcgreplay/internal/observe"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 	"github.com/nicholasjackson/tcgreplay/internal/usergames"
 )
@@ -683,6 +684,8 @@ type hostedServer struct {
 	// events holds the records it wrote (nil when the config named its
 	// own writer).
 	events *syncBuffer
+	// tel is its telemetry, nil unless the config set c.telemetry.
+	tel *observe.Telemetry
 }
 
 // connect signs a connector in as g's current account, the way claude.ai
@@ -1107,7 +1110,7 @@ func TestHostedAuthNeedsCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("TCGREPLAY_GOOGLE_CLIENT_SECRET", tt.secret)
-			a, err := hostedAuth(config{googleClientID: tt.id}, public, oauth2.Endpoint{}, nil, nil)
+			a, err := hostedAuth(config{googleClientID: tt.id}, public, oauth2.Endpoint{}, nil, nil, nil)
 			if tt.ok {
 				if err != nil || a == nil {
 					t.Fatalf("hostedAuth with credentials: %v, %v", a, err)
@@ -1289,8 +1292,8 @@ func TestHostedHealthz(t *testing.T) {
 
 // TestAppSpecHealthCheckAndSecrets: the App Platform definition checks
 // health at /healthz and declares the Google credentials, the player-ID
-// key, OpenAI's domain-verification token and the reviewer's email as
-// secrets, with no value in the file.
+// key, OpenAI's domain-verification token, the reviewer's email and the
+// Grafana Cloud token as secrets, with no value in the file.
 func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 	lines := strings.Split(readTestdata(t, "../../.do/app.yaml"), "\n")
 	var health bool
@@ -1309,7 +1312,7 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 		t.Error("app.yaml has no health_check with http_path: /healthz")
 	}
 
-	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET", "TCGREPLAY_PLAYER_ID_KEY", "TCGREPLAY_OPENAI_CHALLENGE", "TCGREPLAY_REVIEWER"} {
+	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET", "TCGREPLAY_PLAYER_ID_KEY", "TCGREPLAY_OPENAI_CHALLENGE", "TCGREPLAY_REVIEWER", "TCGREPLAY_GRAFANA_TOKEN"} {
 		f := appspec.EnvFields(strings.Join(lines, "\n"), key)
 		if f == nil {
 			t.Errorf("app.yaml declares no %s", key)

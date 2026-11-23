@@ -15,6 +15,12 @@
 # move note may), and never say TCG Replay is in ChatGPT's directory while
 # site/src/lib/listing.ts says it is not listed.
 
+- date: 2026-11-23
+  title: "Privacy page: where diagnostics are kept"
+  refresh: false
+  changes:
+    - "The [privacy page](/privacy) now says the playmat's usage and error records and request traces are kept in Grafana Cloud, in Germany, for 14 days, with daily usage totals (no player ID) kept for six weeks. They name you only by your player ID."
+
 - date: 2026-11-21
   title: A new look
   refresh: false

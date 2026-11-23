@@ -2,6 +2,7 @@ package hostauth
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -42,7 +43,7 @@ func newFakePlaces(max int) *fakePlaces {
 	return &fakePlaces{max: max, held: map[string]bool{}}
 }
 
-func (p *fakePlaces) Admit(acct Account) error {
+func (p *fakePlaces) Admit(_ context.Context, acct Account) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.admits = append(p.admits, acct.ID)
@@ -56,7 +57,7 @@ func (p *fakePlaces) Admit(acct Account) error {
 	return nil
 }
 
-func (p *fakePlaces) Release(id string) {
+func (p *fakePlaces) Release(_ context.Context, id string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.releases = append(p.releases, id)
@@ -423,7 +424,7 @@ func TestStoreReleaseAtLastSignIn(t *testing.T) {
 	}
 	s := newStore(seal, time.Now)
 	var released []string
-	s.onRelease = func(id string) { released = append(released, id) }
+	s.onRelease = func(_ context.Context, id string) { released = append(released, id) }
 	check := func(when string, want ...string) {
 		t.Helper()
 		if !slices.Equal(released, want) {
@@ -438,8 +439,8 @@ func TestStoreReleaseAtLastSignIn(t *testing.T) {
 	second := s.addSession(now, one)
 	other := s.addSession(now, two)
 	s.addCode(now, &authCode{clientID: "c", account: one})
-	s.endSession(first)
-	s.endSession(second)
+	s.endSession(context.Background(), first)
+	s.endSession(context.Background(), second)
 	check("with sub-1's code live")
 	s.mu.Lock()
 	s.sweep(now.Add(codeLifetime + time.Second))
@@ -448,7 +449,7 @@ func TestStoreReleaseAtLastSignIn(t *testing.T) {
 
 	// A code taken for exchange passes its hold to the tokens issued.
 	code := s.addCode(now, &authCode{clientID: "c", account: two})
-	s.endSession(other)
+	s.endSession(context.Background(), other)
 	c := s.takeCode(code)
 	if c == nil {
 		t.Fatal("takeCode found no code")
@@ -466,7 +467,7 @@ func TestStoreReleaseAtLastSignIn(t *testing.T) {
 	three := Account{ID: "sub-3"}
 	code = s.addCode(now, &authCode{clientID: "c", account: three})
 	s.takeCode(code)
-	s.release(three.ID)
+	s.release(context.Background(), three.ID)
 	check("after sub-3's failed exchange", one.ID, three.ID)
 
 	for i := 0; i < 50; i++ {
@@ -495,12 +496,12 @@ func TestCapSignInError(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i := 1; i <= 2; i++ {
-		if err := a.signIn(httptest.NewRecorder(), Account{ID: fmt.Sprintf("sub-%d", i)}); err != nil {
+		if err := a.signIn(context.Background(), httptest.NewRecorder(), Account{ID: fmt.Sprintf("sub-%d", i)}); err != nil {
 			t.Fatalf("account %d under the cap: %v", i, err)
 		}
 	}
 	rec := httptest.NewRecorder()
-	err = a.signIn(rec, Account{ID: "sub-3", Email: "three@example.com"})
+	err = a.signIn(context.Background(), rec, Account{ID: "sub-3", Email: "three@example.com"})
 	if !errors.Is(err, ErrBusy) {
 		t.Fatalf("third account at a cap of 2: %v, want ErrBusy", err)
 	}
@@ -572,7 +573,7 @@ func TestCapNilPlacesIsOff(t *testing.T) {
 		t.Error("no Places but the store has a release hook")
 	}
 	for i := 0; i < 50; i++ {
-		if err := a.signIn(httptest.NewRecorder(), Account{ID: fmt.Sprintf("sub-%d", i)}); err != nil {
+		if err := a.signIn(context.Background(), httptest.NewRecorder(), Account{ID: fmt.Sprintf("sub-%d", i)}); err != nil {
 			t.Fatalf("signIn: account %d refused with no cap: %v", i+1, err)
 		}
 	}

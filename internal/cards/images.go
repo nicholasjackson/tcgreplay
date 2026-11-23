@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 )
 
@@ -106,6 +108,7 @@ type ImageCache struct {
 	failed  map[string]time.Time         // when the source last failed to serve one
 	copying map[string]bool              // being copied by a worker now
 	origin  map[string]string            // a file source image's relative path -> its source address
+	spanCtx map[string]trace.SpanContext // a queued image -> the span of the card request that queued it
 	// clearing holds the scopes a Clear is working on: their images are
 	// answered from the source and never copied until it ends.
 	clearing []Scope
@@ -159,6 +162,7 @@ func NewImageCache(c *spaces.Client, public string) *ImageCache {
 		pending:     map[string]bool{},
 		copying:     map[string]bool{},
 		origin:      map[string]string{},
+		spanCtx:     map[string]trace.SpanContext{},
 		failed:      map[string]time.Time{},
 	}
 	ic.idle = sync.NewCond(&ic.mu)
@@ -228,11 +232,18 @@ func versionOf(etags map[string]string) string {
 	return imageVersion(etags[ImageFiles[0]], etags[ImageFiles[1]])
 }
 
-// Image returns where the board should load src from, the fallback when
-// that differs from src, and the copy's content version when it is a copy
-// ("" otherwise). It never blocks or touches the network; an image without
-// a copy is queued for copying.
+// Image is ImageContext with no request.
 func (ic *ImageCache) Image(src string) (image, fallback, version string) {
+	return ic.ImageContext(context.Background(), src)
+}
+
+// ImageContext returns where the board should load src from, the fallback
+// when that differs from src, and the copy's content version when it is a
+// copy ("" otherwise). It never blocks or touches the network; an image
+// without a copy is queued for copying, remembering the span in ctx (the
+// card request's), so the copy's source fetch and store writes show in
+// that request's trace while it still runs in the background.
+func (ic *ImageCache) ImageContext(ctx context.Context, src string) (image, fallback, version string) {
 	if src == "" {
 		return "", "", ""
 	}
@@ -262,11 +273,15 @@ func (ic *ImageCache) Image(src string) (image, fallback, version string) {
 		return src, "", ""
 	}
 	ic.pending[rel] = true
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		ic.spanCtx[rel] = sc
+	}
 	select {
 	case ic.queue <- rel:
 	default:
 		// Full: the next view queues it again.
 		delete(ic.pending, rel)
+		delete(ic.spanCtx, rel)
 	}
 	return src, "", ""
 }
@@ -443,9 +458,14 @@ func (ic *ImageCache) handle(ctx context.Context, rel string) {
 	if !skip {
 		ic.copying[rel] = true // a Clear of rel's scope waits for this copy
 	}
+	sc, traced := ic.spanCtx[rel]
 	ic.mu.Unlock()
 	if skip || ic.brk.skip() {
 		return
+	}
+	if traced {
+		// Under the queuing request's span, still on the worker's context.
+		ctx = trace.ContextWithSpanContext(ctx, sc)
 	}
 	ic.copyOne(ctx, rel)
 }
@@ -455,6 +475,7 @@ func (ic *ImageCache) unpend(rel string) {
 	ic.mu.Lock()
 	delete(ic.pending, rel)
 	delete(ic.copying, rel)
+	delete(ic.spanCtx, rel)
 	ic.idle.Broadcast()
 	ic.mu.Unlock()
 }
