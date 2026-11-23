@@ -16,6 +16,10 @@ created_date: "2026-11-12"
 - Added: `20261112091756-c5b6d1fd-launch-docs` now depends on `20261112083238-29247b36-privacy-terms-disclaimer`. Both change `tcgreplay:site/src/lib/facts.ts`, `tcgreplay:import.meta.url`, `tcgreplay:gotchas/astro-site-build.md`, `tcgreplay:site/e2e/facts.spec.js`, `tcgreplay:site/e2e/site.spec.js`, `tcgreplay:site/e2e/limits.spec.js`.
 - Added: `20261112091756-c5b6d1fd-launch-docs` now depends on `20261111132045-1d1d32f6-visitor-analytics`. Both change `tcgreplay:internal/site/site.go`, `tcgreplay:site/astro.config.mjs`, `tcgreplay:/mcp`, `tcgreplay:gotchas/astro-site-build.md`, `tcgreplay:/docs/connect`, `tcgreplay:site/e2e/site.spec.js`, `tcgreplay:site.spec.js`.
 - Added: `20261112091756-c5b6d1fd-launch-docs` now depends on `20261112090820-07d70cfb-chatgpt-submission-prep`. Both change `tcgreplay:https://tcgreplay.app/mcp`, `tcgreplay:site/src/data/whats-new.yaml`, `tcgreplay:chatgptDirectory.listed`.
+- Added: `20261123114225-5cf4d0df-grafana-observability` now depends on `20261112083238-29247b36-privacy-terms-disclaimer`. Both change `tcgreplay:site/src/pages/privacy.astro`, `tcgreplay:.do/app.yaml`, `tcgreplay:docs/observability.md`, `tcgreplay:internal/hostauth/hostauth.go`, `tcgreplay:google.go`, `tcgreplay:site/e2e/privacy.spec.js`.
+- Added: `20261123114225-5cf4d0df-grafana-observability` now depends on `20261111132045-1d1d32f6-visitor-analytics`. Both change `tcgreplay:cmd/tcgreplay/main.go`, `tcgreplay:cmd/tcgreplay/hosted.go`, `tcgreplay:/ws`, `tcgreplay:/mcp`, `tcgreplay:cmd/tcgreplay/cardsets_test.go`, `tcgreplay:cmd/tcgreplay/hosted_test.go`, `tcgreplay:hosted_test.go`, `tcgreplay:.do/app.yaml`, `tcgreplay:127.0.0.1`.
+- Added: `20261123114225-5cf4d0df-grafana-observability` now depends on `20261112090820-07d70cfb-chatgpt-submission-prep`. Both change `tcgreplay:internal/mcpserver`, `tcgreplay:internal/mcpserver/server.go`, `tcgreplay:server.go`, `tcgreplay:cmd/tcgreplay`, `tcgreplay:cmd/tcgreplay/main.go`, `tcgreplay:cmd/tcgreplay/hosted.go`, `tcgreplay:site/src/pages/privacy.astro`, `tcgreplay:cmd/tcgreplay/hosted_test.go`, `tcgreplay:site/e2e/privacy.spec.js`, `tcgreplay:.do/app.yaml`, `tcgreplay:internal/hostauth`, `tcgreplay:internal/usergames`, `tcgreplay:internal/usergames/usergames.go`, `tcgreplay:site/src/data/whats-new.yaml`.
+- Added: `20261123114225-5cf4d0df-grafana-observability` now depends on `20261112091756-c5b6d1fd-launch-docs`. Both change `tcgreplay:/mcp`, `tcgreplay:site/src/data/whats-new.yaml`.
 
 ## 20261111093353-8ff3589f-domain-move
 ### Approach
@@ -377,3 +381,87 @@ All work is in the website (`site/`); no Go changes. Builds on domain-move, whic
 - Success metric: in the first month, no GitHub issue asks a ChatGPT-connection or missing-tools question the docs already answer.
 - Success metric: every player-visible release since launch has a What's new entry.
 - Review: the maintainer reads the connecting page, refresh section, What's new page and launch entry for clarity, and confirms the launch entry lists what shipped.
+
+## 20261123114225-5cf4d0df-grafana-observability
+### Approach
+
+- The OpenTelemetry Go SDK runs in the hosted server only, in a new `internal/observe` package. It sends logs, traces and metrics over OTLP/HTTP to Grafana Cloud (Germany, `prod-eu-west-2`/`-4`), controlled by optional `TCGREPLAY_GRAFANA_*` settings. Unset or incomplete settings mean nothing is sent, and the start-up line says so. Desktop modes never build it.
+- Logs reuse the existing `telemetry.Recorder` records. Stdout is unchanged, and a sink adds trace IDs and counters. Standard `log` lines reach Grafana through a second writer beside stderr.
+- Traces:
+  - `otelhttp` wraps the hosted handler. It accepts Cloudflare's W3C `traceparent` with an always-on sampler, so Cloudflare's sampling never drops playmat spans.
+  - Every outside client (Google, card sets, image store, CDN, TCGdex) is traced.
+  - Tool-call spans take their trace context from request headers in an outermost MCP middleware. Tool handlers receive the initialize request's context, not their own.
+  - Board actions are root spans linked to their `/ws` span.
+  - An image copy is a child span of the card request that queued it.
+- An allow-list filter keeps client IP, user agent, query strings, OAuth codes and state, and board handles out of spans.
+- Grafana Free keeps metrics only 14 days. So an hourly job reads the playmat's own daily gauge back through Grafana's Prometheus API and re-exports six weeks of daily totals. Grafana is the only store: no new storage.
+- Telemetry never blocks players: 2,048-item drop-not-block queues, 5-second export timeouts with no retries, and one stderr line after 5 minutes of failure, at most every 5 minutes.
+
+### Milestones and tasks
+
+- **M1, records and log lines kept in Grafana across updates** (ships with sending off): telemetry export foundation; records and log lines sent to Grafana.
+- **M2, every request traced, edge to outside services, logs linked:**
+  - every HTTP request and outside call traced;
+  - tool calls and board actions traced, with records linked to their trace;
+  - image copies joined to their card request, plus the end-to-end privacy sweep.
+- **M3, daily usage counted and kept six weeks:** usage counted as metrics; six weeks of daily usage with a dashboard (`docs/grafana/tcgreplay-usage.json`).
+- **M4, maintainer reads everything in Grafana:**
+  - runbook rewritten for Grafana;
+  - privacy page names Grafana Cloud, with a What's new entry;
+  - turn on sending (human);
+  - turn on Cloudflare edge traces (human).
+
+### Tasks for a person
+
+- **Turn on sending to the Grafana stack:** create the access policy token (metrics read/write, logs write, traces write) and set `TCGREPLAY_GRAFANA_*` in the App Platform console. Needs the Grafana Cloud account and production secrets.
+- **Turn on Cloudflare edge traces:** enable domain Traces with "Forward to origin" and the Grafana OTLP export. Needs the Cloudflare dashboard. If export is not on the Free plan, or the trace context does not survive App Platform's edge, the runbook records why and the edge requirement is dropped, as the spec allows.
+
+### Out of scope
+
+- The spec's non-goals: browser telemetry, public stats, Cloudflare Logpush.
+- Grafana alerting, and moving platform metrics out of DigitalOcean.
+- Sampling, kept as a later lever if volume nears the free tier.
+- Paid plans, a collector or self-hosted monitoring.
+- Joining admin image-clear jobs to the admin request's trace.
+- The password provider itself (sign-in page plan).
+- New record events.
+
+### Drafting assumptions
+
+- Daily totals are carried forward in Grafana for 42 days, because Free keeps metrics 14 days.
+- Settings are named `TCGREPLAY_GRAFANA_{OTLP_URL,INSTANCE_ID,TOKEN,METRICS_URL,METRICS_USER}`, not `OTEL_*`. One token holds all four scopes.
+- OTel providers are passed explicitly and never set as globals; only the error handler and logger globals are set, in hosted mode.
+- Metric labels are closed sets (unknown assistants and tools become `other`), and `otelhttp` HTTP metrics are off to stay within the 10k-series budget.
+- The 5% latency criterion is guarded in CI by a hung-receiver test, and measured by hand on the live playmat.
+- Sending is turned on only after the privacy page names Grafana (M4). M1 to M3 ship with sending off.
+- `Places.Admit`, `signIn`, `allow`, `usergames.Use` and `ResolveMCP` take a context parameter, so their records carry traces.
+
+### Project-wide rules
+
+- The privacy page names Grafana Cloud, Germany, records and traces kept 14 days, and daily totals six weeks. `site/e2e/privacy.spec.js` ties each `data-retention` figure (logs, traces, totals, metrics) to the runbook's Retention section.
+- There is one What's new entry for the privacy change (`refresh: false`).
+- New settings are declared in `.do/app.yaml` (the token as SECRET, with no value) and set in the console. Never paste the whole file.
+- Optional hosted settings report on or off in the start-up line and never stop play.
+- `telemetry.Event.Provider` (record field `provider`) is shared with the sign-in page plan; whichever lands second keeps the one field.
+- Recorder calls take a context (`RecordContext`, `ActiveContext`), and the sign-in plan's `finishSignIn` must keep that parameter.
+- MCP receiving middleware is added in one `AddReceivingMiddleware` call: tracing, then the rate limit, then the recorder.
+- The `noemail_test` AST scan is extended to span and log attributes.
+
+### Manual checks
+
+- From a player's email, find their errors and the failing request's trace in under five minutes, without the hosting console.
+- In the first two weeks after launch, every day has usage and error records in Grafana, and no deploy loses history.
+- Median tool-call duration with telemetry on is within 5% of off, on the deployed playmat.
+- Daily Google sign-ins can be compared two weeks before and after the sign-in page release.
+- Monthly telemetry volume stays within the Grafana Free tier.
+- After the settings are set, the start-up line says export and usage history are on, and data appears in the stack.
+- Logs survive a redeploy (sign-in, tool-call and import records, and both start-up lines).
+- The live log view during a deploy looks as before.
+- Tempo shows traces for an import, a board page, the live connection and a full sign-in, with the Google and image store calls as their own parts.
+- In Grafana you can go from an error record to its trace and back.
+- One trace holds Cloudflare's and the playmat's spans for a board page, or the runbook records why not.
+- With wrong credentials, the failure line appears after five minutes, at most every five minutes, with no credential, and players are unaffected.
+- The dashboard's daily counts are still there after 28 days.
+- A search of the stack after a test session finds no email, token, pasted log text or card names.
+- A walk-through of the runbook works.
+- A privacy page review on the live site.

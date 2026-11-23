@@ -15,27 +15,27 @@ Today the hosted playmat's logs disappear on every update, and nothing records h
 
 - [ ] **Logs are kept across updates**
   Every log line and diagnostic record the hosted playmat writes (start-up lines, usage records, error records, sign-in records, and records of requests stopped by the rate limit or the player limit) is kept in the observability service. The maintainer can search it after the playmat has been updated or restarted.
-- [ ] **Logs still show live on the hosting platform**
+- [x] **Logs still show live on the hosting platform**
   The playmat keeps writing the same log lines to the hosting platform's live log view, so watching a deploy there works as it does today.
-- [ ] **Every request is traced**
+- [x] **Every request is traced**
   Each assistant tool call, board page or data request, live board connection and sign-in step produces a trace showing what the playmat did and how long each part took. That includes its calls to outside services (Google sign-in, card set data, the card image store). At launch every request is traced, with no sampling. If trace volume would exceed the observability service's free tier, sampling may be introduced.
 - [ ] **Traces start at the edge**
   For requests that pass through the site's edge network, the trace includes the edge's part of the request (edge handling and the connection to the playmat) joined to the playmat's own part, so the maintainer can tell whether time was spent at the edge or in the playmat. This applies when the edge network's trace export is available on the maintainer's current plan (see Constraints). If it is not, this requirement is dropped and the reason recorded.
-- [ ] **Logs link to their trace**
+- [x] **Logs link to their trace**
   A log line written while serving a request carries that request's trace identity, so the maintainer can go from an error record to the trace it belongs to, and from a trace to its log lines.
 - [ ] **Usage is counted over time**
   The playmat reports counts of distinct players, sign-ins, tool calls by assistant, imports, new games and errors as metrics. The maintainer can chart them per day for at least 28 days, longer than the logs are kept.
-- [ ] **Sign-ins are counted by provider**
+- [x] **Sign-ins are counted by provider**
   Once sign-in offers more than one provider, the sign-in count says which provider each sign-in used, so Google sign-ins can be compared before and after a release.
-- [ ] **Nothing identifies a player**
+- [x] **Nothing identifies a player**
   No log, trace or metric sent to the observability service contains an email address, name, Google or playmat token, password, battle log, decklist or card text. Players appear only as their pseudonymous player ID.
-- [ ] **Players are never slowed or stopped by telemetry**
+- [x] **Players are never slowed or stopped by telemetry**
   If the observability service is unreachable, slow, rejecting data or not configured, the playmat keeps serving players with no added delay or errors. Telemetry that cannot be sent is dropped rather than queued without limit.
-- [ ] **The maintainer can tell whether export is on**
+- [x] **The maintainer can tell whether export is on**
   The playmat's start-up record says whether sending to the observability service is on or off. When sending has been failing for more than five minutes, a record on the hosting platform's live log view says so, repeated at most once every five minutes, without exposing credentials.
-- [ ] **The runbook reads from the new place**
+- [x] **The runbook reads from the new place**
   The maintainer's observability runbook explains how to read daily usage, find a player's errors from their email (by first looking up the player's pseudonymous ID on the admin page), and open a request's trace in the observability service. These replace its current instructions for DigitalOcean Insights, the hosting platform's monitoring tool.
-- [ ] **The privacy page is accurate**
+- [x] **The privacy page is accurate**
   The privacy page names the observability service, the country it stores data in (Germany) and how long it keeps diagnostics records and traces, in place of its current claim that records are kept in DigitalOcean Insights.
 
 ## Constraints
@@ -53,7 +53,7 @@ Today the hosted playmat's logs disappear on every update, and nothing records h
 
 - [ ] **Logs survive a redeploy**
   After a player signs in, imports a game through an assistant and the playmat is then redeployed, searching the observability service shows that player's sign-in, tool call and import records, and the start-up records from before and after the redeploy.
-- [ ] **Live log view unchanged**
+- [x] **Live log view unchanged**
   During a deploy, the hosting platform's live log view shows the playmat's start-up record and subsequent records as before.
 - [ ] **A tool call's trace**
   After an assistant imports a game, the observability service shows a trace for that tool call with its total duration and separate timed parts for the playmat's own work and each outside call it made (such as fetching card set data).
@@ -67,19 +67,19 @@ Today the hosted playmat's logs disappear on every update, and nothing records h
   When a tool call fails (for example an import of a malformed battle log), its error record in the observability service links to that tool call's trace, and the trace links back to the error record.
 - [ ] **Usage charted over 28 days**
   The observability service charts, per day, distinct players, sign-ins, tool calls by assistant, imports, new games and errors. Those counts are still available 28 days after they happened.
-- [ ] **Sign-ins split by provider**
+- [x] **Sign-ins split by provider**
   The sign-in count carries the provider (Google today). Once the sign-in page with username-and-password accounts ships, the sign-in chart can show Google sign-ins on their own.
 - [ ] **No identifying data sent**
   After a test session, searching all logs, traces and metrics in the observability service for the test player's email address, a Google token value, a password used, a pasted battle log's text and a deck's card names finds nothing. The player appears only by pseudonymous ID.
 - [ ] **Telemetry outage harmless**
   With the observability service unreachable (or its credentials wrong), a player can still sign in, import a game and play. Median tool-call and board-request durations stay within 5% of those with telemetry off, and the playmat's memory does not keep growing while data cannot be sent.
-- [ ] **Export state visible**
+- [x] **Export state visible**
   The start-up record says whether sending is on or off. With wrong credentials, after five minutes the live log view shows a record saying sending is failing (no more than one every five minutes), and that record contains no credential.
-- [ ] **Desktop sends nothing**
+- [x] **Desktop sends nothing**
   Running the desktop playmat and using it makes no connection to the observability service or any other telemetry destination.
 - [ ] **Runbook works**
   Following the runbook, the maintainer can read a day's distinct players and tool calls by assistant, find a player's error records from their email via the admin page's player-ID lookup, and open the trace for one of those errors, all in the observability service.
-- [ ] **Privacy page corrected**
+- [x] **Privacy page corrected**
   The privacy page names Grafana Cloud as where diagnostics records and traces are kept, says they are stored in Germany, gives how long they are kept, and no longer says they are kept in DigitalOcean Insights.
 
 ## Technical Approach

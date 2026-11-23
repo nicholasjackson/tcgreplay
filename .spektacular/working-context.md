@@ -45,3 +45,11 @@
 
 ## Plan-epic run (2026-11-23)
 - Orchestrating spek-plan-epic for epic 20261111093348-e1b5c2b4-public-launch. Only grafana-observability needs a plan (the other 6 are done).
+- grafana-observability planned (DONE). Summary section written; no cross-plan disagreements. epic order added deps on privacy-terms-disclaimer, visitor-analytics (and maybe more).
+- Repeat run (2026-11-23): status shows all 7 specs planned, nothing to start; summary already has a grafana-observability section. No review (no plan produced in this run).
+
+## Implement-epic run (2026-11-23)
+- Epic 20261111093348-e1b5c2b4-public-launch: 6 specs done; started child for grafana-observability in worktree .spektacular/worktrees/20261123114225-5cf4d0df-grafana-observability/tcgreplay (branch spek/20261123114225-5cf4d0df-grafana-observability, from HEAD of studio-design-alignment). Merge goes into the current branch.
+- Child QUESTION (human tasks 10 Grafana sending, 11 Cloudflare edge traces): user chose option 1, skip both and finish; maintainer does them after deploy via docs/observability.md.
+- Child asked to commit on spek branch at finished step: user approved commit and merge (message "Send records, traces and usage metrics to Grafana Cloud", Co-Authored-By, no Claude-Session trailer).
+- Commit bb23b1c on spek branch (message had to name the spec; added "Spec:" line). Merged into studio-design-alignment as 408c046; worktree removed. Status still shows grafana implement "ready" (9/11) because human tasks 10 and 11 are unticked by design; no further child started.
