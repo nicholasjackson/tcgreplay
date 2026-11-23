@@ -318,30 +318,25 @@ test('damage is raised by 10, 30 or 50, lowered by 10 or typed, and the board sh
   await expect(total).toHaveValue('50');
 });
 
-// Each Special Condition and how the board shows it on the Active.
-const conditions = [
-  ['Asleep', (page) => expect(active(page)).toHaveAttribute('style', /--rot:\s*-90deg/)],
-  ['Burned', (page) => expect(region(page, 'p1 Active').locator('.marker[title="Burned"]')).toBeVisible()],
-  ['Confused', (page) => expect(active(page)).toHaveAttribute('style', /--rot:\s*180deg/)],
-  ['Paralyzed', (page) => expect(active(page)).toHaveAttribute('style', /--rot:\s*90deg/)],
-  ['Poisoned', (page) => expect(region(page, 'p1 Active').locator('.marker[title="Poisoned"]')).toBeVisible()],
-];
+// Each Special Condition is named in the Active's readout, and the card
+// stays upright.
+const conditions = ['Asleep', 'Burned', 'Confused', 'Paralyzed', 'Poisoned'];
 
 test('each Special Condition toggles on and off with one tap and shows its state', async ({ page }, testInfo) => {
   await openActions(page, active(page), testInfo);
-  await expect(group(page, 'Conditions').getByRole('button')).toHaveText(conditions.map(([name]) => name));
-  for (const [name, shown] of conditions) {
+  await expect(group(page, 'Conditions').getByRole('button')).toHaveText(conditions);
+  for (const name of conditions) {
     // A toggle that is on reads "✓ Asleep" on touch screens.
     const toggle = group(page, 'Conditions').getByRole('button', { name: new RegExp(`^(✓ )?${name}$`) });
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
     await activate(toggle, testInfo);
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-    await shown(page);
+    await expect(region(page, 'p1 Active').locator('.cond')).toHaveText([name]);
+    await expect(active(page)).toHaveAttribute('style', /--rot:\s*0deg/);
 
     await activate(toggle, testInfo);
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-    await expect(region(page, 'p1 Active').locator('.marker')).toHaveCount(0);
-    await expect(active(page)).toHaveAttribute('style', /--rot:\s*0deg/);
+    await expect(region(page, 'p1 Active').locator('.cond')).toHaveCount(0);
   }
 });
 

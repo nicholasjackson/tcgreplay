@@ -107,8 +107,8 @@ docker-run:
 		-e TCGREPLAY_REVIEWER -e TCGREPLAY_OPENAI_CHALLENGE $(IMAGE)
 
 # The ChatGPT plugin package for OpenAI's plugin dashboard: plugin.json,
-# mcp.json and the listing icon, built from plugin/ (the listing source,
-# release notes and icon), the public address in .do/app.yaml and the
+# mcp.json, the listing icon and the skills, built from plugin/ (the listing
+# source, release notes, icon and skills/), the public address in .do/app.yaml and the
 # fan-project notice in internal/notice/notice.json. Upload the ZIP in
 # OpenAI's plugin dashboard; plugin/SUBMITTING.md lists the steps.
 plugin:

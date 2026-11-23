@@ -1,6 +1,7 @@
 package hostauth
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -41,7 +42,7 @@ type store struct {
 	// onRelease, if set, is told when an account's last live sign-in
 	// ends. It is called with mu held, so it must not call back into the
 	// store.
-	onRelease func(id string)
+	onRelease func(ctx context.Context, id string)
 }
 
 func newStore(seal *sealer, now func() time.Time) *store {
@@ -118,20 +119,20 @@ func (s *store) sweep(now time.Time) {
 	for k, c := range s.codes {
 		if now.After(c.expires) {
 			delete(s.codes, k)
-			s.releaseLocked(c.account.ID)
+			s.releaseLocked(context.Background(), c.account.ID)
 		}
 	}
 	for id, ss := range s.sessions {
 		if now.After(ss.expires) {
 			delete(s.sessions, id)
 			close(ss.done)
-			s.releaseLocked(ss.account.ID)
+			s.releaseLocked(context.Background(), ss.account.ID)
 		}
 	}
 	for id, t := range s.refresh {
 		if now.After(t.expires) {
 			delete(s.refresh, id)
-			s.releaseLocked(t.account.ID)
+			s.releaseLocked(context.Background(), t.account.ID)
 		}
 	}
 	for _, m := range []map[string]time.Time{s.ended, s.used} {
@@ -212,8 +213,9 @@ func (s *store) session(cookie string) *session {
 
 // endSession ends the board session of a cookie value: its live
 // connections stop, its account holds one fewer sign-in, and the cookie is
-// not taken up again while this instance runs.
-func (s *store) endSession(cookie string) {
+// not taken up again while this instance runs. ctx is the sign-out
+// request's, handed on to onRelease.
+func (s *store) endSession(ctx context.Context, cookie string) {
 	var g grantClaims
 	if !s.seal.open(sealSession, cookie, &g) || g.ID == "" {
 		return
@@ -227,7 +229,7 @@ func (s *store) endSession(cookie string) {
 	}
 	delete(s.sessions, g.ID)
 	close(ss.done)
-	s.releaseLocked(ss.account.ID)
+	s.releaseLocked(ctx, ss.account.ID)
 }
 
 // holdLocked counts one more live sign-in for acct. The caller holds mu.
@@ -242,8 +244,9 @@ func (s *store) holdLocked(acct Account) {
 }
 
 // releaseLocked counts one fewer live sign-in for the account, forgetting
-// it at zero and telling onRelease. The caller holds mu.
-func (s *store) releaseLocked(id string) {
+// it at zero and telling onRelease, with ctx (the request that ended the
+// sign-in, or context.Background for an expiry). The caller holds mu.
+func (s *store) releaseLocked(ctx context.Context, id string) {
 	st := s.accounts[id]
 	if st == nil {
 		return
@@ -252,7 +255,7 @@ func (s *store) releaseLocked(id string) {
 	if st.live <= 0 {
 		delete(s.accounts, id)
 		if s.onRelease != nil {
-			s.onRelease(id)
+			s.onRelease(ctx, id)
 		}
 	}
 }
@@ -386,11 +389,11 @@ func (s *store) takeRefresh(clientID, token string) (Account, bool) {
 }
 
 // release gives back a live sign-in taken from a code that was not
-// exchanged.
-func (s *store) release(id string) {
+// exchanged, in the request ctx belongs to.
+func (s *store) release(ctx context.Context, id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.releaseLocked(id)
+	s.releaseLocked(ctx, id)
 }
 
 // issueTokens issues an access and a refresh token to clientID for acct.

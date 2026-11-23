@@ -115,7 +115,10 @@ func (r *Registry) Recorder() *telemetry.Recorder { return r.cfg.Recorder }
 // action sees the expiry notice. An account without a place takes one;
 // when the server is full it is refused with an error wrapping
 // hostauth.ErrBusy, and its activity is not recorded.
-func (r *Registry) Use(acct hostauth.Account) (*Entry, error) {
+//
+// ctx is the action's request, so its player_day record carries that
+// request's trace.
+func (r *Registry) Use(ctx context.Context, acct hostauth.Account) (*Entry, error) {
 	now := r.cfg.Now()
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -131,7 +134,7 @@ func (r *Registry) Use(acct hostauth.Account) (*Entry, error) {
 	e.last = now
 	e.holds = true
 	e.reviewer = reviewer
-	r.cfg.Recorder.Active(acct.Email)
+	r.cfg.Recorder.ActiveContext(ctx, acct.Email)
 	return e, nil
 }
 
@@ -139,21 +142,22 @@ func (r *Registry) Use(acct hostauth.Account) (*Entry, error) {
 // place, or is refused with an error wrapping hostauth.ErrBusy when every
 // place is held. An account already holding one always gets in. Places
 // freed by idle games are counted as free.
-func (r *Registry) Admit(acct hostauth.Account) error {
-	_, err := r.Use(acct)
+func (r *Registry) Admit(ctx context.Context, acct hostauth.Account) error {
+	_, err := r.Use(ctx, acct)
 	if err != nil {
-		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "places", Message: err.Error()})
+		r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "places", Message: err.Error()})
 	}
 	return err
 }
 
 // Release is hostauth.Places' notice that an account's last sign-in has
 // ended: its entry is removed, freeing its place and closing its boards.
-func (r *Registry) Release(id string) {
+// Its account_removed record carries the trace of ctx (the sign-out).
+func (r *Registry) Release(ctx context.Context, id string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if e := r.entries[id]; e != nil {
-		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.Email, Reason: "signed_out"})
+		r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.Email, Reason: "signed_out"})
 	}
 	r.removeLocked(id)
 }

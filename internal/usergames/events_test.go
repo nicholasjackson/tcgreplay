@@ -2,6 +2,7 @@ package usergames
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/url"
 	"strings"
@@ -91,10 +92,10 @@ func TestRecordsUserCapRefusal(t *testing.T) {
 	r := newRegistry(t, t.TempDir(), newClock().Now)
 	r.cfg.MaxUsers = 1
 	rec, buf := withRecorder(t, r)
-	if err := r.Admit(alice); err != nil {
+	if err := r.Admit(context.Background(), alice); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.Admit(bob); err == nil {
+	if err := r.Admit(context.Background(), bob); err == nil {
 		t.Fatal("bob admitted at a cap of 1")
 	}
 	got := only(records(t, buf), telemetry.Limited)
@@ -110,7 +111,7 @@ func TestRecordsSignOutRemoval(t *testing.T) {
 	r := newRegistry(t, t.TempDir(), newClock().Now)
 	rec, buf := withRecorder(t, r)
 	use(t, r, alice)
-	r.Release(alice.ID)
+	r.Release(context.Background(), alice.ID)
 	got := only(records(t, buf), telemetry.AccountRemoved)
 	if len(got) != 1 || got[0]["player"] != rec.ID(alice.Email) || got[0]["reason"] != "signed_out" {
 		t.Errorf("account_removed records %v, want one for alice, signed_out", got)

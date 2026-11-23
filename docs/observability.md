@@ -1,28 +1,33 @@
-# Observability: usage, errors, graphs and alerts
+# Observability: usage, errors, traces, graphs and alerts
 
 The maintainer's runbook for watching the hosted playmat at
 `https://tcgreplay.app`. It covers:
 
-- what the playmat records and what it never records;
-- how players are named in the records;
-- how to read each day's usage in DigitalOcean Insights;
-- how to find a player's errors from their email;
-- the graphs to watch and the alerts.
+- what the playmat records, what its traces carry, and what it never sends;
+- how players are named;
+- setting up Grafana Cloud and turning sending on;
+- how to read each day's usage, find a player's errors from their email,
+  and open a request's trace;
+- turning on Cloudflare's edge traces;
+- what the export status lines mean;
+- the graphs to watch, the alerts, capacity and retention.
 
-The capacity and retention sections are filled from measurements.
+Where each thing is read:
 
-Everything is read in DigitalOcean. No log forwarding service and no second
-monitoring vendor is used.
-
-- **Records**: the playmat writes one JSON object per line to its standard
-  output. App Platform is meant to pass that output to DigitalOcean
-  Insights, whose Logs tab would keep it across redeploys. **As of
-  2026-11-19 it does not arrive there** (Insights > Logs shows nothing for
-  the app in any region, while its metrics do arrive); the maintainer has
-  asked DigitalOcean why. Until that is settled, the records can only be
-  watched live in the app's Runtime Logs tab, which keeps no history.
-- **Graphs and alerts**: these come from App Platform's metrics and alert
-  rules, not from the playmat.
+- **Records, log lines, traces and usage metrics: Grafana Cloud.** The
+  playmat sends them over OTLP to the maintainer's Grafana Cloud stack (a
+  German region, Free tier): records and log lines to Loki, request traces
+  to Tempo, usage counters and the daily totals to Mimir. They survive
+  redeploys and restarts. Sending is off until the `TCGREPLAY_GRAFANA_*`
+  settings are set (see [Setting up Grafana Cloud](#setting-up-grafana-cloud)).
+- **Platform metrics and alerts: DigitalOcean.** CPU, memory, restarts,
+  request rate and the alert rules stay in App Platform. Nothing is alerted
+  from Grafana.
+- **Live view: App Platform's Runtime Logs tab.** The playmat still writes
+  every record to standard output and every log line to standard error,
+  exactly as before, so a deploy can be watched there. That tab keeps no
+  history. DigitalOcean Insights receives no App Platform logs, so it is
+  not used for records.
 
 ## What is recorded
 
@@ -38,6 +43,7 @@ field is left out.
 | `tool` | the MCP tool called |
 | `action` | the board action, or the admin action |
 | `assistant` | the assistant that made the call, as the playmat names it (`Claude`, `ChatGPT`, `Codex`, `Gemini`, or the client's own name) |
+| `provider` | the sign-in provider (`google`), on `sign_in` |
 | `message` | an error or refusal message, redacted (see below) |
 | `reason` | why a request was refused or an account removed |
 | `idle` | the idle time an expired game went past (`TCGREPLAY_IDLE_TIMEOUT`, in words, e.g. `60 minutes`) |
@@ -45,7 +51,7 @@ field is left out.
 Some example lines:
 
 ```json
-{"time":"2026-11-12T09:30:00.123Z","level":"info","event":"sign_in","player":"p_3f9a1c0b7d2e4a68"}
+{"time":"2026-11-12T09:30:00.123Z","level":"info","event":"sign_in","player":"p_3f9a1c0b7d2e4a68","provider":"google"}
 {"time":"2026-11-12T09:30:00.456Z","level":"info","event":"player_day","player":"p_3f9a1c0b7d2e4a68"}
 {"time":"2026-11-12T09:31:12.003Z","level":"info","event":"tool_call","player":"p_3f9a1c0b7d2e4a68","tool":"import_log","assistant":"Claude"}
 {"time":"2026-11-12T09:31:12.004Z","level":"info","event":"import","player":"p_3f9a1c0b7d2e4a68","assistant":"Claude"}
@@ -57,7 +63,7 @@ The events form a closed list:
 
 | event | fields beyond time, level, event and player | written when |
 |---|---|---|
-| `sign_in` | none | a Google sign-in completes, for the board or an assistant connection |
+| `sign_in` | `provider` (`google`) | a Google sign-in completes, for the board or an assistant connection |
 | `sign_in_refused` | `reason` (the refusal, e.g. the server is busy) | a completed Google sign-in is refused at the user cap |
 | `sign_out` | none | a board session signs out |
 | `player_day` | none | a player's first activity in a UTC day: a sign-in, a tool call, a board page load or a board action |
@@ -73,13 +79,55 @@ The events form a closed list:
 | `admin_action` | `action` (`check`, `clear` or `lookup`) | an admin checks for card sets, clears images or looks up a player's ID |
 
 The playmat's other log lines name no player and stay plain text: start-up,
-card sets, card images, refused tokens and client registrations. The start-up
-line ends with `player IDs on`. The admin page's own text lines for card-set
-checks and image clears name the admin by player ID.
+card sets, card images, refused tokens and client registrations. They reach
+Grafana too, as log records marked `log.source="log"` (records are marked
+`log.source="record"`), at `WARN` when they start `warning:`. The start-up
+line includes `player IDs on`, then the export and usage history status (see
+[Export status](#export-status)). The admin page's own text lines for
+card-set checks and image clears name the admin by player ID.
+
+In Grafana each record is a Loki log line whose body is the JSON line
+above. Its fields are also structured metadata (`event`, `player`, `tool`,
+`action`, `assistant`, `reason`, `provider`), and a record written while
+serving a request carries that request's `trace_id` and `span_id`.
+Background records (idle games, idle accounts) carry none.
+
+## What traces carry
+
+Every request to the playmat is traced, with no sampling. A trace holds:
+
+- **A server span per request**, named by its route (`GET /board`,
+  `POST /mcp`, `GET /ws`, `GET /auth/google/callback`, `GET /api/`, and
+  `GET /` for website pages), with its method, route, status code, path and
+  timing.
+- **A span per assistant tool call**, `tools/call <tool>`, inside the trace
+  of the `POST /mcp` request that carried it. It names the tool, the
+  assistant (`Claude`, `ChatGPT`, `Codex`, `Gemini` or `other`) and the
+  player ID. A failed call is marked failed with the redacted message of its
+  error record.
+- **A span per board action**, `board <verb>`, in a short trace of its own
+  linked to the live connection's `GET /ws` span, naming the action and the
+  player ID.
+- **Client spans for outside calls**: Google's token exchange (inside the
+  sign-in callback's trace), card set fetches, image store writes, CDN
+  purges and image source fetches. Each is named by method and host, with
+  the address but never its query. An image copy that a card request queues
+  shows inside that card request's trace.
+
+A request that arrives with Cloudflare's W3C trace context joins
+Cloudflare's trace (see [Turning on edge traces](#turning-on-edge-traces)).
+
+Traces never carry a client address, a browser's user agent, a query string
+(so no Google authorization code, OAuth state or board link handle), an
+email, a token, a battle log or card names. Span attributes pass an
+allow-list in the playmat; anything else a library adds is dropped.
+
+Usage metrics carry only closed sets of labels (provider, assistant, tool,
+kind, reason, day, count), never a player ID.
 
 ## What is never recorded
 
-No record and no log line contains any of these:
+No record, log line, trace or metric contains any of these:
 
 - a player's email address or name;
 - a Google token, or the playmat's own tokens and cookies;
@@ -127,35 +175,91 @@ is no need to compute an ID by hand.
 - **Rotating the key** gives every player a new ID, so records written before
   the change no longer match the same players. Rotate it only if it leaks.
 
-## Reading daily usage in Insights
+## Setting up Grafana Cloud
 
-Insights has no "count distinct" or group-by. Each daily number is the
-number of matching lines for that UTC day.
+Do this once, and only after the privacy page describing Grafana Cloud is
+live. Diagnostics must never go to a service the privacy page does not name.
 
-1. Open the Control Panel and go to **Insights > Logs**. Choose the region
-   **AMS3** (the app runs in Amsterdam) and the tcgreplay app.
-2. Set an absolute time range covering one UTC day: From `YYYY-MM-DD 00:00`
-   To `YYYY-MM-DD 23:59:59`, in UTC. A single query covers at most 7 days.
-3. Run each search below as a text search, and read the number of matches:
+1. **Check the region.** In Grafana Cloud, open the stack's details. Its
+   region must be a German one (`prod-eu-west-2` or `prod-eu-west-4`;
+   `prod-eu-central-0` is Switzerland). The privacy page says Germany: if
+   the stack is elsewhere, stop.
+2. **Create the token.** Under Administration > Users and access > Cloud
+   access policies, create a policy for this stack with the scopes
+   `metrics:read`, `metrics:write`, `logs:write` and `traces:write`, then
+   add a token to it. Copy the token; it is shown once.
+3. **Find the addresses.** On the stack's page:
+   - the **OpenTelemetry** tile (Configure) gives the OTLP endpoint
+     (`https://otlp-gateway-….grafana.net/otlp`) and the instance ID;
+   - the **Prometheus** tile (Details) gives the query URL
+     (`https://prometheus-….grafana.net/api/prom`) and its user (the
+     metrics instance ID).
+4. **Set the settings.** In the App Platform console, open the app's
+   Settings > App-Level Environment Variables and add:
 
-| number | search |
+   | setting | value | encrypt |
+   |---|---|---|
+   | `TCGREPLAY_GRAFANA_OTLP_URL` | the OTLP endpoint | no |
+   | `TCGREPLAY_GRAFANA_INSTANCE_ID` | the instance ID | no |
+   | `TCGREPLAY_GRAFANA_TOKEN` | the token | **yes** |
+   | `TCGREPLAY_GRAFANA_METRICS_URL` | the Prometheus query URL | no |
+   | `TCGREPLAY_GRAFANA_METRICS_USER` | the Prometheus user | no |
+
+   Add only these entries in the console editor. Never paste
+   `.do/app.yaml` into it: the file declares the settings but holds no
+   values, and deploys do not apply it.
+5. **Save.** The playmat restarts. In Runtime Logs, the start-up line
+   should include `telemetry export: on (Grafana Cloud otlp-gateway-…)` and
+   `usage history: on (prometheus-…)`. Within a few minutes, Explore shows
+   the records in Loki (`{service_name="tcgreplay"}`), traces in Tempo, and
+   `tcgreplay_` metrics in the Prometheus data source.
+6. **Import the dashboard.** Go to Dashboards > New > Import, upload
+   `docs/grafana/tcgreplay-usage.json`, and choose the stack's Prometheus
+   data source. The daily totals fill in after the first full UTC day.
+
+To stop sending, remove the settings (or just the token) and save.
+
+## Reading daily usage in Grafana
+
+The **tcgreplay usage** dashboard charts each count per UTC day:
+
+- six weeks of daily totals: distinct players, sign-ins by provider, tool
+  calls by assistant, imports, new games and errors;
+- the last 14 days from the raw counters, including tool calls by tool and
+  limit refusals by reason.
+
+Grafana Cloud Free keeps metrics for only 14 days, so the playmat carries
+the daily totals itself. Every hour it does the following:
+
+1. reads back the totals it sent before;
+2. adds each finished day, computed from the raw counters;
+3. drops days older than six weeks;
+4. sends the table again as the `tcgreplay_usage_daily` gauge.
+
+It stores nothing on disk; Grafana holds the table.
+
+To read one number in Explore, use an instant query on the Prometheus data
+source:
+
+| number | query |
 |---|---|
-| Distinct players | `"event":"player_day"` |
-| Tool calls by assistant | `"event":"tool_call"` together with `"assistant":"Claude"`, then again with `"assistant":"ChatGPT"`, `"assistant":"Codex"` and `"assistant":"Gemini"` |
-| All tool calls | `"event":"tool_call"`; the total less the four named assistants is the calls from other clients, which are named by their own client name |
-| Imports | `"event":"import"` |
-| New games | `"event":"new_game"` |
-| Sign-ins | `"event":"sign_in"` |
-| Errors | `"event":"error"` |
-| Refusals at the limits | `"event":"limited"`, split with `"reason":"rate"` or `"reason":"places"` |
+| Distinct players | `max by (day) (last_over_time(tcgreplay_usage_daily{count="players"}[42d]))` |
+| Sign-ins by provider | `max by (day, provider) (last_over_time(tcgreplay_usage_daily{count="sign_ins"}[42d]))` |
+| Tool calls by assistant | `max by (day, assistant) (last_over_time(tcgreplay_usage_daily{count="tool_calls"}[42d]))` |
+| Imports | `max by (day, assistant) (last_over_time(tcgreplay_usage_daily{count="imports"}[42d]))` |
+| New games | `max by (day, assistant) (last_over_time(tcgreplay_usage_daily{count="new_games"}[42d]))` |
+| Errors | `max by (day) (last_over_time(tcgreplay_usage_daily{count="errors"}[42d]))` |
 
-The `player_day` count can be slightly high. The playmat remembers who it
-has seen today only in memory, so after a restart or redeploy during the day,
-a player who is active again is counted a second time.
+To read one day, add `day="YYYY-MM-DD"` to the selector. Today's numbers are
+not in the table yet. They come from the raw counters, for example
+`sum by (assistant) (increase(tcgreplay_tool_calls_total[1d]))` or
+`sum(increase(tcgreplay_player_days_total[1d]))`. Assistants other than
+Claude, ChatGPT, Codex and Gemini count as `other`; their own names are in
+the `tool_call` records.
 
-If Insights has parsed the JSON fields into attributes (a field shows
-**+ Add to filters**), filter on `event`, `assistant` and `player` in the
-filters panel instead of text searches. The text searches work either way.
+The players count can be slightly high. The playmat remembers who it has
+seen today only in memory, so after a restart or redeploy during the day, a
+player who is active again is counted a second time.
 
 ## Finding a player's errors
 
@@ -166,12 +270,108 @@ When a player reports a problem:
 2. Under **Find a player's ID**, enter the email address the player signed
    in with. The page shows their ID, for example `p_3f9a1c0b7d2e4a68`. The
    address is posted, so it never appears in a URL, and it is not logged.
-3. In **Insights > Logs** (AMS3), set the time range around the report and
-   search `"player":"p_3f9a1c0b7d2e4a68"` together with `"event":"error"`.
-   Leave out the event to see everything the player did:
+3. In Grafana, open **Explore** with the Loki data source, set the time
+   range around the report, and run:
+
+   ```text
+   {service_name="tcgreplay"} | player="p_3f9a1c0b7d2e4a68" | event="error"
+   ```
+
+   Leave out `| event="error"` to see everything the player did:
    - their tool calls, with the tool and the assistant;
    - their imports and new games;
    - any limits they hit, and their sign-ins.
+4. **Open the error's trace.** Expand an error line: its `trace_id` links to
+   Tempo. The trace shows the tool call or board action, how long each part
+   took, and any outside call it made. If the line shows a `trace_id` but no
+   link, add a derived field to the Loki data source: under Connections >
+   Data sources > Loki > Derived fields, name it `trace_id`, match the
+   label, and make it an internal link to the Tempo data source with query
+   `${__value.raw}`.
+5. **From a trace back to its logs.** In Tempo, a span's **Logs for this
+   span** button opens the records written while serving it. If the button
+   is missing, open the Tempo data source's **Trace to logs** setting,
+   choose the Loki data source and filter by trace ID.
+
+## Traces
+
+In Explore with the Tempo data source, search by:
+
+- **route**: `{ name = "POST /mcp" }` or `{ span.http.route = "/board" }`;
+- **tool call**: `{ name = "tools/call import_log" }` or
+  `{ span.tcgreplay.tool = "import_log" }`;
+- **player**: `{ span.tcgreplay.player = "p_3f9a1c0b7d2e4a68" }`;
+- **failures**: `{ status = error }`;
+- **slow requests**: `{ duration > 2s }`.
+
+A board action's trace is short and linked to its live connection's
+`GET /ws` trace, which stays open as long as the board does.
+
+## Turning on edge traces
+
+Cloudflare's domain-level Traces can add the edge's part of a request
+(Cloudflare's handling and its connection to the playmat) to the same trace
+as the playmat's part. It is configured in the Cloudflare dashboard, not in
+code, and it changes no routing.
+
+1. In the Cloudflare dashboard for the tcgreplay.app zone, open
+   Observability. Check that Traces and OTLP export are offered on the
+   zone's current (Free) plan. If OTLP export needs a paid plan, do not
+   upgrade: record that under **Status** below and stop.
+2. Add a destination of type **Traces**, named Grafana Cloud, with:
+   - the endpoint `<TCGREPLAY_GRAFANA_OTLP_URL>/v1/traces`;
+   - the header `Authorization: Basic <base64 of instanceID:token>` (a
+     separate traces-only token is fine).
+3. Turn on Traces for the zone and attach the destination, then set it up
+   as follows:
+   - **Persistence**: off, so the free daily allowance is not spent on
+     Cloudflare's own storage.
+   - **Sampling**: start at 100%, and lower it only if the daily cap is hit.
+   - **Forward to origin**: on.
+   - **Incoming context**: leave at **Reject**.
+4. Request `https://tcgreplay.app/board` and find the trace in Tempo. The
+   playmat's `GET /board` span should sit in the same trace as Cloudflare's
+   spans. If it does not, App Platform's own edge may be dropping the
+   `traceparent` header: record that under **Status** as the reason. Do not
+   add header rewriting or routing changes to work around it.
+
+From 2026-12-01 Cloudflare's Free plan allows 0.5 GB of trace ingestion a
+day. At the cap, ingestion stops until 00:00 UTC.
+
+**Status:** not yet turned on (2026-11-23). Record here, with the date,
+whether it is on or why the edge part was dropped.
+
+## Export status
+
+The start-up line includes two parts:
+
+- **Export**: `telemetry export: on (Grafana Cloud <host>)`,
+  `off (no TCGREPLAY_GRAFANA_* settings)` or
+  `off (incomplete: <which setting is missing or wrong>)`. An incomplete
+  setting also writes its own line,
+  `warning: telemetry export: off (incomplete: …)`. The playmat starts and
+  serves either way.
+- **Usage history**: `usage history: on (<host>)` or `off (<why>)`. It is
+  off without the two metrics settings, or while export is off. A wrong
+  metrics setting writes a `warning: usage history: off (…)` line.
+
+When sending has failed for more than five minutes without a break, the
+live log view shows:
+
+```text
+warning: telemetry export: sending to Grafana Cloud has failed for 7m (logs, traces: unreachable)
+```
+
+The line names:
+
+- **the signals**: `logs`, `traces`, `metrics` or `history`;
+- **the kind of failure**: `unreachable`, `timeout`, `rejected (HTTP 401)`
+  (a wrong token or instance ID) or `failed`.
+
+It repeats at most every five minutes and stops after a send succeeds. It
+never shows the token or the server's reply. Players are not affected: data
+that cannot be sent is dropped from bounded queues, and no request waits on
+Grafana.
 
 ## Graphs
 
@@ -181,8 +381,11 @@ App Platform charts these without any work in the playmat. Use the last
 - **The app's Insights tab** (App Platform > tcgreplay > Insights): CPU,
   memory, restart count, request rate, P95 response time, and CDN throughput
   and latency by status code.
-- **Control Panel > Insights**: the same App Platform metrics, beside the
-  logs, in dashboards.
+- **Control Panel > Insights**: the same App Platform metrics, in
+  dashboards.
+
+For each request's own timing, use the traces in Grafana (see
+[Traces](#traces)).
 
 ## Alerts
 
@@ -254,34 +457,40 @@ changing the size, because it changes the hosting cost.
 
 ## Retention
 
-**Provisional: to be confirmed by the maintainer.** DigitalOcean's
-documentation does not state how long Insights keeps logs or metrics while
-Insights is in public preview. It documents only alert history, which is
-kept for up to 30 days. The figures below are the conservative working
-values until the maintainer confirms the real periods with DigitalOcean (in
-the Insights console, the docs or support):
+The privacy page quotes these figures, and the site's browser suite checks
+that each figure it shows appears in this section. Keep the wording exact
+("14 days", "six weeks", "7 days", "six months").
 
 | kind | where it is kept | retention |
 |---|---|---|
-| Usage records (`sign_in`, `player_day`, `tool_call`, `import`, `new_game` and the other non-error events) | Insights logs | **7 days**, provisional: the longest range the Insights log search offers ("Last 7 days"). To be confirmed by the maintainer. |
-| Error records (`error`) | Insights logs | **7 days**, provisional, as above. To be confirmed by the maintainer. |
-| Platform metrics (request rate, response time, status codes, CPU, memory, restarts) | Insights and App Platform metrics | **7 days**, provisional: the longest range the dashboards are relied on for. To be confirmed by the maintainer. |
-| Alert history | Insights | 30 days, as documented by DigitalOcean (Insights limits page) |
+| Records: usage records (`sign_in`, `player_day`, `tool_call`, `import`, `new_game` and the other non-error events), error records (`error`) and the plain log lines | Grafana Cloud Loki | **14 days**: the Free tier's log retention |
+| Request traces | Grafana Cloud Tempo | **14 days**: the Free tier's trace retention |
+| Raw usage metrics (`tcgreplay_*_total`) | Grafana Cloud Mimir | **14 days**: the Free tier's metric retention |
+| Daily usage totals (`tcgreplay_usage_daily`, no player ID) | Grafana Cloud Mimir, carried by the playmat | **six weeks**: the playmat keeps re-sending the last 42 days |
+| Platform metrics (request rate, response time, status codes, CPU, memory, restarts) | App Platform metrics and Insights | **7 days**, provisional: the longest range the dashboards are relied on for. To be confirmed by the maintainer. |
+| Alert history | DigitalOcean Insights | 30 days, as documented by DigitalOcean (Insights limits page) |
+| Cloudflare's edge traces (only if turned on and persisted) | Cloudflare | 7 days on the Free plan; the playmat's setup turns persistence off |
+| Visitor counts (Cloudflare Web Analytics, no player ID, when counting is on) | Cloudflare | **six months**: the full detail for 7 days, then a sample of about a tenth |
 
-- **Sources checked on 2026-11-13**: these DigitalOcean docs pages, none of
-  which gives a log or metric retention period:
-  - `docs.digitalocean.com/products/insights/details/limits/`;
-  - `.../insights/details/features/`;
-  - `.../insights/how-to/view-logs/`;
-  - `.../app-platform/how-to/view-insights/`;
-  - `.../app-platform/details/limits/`.
+- **Sources, checked on 2026-11-23**:
+  - `grafana.com/pricing` and `grafana.com/products/cloud/free-tier`
+    (Free: "14 days retention" for metrics, logs and traces; 50 GB logs,
+    50 GB traces and 10k active metric series a month);
+  - `developers.cloudflare.com/observability/pricing/` (Free: 7 days
+    retention, 0.5 GB a day from 2026-12-01);
+  - `developers.cloudflare.com/web-analytics/faq/` (visitor counts:
+    unsampled for 7 days, then about a tenth, available for six months;
+    checked on 2026-11-13).
+- **Platform metrics**, checked on 2026-11-13: DigitalOcean's documentation
+  gives no metric retention period while Insights is in public preview
+  (`docs.digitalocean.com/products/insights/details/limits/`,
+  `.../insights/details/features/`,
+  `.../app-platform/how-to/view-insights/`,
+  `.../app-platform/details/limits/`). When the real period is confirmed,
+  replace the provisional figure with it, its date and its source, and
+  update the privacy page at the same time.
 - **App Platform's own Runtime Logs tab** keeps no history, so it holds no
   records.
 - **Nothing is stored by the playmat itself.** It keeps today's set of seen
-  player IDs in memory only, and that set is lost on restart.
-- **When confirmed**, replace each provisional figure above with the
-  confirmed period, the date it was confirmed and its source. The privacy
-  page states these periods, so update it at the same time.
-- **If Insights keeps logs for less than 7 days, or drops them on
-  redeploy**, a week of daily usage cannot be read back. Raise that before
-  launch.
+  player IDs and the daily table in memory only. The table is read back
+  from Grafana after a restart.

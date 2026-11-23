@@ -31,11 +31,11 @@ func (r *Registry) Board() http.Handler {
 		}
 		if pageLoad(req) {
 			if h := req.URL.Query().Get("board"); h != "" && h != Handle(acct.ID) {
-				r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.BoardRefused, Email: acct.Email})
+				r.cfg.Recorder.RecordContext(req.Context(), telemetry.Event{Name: telemetry.BoardRefused, Email: acct.Email})
 				notYoursPage(w, acct)
 				return
 			}
-			e, err := r.Use(acct)
+			e, err := r.Use(req.Context(), acct)
 			if err != nil {
 				refuse(w, err)
 				return
@@ -67,7 +67,7 @@ func (r *Registry) BoardLimit(next func(ctx context.Context) error) func(ctx con
 		if !ok {
 			return nil
 		}
-		_, err := r.Use(acct)
+		_, err := r.Use(ctx, acct)
 		return err
 	}
 }

@@ -101,7 +101,7 @@ With no auth every tool runs anonymously; with OAuth, linking starts at the firs
 - Prove domain ownership with a challenge token served as plain text at `/.well-known/openai-apps-challenge`.
 - Use a project with global (not EU) data residency.
 
-**Package** [S25][S26]: a ZIP with `plugin.json` (agent-plugins schema 1.0.0) and `mcp.json` (`type: streamable-http`, `url`, `extensions["com.openai"].auth`), optionally `skills/<name>/SKILL.md`. No secrets in the ZIP. **One MCP server per plugin.**
+**Package** [S25][S26]: a ZIP with `plugin.json` (agent-plugins schema 1.0.0) and `mcp.json` (`type: streamable-http`, `url`, `extensions["com.openai"].auth`), and `skills/<name>/SKILL.md`. A public submission needs **at least one skill** (`plugin_runtime_surface_missing`, confirmed 22 November 2026), and plugin.json must not carry a `skills` field (the schema forbids it; skills are found in `skills/`). No secrets in the ZIP. **One MCP server per plugin.** Uploading a ZIP with `mcp.json` as a personal plugin in ChatGPT marks it desktop only: see `gotchas/chatgpt-personal-plugin-desktop-only.md`.
 
 | Item | Limit |
 |---|---|
@@ -113,6 +113,13 @@ With no auth every tool runs anonymously; with OAuth, linking starts at the firs
 | ZIP | 100 MB |
 
 **Review material** [S5][S6]: 5 positive and 3 negative test cases; a video walkthrough URL; release notes; reviewer credentials; logo, company URL and privacy policy URL; country availability (`publication.countries` is an allow-list).
+
+**Reviewer credentials** [S5][S6] (re-read 23 November 2026):
+- They go in the dashboard's **Review details**, never in the ZIP.
+- "Provide a dedicated test account, login URL, workspace or tenant details, and sign-in instructions. Use sample data, not a real user's account." [S5]
+- The account "should work immediately without MFA approval, email or SMS codes, magic links, or private-network access" [S5]. So **a magic link or emailed code is not an acceptable review login**, despite an earlier reading that the dashboard offered it.
+- Test the credentials from outside any company network, confirm they have not expired, and keep the account and its sample data available for later reviews. If the credentials or sign-in steps change, submit an updated draft. [S5][S6]
+- Neither page says the username must be an email address. A reviewer login should accept either a plain username or an email, so it works with whatever the form expects.
 
 **Process** [S5][S6]:
 1. The portal scans your tools, importing names, descriptions, schemas, annotations, `securitySchemes`, `_meta`, UI CSP and server `instructions`.
@@ -193,7 +200,7 @@ With no auth every tool runs anonymously; with OAuth, linking starts at the firs
 6. **Pokémon IP is the main barrier to a public listing.** OpenAI requires owning or having permission for any IP [S9], and its usage policies ban infringement. [S27] The name, card text and card images belong to their rights holders. **Unverified**: The Pokémon Company's current fan-content or licensing terms; secondary reports describe past enforcement over card images. [S36] Take legal advice or seek permission before submitting, and make sure name and branding do not suggest an official Pokémon or OpenAI product.
 7. **Age.** The listing must not explicitly target under-13s. [S9]
 8. **Third-party data.** Card text and images come from TCGdex; confirm its terms authorise this use. [S9]
-9. **Google login and review.** Reviewers need a demo account with sample games and no MFA. [S6][S5] **Unverified**: Google sign-in may trigger verification challenges for a shared reviewer account; consider a dedicated reviewer login path.
+9. **Google login and review.** Reviewers need a demo account with sample games and no MFA, email codes or magic links. [S6][S5] A shared Google account risks Google's sign-in challenges. TCG Replay's reviewer path is operator-configured username and password accounts (`TCGREPLAY_PASSWORD_ACCOUNTS`, spec 20261122190321-c6d9d90a-sign-in-page): one per directory review, entered in Review details with the login URL.
 10. **UI.** The web board could become an MCP Apps resource in picture-in-picture mode, served from TCG Replay's own domain with a tight CSP. Embedding the existing board as an iframe needs a justification. [S34][S9][S35]
 11. **Plans and region.** Official sources conflict on Plus and Pro, and UK/EEA availability is unconfirmed. [S18][S19][S13] Check before telling players which plan they need.
 

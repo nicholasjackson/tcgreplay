@@ -82,9 +82,9 @@ func startHostedAdmin(t *testing.T, shared, token bool) *adminHosted {
 	if err != nil {
 		t.Fatal(err)
 	}
-	images := hostedImages(c)
+	images := hostedImages(c, nil)
 	loader := newCatalog(c)
-	reg, mcpSrv, a, err := newHosted(c, loader, images, u, g.Endpoint())
+	reg, mcpSrv, a, err := newHosted(c, loader, images, u, g.Endpoint(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func startHostedAdmin(t *testing.T, shared, token bool) *adminHosted {
 	}
 	h.admin = hostedAdmin(loader, images, reg.Recorder())
 	go h.admin.Run(ctx)
-	ts := httptest.NewServer(hostedHandler(mcpSrv, reg, a, h.admin, func(h http.Handler) http.Handler { return h }, ""))
+	ts := httptest.NewServer(hostedHandler(mcpSrv, reg, a, h.admin, func(h http.Handler) http.Handler { return h }, "", nil))
 	t.Cleanup(ts.Close)
 	h.hostedServer = &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: loader, events: events}
 	return h

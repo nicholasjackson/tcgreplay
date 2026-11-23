@@ -759,7 +759,7 @@ type stubImages struct {
 	asked  []string
 }
 
-func (s *stubImages) Image(src string) (string, string, string) {
+func (s *stubImages) ImageContext(_ context.Context, src string) (string, string, string) {
 	s.asked = append(s.asked, src)
 	img, fb := s.answer(src)
 	return img, fb, ""
@@ -897,8 +897,8 @@ type versionedStub struct {
 	version string
 }
 
-func (v versionedStub) Image(src string) (string, string, string) {
-	img, fb, _ := v.stubImages.Image(src)
+func (v versionedStub) ImageContext(_ context.Context, src string) (string, string, string) {
+	img, fb, _ := v.stubImages.ImageContext(context.Background(), src)
 	return img, fb, v.version
 }
 
@@ -974,7 +974,7 @@ type versionedImages struct {
 	keep         bool
 }
 
-func (v versionedImages) Image(src string) (string, string, string) {
+func (v versionedImages) ImageContext(_ context.Context, src string) (string, string, string) {
 	if v.keep {
 		return src, "", v.version
 	}

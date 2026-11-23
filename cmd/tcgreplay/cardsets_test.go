@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +24,7 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth/hostauthtest"
+	"github.com/nicholasjackson/tcgreplay/internal/observe"
 	"github.com/nicholasjackson/tcgreplay/internal/spaces"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 )
@@ -281,17 +283,31 @@ func serveHosted(t *testing.T, public string, c config, g *hostauthtest.FakeGoog
 		events = &syncBuffer{}
 		c.events = events
 	}
-	reg, srv, a, err := newHosted(c, cat, nil, u, g.Endpoint())
+	// Telemetry only when the test asks for it, never from the environment.
+	var tel *observe.Telemetry
+	if c.telemetry != nil {
+		prev := log.Writer()
+		tel, _ = hostedTelemetry(context.Background(), c)
+		t.Cleanup(func() {
+			tel.Shutdown(context.Background())
+			log.SetOutput(prev)
+		})
+	}
+	if tel.Enabled() {
+		cat.HTTP = tel.Client(cat.HTTP)
+	}
+	reg, srv, a, err := newHosted(c, cat, nil, u, g.Endpoint(), tel)
 	if err != nil {
 		t.Fatal(err)
 	}
+	reg.Recorder().SetSink(tel.Sink())
 	moved, err := parseMovedHosts(c.movedFrom, u)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ts := httptest.NewServer(movedGuard(moved, u, movedMCP(c, u), hostedHandler(srv, reg, a, hostedAdmin(cat, nil, reg.Recorder()), hostedAnalytics(c, u), c.openAIChallenge)))
+	ts := httptest.NewServer(hostedServeHandler(c, tel, moved, u, srv, reg, a, hostedAdmin(cat, nil, reg.Recorder())))
 	t.Cleanup(ts.Close)
-	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: cat, events: events}
+	return &hostedServer{ts: ts, g: g, reg: reg, public: u.String(), cat: cat, events: events, tel: tel}
 }
 
 // hostedOn starts hosted mode on the card sets published at base (an

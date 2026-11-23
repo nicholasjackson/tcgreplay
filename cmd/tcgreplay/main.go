@@ -22,6 +22,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -41,6 +42,7 @@ import (
 	"github.com/nicholasjackson/tcgreplay/internal/catalog"
 	"github.com/nicholasjackson/tcgreplay/internal/game"
 	"github.com/nicholasjackson/tcgreplay/internal/mcpserver"
+	"github.com/nicholasjackson/tcgreplay/internal/observe"
 	"github.com/nicholasjackson/tcgreplay/internal/state"
 	"github.com/nicholasjackson/tcgreplay/internal/webui"
 )
@@ -100,6 +102,12 @@ type config struct {
 	// cdnAPI, if set, is the DigitalOcean API base the CDN purge client
 	// calls (tests).
 	cdnAPI string
+	// telemetry, if set, replaces the TCGREPLAY_GRAFANA_* settings hosted
+	// mode reads (tests point it at a fake receiver).
+	telemetry *observe.Settings
+	// earlyLog holds the log lines written before hosted mode started its
+	// telemetry, which it sends on.
+	earlyLog []byte
 }
 
 // args renders the config as flags for spawning the daemon. Unset wait
@@ -169,6 +177,10 @@ func main() {
 		os.Exit(runSets(os.Args[2:]))
 	}
 	var c config
+	// Lines logged before the mode is known (setting warnings) are kept
+	// too, so hosted mode can send them on once its telemetry starts.
+	var early bytes.Buffer
+	log.SetOutput(io.MultiWriter(os.Stderr, &early))
 	flag.StringVar(&c.dataDir, "data", game.DefaultDataDir(), "directory for the playmat's log and daemon files")
 	flag.StringVar(&c.cacheDir, "cache", catalog.DefaultCacheDir(), "directory for the local copy of published card sets")
 	flag.StringVar(&c.seat, "seat", "p2", "seat Claude plays")
@@ -263,6 +275,7 @@ func main() {
 	var err error
 	switch {
 	case *hosted:
+		c.earlyLog = early.Bytes()
 		err = runHosted(ctx, c)
 	case *daemon:
 		err = runDaemon(ctx, c, *replace)

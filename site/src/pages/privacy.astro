@@ -7,10 +7,15 @@
 // - the idle time from the App Platform definition (lib/facts), not typed in;
 // - the help address from internal/notice/notice.json (lib/notice);
 // - diagnostics, what they never contain and their retention from the
-//   observability runbook, docs/observability.md. Its Retention section is
-//   provisional (7 days, to be confirmed by the maintainer); when it
-//   changes, change the data-retention figures here too. The browser suite
-//   checks the "logs" and "metrics" figures against it;
+//   observability runbook, docs/observability.md. Its Retention section
+//   gives Grafana Cloud's Free tier retention (14 days for records and
+//   traces, checked 23 November 2026 at grafana.com/pricing), the daily
+//   totals the playmat carries (six weeks) and DigitalOcean's platform
+//   metrics (7 days, provisional, to be confirmed by the maintainer); when
+//   it changes, change the data-retention figures here too. The browser
+//   suite checks every data-retention figure on this page ("logs",
+//   "traces", "totals", "metrics" and the visitor counts' "visits")
+//   against it;
 // - visitor counting from Cloudflare Web Analytics' documentation, checked
 //   13 November 2026: developers.cloudflare.com/web-analytics/data-metrics/dimensions/
 //   (country, host, path, referrer, device type, browser, operating system),
@@ -25,7 +30,7 @@ import Base from '../layouts/Base.astro';
 import { limits, site } from '../lib/facts';
 import { notice } from '../lib/notice';
 
-const updated = '21 November 2026';
+const updated = '23 November 2026';
 
 // The On this page card: each section's id and its heading, in page order.
 const toc = [
@@ -158,12 +163,22 @@ const toc = [
         your player ID from your email address to find your records.
       </p>
       <p>
-        These records never contain your email address or name, Google tokens or the playmat's own tokens and cookies,
-        battle logs, decklists or card data.
+        The playmat also keeps <strong>request traces</strong>: for each request (a sign-in step, a request from your
+        assistant, a board page or action, a card image), which part of the playmat handled it, how long each part
+        took, whether it failed, and its calls to outside services (Google, the card data and the image store), without
+        the details of the request. Traces name you only by your player ID.
       </p>
       <p>
-        Both are kept in DigitalOcean's Insights service: usage and error records
-        for <span data-retention="logs">7 days</span>, and the metrics for <span data-retention="metrics">7 days</span>.
+        These records and traces never contain your email address or name, Google tokens or the playmat's own tokens
+        and cookies, your IP address or browser details, battle logs, decklists or card data.
+      </p>
+      <p>
+        The usage and error records and the request traces are sent to <strong>Grafana Cloud</strong> and stored in
+        Germany: the records for <span data-retention="logs">14 days</span> and the traces
+        for <span data-retention="traces">14 days</span>. Daily usage totals (how many players, sign-ins, assistant
+        requests, imports, new games and errors each day, with no player ID) are kept there
+        for <span data-retention="totals">six weeks</span>. DigitalOcean keeps its request and performance metrics
+        for <span data-retention="metrics">7 days</span>.
       </p>
     </section>
 
@@ -215,10 +230,16 @@ const toc = [
         </li>
         <li>
           <strong>DigitalOcean</strong> hosts the playmat, stores the card data and images (DigitalOcean Spaces) and
-          keeps the diagnostics (Insights).
+          keeps its own request and performance metrics.
         </li>
         <li>
-          <strong>Cloudflare</strong> delivers the playmat's traffic and counts visits (Cloudflare Web Analytics).
+          <strong>Grafana Cloud</strong> (Grafana Labs) stores the playmat's usage and error records, request traces and
+          daily usage totals, in Germany (see <a href="#diagnostics">diagnostics</a>). It receives your player ID, never
+          your email address, tokens, battle logs, decklists or card text.
+        </li>
+        <li>
+          <strong>Cloudflare</strong> delivers the playmat's traffic, counts visits (Cloudflare Web Analytics) and may
+          trace requests as they pass through it, sending those traces to Grafana Cloud.
         </li>
         <li>
           <strong>Your AI assistant</strong> (Claude, ChatGPT or another) sees what you share with it and what the
