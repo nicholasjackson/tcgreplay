@@ -52,7 +52,7 @@ func (r *Registry) MCPMiddleware() mcp.Middleware {
 			res, err := next(ctx, method, req)
 
 			rec := r.cfg.Recorder
-			rec.RecordContext(ctx, telemetry.Event{Name: telemetry.ToolCall, Email: acct.Email, Tool: tool, Assistant: assistant})
+			rec.RecordContext(ctx, telemetry.Event{Name: telemetry.ToolCall, Email: acct.PlayerKey(), Tool: tool, Assistant: assistant})
 			failed, msg := err != nil, ""
 			if failed {
 				msg = err.Error()
@@ -63,12 +63,12 @@ func (r *Registry) MCPMiddleware() mcp.Middleware {
 			case failed:
 				sensitive := append(telemetry.SensitiveFromJSON(args), r.gameNames(acct)...)
 				redacted := telemetry.Redact(msg, sensitive)
-				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.Error, Email: acct.Email, Tool: tool, Message: redacted})
+				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.Error, Email: acct.PlayerKey(), Tool: tool, Message: redacted})
 				trace.SpanFromContext(ctx).SetStatus(codes.Error, redacted)
 			case tool == "import_log":
-				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.Import, Email: acct.Email, Assistant: assistant})
+				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.Import, Email: acct.PlayerKey(), Assistant: assistant})
 			case tool == "new_game":
-				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.NewGame, Email: acct.Email, Assistant: assistant})
+				rec.RecordContext(ctx, telemetry.Event{Name: telemetry.NewGame, Email: acct.PlayerKey(), Assistant: assistant})
 			}
 			return res, err
 		}
@@ -97,7 +97,7 @@ func (r *Registry) BoardError(ctx context.Context, action string, err error) {
 	}
 	acct, _ := hostauth.AccountFrom(ctx)
 	redacted := telemetry.Redact(err.Error(), r.gameNames(acct))
-	r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Error, Email: acct.Email, Action: action, Message: redacted})
+	r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Error, Email: acct.PlayerKey(), Action: action, Message: redacted})
 	trace.SpanFromContext(ctx).SetStatus(codes.Error, redacted)
 }
 

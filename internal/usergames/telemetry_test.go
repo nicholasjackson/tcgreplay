@@ -303,3 +303,36 @@ func TestBoardErrorRecords(t *testing.T) {
 	off := newRegistry(t, t.TempDir(), nil)
 	off.BoardError(ctx, "move", errors.New("x")) // no recorder: nothing to do, no panic
 }
+
+// TestPasswordAccountHasItsOwnPlayerID: a password account whose username
+// is a Google account's email is recorded under its own player ID, on tool
+// calls and in its daily activity, never under the Google account's, which
+// keeps the ID it had before.
+func TestPasswordAccountHasItsOwnPlayerID(t *testing.T) {
+	r := newRegistry(t, t.TempDir(), newClock().Now)
+	rec, buf := withRecorder(t, r)
+	pw := hostauth.PasswordAccount(alice.Email)
+	next := func(context.Context, string, mcp.Request) (mcp.Result, error) { return textResult("ok", false), nil }
+	for _, acct := range []hostauth.Account{alice, pw} {
+		req := callRequest(acct, "get_state", `{}`)
+		req.Extra.TokenInfo.Extra["provider"] = acct.Provider
+		if _, err := r.MCPMiddleware()(next)(context.Background(), "tools/call", req); err != nil {
+			t.Fatal(err)
+		}
+		use(t, r, acct)
+	}
+	googleID, pwID := rec.ID(alice.Email), rec.ID(pw.PlayerKey())
+	if googleID == pwID {
+		t.Fatal("the password account's player ID is the Google account's")
+	}
+	for _, event := range []string{telemetry.ToolCall, telemetry.PlayerDay} {
+		players := map[any]int{}
+		for _, r := range only(records(t, buf), event) {
+			players[r["player"]]++
+		}
+		if players[googleID] == 0 || players[pwID] == 0 || len(players) != 2 {
+			t.Errorf("%s records by player %v, want the Google ID %s and the password ID %s apart", event, players, googleID, pwID)
+		}
+	}
+	noEmail(t, buf)
+}

@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -404,5 +405,54 @@ func TestPublicPlaceholderFilled(t *testing.T) {
 	}
 	if got := p.Extensions.OpenAI.Review.TestCases.Positive[0]["prompt"]; got != "Copy the decklist and battle log from https://tcgreplay.app/docs/example" {
 		t.Errorf("prompt %q, want the placeholder filled with https://tcgreplay.app", got)
+	}
+}
+
+// TestReviewerMaterialsUseTheReviewerAccount: the review test cases, the
+// demo script and the submission checklist tell the reviewer to sign in
+// with the configured reviewer account, never with Google, and no longer
+// name the retired TCGREPLAY_REVIEWER setting.
+func TestReviewerMaterialsUseTheReviewerAccount(t *testing.T) {
+	read := func(path string) string {
+		t.Helper()
+		b, err := os.ReadFile("../../" + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(b)
+	}
+	// The review test cases, without the listing's player-facing
+	// description (which rightly says players sign in with Google).
+	var listing struct {
+		Review struct {
+			TestCases struct {
+				Positive []map[string]any `json:"positive"`
+				Negative []map[string]any `json:"negative"`
+			} `json:"test_cases"`
+		} `json:"review"`
+	}
+	raw := read("plugin/listing.json")
+	if err := json.Unmarshal([]byte(raw), &listing); err != nil {
+		t.Fatal(err)
+	}
+	cases, _ := json.Marshal(listing.Review.TestCases)
+	if len(cases) < 50 {
+		t.Fatalf("found no review test cases in plugin/listing.json: %s", cases)
+	}
+	googleSignIn := regexp.MustCompile(`(?i)sign(ed)? in with (a |the |your )?(reviewer'?s? )?google`)
+	for name, text := range map[string]string{
+		"review test cases": string(cases),
+		"demo script":       read("plugin/demo-script.md"),
+		"checklist":         read("plugin/SUBMITTING.md"),
+	} {
+		if m := googleSignIn.FindString(text); m != "" {
+			t.Errorf("%s tell the reviewer to %q", name, m)
+		}
+		if strings.Contains(text, "TCGREPLAY_REVIEWER") {
+			t.Errorf("%s name the retired TCGREPLAY_REVIEWER", name)
+		}
+		if !strings.Contains(text, "reviewer account") {
+			t.Errorf("%s do not mention the reviewer account", name)
+		}
 	}
 }

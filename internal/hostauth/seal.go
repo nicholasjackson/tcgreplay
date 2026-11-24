@@ -103,10 +103,29 @@ type grantClaims struct {
 	// was kept, which therefore open as unverified.
 	Verified bool  `json:"v,omitempty"`
 	Exp      int64 `json:"x"`
+	// Provider is Account.Provider; absent for Google, and in grants
+	// sealed before it was kept, which therefore open as Google.
+	Provider string `json:"p,omitempty"`
+	// Fingerprint is, for a password account, the fingerprint of its
+	// configured hash when the grant was made (PasswordAccounts
+	// .Fingerprint): a grant whose account was since removed or
+	// re-passworded no longer opens.
+	Fingerprint string `json:"k,omitempty"`
 }
 
 func (g grantClaims) account() Account {
-	return Account{ID: g.Sub, Email: g.Email, EmailVerified: g.Verified}
+	return Account{ID: g.Sub, Email: g.Email, EmailVerified: g.Verified, Provider: g.Provider}
+}
+
+// grantFor is the claims every grant for acct carries; the caller adds
+// the ID, client and expiry. fp is the account's fingerprint ("" for
+// Google).
+func grantFor(acct Account, fp string) grantClaims {
+	p := acct.Provider
+	if p == ProviderGoogle {
+		p = "" // Google is the absent default, as in older grants
+	}
+	return grantClaims{Sub: acct.ID, Email: acct.Email, Verified: acct.EmailVerified, Provider: p, Fingerprint: fp}
 }
 
 // clientKey is a short stand-in for a client ID inside its tokens.

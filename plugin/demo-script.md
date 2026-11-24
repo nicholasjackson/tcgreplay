@@ -6,9 +6,10 @@ video and running the test cases are the same rehearsal.
 
 Before recording:
 
-- Use the reviewer's Google account, the one set as `TCGREPLAY_REVIEWER`
-  on the hosted playmat. It must have no two-step verification, or OpenAI's
-  reviewer cannot sign in.
+- Use the reviewer account: the username and password entered in OpenAI's
+  review information, configured on the hosted playmat in
+  `TCGREPLAY_PASSWORD_ACCOUNTS` (see step 4 of `SUBMITTING.md`). It needs
+  no codes or approvals, so OpenAI's reviewer can always sign in.
 - Open the example game at https://tcgreplay.app/docs/example in another
   tab. Its decklist and battle log are what the prompts paste.
 - Start from a new ChatGPT chat with TCG Replay not yet connected.
@@ -16,8 +17,9 @@ Before recording:
 ## Shots
 
 1. **Connect and sign in.** In the new chat, add TCG Replay from the
-   plugins menu. ChatGPT opens the Google sign-in; sign in with the
-   reviewer account and return to the chat.
+   plugins menu. ChatGPT opens the TCG Replay sign-in page; enter the
+   reviewer account's username and password in its form and return to the
+   chat.
 2. **Import the example game** (positive case 1). Copy the decklist and the
    battle log from the example page and send them with:
    "Here's a game from TCG Live and my decklist. Import it and review it

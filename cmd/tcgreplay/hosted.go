@@ -125,18 +125,36 @@ func hostedAuth(c config, public *url.URL, google oauth2.Endpoint, places hostau
 	if c.googleClientID == "" || secret == "" {
 		return nil, errors.New("hosted mode needs Google sign-in: set TCGREPLAY_GOOGLE_CLIENT_ID and TCGREPLAY_GOOGLE_CLIENT_SECRET")
 	}
+	// The parse error names the entry and the rule, never the value.
+	accounts, err := hostauth.ParsePasswordAccounts(c.passwordAccounts)
+	if err != nil {
+		return nil, fmt.Errorf("TCGREPLAY_PASSWORD_ACCOUNTS: %v", err)
+	}
 	return hostauth.New(hostauth.Config{
-		Public:         public,
-		GoogleClientID: c.googleClientID,
-		GoogleSecret:   secret,
-		SigningKey:     os.Getenv("TCGREPLAY_SIGNING_KEY"),
-		RateLimit:      c.rateLimit,
-		Places:         places,
-		Google:         google,
-		Admins:         strings.Split(os.Getenv("TCGREPLAY_ADMINS"), ","),
-		Recorder:       rec,
-		HTTPClient:     tel.Client(nil),
+		Public:           public,
+		GoogleClientID:   c.googleClientID,
+		GoogleSecret:     secret,
+		SigningKey:       os.Getenv("TCGREPLAY_SIGNING_KEY"),
+		RateLimit:        c.rateLimit,
+		Places:           places,
+		Google:           google,
+		Admins:           strings.Split(os.Getenv("TCGREPLAY_ADMINS"), ","),
+		Recorder:         rec,
+		HTTPClient:       tel.Client(nil),
+		PasswordAccounts: accounts,
 	})
+}
+
+// passwordAccountsText describes the password accounts for the start-up
+// log: how many, never who.
+func passwordAccountsText(n int) string {
+	switch n {
+	case 0:
+		return "no password accounts (TCGREPLAY_PASSWORD_ACCOUNTS)"
+	case 1:
+		return "1 password account"
+	}
+	return fmt.Sprintf("%d password accounts", n)
 }
 
 // hostedRecorder builds hosted mode's recorder: one JSON record per line
@@ -216,15 +234,6 @@ func challengeText(token string) string {
 		return "no OpenAI domain token (TCGREPLAY_OPENAI_CHALLENGE)"
 	}
 	return "OpenAI domain token set"
-}
-
-// reviewerText describes the reviewer account for the start-up log:
-// whether one is set, never who.
-func reviewerText(email string) string {
-	if email == "" {
-		return "no reviewer account (TCGREPLAY_REVIEWER)"
-	}
-	return "reviewer account set"
 }
 
 // idleText describes the idle setting for the start-up log.
@@ -340,7 +349,7 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 			if tel.Enabled() {
 				ui.Trace = func(ctx context.Context, verb string) (context.Context, func(error)) {
 					acct, _ := hostauth.AccountFrom(ctx)
-					return tel.BoardSpan(ctx, verb, rec.ID(acct.Email))
+					return tel.BoardSpan(ctx, verb, rec.ID(acct.PlayerKey()))
 				}
 			}
 			return ui
@@ -348,7 +357,6 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 		Public:   public,
 		Idle:     c.idleTimeout,
 		MaxUsers: c.maxUsers,
-		Reviewer: c.reviewer,
 		Now:      c.now,
 		Recorder: rec,
 	})
@@ -407,7 +415,7 @@ func mcpCaller(rec *telemetry.Recorder) func(mcp.Request) (string, string) {
 	return func(req mcp.Request) (player, assistant string) {
 		if extra := req.GetExtra(); extra != nil {
 			if acct, ok := hostauth.AccountFromToken(extra.TokenInfo); ok {
-				player = rec.ID(acct.Email)
+				player = rec.ID(acct.PlayerKey())
 			}
 		}
 		if s, ok := req.GetSession().(*mcp.ServerSession); ok && s != nil {
@@ -598,7 +606,7 @@ func runHosted(ctx context.Context, c config) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, %s, %s, player IDs on, %s", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()), challengeText(c.openAIChallenge), reviewerText(c.reviewer), exportText)
+	log.Printf("tcgreplay %s hosted: listening on %s, public %s, %s, data %s, card sets %s (local copy in %s), claude plays %s, %s, %d requests a minute per account, %d users, %s, %s, %s, %s, %s, player IDs on, %s", version, ln.Addr(), public, movedText(moved), c.dataDir, c.cardsetsURL, c.cacheDir, c.seat, signInText(), c.rateLimit, c.maxUsers, idleText(c.idleTimeout), timingText(c.timing), adminText(a.AdminCount()), challengeText(c.openAIChallenge), passwordAccountsText(a.PasswordAccountCount()), exportText)
 	// No WriteTimeout: MCP event streams and the board's websocket are long-lived.
 	hs := &http.Server{Handler: hostedServeHandler(c, tel, moved, public, srv, reg, a, admin), ReadHeaderTimeout: 10 * time.Second}
 	stopped := make(chan struct{})

@@ -35,26 +35,16 @@ var googleIssuers = []string{"https://accounts.google.com", "accounts.google.com
 // loginCookieName is the name of the login cookie for the sign-in state.
 func loginCookieName(state string) string { return loginCookie + "_" + state }
 
-// startGoogle records p as a sign-in in progress, ties it to this browser
-// with the login cookie, and sends the browser to Google's account
-// chooser.
-func (a *Auth) startGoogle(w http.ResponseWriter, r *http.Request, p *pendingLogin) {
-	p.nonce = newToken()
-	p.verifier = oauth2.GenerateVerifier()
-	state := a.st.addPending(a.now(), p)
-	http.SetCookie(w, &http.Cookie{
-		Name:     loginCookieName(state),
-		Value:    state,
-		Path:     googleCallbackPath,
-		MaxAge:   int(pendingLifetime / time.Second),
-		HttpOnly: true,
-		Secure:   a.secure(),
-		SameSite: http.SameSiteLaxMode,
-	})
+// startGoogle sends the browser to Google's account chooser for the
+// sign-in in progress named by state, which the sign-in page's Google
+// button chose. It adds the nonce and PKCE verifier to that same sign-in.
+func (a *Auth) startGoogle(w http.ResponseWriter, r *http.Request, state string, p *pendingLogin) {
+	nonce, verifier := newToken(), oauth2.GenerateVerifier()
+	a.st.setGoogleKeys(p, nonce, verifier)
 	w.Header().Set("Cache-Control", "no-store")
 	http.Redirect(w, r, a.google.AuthCodeURL(state,
-		oauth2.S256ChallengeOption(p.verifier),
-		oauth2.SetAuthURLParam("nonce", p.nonce),
+		oauth2.S256ChallengeOption(verifier),
+		oauth2.SetAuthURLParam("nonce", nonce),
 		oauth2.SetAuthURLParam("prompt", "select_account"),
 	), http.StatusFound)
 }
@@ -66,14 +56,13 @@ func (a *Auth) startGoogle(w http.ResponseWriter, r *http.Request, p *pendingLog
 func (a *Auth) serveGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	state := q.Get("state")
-	c, err := r.Cookie(loginCookieName(state))
-	if state == "" || err != nil || c.Value != state {
+	if !ownsState(r, state) {
 		log.Printf("hostauth: refused Google callback: state does not match this browser's sign-in")
 		errorPage(w, http.StatusBadRequest, "This sign-in link has expired or was opened in a different browser. Please start signing in again.")
 		return
 	}
 	// The login cookie has done its job either way.
-	http.SetCookie(w, &http.Cookie{Name: loginCookieName(state), Path: googleCallbackPath, MaxAge: -1, HttpOnly: true, Secure: a.secure(), SameSite: http.SameSiteLaxMode})
+	a.clearLoginCookie(w, state)
 	p := a.st.takePending(a.now(), state)
 	if p == nil {
 		log.Printf("hostauth: refused Google callback: no sign-in in progress for its state")
@@ -91,23 +80,7 @@ func (a *Auth) serveGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		errorPage(w, http.StatusUnauthorized, "Google sign-in could not be confirmed. Please try again.")
 		return
 	}
-	if err := a.signIn(r.Context(), w, acct); err != nil {
-		a.cfg.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.SignInRefused, Email: acct.Email, Reason: err.Error()})
-		var b busyError
-		if errors.As(err, &b) {
-			busyPage(w, b.max)
-			return
-		}
-		errorPage(w, http.StatusServiceUnavailable, "Sign-in could not be completed right now. Please try again later.")
-		return
-	}
-	switch p.kind {
-	case loginConnector:
-		a.continueConnector(w, r, p, acct)
-	default:
-		w.Header().Set("Cache-Control", "no-store")
-		http.Redirect(w, r, p.next, http.StatusFound)
-	}
+	a.finishSignIn(w, r, p, acct)
 }
 
 // exchangeGoogle trades Google's code for tokens and returns the account
@@ -209,8 +182,8 @@ func audienceHas(aud json.RawMessage, id string) bool {
 	return false
 }
 
-// signIn starts a board session for acct in this browser. Every Google
-// sign-in does, whichever flow started it, so a browser that connected
+// signIn starts a board session for acct in this browser. Every sign-in
+// does, whichever provider and flow it came through, so a browser that connected
 // claude.ai can open a board link without signing in again. It is also
 // where the user cap is applied, once for both flows: the places provider
 // may refuse the account with an error wrapping ErrBusy.
@@ -230,7 +203,7 @@ func (a *Auth) signIn(ctx context.Context, w http.ResponseWriter, acct Account) 
 		Secure:   a.secure(),
 		SameSite: http.SameSiteLaxMode,
 	})
-	a.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.SignIn, Email: acct.Email, Provider: "google"})
+	a.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.SignIn, Email: acct.PlayerKey(), Provider: acct.providerName()})
 	return nil
 }
 

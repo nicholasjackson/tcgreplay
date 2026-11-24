@@ -38,11 +38,39 @@ type store struct {
 	// taken up again.
 	ended   map[string]time.Time
 	used    map[string]time.Time
-	buckets map[string]*bucket // by Account.ID
+	buckets map[string]*bucket // by key: "acct:<id>", "login-user:<name>", "login-client:<addr>"
 	// onRelease, if set, is told when an account's last live sign-in
 	// ends. It is called with mu held, so it must not call back into the
 	// store.
 	onRelease func(ctx context.Context, id string)
+	// fingerprint gives a password account's current fingerprint, sealed
+	// into its grants; nil, or "" for any account, seals none.
+	fingerprint func(Account) string
+	// validGrant reports whether a password account's sealed grant, with
+	// its fingerprint, still stands (the account is still configured with
+	// the same hash). Nil refuses every password grant. Google grants are
+	// never asked about.
+	validGrant func(acct Account, fp string) bool
+}
+
+// grantFor is grantFor(acct) with the account's current fingerprint.
+func (s *store) grantFor(acct Account) grantClaims {
+	fp := ""
+	if acct.Password() && s.fingerprint != nil {
+		fp = s.fingerprint(acct)
+	}
+	return grantFor(acct, fp)
+}
+
+// grantStands reports whether an opened grant may be used: always for a
+// Google account; for a password account only while it is still
+// configured with the hash it signed in with.
+func (s *store) grantStands(g grantClaims) bool {
+	acct := g.account()
+	if !acct.Password() {
+		return true
+	}
+	return s.validGrant != nil && s.validGrant(acct, g.Fingerprint)
 }
 
 func newStore(seal *sealer, now func() time.Time) *store {
@@ -61,7 +89,8 @@ func newStore(seal *sealer, now func() time.Time) *store {
 	}
 }
 
-// loginKind says how a Google sign-in continues once Google answers.
+// loginKind says how a sign-in continues once a provider confirms the
+// account.
 type loginKind int
 
 const (
@@ -71,8 +100,9 @@ const (
 	loginConnector
 )
 
-// pendingLogin is a Google sign-in in progress, tied to one browser by the
-// login cookie.
+// pendingLogin is a sign-in in progress, tied to one browser by the login
+// cookie. It is created before the person chooses a provider, and used up
+// only when a provider finishes it.
 type pendingLogin struct {
 	kind     loginKind
 	next     string // loginBoard: the local path to return to
@@ -142,9 +172,9 @@ func (s *store) sweep(now time.Time) {
 			}
 		}
 	}
-	// A bucket untouched for a minute is full again: forget it.
+	// A bucket untouched for its whole window is full again: forget it.
 	for id, b := range s.buckets {
-		if now.Sub(b.last) >= time.Minute {
+		if now.Sub(b.last) >= b.window {
 			delete(s.buckets, id)
 		}
 	}
@@ -161,6 +191,27 @@ func (s *store) addPending(now time.Time, p *pendingLogin) string {
 	return state
 }
 
+// peekPending returns the live sign-in in progress for state without
+// using it up, or nil.
+func (s *store) peekPending(now time.Time, state string) *pendingLogin {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p := s.pending[key(state)]
+	if p == nil || now.After(p.expires) {
+		return nil
+	}
+	return p
+}
+
+// setGoogleKeys records the nonce and PKCE verifier of a Google sign-in on
+// its pending entry, under the store's lock (a double click on the page's
+// button sends two starts at once).
+func (s *store) setGoogleKeys(p *pendingLogin, nonce, verifier string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p.nonce, p.verifier = nonce, verifier
+}
+
 // takePending removes and returns the live sign-in in progress for state.
 func (s *store) takePending(now time.Time, state string) *pendingLogin {
 	s.mu.Lock()
@@ -171,7 +222,10 @@ func (s *store) takePending(now time.Time, state string) *pendingLogin {
 	if p == nil || now.After(p.expires) {
 		return nil
 	}
-	return p
+	// A copy, taken under the lock: a Google start still running for this
+	// state (setGoogleKeys) cannot change what the caller reads.
+	cp := *p
+	return &cp
 }
 
 // addSession starts a board session for acct and returns its cookie value.
@@ -183,14 +237,16 @@ func (s *store) addSession(now time.Time, acct Account) string {
 	exp := now.Add(sessionLifetime)
 	s.sessions[id] = &session{account: acct, expires: exp, done: make(chan struct{})}
 	s.holdLocked(acct)
-	return s.seal.seal(sealSession, grantClaims{ID: id, Sub: acct.ID, Email: acct.Email, Verified: acct.EmailVerified, Exp: exp.Unix()})
+	g := s.grantFor(acct)
+	g.ID, g.Exp = id, exp.Unix()
+	return s.seal.seal(sealSession, g)
 }
 
 // session returns the board session for a cookie value, or nil. A cookie
 // from before a restart starts its session again.
 func (s *store) session(cookie string) *session {
 	var g grantClaims
-	if !s.seal.open(sealSession, cookie, &g) || g.ID == "" {
+	if !s.seal.open(sealSession, cookie, &g) || g.ID == "" || !s.grantStands(g) {
 		return nil
 	}
 	exp := time.Unix(g.Exp, 0)
@@ -367,7 +423,7 @@ func (s *store) takeCode(code string) *authCode {
 // before a restart takes up a live sign-in for them.
 func (s *store) takeRefresh(clientID, token string) (Account, bool) {
 	var g grantClaims
-	if !s.seal.open(sealRefresh, token, &g) || g.ID == "" || g.Client != clientKey(clientID) {
+	if !s.seal.open(sealRefresh, token, &g) || g.ID == "" || g.Client != clientKey(clientID) || !s.grantStands(g) {
 		return Account{}, false
 	}
 	exp := time.Unix(g.Exp, 0)
@@ -397,8 +453,8 @@ func (s *store) release(ctx context.Context, id string) {
 }
 
 // issueTokens issues an access and a refresh token to clientID for acct.
-// Both carry acct's verified-email flag, so a reviewer or admin is
-// recognised on tool calls too.
+// Both carry acct's verified-email flag and provider, so an admin or a
+// password account is recognised on tool calls too.
 // The refresh token takes over the live sign-in of the code or refresh
 // token just exchanged, so the account never drops out of the count.
 func (s *store) issueTokens(now time.Time, clientID string, acct Account) (access, refresh string) {
@@ -406,10 +462,14 @@ func (s *store) issueTokens(now time.Time, clientID string, acct Account) (acces
 	defer s.mu.Unlock()
 	s.sweep(now)
 	ck := clientKey(clientID)
-	access = s.seal.seal(sealAccess, grantClaims{Client: ck, Sub: acct.ID, Email: acct.Email, Verified: acct.EmailVerified, Exp: now.Add(accessLifetime).Unix()})
+	ag := s.grantFor(acct)
+	ag.Client, ag.Exp = ck, now.Add(accessLifetime).Unix()
+	access = s.seal.seal(sealAccess, ag)
 	id, exp := newToken(), now.Add(refreshLifetime)
 	s.refresh[id] = &refreshToken{account: acct, expires: exp}
-	refresh = s.seal.seal(sealRefresh, grantClaims{ID: id, Client: ck, Sub: acct.ID, Email: acct.Email, Verified: acct.EmailVerified, Exp: exp.Unix()})
+	rg := s.grantFor(acct)
+	rg.ID, rg.Client, rg.Exp = id, ck, exp.Unix()
+	refresh = s.seal.seal(sealRefresh, rg)
 	return access, refresh
 }
 
@@ -417,7 +477,7 @@ func (s *store) issueTokens(now time.Time, clientID string, acct Account) (acces
 // are sealed and never stored, so one from before a restart still works.
 func (s *store) accessToken(token string) *accessToken {
 	var g grantClaims
-	if !s.seal.open(sealAccess, token, &g) {
+	if !s.seal.open(sealAccess, token, &g) || !s.grantStands(g) {
 		return nil
 	}
 	return &accessToken{account: g.account(), expires: time.Unix(g.Exp, 0)}

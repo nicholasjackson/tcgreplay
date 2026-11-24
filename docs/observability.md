@@ -43,7 +43,7 @@ field is left out.
 | `tool` | the MCP tool called |
 | `action` | the board action, or the admin action |
 | `assistant` | the assistant that made the call, as the playmat names it (`Claude`, `ChatGPT`, `Codex`, `Gemini`, or the client's own name) |
-| `provider` | the sign-in provider (`google`), on `sign_in` |
+| `provider` | the sign-in provider (`google` or `password`), on `sign_in`, and `password` on a refused password attempt |
 | `message` | an error or refusal message, redacted (see below) |
 | `reason` | why a request was refused or an account removed |
 | `idle` | the idle time an expired game went past (`TCGREPLAY_IDLE_TIMEOUT`, in words, e.g. `60 minutes`) |
@@ -63,8 +63,8 @@ The events form a closed list:
 
 | event | fields beyond time, level, event and player | written when |
 |---|---|---|
-| `sign_in` | `provider` (`google`) | a Google sign-in completes, for the board or an assistant connection |
-| `sign_in_refused` | `reason` (the refusal, e.g. the server is busy) | a completed Google sign-in is refused at the user cap |
+| `sign_in` | `provider` (`google` or `password`) | a sign-in completes, for the board or an assistant connection: with Google, or with an operator-configured username and password account |
+| `sign_in_refused` | `reason` (the refusal, e.g. the server is busy), and `provider` (`password`) for a password attempt | a completed sign-in is refused at the user cap; or a password attempt is refused, with reason `credentials` (the username and password do not match) or `throttled` (too many failures for the username or the client). A refused password attempt carries no player: the attempted username is never recorded |
 | `sign_out` | none | a board session signs out |
 | `player_day` | none | a player's first activity in a UTC day: a sign-in, a tool call, a board page load or a board action |
 | `tool_call` | `tool`, `assistant` | every MCP tool call that gets past the request limit |

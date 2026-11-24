@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math"
+	"net"
+	"net/http"
 	"strings"
 	"time"
 
@@ -38,38 +41,126 @@ func BusyError(max int) error { return busyError{max} }
 // limitLogEvery is how often one account's refusals are logged.
 const limitLogEvery = 10 * time.Second
 
-// bucket is one account's request allowance: it holds up to the per-minute
-// limit and refills at that rate.
+// The failed password sign-in allowances: per username attempted and per
+// client address, each refilled over loginWindow.
+const (
+	loginUserCap   = 10
+	loginClientCap = 30
+	loginWindow    = 15 * time.Minute
+)
+
+// bucket is an allowance under one key: it holds up to its capacity and
+// refills completely over its window (the request limit: limit requests,
+// refilled over a minute).
 type bucket struct {
 	tokens float64
 	last   time.Time
 	logged time.Time
+	window time.Duration
 }
 
-// take spends one request from the account's bucket. When it is empty it
-// returns how long until the next request is allowed, and whether this
-// refusal should be logged.
-func (s *store) take(now time.Time, id string, limit int) (ok bool, wait time.Duration, logIt bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	n := float64(limit)
-	b := s.buckets[id]
+// refill brings b up to date at now for capacity n over window, creating
+// it full if it is new. The caller holds mu.
+func (s *store) refill(now time.Time, key string, capacity int, window time.Duration) *bucket {
+	n := float64(capacity)
+	b := s.buckets[key]
 	if b == nil {
 		b = &bucket{tokens: n, last: now}
-		s.buckets[id] = b
+		s.buckets[key] = b
 	}
-	b.tokens = math.Min(n, b.tokens+now.Sub(b.last).Seconds()*n/60)
+	b.window = window
+	b.tokens = math.Min(n, b.tokens+now.Sub(b.last).Seconds()*n/window.Seconds())
 	b.last = now
+	return b
+}
+
+// take spends one from the allowance under key, which holds capacity and
+// refills over window. When it is empty it returns how long until the next
+// one is allowed, and whether this refusal should be logged.
+func (s *store) take(now time.Time, key string, capacity int, window time.Duration) (ok bool, wait time.Duration, logIt bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b := s.refill(now, key, capacity, window)
 	if b.tokens >= 1 {
 		b.tokens--
 		return true, 0, false
 	}
-	wait = time.Duration((1 - b.tokens) * 60 / n * float64(time.Second))
+	wait = time.Duration((1 - b.tokens) * window.Seconds() / float64(capacity) * float64(time.Second))
 	if now.Sub(b.logged) >= limitLogEvery {
 		b.logged = now
 		logIt = true
 	}
 	return false, wait, logIt
+}
+
+// peek reports whether the allowance under key has one to spend, without
+// spending it, and if not, how long until it will.
+func (s *store) peek(now time.Time, key string, capacity int, window time.Duration) (ok bool, wait time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b := s.refill(now, key, capacity, window)
+	if b.tokens >= 1 {
+		return true, 0
+	}
+	return false, time.Duration((1 - b.tokens) * window.Seconds() / float64(capacity) * float64(time.Second))
+}
+
+// loginKeys are the allowance keys of a password sign-in attempt: the
+// username attempted (whether or not it exists) and the client address.
+func loginKeys(user, client string) (userKey, clientKey string) {
+	return "login-user:" + normalise(user), "login-client:" + client
+}
+
+// loginAllowed reports whether a password sign-in may be checked: neither
+// the username's nor the client's failure allowance is used up. It spends
+// nothing, so a throttled attempt is refused before any password check.
+func (a *Auth) loginAllowed(now time.Time, user, client string) (bool, time.Duration) {
+	uk, ck := loginKeys(user, client)
+	okU, waitU := a.st.peek(now, uk, loginUserCap, loginWindow)
+	okC, waitC := a.st.peek(now, ck, loginClientCap, loginWindow)
+	return okU && okC, max(waitU, waitC)
+}
+
+// loginFailed spends one failure from the username's and the client's
+// allowances.
+func (a *Auth) loginFailed(now time.Time, user, client string) {
+	uk, ck := loginKeys(user, client)
+	a.st.take(now, uk, loginUserCap, loginWindow)
+	a.st.take(now, ck, loginClientCap, loginWindow)
+}
+
+// clientAddr is the address a request came from, for the per-client
+// failure allowance: the address App Platform's edge reports
+// (do-connecting-ip, then CF-Connecting-IP), else the connection's peer.
+func clientAddr(r *http.Request) string {
+	addr, _ := clientAddrFrom(r)
+	return addr
+}
+
+// clientAddrFrom is clientAddr and where it came from: the header's name,
+// or "peer".
+func clientAddrFrom(r *http.Request) (addr, source string) {
+	for _, h := range []string{"do-connecting-ip", "CF-Connecting-IP"} {
+		if ip := net.ParseIP(strings.TrimSpace(r.Header.Get(h))); ip != nil {
+			return ip.String(), h
+		}
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr, "peer"
+	}
+	return host, "peer"
+}
+
+// clientAddr is clientAddr, logging once where the first password
+// attempt's address came from (the source, never the address), so a
+// deploy check can see whether the edge's headers arrive.
+func (a *Auth) clientAddr(r *http.Request) string {
+	addr, source := clientAddrFrom(r)
+	a.clientSourceOnce.Do(func() {
+		log.Printf("hostauth: password sign-in client addresses come from %s", source)
+	})
+	return addr
 }
 
 // allow counts one request for acct against the request limit; a refusal
@@ -78,14 +169,14 @@ func (a *Auth) allow(ctx context.Context, acct Account) error {
 	if a.cfg.RateLimit <= 0 {
 		return nil
 	}
-	ok, wait, logIt := a.st.take(a.now(), acct.ID, a.cfg.RateLimit)
+	ok, wait, logIt := a.st.take(a.now(), "acct:"+acct.ID, a.cfg.RateLimit, time.Minute)
 	if ok {
 		return nil
 	}
 	err := fmt.Errorf("%w: this account is limited to %d requests a minute; try again in %ds",
 		ErrRateLimited, a.cfg.RateLimit, int(math.Ceil(wait.Seconds())))
 	if logIt {
-		a.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "rate", Message: err.Error()})
+		a.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Limited, Email: acct.PlayerKey(), Reason: "rate", Message: err.Error()})
 	}
 	return err
 }

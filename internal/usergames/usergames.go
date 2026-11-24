@@ -14,7 +14,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -38,13 +37,10 @@ type Config struct {
 	// it is dropped; 0 means never.
 	Idle time.Duration
 	// MaxUsers is the number of places: accounts that may hold a game at
-	// once. 0 means no cap.
+	// once. 0 means no cap. Operator-configured password accounts (the
+	// directory reviewers) are admitted even when every place is held, and
+	// their places are not counted.
 	MaxUsers int
-	// Reviewer is the Google email of the one reviewer account (OpenAI's
-	// plugin review), matched without regard to case and only when Google
-	// verified it. The reviewer is admitted even when every place is held,
-	// and its place is not counted against MaxUsers. Empty means none.
-	Reviewer string
 	// Now is the clock; nil means time.Now. Tests substitute their own.
 	Now func() time.Time
 	// Recorder records the registry's events (refusals at the user cap,
@@ -86,9 +82,10 @@ type Entry struct {
 	// the server's places; both are guarded by the registry's mu.
 	last  time.Time
 	holds bool
-	// reviewer is whether acct is the configured reviewer, as of its last
-	// action; a reviewer's place is not counted. Guarded by mu.
-	reviewer bool
+	// reserved is whether acct holds a reserved place (a password
+	// account), as of its last action; a reserved place is not counted.
+	// Guarded by mu.
+	reserved bool
 	ctx      context.Context
 	stop     context.CancelFunc
 	board    http.Handler
@@ -99,7 +96,6 @@ func New(cfg Config) *Registry {
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
-	cfg.Reviewer = strings.ToLower(strings.TrimSpace(cfg.Reviewer))
 	return &Registry{cfg: cfg, entries: map[string]*Entry{}}
 }
 
@@ -126,15 +122,15 @@ func (r *Registry) Use(ctx context.Context, acct hostauth.Account) (*Entry, erro
 	if e != nil {
 		r.expireIfIdle(e, now)
 	}
-	reviewer := r.isReviewer(acct)
-	if (e == nil || !e.holds) && !reviewer && r.full() {
+	reserved := acct.Password()
+	if (e == nil || !e.holds) && !reserved && r.full() {
 		return nil, hostauth.BusyError(r.cfg.MaxUsers)
 	}
 	e = r.entryLocked(acct, now)
 	e.last = now
 	e.holds = true
-	e.reviewer = reviewer
-	r.cfg.Recorder.ActiveContext(ctx, acct.Email)
+	e.reserved = reserved
+	r.cfg.Recorder.ActiveContext(ctx, acct.PlayerKey())
 	return e, nil
 }
 
@@ -145,7 +141,7 @@ func (r *Registry) Use(ctx context.Context, acct hostauth.Account) (*Entry, erro
 func (r *Registry) Admit(ctx context.Context, acct hostauth.Account) error {
 	_, err := r.Use(ctx, acct)
 	if err != nil {
-		r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Limited, Email: acct.Email, Reason: "places", Message: err.Error()})
+		r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.Limited, Email: acct.PlayerKey(), Reason: "places", Message: err.Error()})
 	}
 	return err
 }
@@ -157,21 +153,14 @@ func (r *Registry) Release(ctx context.Context, id string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if e := r.entries[id]; e != nil {
-		r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.Email, Reason: "signed_out"})
+		r.cfg.Recorder.RecordContext(ctx, telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.PlayerKey(), Reason: "signed_out"})
 	}
 	r.removeLocked(id)
 }
 
-// isReviewer reports whether acct is the configured reviewer: its email
-// matches, without regard to case, and Google verified it (as admins are
-// matched, see hostauth.Auth.IsAdmin).
-func (r *Registry) isReviewer(acct hostauth.Account) bool {
-	return r.cfg.Reviewer != "" && acct.EmailVerified && strings.ToLower(strings.TrimSpace(acct.Email)) == r.cfg.Reviewer
-}
-
 // full reports whether every place is held. Idle entries are expired
-// first, so their places count as free, and the reviewer's place is not
-// counted. The caller holds mu.
+// first, so their places count as free, and reserved places (password
+// accounts) are not counted. The caller holds mu.
 func (r *Registry) full() bool {
 	if r.cfg.MaxUsers <= 0 {
 		return false
@@ -179,7 +168,7 @@ func (r *Registry) full() bool {
 	r.sweepLocked(r.cfg.Now())
 	held := 0
 	for _, e := range r.entries {
-		if e.holds && !e.reviewer {
+		if e.holds && !e.reserved {
 			held++
 		}
 	}
@@ -209,6 +198,7 @@ func (r *Registry) entryLocked(acct hostauth.Account, now time.Time) *Entry {
 	}
 	if acct.Email != "" {
 		e.acct.Email = acct.Email
+		e.acct.Provider = acct.Provider
 	}
 	return e
 }
@@ -224,7 +214,7 @@ func (r *Registry) expireIfIdle(e *Entry, now time.Time) bool {
 	e.holds = false
 	if _, err := e.M.Current(); err == nil {
 		e.M.Expire(r.notice())
-		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.GameExpired, Email: e.acct.Email, Idle: humanDuration(r.cfg.Idle)})
+		r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.GameExpired, Email: e.acct.PlayerKey(), Idle: humanDuration(r.cfg.Idle)})
 	}
 	return true
 }
@@ -298,7 +288,7 @@ func (r *Registry) sweepLocked(now time.Time) {
 		}
 		if !e.holds && now.Sub(e.last) > purgeAfter {
 			r.removeLocked(id)
-			r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.Email, Reason: "idle"})
+			r.cfg.Recorder.Record(telemetry.Event{Name: telemetry.AccountRemoved, Email: e.acct.PlayerKey(), Reason: "idle"})
 			changed = true
 		}
 	}

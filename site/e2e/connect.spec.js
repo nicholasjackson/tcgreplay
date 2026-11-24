@@ -159,7 +159,10 @@ test('the sign-in page is linked from the connecting page and explains Google an
   await link.click();
   await expect(page).toHaveURL(/\/docs\/sign-in$/);
   const prose = page.locator('.prose');
+  await expect(prose).toContainText(/TCG Replay['’]s sign-in page/);
+  await expect(prose).toContainText('Sign in with Google');
   await expect(prose).toContainText(/Google['’]s account chooser/);
+  await expect(prose).not.toContainText(/no tcgreplay page in between/i);
   await expect(prose).toContainText(`${site.boardURL}?board=`);
   await expect(prose).toContainText('same browser');
 });

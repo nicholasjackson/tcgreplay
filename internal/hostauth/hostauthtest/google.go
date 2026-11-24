@@ -233,11 +233,19 @@ func isTestServer(u *url.URL) bool {
 type alias struct{ from, to string }
 
 func (a *alias) RoundTrip(r *http.Request) (*http.Response, error) {
-	if r.URL.Host == a.from && a.from != a.to {
-		r = r.Clone(r.Context())
-		r.URL.Scheme = "http"
-		r.URL.Host = a.to
-		r.Host = a.from
+	if r.URL.Host != a.from || a.from == a.to {
+		return http.DefaultTransport.RoundTrip(r)
 	}
-	return http.DefaultTransport.RoundTrip(r)
+	orig := r
+	r = r.Clone(r.Context())
+	r.URL.Scheme = "http"
+	r.URL.Host = a.to
+	r.Host = a.from
+	resp, err := http.DefaultTransport.RoundTrip(r)
+	if resp != nil {
+		// The response answers the request as the browser sent it, at
+		// the public address, so links on a page resolve against that.
+		resp.Request = orig
+	}
+	return resp, err
 }

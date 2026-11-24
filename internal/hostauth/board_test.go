@@ -238,8 +238,8 @@ func TestBoardSignedOutRefused(t *testing.T) {
 }
 
 // TestBoardSessionInfo shows /auth/session answers 401 signed out and
-// with an unknown cookie, and the signed-in account's email once signed
-// in, never cached.
+// with an unknown cookie, and the signed-in account's email and provider
+// once signed in, never cached.
 func TestBoardSessionInfo(t *testing.T) {
 	b := newBoard(t)
 	for _, cookie := range []string{"", "not-a-session"} {
@@ -250,8 +250,8 @@ func TestBoardSessionInfo(t *testing.T) {
 	}
 	_, id := b.signInBoard(t, "/")
 	resp, body := b.send(t, "GET", "/auth/session", id, nil)
-	if resp.StatusCode != http.StatusOK || strings.TrimSpace(body) != `{"email":"`+hostauthtest.DefaultAccount.Email+`"}` {
-		t.Errorf("/auth/session signed in: %d %q, want 200 with the email", resp.StatusCode, body)
+	if resp.StatusCode != http.StatusOK || strings.TrimSpace(body) != `{"email":"`+hostauthtest.DefaultAccount.Email+`","provider":"google"}` {
+		t.Errorf("/auth/session signed in: %d %q, want 200 with the email and provider google", resp.StatusCode, body)
 	}
 	if cc := resp.Header.Get("Cache-Control"); cc != "no-store" {
 		t.Errorf("Cache-Control = %q, want no-store", cc)

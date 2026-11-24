@@ -31,7 +31,7 @@ func (r *Registry) Board() http.Handler {
 		}
 		if pageLoad(req) {
 			if h := req.URL.Query().Get("board"); h != "" && h != Handle(acct.ID) {
-				r.cfg.Recorder.RecordContext(req.Context(), telemetry.Event{Name: telemetry.BoardRefused, Email: acct.Email})
+				r.cfg.Recorder.RecordContext(req.Context(), telemetry.Event{Name: telemetry.BoardRefused, Email: acct.PlayerKey()})
 				notYoursPage(w, acct)
 				return
 			}

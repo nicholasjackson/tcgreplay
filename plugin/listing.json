@@ -20,16 +20,16 @@
     "test_cases": {
       "positive": [
         {
-          "description": "Connect TCG Replay, sign in with Google, and import the example game. Copy the decklist and the battle log from {public}/docs/example and paste both with the prompt.",
+          "description": "Connect TCG Replay, sign in on the TCG Replay sign-in page with the reviewer account (the username and password from the review information), and import the example game. Copy the decklist and the battle log from {public}/docs/example and paste both with the prompt.",
           "prompt": "Here's a game from TCG Live and my decklist. Import it and review it with me. [paste the decklist and the battle log from the example page]",
           "tools_triggered": "guide, import_log",
-          "expected_behavior": "On first use ChatGPT asks the reviewer to connect TCG Replay and sign in with Google. The assistant reads the import-game guide, imports the game, says whether the import was complete, summarises it (Rival wins, taking all 6 prize cards to 4) and gives a link to the board."
+          "expected_behavior": "On first use ChatGPT asks the reviewer to connect TCG Replay; the TCG Replay sign-in page opens and the reviewer signs in with the reviewer account's username and password. The assistant reads the import-game guide, imports the game, says whether the import was complete, summarises it (Rival wins, taking all 6 prize cards to 4) and gives a link to the board."
         },
         {
           "description": "Open the board link from the import and look at a position in the example game.",
           "prompt": "Open the board and tell me what the position was at the start of my turn 3.",
           "tools_triggered": "get_state, get_log",
-          "expected_behavior": "The board link opens in the browser already signed in with the same Google account and shows the imported game. The assistant reads the log and the board and describes both sides' Active and Benched Pokémon, hands and prize cards at the start of that turn."
+          "expected_behavior": "The board link opens in the browser already signed in with the same reviewer account and shows the imported game. The assistant reads the log and the board and describes both sides' Active and Benched Pokémon, hands and prize cards at the start of that turn."
         },
         {
           "description": "Review a turn of the example game, with coaching notes on the board.",

@@ -33,8 +33,8 @@ func TestReviewMaterial(t *testing.T) {
 	if len(tc.Positive) != 5 || len(tc.Negative) != 3 {
 		t.Fatalf("%d positive and %d negative cases, want 5 and 3", len(tc.Positive), len(tc.Negative))
 	}
-	if first := tc.Positive[0]; !strings.Contains(first["description"], examplePage) || !strings.Contains(first["description"], "Google") {
-		t.Errorf("first positive case %q does not point at %s and the Google sign-in", first["description"], examplePage)
+	if first := tc.Positive[0]; !strings.Contains(first["description"], examplePage) || !strings.Contains(first["description"], "reviewer account") {
+		t.Errorf("first positive case %q does not point at %s and the reviewer account's sign-in", first["description"], examplePage)
 	}
 	var tools []string
 	for i, c := range tc.Positive {
@@ -104,14 +104,14 @@ func TestDemoScriptAndChecklist(t *testing.T) {
 			t.Errorf("demo script does not walk positive case %d", i)
 		}
 	}
-	if !strings.Contains(string(script), "two-step verification") {
-		t.Error("demo script does not say the reviewer account needs no two-step verification")
+	if !strings.Contains(string(script), "TCGREPLAY_PASSWORD_ACCOUNTS") || !strings.Contains(string(script), "no codes or approvals") {
+		t.Error("demo script does not say the reviewer account is a configured password account needing no codes or approvals")
 	}
 	checklist, err := os.ReadFile("../../plugin/SUBMITTING.md")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"make plugin", "TCGREPLAY_OPENAI_CHALLENGE", "TCGREPLAY_REVIEWER", "MCP Inspector", "backwards compatible", "demo_recording_url"} {
+	for _, want := range []string{"make plugin", "TCGREPLAY_OPENAI_CHALLENGE", "TCGREPLAY_PASSWORD_ACCOUNTS", "htpasswd -nBC 12", "Username and password", "MCP Inspector", "backwards compatible", "demo_recording_url"} {
 		if !strings.Contains(string(checklist), want) {
 			t.Errorf("submission checklist does not mention %q", want)
 		}

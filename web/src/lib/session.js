@@ -15,7 +15,9 @@ export async function loadSession() {
   }
   if (r.status === 200) {
     try {
-      app.account = (await r.json()).email || null;
+      const body = await r.json();
+      app.account = body.email || null;
+      app.accountProvider = body.provider || 'google';
     } catch {
       app.account = null;
     }

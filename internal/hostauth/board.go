@@ -24,7 +24,7 @@ func (a *Auth) serveLogin(w http.ResponseWriter, r *http.Request) {
 	if !localPath(next) {
 		next = "/board"
 	}
-	a.startGoogle(w, r, &pendingLogin{kind: loginBoard, next: next})
+	a.startSignIn(w, r, &pendingLogin{kind: loginBoard, next: next})
 }
 
 // sessionFor returns the board session the request's cookie names, or nil.
@@ -51,7 +51,7 @@ func subresource(r *http.Request) bool {
 }
 
 // RequireSession guards the board. A signed-out request for a page is sent
-// through Google sign-in and back to the page; a signed-out live
+// through the sign-in page and back to the page; a signed-out live
 // connection, data request or request the browser marks as not for a
 // page is refused with 401. A signed-in request
 // carries its account (see AccountFrom), and a live connection ends as
@@ -94,9 +94,11 @@ func (a *Auth) RequireSession(next http.Handler) http.Handler {
 	})
 }
 
-// sessionInfo is what the board reads about its sign-in.
+// sessionInfo is what the board reads about its sign-in: the account's
+// email or username, and how it signed in ("google" or "password").
 type sessionInfo struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
+	Provider string `json:"provider"`
 }
 
 // serveSession tells the board who is signed in, or 401.
@@ -107,7 +109,7 @@ func (a *Auth) serveSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnauthorized, oauthError{Error: "signed_out", Description: "not signed in"})
 		return
 	}
-	writeJSON(w, http.StatusOK, sessionInfo{Email: s.account.Email})
+	writeJSON(w, http.StatusOK, sessionInfo{Email: s.account.Email, Provider: s.account.providerName()})
 }
 
 // sameSite reports whether a request was sent by a page on the public
@@ -131,7 +133,7 @@ func (a *Auth) serveLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	if id, s := a.sessionFor(r); s != nil {
 		a.st.endSession(r.Context(), id)
-		a.cfg.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.SignOut, Email: s.account.Email})
+		a.cfg.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.SignOut, Email: s.account.PlayerKey()})
 	}
 	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Path: "/", MaxAge: -1, HttpOnly: true, Secure: a.secure(), SameSite: http.SameSiteLaxMode})
 	w.Header().Set("Cache-Control", "no-store")
