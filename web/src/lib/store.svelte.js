@@ -4,6 +4,9 @@ export const app = $state({
   connected: false,
   // Signed-in account's email on the hosted playmat; null on the desktop.
   account: null,
+  // How the account signed in: 'google', or 'password' for a reviewer or
+  // invited account.
+  accountProvider: 'google',
   // Set while a sign-out is on its way, so the closing live connection
   // does not send the user straight back through sign-in.
   signingOut: false,

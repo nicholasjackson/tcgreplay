@@ -72,15 +72,12 @@ func TestRestartKeepsConnectorWithKey(t *testing.T) {
 	resp, m = c.token(t, refreshForm(tok.ClientID, tok.RefreshToken), "", "")
 	checkOAuthError(t, resp, m, http.StatusBadRequest, "invalid_grant")
 
+	// The old client can still start a sign-in: the sign-in page, then
+	// Google.
 	b := c.browser(t)
-	b.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
-	r, err := b.Get(c.authorizeURL(tok.ClientID, hostauthtest.LoopbackCallback, nil))
-	if err != nil {
-		t.Fatal(err)
-	}
-	r.Body.Close()
-	if r.StatusCode != http.StatusFound || !strings.HasPrefix(r.Header.Get("Location"), c.g.URL) {
-		t.Errorf("authorize for the old client: %d to %q, want a redirect to Google", r.StatusCode, r.Header.Get("Location"))
+	loc := c.chooseGoogle(t, b, c.toSignin(t, b, c.authorizeURL(tok.ClientID, hostauthtest.LoopbackCallback, nil)))
+	if !strings.HasPrefix(loc.String(), c.g.URL) {
+		t.Errorf("authorize for the old client: sent to %q, want Google", loc)
 	}
 }
 

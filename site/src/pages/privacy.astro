@@ -89,13 +89,18 @@ const toc = [
         which it uses once to confirm who you are and then throws away.
       </p>
       <p>
+        Reviewer and invited accounts sign in with a username and password that the playmat's operator sets up. For
+        them the playmat keeps the username, and the password only as a one-way hash in its settings; it never records
+        a password, or a username or password someone tried.
+      </p>
+      <p>
         The playmat keeps your sign-ins in its memory. The copies it gives your browser (a cookie) and your assistant
         are encrypted, so you stay signed in when the playmat is updated. Two cookies keep you signed in, both hidden
         from scripts:
       </p>
       <ul>
         <li><code>tcgreplay_session</code>, which keeps the board signed in;</li>
-        <li><code>tcgreplay_login_…</code>, which exists only while a Google sign-in is in progress.</li>
+        <li><code>tcgreplay_login_…</code>, which exists only while a sign-in is in progress.</li>
       </ul>
       <p>
         The board also remembers seven display settings in your browser (replay speed, autoplay, where the panel sits,

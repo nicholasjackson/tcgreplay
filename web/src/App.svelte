@@ -436,7 +436,7 @@
           <button role="menuitem" onclick={() => menu(() => (app.modal = { kind: 'about' }))}>About tcgreplay</button>
           {#if app.account}
             <div class="sep"></div>
-            <div class="account" title="Signed in with Google">{app.account}</div>
+            <div class="account" title={app.accountProvider === 'password' ? 'Signed in with a reviewer account' : 'Signed in with Google'}>{app.account}</div>
             <form method="POST" action="/auth/logout" onsubmit={() => (app.signingOut = true)}><button role="menuitem" type="submit">Sign out</button></form>
           {/if}
         </div>

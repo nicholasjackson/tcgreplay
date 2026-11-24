@@ -127,7 +127,7 @@ func (c *connector) restart(t *testing.T) {
 	a.Routes(mux)
 	mux.Handle("/mcp", a.RequireToken(mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return c.srv }, nil)))
 	mux.HandleFunc("GET /start", func(w http.ResponseWriter, r *http.Request) {
-		a.startGoogle(w, r, &pendingLogin{kind: loginBoard, next: boardNext})
+		a.startSignIn(w, r, &pendingLogin{kind: loginBoard, next: boardNext})
 	})
 	mux.HandleFunc("GET /board", func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "OK")
@@ -701,26 +701,16 @@ func TestAuthorizeLoopbackPort(t *testing.T) {
 	}
 }
 
-// TestAuthorizeAlwaysAsksGoogle shows a connector sign-in sends the browser
-// to Google's account chooser even when the browser is already signed in to
-// the board.
+// TestAuthorizeAlwaysAsksGoogle shows a connector sign-in shows the sign-in
+// page, and its Google button sends the browser to Google's account
+// chooser, even when the browser is already signed in to the board.
 func TestAuthorizeAlwaysAsksGoogle(t *testing.T) {
 	c := newConnector(t)
 	b := c.browser(t)
 	c.signInOK(t, b)
 
 	id, _ := c.registerClient(t, "none", hostauthtest.LoopbackCallback)
-	follow := b.CheckRedirect
-	b.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
-	resp, _ := get(t, b, c.authorizeURL(id, hostauthtest.LoopbackCallback, nil))
-	b.CheckRedirect = follow
-	if resp.StatusCode != http.StatusFound {
-		t.Fatalf("status %d, want a 302 to Google", resp.StatusCode)
-	}
-	loc, err := resp.Location()
-	if err != nil {
-		t.Fatal(err)
-	}
+	loc := c.chooseGoogle(t, b, c.toSignin(t, b, c.authorizeURL(id, hostauthtest.LoopbackCallback, nil)))
 	if got := loc.Scheme + "://" + loc.Host + loc.Path; got != c.g.URL+"/authorize" {
 		t.Errorf("sent to %s, want Google's %s/authorize", got, c.g.URL)
 	}

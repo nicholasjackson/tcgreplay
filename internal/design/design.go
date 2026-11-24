@@ -26,6 +26,19 @@ import (
 //go:embed tokens.json
 var source []byte
 
+// TokensCSS is tokens.css, the generated stylesheet of design tokens. The
+// hosted app's server-rendered pages (sign-in, problem, busy, signed out)
+// inline it so they share the board's and website's colours and type.
+//
+//go:embed tokens.css
+var TokensCSS string
+
+// MarkSVG is mark.svg, the TCG Replay mark, for the hosted app's
+// server-rendered pages to inline.
+//
+//go:embed mark.svg
+var MarkSVG string
+
 // Tokens is the token source, tokens.json.
 type Tokens struct {
 	Color   Colors `json:"color"`

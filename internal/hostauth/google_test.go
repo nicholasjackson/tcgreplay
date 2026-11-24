@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -54,7 +55,7 @@ func newHarness(t *testing.T, mod func(*Config)) *harness {
 	}
 	a.Routes(mux)
 	mux.HandleFunc("GET /start", func(w http.ResponseWriter, r *http.Request) {
-		a.startGoogle(w, r, &pendingLogin{kind: loginBoard, next: boardNext})
+		a.startSignIn(w, r, &pendingLogin{kind: loginBoard, next: boardNext})
 	})
 	mux.HandleFunc("GET /board", func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "OK")
@@ -67,20 +68,65 @@ func (h *harness) browser(t *testing.T) *http.Client {
 	return hostauthtest.Browser(t, h.ts.URL, h.ts.URL)
 }
 
-// begin starts a board sign-in in c and returns the Google address the
-// playmat sent it to, without following it.
+// begin starts a board sign-in in c, chooses Google on the sign-in page,
+// and returns the Google address the playmat sent it to, without
+// following it.
 func (h *harness) begin(t *testing.T, c *http.Client) *url.URL {
+	t.Helper()
+	page := h.toSignin(t, c, h.ts.URL+"/start")
+	return h.chooseGoogle(t, c, page)
+}
+
+// toSignin opens start in c, checks it redirects to the sign-in page, and
+// returns the sign-in page's address, without following it.
+func (h *harness) toSignin(t *testing.T, c *http.Client, start string) *url.URL {
+	t.Helper()
+	loc := noFollow(t, c, start)
+	if loc.Path != signinPath || loc.Query().Get("state") == "" {
+		t.Fatalf("GET %s sent the browser to %s, want the sign-in page", start, loc)
+	}
+	return h.resolve(loc)
+}
+
+// chooseGoogle opens the sign-in page in c, follows its Google button, and
+// returns the Google address the playmat sent it to, without following it.
+func (h *harness) chooseGoogle(t *testing.T, c *http.Client, page *url.URL) *url.URL {
+	t.Helper()
+	resp, body := getPage(t, c, page.String())
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("sign-in page: status %d: %s", resp.StatusCode, body)
+	}
+	m := regexp.MustCompile(`data-provider="google" href="([^"]+)"`).FindStringSubmatch(body)
+	if m == nil {
+		t.Fatalf("sign-in page has no Google button: %s", body)
+	}
+	href, err := page.Parse(strings.ReplaceAll(m[1], "&amp;", "&"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return noFollow(t, c, href.String())
+}
+
+// resolve returns loc against the harness's address.
+func (h *harness) resolve(loc *url.URL) *url.URL {
+	base, _ := url.Parse(h.ts.URL)
+	return base.ResolveReference(loc)
+}
+
+// noFollow fetches u in c without following a redirect, checks it
+// redirects, and returns where to.
+func noFollow(t *testing.T, c *http.Client, u string) *url.URL {
 	t.Helper()
 	follow := c.CheckRedirect
 	c.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 	defer func() { c.CheckRedirect = follow }()
-	resp, err := c.Get(h.ts.URL + "/start")
+	resp, err := c.Get(u)
 	if err != nil {
-		t.Fatalf("GET /start: %v", err)
+		t.Fatalf("GET %s: %v", u, err)
 	}
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusFound {
-		t.Fatalf("GET /start: status %d, want 302", resp.StatusCode)
+		t.Fatalf("GET %s: status %d, want 302", u, resp.StatusCode)
 	}
 	loc, err := url.Parse(resp.Header.Get("Location"))
 	if err != nil {
@@ -89,9 +135,29 @@ func (h *harness) begin(t *testing.T, c *http.Client) *url.URL {
 	return loc
 }
 
-// get fetches u in c, following redirects as a browser would, and returns
-// the final response with its body read.
+// get fetches u in c, following redirects as a browser would and choosing
+// Google if it lands on the sign-in page, and returns the final response
+// with its body read. getPage stops on the sign-in page instead.
 func get(t *testing.T, c *http.Client, u string) (*http.Response, string) {
+	t.Helper()
+	resp, err := c.Get(u)
+	if err != nil {
+		t.Fatalf("GET %s: %v", u, err)
+	}
+	if resp, err = hostauthtest.ChooseGoogle(c, resp); err != nil {
+		t.Fatalf("GET %s: %v", u, err)
+	}
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return resp, string(b)
+}
+
+// getPage fetches u in c, following redirects as a browser would, and
+// returns the final response with its body read, stopping on any page.
+func getPage(t *testing.T, c *http.Client, u string) (*http.Response, string) {
 	t.Helper()
 	resp, err := c.Get(u)
 	if err != nil {
@@ -388,7 +454,8 @@ func TestGoogleAddressesFromPublic(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://evil.example/start", nil)
 	req.Host = "evil.example"
 	rec := httptest.NewRecorder()
-	h.a.startGoogle(rec, req, &pendingLogin{kind: loginBoard, next: boardNext})
+	p := &pendingLogin{kind: loginBoard, next: boardNext}
+	h.a.startGoogle(rec, req, h.a.st.addPending(h.a.now(), p), p)
 	if rec.Code != http.StatusFound {
 		t.Fatalf("status %d, want 302", rec.Code)
 	}
@@ -426,8 +493,14 @@ func TestCookieAttributes(t *testing.T) {
 				t.Fatal(err)
 			}
 			rec := httptest.NewRecorder()
-			a.startGoogle(rec, httptest.NewRequest("GET", "/start", nil), &pendingLogin{kind: loginBoard, next: "/"})
-			loc, _ := url.Parse(rec.Header().Get("Location"))
+			a.startSignIn(rec, httptest.NewRequest("GET", "/start", nil), &pendingLogin{kind: loginBoard, next: "/"})
+			if loc, _ := url.Parse(rec.Header().Get("Location")); loc.Path != signinPath {
+				t.Errorf("sign-in start sent the browser to %s, want the sign-in page", loc)
+			}
+			grec := httptest.NewRecorder()
+			p := &pendingLogin{kind: loginBoard, next: "/"}
+			a.startGoogle(grec, httptest.NewRequest("GET", "/auth/google", nil), a.st.addPending(a.now(), p), p)
+			loc, _ := url.Parse(grec.Header().Get("Location"))
 			if got, want := loc.Query().Get("redirect_uri"), tt.public+"/auth/google/callback"; got != want {
 				t.Errorf("redirect_uri = %q, want %q", got, want)
 			}
@@ -438,7 +511,7 @@ func TestCookieAttributes(t *testing.T) {
 			a.signIn(context.Background(), rec2, Account{ID: "sub-1", Email: "one@example.com"})
 
 			cookies := append(rec.Result().Cookies(), rec2.Result().Cookies()...)
-			want := map[string]string{loginCookie: "/auth/google/callback", sessionCookie: "/"}
+			want := map[string]string{loginCookie: "/auth/", sessionCookie: "/"}
 			for _, ck := range cookies {
 				name := ck.Name
 				if strings.HasPrefix(name, loginCookie+"_") {

@@ -178,14 +178,15 @@ func TestChallengeText(t *testing.T) {
 
 // TestMainServesOpenAIChallengeFromEnv runs the binary's main in hosted
 // mode with TCGREPLAY_OPENAI_CHALLENGE (with stray spaces, as a console
-// paste may leave) and TCGREPLAY_REVIEWER set: the path answers the
-// trimmed token, and the start-up log says the token and the reviewer are
-// set without printing either.
+// paste may leave) and TCGREPLAY_PASSWORD_ACCOUNTS set: the path answers
+// the trimmed token, and the start-up log says the token is set and how
+// many password accounts there are, without printing the token or any
+// username.
 func TestMainServesOpenAIChallengeFromEnv(t *testing.T) {
 	port := freePort(t)
 	cmd, stderr, _ := helperCmd(t, "PORT="+port, "TCGREPLAY_PUBLIC_URL=https://play.example.com",
 		"TCGREPLAY_GOOGLE_CLIENT_ID=env-client", "TCGREPLAY_GOOGLE_CLIENT_SECRET=env-secret",
-		"TCGREPLAY_OPENAI_CHALLENGE= "+testChallenge+"\n", "TCGREPLAY_REVIEWER=Reviewer@Example.com")
+		"TCGREPLAY_OPENAI_CHALLENGE= "+testChallenge+"\n", "TCGREPLAY_PASSWORD_ACCOUNTS="+passwordSetting(t, "reviewer@example.com", "review-pw"))
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -214,8 +215,8 @@ func TestMainServesOpenAIChallengeFromEnv(t *testing.T) {
 	if strings.Contains(out, testChallenge) {
 		t.Errorf("log prints the OpenAI domain token:\n%s", out)
 	}
-	if !strings.Contains(out, "reviewer account set") {
-		t.Errorf("start-up log does not say the reviewer account is set:\n%s", out)
+	if !strings.Contains(out, "1 password account") {
+		t.Errorf("start-up log does not count the password account:\n%s", out)
 	}
 	if strings.Contains(strings.ToLower(out), "reviewer@example.com") {
 		t.Errorf("log names the reviewer:\n%s", out)

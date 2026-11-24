@@ -16,25 +16,42 @@ Replay is unlisted.
    for every new submission.
 3. **Upload the ZIP** in OpenAI's plugin dashboard. Fix any validation error
    in `listing.json` (or the builder, `internal/plugin`) and rebuild.
-4. **Connect the MCP server.** In the dashboard's MCP step:
-   - copy the domain-verification token, set it as `TCGREPLAY_OPENAI_CHALLENGE`
-     in the App Platform console (Settings > App-Level Environment
-     Variables, encrypted), with the reviewer's email as
-     `TCGREPLAY_REVIEWER`, and save (App Platform restarts the playmat);
-   - check https://tcgreplay.app/.well-known/openai-apps-challenge returns
-     exactly the token, then verify the domain in the dashboard;
-   - connect, sign in with Google, and wait for the tool scan to list the
-     tools with their titles and labels.
+4. **Create the reviewer account and connect the MCP server.**
+   - Create the reviewer account: generate a strong random password in your
+     password manager, then run `htpasswd -nBC 12 openai-reviewer` (or
+     `docker run --rm -it httpd:2.4 htpasswd -nBC 12 openai-reviewer`) and
+     enter it. It prints `openai-reviewer:$2y$12$…`. Keep one account per
+     directory review (for example `claude-reviewer` for Claude's), every
+     entry made at the same cost.
+   - In the App Platform console (Settings > App-Level Environment
+     Variables), set `TCGREPLAY_PASSWORD_ACCOUNTS` to the printed lines,
+     comma-separated, ticking **Encrypt**. In the dashboard's MCP step, copy
+     the domain-verification token and set it as `TCGREPLAY_OPENAI_CHALLENGE`
+     (encrypted) too, then save (App Platform restarts the playmat). Delete
+     the old single-reviewer setting if it is still there: it is no longer
+     used.
+   - Check the start-up line in Runtime Logs reports the password accounts
+     ("2 password accounts"), and that
+     https://tcgreplay.app/.well-known/openai-apps-challenge returns exactly
+     the token; then verify the domain in the dashboard.
+   - Connect, sign in on the TCG Replay sign-in page with the reviewer
+     account, and wait for the tool scan to list the tools with their
+     titles and labels.
    If the dashboard's connection is refused at registration, note the
    redirect address it used before changing the sign-in service.
-5. **Review details.** Give the reviewer's Google account and password, and
-   the login page https://tcgreplay.app, in the dashboard only, never in
-   this repository. The account must have no two-step verification.
+5. **Review details.** In Review information > Reviewer credentials, choose
+   **Username and password** and give the reviewer account: login URL
+   https://tcgreplay.app, the username (`openai-reviewer`) and its password,
+   with sign-in steps such as "Connect TCG Replay; on the TCG Replay sign-in
+   page, enter the username and password in the form below the Google
+   button". Enter them in the dashboard only, never in this repository; the
+   plain password lives only in your password manager.
 6. **Record the demo video** from `demo-script.md`. Add its URL as
    `review.demo_recording_url` in `listing.json` and rebuild, or enter it in
    the dashboard if the form allows.
 7. **Run MCP Inspector first**: connect to https://tcgreplay.app/mcp,
-   complete Google sign-in through its Auth settings, list the tools (labels,
+   sign in through its Auth settings with the reviewer account on the TCG
+   Replay sign-in page, list the tools (labels,
    titles and the profile marker on `get_account`), and call `get_account`,
    `import_log` with the example game, and `get_state`.
 8. **Submit** for review.
