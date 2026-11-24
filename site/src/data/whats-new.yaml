@@ -15,6 +15,12 @@
 # move note may), and never say TCG Replay is in ChatGPT's directory while
 # site/src/lib/listing.ts says it is not listed.
 
+- date: 2026-11-24
+  title: A TCG Replay sign-in page
+  refresh: false
+  changes:
+    - "Connecting your assistant, or opening the board in a browser that is not signed in, now shows TCG Replay's own sign-in page. Choose Sign in with Google there, as before: you keep the same account and games."
+
 - date: 2026-11-23
   title: "Privacy page: where diagnostics are kept"
   refresh: false

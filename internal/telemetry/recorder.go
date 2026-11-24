@@ -12,9 +12,11 @@ import (
 // The closed catalogue of events. docs/observability.md lists each with
 // its fields; a new event needs a constant here and a row there.
 const (
-	// SignIn: a Google sign-in completes (either flow).
+	// SignIn: a sign-in completes (either flow, any provider; Provider).
 	SignIn = "sign_in"
-	// SignInRefused: a completed sign-in is refused (Reason).
+	// SignInRefused: a sign-in is refused (Reason): a completed sign-in at
+	// the user cap, or a password attempt ("credentials", "throttled";
+	// Provider "password", no player).
 	SignInRefused = "sign_in_refused"
 	// SignOut: a board session signs out.
 	SignOut = "sign_out"
@@ -59,7 +61,7 @@ type Event struct {
 	Message   string
 	Reason    string
 	Idle      string
-	Provider  string // the sign-in provider ("google"), on sign_in
+	Provider  string // the sign-in provider ("google" or "password"), on sign_in and a refused password attempt
 }
 
 // line is the record as written, in its fixed field order.

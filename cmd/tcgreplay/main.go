@@ -75,10 +75,12 @@ type config struct {
 	// found. Read from TCGREPLAY_OPENAI_CHALLENGE only, never a flag, so
 	// it never shows in a process listing.
 	openAIChallenge string
-	// reviewer is the Google email of the one reviewer account, admitted
-	// past the user cap (see usergames.Config.Reviewer). Read from
-	// TCGREPLAY_REVIEWER only, never a flag, and never logged.
-	reviewer string
+	// passwordAccounts is the operator's username and password accounts,
+	// "username:bcrypt-hash" entries separated by commas or newlines (see
+	// hostauth.ParsePasswordAccounts). Read from
+	// TCGREPLAY_PASSWORD_ACCOUNTS only, never a flag, so it never shows in
+	// a process listing, and never logged.
+	passwordAccounts string
 	// rateLimit is requests a minute per account; maxUsers is places:
 	// signed-in accounts served at once. 0 turns either off.
 	rateLimit, maxUsers int
@@ -221,7 +223,10 @@ func main() {
 	}
 	c.idleErr = idleErr
 	c.openAIChallenge = strings.TrimSpace(os.Getenv("TCGREPLAY_OPENAI_CHALLENGE"))
-	c.reviewer = strings.TrimSpace(os.Getenv("TCGREPLAY_REVIEWER"))
+	if strings.TrimSpace(os.Getenv("TCGREPLAY_REVIEWER")) != "" {
+		log.Printf("warning: TCGREPLAY_REVIEWER is no longer used; give the reviewer a password account in TCGREPLAY_PASSWORD_ACCOUNTS")
+	}
+	c.passwordAccounts = os.Getenv("TCGREPLAY_PASSWORD_ACCOUNTS")
 	// A flag overrides the environment, even an invalid value there.
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {

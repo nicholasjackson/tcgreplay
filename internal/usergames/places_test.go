@@ -256,89 +256,66 @@ func TestZeroPlacesIsOff(t *testing.T) {
 	}
 }
 
-// reviewer is the configured reviewer account, as Google verified it;
-// carol is a third ordinary account.
+// reviewer is an operator-configured password account (a directory
+// reviewer); carol is a third ordinary account.
 var (
-	reviewer = hostauth.Account{ID: "google-sub-reviewer", Email: "Reviewer@Example.com", EmailVerified: true}
+	reviewer = hostauth.PasswordAccount("openai")
 	carol    = hostauth.Account{ID: "google-sub-carol", Email: "carol@example.com"}
 )
 
-// reviewerRegistry is placesRegistry with reviewer@example.com as the
-// reviewer.
-func reviewerRegistry(t *testing.T, max int) *Registry {
-	t.Helper()
-	r := placesRegistry(t, max, 0, nil)
-	r.cfg.Reviewer = "reviewer@example.com"
-	return r
-}
-
-// TestReviewerPastTheCap: at a cap of 1 held by A, the reviewer (email
-// verified, matched without regard to case) is admitted and can act,
-// while C is still refused with the usual busy error.
-func TestReviewerPastTheCap(t *testing.T) {
-	r := reviewerRegistry(t, 1)
+// TestPasswordAccountPastTheCap: at a cap of 1 held by A, a password
+// account is admitted and can act, while C is still refused with the
+// usual busy error.
+func TestPasswordAccountPastTheCap(t *testing.T) {
+	r := placesRegistry(t, 1, 0, nil)
 	if err := r.Admit(context.Background(), alice); err != nil {
 		t.Fatalf("Admit(A) with a free place: %v", err)
 	}
 	if err := r.Admit(context.Background(), reviewer); err != nil {
-		t.Fatalf("Admit(reviewer) at the cap: %v", err)
+		t.Fatalf("Admit(password account) at the cap: %v", err)
 	}
 	e := use(t, r, reviewer)
 	startGame(t, e.M, "review-game")
-	checkBusyErr(t, "Admit(C) with the reviewer in", r.Admit(context.Background(), carol), 1)
+	checkBusyErr(t, "Admit(C) with the password account in", r.Admit(context.Background(), carol), 1)
 	if _, err := r.Use(context.Background(), carol); err == nil {
-		t.Error("Use(C) at the cap with the reviewer in was not refused")
+		t.Error("Use(C) at the cap with the password account in was not refused")
 	}
 }
 
-// TestUnverifiedReviewerEmailIsRefused: an account whose email matches the
-// reviewer's but which Google has not verified is treated like any other
-// account at the cap.
-func TestUnverifiedReviewerEmailIsRefused(t *testing.T) {
-	r := reviewerRegistry(t, 1)
-	use(t, r, alice)
-	impostor := hostauth.Account{ID: "google-sub-impostor", Email: "reviewer@example.com"}
-	checkBusyErr(t, "Admit(unverified reviewer email) at the cap", r.Admit(context.Background(), impostor), 1)
-	// A verified account with a different email is not the reviewer either.
-	other := hostauth.Account{ID: "google-sub-other", Email: "reviewer@example.org", EmailVerified: true}
-	checkBusyErr(t, "Admit(another verified email) at the cap", r.Admit(context.Background(), other), 1)
-}
-
-// TestReviewerPlaceNotCounted: the reviewer's place does not take one of
-// the cap's: with the reviewer in, A leaving lets C in, and with the
-// reviewer alone the one place is still free for A.
-func TestReviewerPlaceNotCounted(t *testing.T) {
-	r := reviewerRegistry(t, 1)
-	use(t, r, reviewer)
-	if err := r.Admit(context.Background(), alice); err != nil {
-		t.Fatalf("Admit(A) with only the reviewer in: %v", err)
-	}
-	checkBusyErr(t, "Admit(C) with A and the reviewer in", r.Admit(context.Background(), carol), 1)
-	r.Release(context.Background(), alice.ID)
-	if err := r.Admit(context.Background(), carol); err != nil {
-		t.Fatalf("Admit(C) after A left, the reviewer still in: %v", err)
-	}
-	if !r.holdsPlace(reviewer) || !r.holdsPlace(carol) {
-		t.Errorf("reviewer holds a place: %v, C: %v; want both", r.holdsPlace(reviewer), r.holdsPlace(carol))
-	}
-}
-
-// TestNoReviewerConfigured: with no reviewer set, the verified reviewer
-// account is refused at the cap like any other.
-func TestNoReviewerConfigured(t *testing.T) {
+// TestGoogleAccountNamedLikeAPasswordAccountIsCounted: a Google account
+// whose email or name matches a password account's username, verified or
+// not, gets no reserved place: it is refused at the cap like any other.
+func TestGoogleAccountNamedLikeAPasswordAccountIsCounted(t *testing.T) {
 	r := placesRegistry(t, 1, 0, nil)
 	use(t, r, alice)
-	checkBusyErr(t, "Admit(reviewer account) with no reviewer configured", r.Admit(context.Background(), reviewer), 1)
+	for _, g := range []hostauth.Account{
+		{ID: "google-sub-openai", Email: "openai", EmailVerified: true},
+		{ID: "google-sub-openai2", Email: "openai@example.com", EmailVerified: true},
+		{ID: "password:openai", Email: "openai", EmailVerified: true}, // even with the ID, without the provider
+	} {
+		checkBusyErr(t, "Admit(Google "+g.Email+") at the cap", r.Admit(context.Background(), g), 1)
+	}
 }
 
-// TestReviewerSettingNormalised: the reviewer setting is matched trimmed
-// and without regard to case.
-func TestReviewerSettingNormalised(t *testing.T) {
-	r := New(Config{Reviewer: "  Reviewer@EXAMPLE.com \n"})
-	if !r.isReviewer(reviewer) {
-		t.Errorf("reviewer %q not matched by setting %q", reviewer.Email, r.cfg.Reviewer)
+// TestPasswordAccountPlaceNotCounted: a password account's place does not
+// take one of the cap's: with it in, A leaving lets C in, and with it
+// alone the one place is still free for A. Several password accounts all
+// get in.
+func TestPasswordAccountPlaceNotCounted(t *testing.T) {
+	r := placesRegistry(t, 1, 0, nil)
+	use(t, r, reviewer)
+	if err := r.Admit(context.Background(), alice); err != nil {
+		t.Fatalf("Admit(A) with only the password account in: %v", err)
 	}
-	if r.isReviewer(alice) {
-		t.Error("alice matched as the reviewer")
+	checkBusyErr(t, "Admit(C) with A and the password account in", r.Admit(context.Background(), carol), 1)
+	if err := r.Admit(context.Background(), hostauth.PasswordAccount("claude")); err != nil {
+		t.Fatalf("Admit(a second password account) at the cap: %v", err)
+	}
+	r.Release(context.Background(), alice.ID)
+	if err := r.Admit(context.Background(), carol); err != nil {
+		t.Fatalf("Admit(C) after A left, the password accounts still in: %v", err)
+	}
+	if !r.holdsPlace(reviewer) || !r.holdsPlace(carol) {
+		t.Errorf("password account holds a place: %v, C: %v; want both", r.holdsPlace(reviewer), r.holdsPlace(carol))
 	}
 }

@@ -291,7 +291,7 @@ func TestMainHostedSaysWhetherSending(t *testing.T) {
 // provider field and names it on sign_in.
 func TestRunbookListsProvider(t *testing.T) {
 	doc := readTestdata(t, "../../docs/observability.md")
-	for _, want := range []string{"| `provider` | the sign-in provider (`google`), on `sign_in` |", "| `sign_in` | `provider` (`google`) |"} {
+	for _, want := range []string{"| `provider` | the sign-in provider (`google` or `password`), on `sign_in`", "| `sign_in` | `provider` (`google` or `password`) |", "reason `credentials`", "`throttled`"} {
 		if !strings.Contains(doc, want) {
 			t.Errorf("docs/observability.md lacks %q", want)
 		}

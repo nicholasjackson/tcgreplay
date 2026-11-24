@@ -40,8 +40,9 @@ const check = 'What can the tcgreplay playmat do?';
     <li>Open <strong>Settings → Connectors</strong> and choose <strong>Add custom connector</strong>.</li>
     <li>Name it <code>tcgreplay</code> and paste the playmat's address, <code>{site.mcpURL}</code>.</li>
     <li>
-      Choose <strong>Add</strong>, then <strong>Connect</strong>. Google asks you to choose an account: pick one and
-      allow it to share your email address. You come back to claude.ai.
+      Choose <strong>Add</strong>, then <strong>Connect</strong>. TCG Replay's sign-in page opens: choose
+      <strong>Sign in with Google</strong>, pick your account and allow it to share your email address. You come back to
+      claude.ai.
     </li>
     <li>In a chat, make sure tcgreplay is switched on in the chat's tools menu.</li>
   </ol>
@@ -67,7 +68,7 @@ const check = 'What can the tcgreplay playmat do?';
         <li>Open <strong>Plugins</strong> in ChatGPT.</li>
         <li>Search for "{chatgptDirectory.name}".</li>
         <li>Open it and choose <strong>Add</strong> (or <strong>Connect</strong>).</li>
-        <li>Sign in with Google when asked, and allow it to share your email address.</li>
+        <li>When TCG Replay's sign-in page opens, choose <strong>Sign in with Google</strong> and allow it to share your email address.</li>
         <li>In a new chat, type <code>@</code> and pick {chatgptDirectory.name}.</li>
       </ol>
       <p>Or add it yourself as a custom connection:</p>
@@ -85,8 +86,9 @@ const check = 'What can the tcgreplay playmat do?';
       Read the warning, choose <strong>I understand and want to continue</strong>, then <strong>Create as a plugin</strong>.
     </li>
     <li>
-      Find tcgreplay in your plugins and <strong>Install</strong> it. The first time it is used, Google asks you to
-      choose an account and share your email address, and you come back to ChatGPT.
+      Find tcgreplay in your plugins and <strong>Install</strong> it. The first time it is used, TCG Replay's sign-in
+      page opens: choose <strong>Sign in with Google</strong>, pick your account and share your email address, and you
+      come back to ChatGPT.
     </li>
     <li>In a new chat, type <code>@</code> and pick tcgreplay.</li>
   </ol>
@@ -103,7 +105,8 @@ const check = 'What can the tcgreplay playmat do?';
     </li>
     <li>
       Start Claude Code, type <code>/mcp</code>, choose <strong>tcgreplay</strong> and <strong>Authenticate</strong>.
-      Your browser opens Google's account chooser; pick your account, then return to the terminal.
+      Your browser opens TCG Replay's sign-in page; choose <strong>Sign in with Google</strong>, pick your account, then
+      return to the terminal.
     </li>
   </ol>
   <Prompt text={check} label="Check it works. Ask Claude Code:" note="It should list the playmat's coaching workflows." />
@@ -148,8 +151,8 @@ const check = 'What can the tcgreplay playmat do?';
   <h2>Next</h2>
   <ul>
     <li>
-      <a href="/docs/sign-in">Signing in and opening the board</a>: what to expect from Google, and how to open the board
-      link.
+      <a href="/docs/sign-in">Signing in and opening the board</a>: what the sign-in page looks like, and how to open the
+      board link.
     </li>
     <li><a href="/docs/workflows">Coaching workflows</a>: what to ask once you're connected.</li>
   </ul>

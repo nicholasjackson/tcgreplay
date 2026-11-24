@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -57,6 +58,10 @@ type Config struct {
 	// Recorder records sign-ins, sign-outs, rate-limit refusals and admin
 	// refusals by player ID, never by email; nil records nothing.
 	Recorder *telemetry.Recorder
+	// PasswordAccounts are the operator's username and password accounts
+	// (see ParsePasswordAccounts). Nil or empty means the sign-in page
+	// offers Google only.
+	PasswordAccounts *PasswordAccounts
 }
 
 // Places is the server's user cap, kept by whoever tracks what each
@@ -74,16 +79,61 @@ type Places interface {
 	Release(ctx context.Context, id string)
 }
 
-// Account is the signed-in Google account a request acts for.
+// Account is the signed-in account a request acts for: a Google account,
+// or an operator-configured password account.
 type Account struct {
-	// ID is Google's stable subject identifier ("sub") for the account.
+	// ID is Google's stable subject identifier ("sub") for a Google
+	// account, or "password:<username>" for a password account, so the two
+	// never share an ID.
 	ID string
-	// Email is the account's email address, for display and logs.
+	// Email is a Google account's email address, or a password account's
+	// username, for display and logs.
 	Email string
 	// EmailVerified is whether Google marked Email verified
 	// (email_verified). It is sealed into the board cookie; a cookie from
-	// before it was kept opens as unverified.
+	// before it was kept opens as unverified. Always false for a password
+	// account.
 	EmailVerified bool
+	// Provider is how the account signed in: ProviderGoogle or
+	// ProviderPassword. Empty means Google (sign-ins from before it was
+	// kept).
+	Provider string
+}
+
+// Password reports whether the account is an operator-configured
+// password account: it gets a reserved place and is never an admin.
+func (a Account) Password() bool { return a.Provider == ProviderPassword }
+
+// usePasswordAccounts makes pa the configured password accounts: their
+// grants carry each account's fingerprint, and open only while the
+// account is still configured with the same hash.
+func (a *Auth) usePasswordAccounts(pa *PasswordAccounts) {
+	a.cfg.PasswordAccounts = pa
+	a.st.fingerprint = func(acct Account) string {
+		fp, _ := pa.Fingerprint(acct.Email)
+		return fp
+	}
+	a.st.validGrant = func(acct Account, fp string) bool { return pa.Valid(acct.Email, fp) }
+}
+
+// providerName is the account's provider, with Google for none recorded.
+func (a Account) providerName() string {
+	if a.Provider == "" {
+		return ProviderGoogle
+	}
+	return a.Provider
+}
+
+// PlayerKey is what telemetry hashes into the account's player ID: a
+// Google account's email (unchanged, so existing player IDs stay the
+// same), or "password:<username>" for a password account, so a password
+// account never shares a player ID with a Google account of the same
+// email.
+func (a Account) PlayerKey() string {
+	if a.Password() {
+		return passwordIDPrefix + a.Email
+	}
+	return a.Email
 }
 
 // Auth is the hosted playmat's sign-in service.
@@ -95,6 +145,9 @@ type Auth struct {
 	client *http.Client
 	st     *store
 	admins map[string]bool // lower-cased admin emails
+	// clientSourceOnce logs where password sign-in client addresses come
+	// from, once.
+	clientSourceOnce sync.Once
 }
 
 // New returns a sign-in service for cfg. It fails when the public address
@@ -129,6 +182,7 @@ func New(cfg Config) (*Auth, error) {
 		}
 	}
 	a.st = newStore(seal, a.now)
+	a.usePasswordAccounts(cfg.PasswordAccounts)
 	if cfg.Places != nil {
 		a.st.onRelease = cfg.Places.Release
 	}
@@ -152,6 +206,7 @@ func (a *Auth) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /healthz", serveHealth)
 	a.oauthRoutes(mux)
 	a.boardRoutes(mux)
+	a.signinRoutes(mux)
 }
 
 // secure reports whether cookies must be marked Secure: the playmat is

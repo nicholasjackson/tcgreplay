@@ -368,8 +368,9 @@ func waitHealthy(t *testing.T, base string, within time.Duration, exited <-chan 
 }
 
 // googleClientIDAt registers a client with the playmat at base, starts its
-// sign-in and returns the client ID the playmat sends the browser to
-// Google with, failing unless it is sent to the real Google.
+// sign-in, chooses Google on the sign-in page and returns the client ID
+// the playmat sends the browser to Google with, failing unless it is sent
+// to the real Google.
 func googleClientIDAt(t *testing.T, base string) string {
 	t.Helper()
 	resp, err := http.Post(base+"/register", "application/json", strings.NewReader(`{"client_name":"hosted-test","redirect_uris":["`+hostauthtest.LoopbackCallback+`"]}`))
@@ -401,6 +402,22 @@ func googleClientIDAt(t *testing.T, base string) string {
 	loc, err := resp.Location()
 	if err != nil {
 		t.Fatalf("authorize: %d with no redirect: %v", resp.StatusCode, err)
+	}
+	if loc.Path != "/auth/signin" {
+		t.Fatalf("authorize sent the browser to %s, want the sign-in page", loc)
+	}
+	// The login cookie is Secure for an https public address, so it is
+	// carried by hand to the plain-http test address.
+	req, _ := http.NewRequest("GET", base+"/auth/google?state="+url.QueryEscape(loc.Query().Get("state")), nil)
+	for _, c := range resp.Cookies() {
+		req.AddCookie(c)
+	}
+	if resp, err = noFollow.Do(req); err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if loc, err = resp.Location(); err != nil {
+		t.Fatalf("Google button: %d with no redirect: %v", resp.StatusCode, err)
 	}
 	if loc.Host != "accounts.google.com" {
 		t.Fatalf("authorize sent the browser to %s, want Google", loc)
@@ -1292,8 +1309,9 @@ func TestHostedHealthz(t *testing.T) {
 
 // TestAppSpecHealthCheckAndSecrets: the App Platform definition checks
 // health at /healthz and declares the Google credentials, the player-ID
-// key, OpenAI's domain-verification token, the reviewer's email and the
-// Grafana Cloud token as secrets, with no value in the file.
+// key, OpenAI's domain-verification token, the password accounts and the
+// Grafana Cloud token as secrets, with no value in the file, and no longer
+// declares the retired reviewer setting.
 func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 	lines := strings.Split(readTestdata(t, "../../.do/app.yaml"), "\n")
 	var health bool
@@ -1312,7 +1330,7 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 		t.Error("app.yaml has no health_check with http_path: /healthz")
 	}
 
-	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET", "TCGREPLAY_PLAYER_ID_KEY", "TCGREPLAY_OPENAI_CHALLENGE", "TCGREPLAY_REVIEWER", "TCGREPLAY_GRAFANA_TOKEN"} {
+	for _, key := range []string{"TCGREPLAY_GOOGLE_CLIENT_ID", "TCGREPLAY_GOOGLE_CLIENT_SECRET", "TCGREPLAY_PLAYER_ID_KEY", "TCGREPLAY_OPENAI_CHALLENGE", "TCGREPLAY_PASSWORD_ACCOUNTS", "TCGREPLAY_GRAFANA_TOKEN"} {
 		f := appspec.EnvFields(strings.Join(lines, "\n"), key)
 		if f == nil {
 			t.Errorf("app.yaml declares no %s", key)
@@ -1324,6 +1342,9 @@ func TestAppSpecHealthCheckAndSecrets(t *testing.T) {
 		if v, ok := f["value"]; ok {
 			t.Errorf("%s has a value in app.yaml: %q", key, v)
 		}
+	}
+	if appspec.EnvFields(strings.Join(lines, "\n"), "TCGREPLAY_REVIEWER") != nil {
+		t.Error("app.yaml still declares the retired TCGREPLAY_REVIEWER")
 	}
 }
 
@@ -1360,7 +1381,7 @@ func TestAppSpecIdleTimeoutAndSingleInstance(t *testing.T) {
 }
 
 // TestHostedBoardSignInReturnsToPage: opening a board link while signed
-// out is sent through Google sign-in, query and all, and a browser
+// out is sent through the sign-in page and Google, query and all, and a browser
 // following it lands on the board page it asked for, signed in.
 func TestHostedBoardSignInReturnsToPage(t *testing.T) {
 	h := startHosted(t, testPublic)
@@ -1374,6 +1395,9 @@ func TestHostedBoardSignInReturnsToPage(t *testing.T) {
 	browser := hostauthtest.Browser(t, h.public, h.ts.URL)
 	resp, err := browser.Get(h.public + "/board?x=1")
 	if err != nil {
+		t.Fatal(err)
+	}
+	if resp, err = hostauthtest.ChooseGoogle(browser, resp); err != nil {
 		t.Fatal(err)
 	}
 	body, _ := io.ReadAll(resp.Body)

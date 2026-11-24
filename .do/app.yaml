@@ -163,12 +163,16 @@ envs:
   - key: TCGREPLAY_OPENAI_CHALLENGE
     scope: RUN_TIME
     type: SECRET
-  # The Google account email OpenAI's plugin reviewer signs in with (an
-  # account with no two-step verification). Once Google has verified
-  # it, that account may sign in and play even when TCGREPLAY_MAX_USERS
-  # places are held, and its place is not counted. Set it in the
-  # console, encrypted; it is never logged.
-  - key: TCGREPLAY_REVIEWER
+  # The username and password accounts for directory reviewers and
+  # invited users: comma- or newline-separated username:bcrypt-hash
+  # entries, made with `htpasswd -nBC 12 <username>` (every entry at the
+  # same cost). Each account signs in on TCG Replay's sign-in page, gets
+  # a reserved place (it may sign in and play even when
+  # TCGREPLAY_MAX_USERS places are held, and its place is not counted),
+  # and is never an admin. Removing an account or changing its password
+  # ends its sign-ins at the next restart. Set it in the console,
+  # encrypted; it is never logged. A malformed value stops the playmat.
+  - key: TCGREPLAY_PASSWORD_ACCOUNTS
     scope: RUN_TIME
     type: SECRET
   # Requests per minute per account, and places (accounts served at
