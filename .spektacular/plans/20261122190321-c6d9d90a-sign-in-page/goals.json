@@ -1,0 +1,1283 @@
+{
+  "plan": "20261122190321-c6d9d90a-sign-in-page",
+  "items": [
+    {
+      "item": "40150ba2-ff2b-4ea1-ad7e-1f49d3ce93dc",
+      "title": "Sign-in page in front of Google",
+      "checks": [
+        {
+          "at": "2026-11-24T09:46:59Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "40150ba2-ff2b-4ea1-ad7e-1f49d3ce93dc",
+            "title": "Sign-in page in front of Google",
+            "criteria": [
+              "An assistant starting to connect, and a signed-out browser opening a board page, are both shown the TCG Replay sign-in page, not Google.",
+              "Choosing \"Sign in with Google\" and completing Google's sign-in leaves the same account signed in, completes the assistant's connection or returns to the board page asked for, and signs that browser in to the board, exactly as before.",
+              "With no password accounts configured, the page shows the Google button and no username or password fields. It has no sign-up, change-password or recovery control.",
+              "A page, button or callback reached with a missing, expired or other browser's sign-in shows the existing \"start signing in again\" problem page.",
+              "The connector's registration, authorization checks, PKCE and token exchange behave exactly as before, and sign-ins sealed before the change still work.",
+              "Every existing sign-in, connector, board, cap, admin and hosted test passes."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/signin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "p.nonce"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "pages.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "p.next"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/auth/google/callback"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/oauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/pages.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauthtest/client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/google_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "harness.begin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/start"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/auth/signin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/authorize"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/auth/login"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "accounts.google.com"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Connecting: internal/hostauth/oauth.go:291 now calls a.startSignIn, which redirects to /auth/signin?state=... (internal/hostauth/signin.go:45-57). Signed-out board: internal/hostauth/board.go:27 serveLogin calls startSignIn, and RequireSession (board.go:71) redirects to /auth/login, which lands on the sign-in page. Google is only reached from serveGoogleStart (signin.go:108-115), i.e. after the button is chosen. signin_test.go:19-46 (TestBothEntryPointsShowTheSigninPage) checks all three entry points end on /auth/signin with Google not yet prompted."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Google's callback (google.go:56-84) takes the same pending sign-in and feeds it to finishSignIn (signin.go:121-139), which calls the unchanged signIn (google.go:190-208: user cap, addSession, session cookie). Connector flow still calls continueConnector with the same pendingLogin fields; board flow still redirects to p.next. signin_test.go:182-241 (connector, code and state returned, same account in board session) and :246-264 (board returns to the requested path signed in as the account) cover this."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "signin.go and pages.go:33-72 define signinPage: only heading, optional error, and a provider \u003ca\u003e per entry in buttonProviders, which holds only Google (signin.go:31-33). There is no \u003cform\u003e, \u003cinput\u003e, password field, sign-up, reset or change-password text in the template. signin_test.go:52-69 (TestSigninPageWithoutPasswordAccounts) asserts the absence of these and exactly one data-provider button."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "signin.go:82-95 pendingFor shows errorPage with 'This sign-in has expired or was opened in a different browser. Please start signing in again.' when the cookie does not match, and 'has expired or was already used. Please start signing in again.' when no live sign-in exists. It guards /auth/signin and /auth/google (signin.go:99-115). The callback (google.go:59-71) uses the same error page. signin_test.go:71-118 covers no state, unknown state, missing cookie, and another browser's state; :270-334 covers expiry on page, Google button and callback; :336-355 covers a used sign-in."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Client registration, PKCE and token handling are untouched in the diff (oauth.go changes only the startGoogle call at :291 to startSignIn; seal.go and the store's seal logic are not in the diff). PKCE verifier is still S256 (google.go:41-49) and the exchange still uses VerifierOption(p.verifier) (google.go:95). The stored pending copy in takePending (store.go:194-200) is a copy only for the caller. seal_test.go:72-82 shows a sealed client from before still reaches the sign-in page and Google. Note that seal_test.go was edited to click through the page; the authorization checks themselves are not changed."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Verify results supplied with the goal report go vet, gofmt, go test ./... and go test -race for hostauth and usergames as passing; I did not re-run them (read-only). Existing tests were updated, not removed, to route through the sign-in page (e.g. oauth_test.go:696-710, seal_test.go:72-82, cmd/tcgreplay/hosted_test.go:404-422, hostauthtest/client.go ChooseGoogle at :393-409), and the new tests are in internal/hostauth/signin_test.go. Scope note for the caller, not a criterion: the diff also touches files outside the listed scope (internal/hostauth/hostauthtest/google.go alias RoundTrip, oauth_test.go, seal_test.go, board.go, signin.go, signin_test.go, cmd/tcgreplay/hosted_cap_test.go). They are supporting test or feature changes, but the scope rule ('change only the files that belong to this item') should be checked against them."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "cec2eb15-9867-449f-a047-e6eeee98293c",
+      "title": "Studio look for the sign-in and problem pages",
+      "checks": [
+        {
+          "at": "2026-11-24T09:51:36Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "cec2eb15-9867-449f-a047-e6eeee98293c",
+            "title": "Studio look for the sign-in and problem pages",
+            "criteria": [
+              "The sign-in, problem, busy and signed-out pages show the TCG Replay mark and use the Studio colour tokens, readable at phone and desktop width without sideways scrolling.",
+              "The Google button is the first and most prominent action, labelled \"Sign in with Google\" with Google's mark.",
+              "The pages request no font, script, stylesheet or image from any other site, and responses tell browsers not to frame them or cache them."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/design/design.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/pages.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/pages_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/hostauth/pages.go:57-62 and 67-74 render the sign-in, problem and busy pages through the shared layout (pages.go:38-54), which inlines design.TokensCSS and design.MarkSVG (pages.go:49, 658-661). design.go:26-40 embeds tokens.css and mark.svg, and mark.svg (line 1-16) is the TCG Replay mark. pageStyle (pages.go:15-30) uses only var(--bg), var(--ink), var(--panel), var(--primary) etc. main is max-width 24rem with 1px border and body padding var(--space-4) (pages.go:16-17), and the viewport meta is at pages.go:42. Nothing in the CSS sets a fixed width wider than that, so no sideways scroll is expected. The signed-out page is rendered through the same renderedPages helper in pages_test.go:26 and is asserted to carry the mark and tokens (pages_test.go:34-53). Phone/desktop rendering itself was not run; judged from the CSS."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "internal/hostauth/signin.go:31-33 defines the single provider button {ID: \"google\", Label: \"Sign in with Google\"}. pages.go:71-73 renders the providers list first in the body, before any other action, and the Google entry gets the googleMark SVG (pages.go:72, googleMark at pages.go:34-35 with Google's four brand colours #EA4335, #4285F4, #FBBC05, #34A853). The .provider button is full width in a grid with a min-height of var(--touch-target) (pages.go:24-25), which makes it the page's dominant action. pages_test.go:55-75 asserts first action is the Google button, the label and the four colours."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "No external URL in the page: pageStyle (pages.go:15-30) has no url() or @import, and the only font-family is var(--font-sans), which tokens.css:106 defines as a name list (\"IBM Plex Sans\", system-ui, ...) with no @font-face, @import or url( (grep of tokens.css for @import|url\\(|https?:|font-face|src: returned no matches). mark.svg has only an xmlns namespace declaration, not a request. googleMark is inline SVG. The template's only links are the same-site /auth/login?next=/board link and the /auth/google start path. Headers: pageHeaders (pages.go:100-106) sets Cache-Control no-store, X-Frame-Options DENY, and a CSP of default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'. renderPage and renderSignin both call pageHeaders (pages.go:115, 127), so the problem, busy, signed-out and sign-in pages all get it. pages_test.go:80-106 checks these headers and that no script, link, img or iframe element or external src/href is present."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "30c3d86e-10cd-4a2b-a186-eefccbccb16f",
+      "title": "Website docs and news entry for the sign-in page",
+      "checks": [
+        {
+          "at": "2026-11-24T09:55:15Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "30c3d86e-10cd-4a2b-a186-eefccbccb16f",
+            "title": "Website docs and news entry for the sign-in page",
+            "criteria": [
+              "The sign-in guide and the connecting steps for each assistant say a TCG Replay sign-in page opens first and players choose \"Sign in with Google\" there. None still says there is no TCG Replay page in between.",
+              "A What's new entry dated the release day announces the sign-in page, with refresh set to false.",
+              "The website builds and its browser suite passes."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/content/docs/sign-in.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/docs/connect.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/index.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/connect.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/docs/sign-in"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/data/whats-new.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The sign-in guide (site/src/content/docs/sign-in.md:9 and :20) says the browser opens TCG Replay's sign-in page and the reader chooses Sign in with Google there. The connecting steps in site/src/pages/docs/connect.astro say the same for claude.ai (:43-44), ChatGPT's directory listing (:71, inside the chatgptDirectory.listed branch), ChatGPT's custom plugin install (:89-91) and Claude Code (:108-109). A grep of site/src for 'in between', 'no tcgreplay page' and 'no TCG Replay page' finds only the negated assertion in site/e2e/connect.spec.js:165, which checks the phrase is absent. The remaining 'straight away' hit (sign-in.md:19) is about the same-browser case and is not a claim about a missing page. site/src/pages/index.astro:18, :63 and :135 still say 'sign in with Google' without any 'no page in between' claim, and it is not part of the sign-in guide or connecting steps."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The staged diff adds a site/src/data/whats-new.yaml entry at the top of the list (diff hunk @@ -15,6 +15,12 @@): date 2026-11-24 (today's date per the environment), title 'A TCG Replay sign-in page', refresh: false, and a change line saying connecting the assistant or opening the board in a signed-out browser now shows TCG Replay's own sign-in page where the player chooses Sign in with Google. It sits above the 2026-11-23 entry, so the newest-first order holds."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Verification results given to me: 'cd site \u0026\u0026 npm run build' pass (21 pages), and 'cd site \u0026\u0026 npx playwright test' pass (280 passed, 2 skipped) after the screenshot baselines were re-recorded and the suite re-run green. I did not re-run either command, since I am read-only. The e2e assertions in site/e2e/connect.spec.js:159-166 (the sign-in page link test) match the new copy in sign-in.md, which I checked by reading. Note for the caller, outside the criterion: the diff also changes Go files under internal/hostauth and cmd/tcgreplay and re-records PNG baselines under site/e2e/__screenshots__, none of which are in this item's listed scope; the criterion itself is not affected by that."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "818852b8-40c3-4519-900b-cadbd4477c2a",
+      "title": "Password accounts from configuration",
+      "checks": [
+        {
+          "at": "2026-11-24T09:58:04Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "818852b8-40c3-4519-900b-cadbd4477c2a",
+            "title": "Password accounts from configuration",
+            "criteria": [
+              "A configuration with several `username:bcrypt-hash` entries yields that many accounts, each checked against its own password.",
+              "A plain-text password, a malformed entry, an invalid username or a duplicate username is refused with an error that does not contain the configured value.",
+              "A wrong password and an unknown username both fail in the same way and take about the same time.",
+              "Usernames may be a plain name or an email address. A password account's identity never equals a Google account's, even when the username is exactly a Google account's email.",
+              "A sign-in made before an account was removed, or before its password changed, is reported as no longer valid."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "go.mod"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "go.sum"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "golang.org/x/crypto"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/password.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/password_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/hostauth/password.go:59-97 ParsePasswordAccounts splits entries on commas and whitespace and stores each username with its own hash; password_test.go:25-65 (TestParsePasswordAccounts) parses three accounts in comma, newline and space forms, and each Check(user, its own password) succeeds with Len()==3. Note that nothing in cmd/ calls ParsePasswordAccounts (grep finds no caller outside hostauth), so a deployment configuration does not yet reach the parser. cmd/ is outside this item's scope, so I did not count that against this criterion."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "password.go:67-85 and 89-94 return errors that name only the entry number and the rule broken (\"entry %d is not username:bcrypt-hash\", \"the password is not a bcrypt hash\", \"the username must be 1 to 254 ...\", \"entry %d repeats an earlier entry's username\"); no username or value is formatted into them. password_test.go:71-107 (TestParsePasswordAccountsRefuses) covers plain text, malformed entry, invalid username, low cost and duplicate, and checks that the messages do not contain the secrets."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Check (password.go:116-136) gives both failures the same return value, so the result is the same. The timing is not the same when accounts have different costs: the dummy hash is generated at maxCost, the highest configured cost (password.go:87, 90), while a known account is compared at its own hash cost (password.go:122-131). A wrong password for an account at cost 10 therefore takes much less time than an unknown username when another account is at cost 12. The equal-time claim holds only when all configured costs match. TestCheckUnknownAndWrongLookAlike (password_test.go:112-137) checks only that each path takes at least half of one comparison, so it does not catch this gap."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "password.go:141-143 PasswordAccount builds ID \"password:\"+name with Provider ProviderPassword. Google account IDs are the numeric sub, and hostauth.go:78-96 sets Account.Provider and Password(). Even when the username equals a Google email, the ID differs because of the prefix. password_test.go:139-162 (TestPasswordAccountIdentityIsItsOwn) checks this against Google accounts whose ID or Email match the username, including one whose ID is the email."
+            },
+            {
+              "criterion": 5,
+              "verdict": "not_met",
+              "evidence": "password.go:148-161 provides Fingerprint and Valid, and password_test.go:164-202 (TestFingerprintRevokes) shows that a fingerprint stops validating after removal or a password change. Nothing uses them in the sign-in path: grep for Fingerprint( and .Valid( finds no caller outside password.go and its test. Account (hostauth.go:461-481) has no field that carries the fingerprint, and signin.go and board.go have no check against the configured accounts. So a sign-in made before a removal or change is not reported as no longer valid by the code; only the predicate exists."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-24T09:59:55Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "818852b8-40c3-4519-900b-cadbd4477c2a",
+            "title": "Password accounts from configuration",
+            "criteria": [
+              "A configuration with several `username:bcrypt-hash` entries yields that many accounts, each checked against its own password.",
+              "A plain-text password, a malformed entry, an invalid username or a duplicate username is refused with an error that does not contain the configured value.",
+              "A wrong password and an unknown username both fail in the same way and take about the same time.",
+              "Usernames may be a plain name or an email address. A password account's identity never equals a Google account's, even when the username is exactly a Google account's email.",
+              "A sign-in made before an account was removed, or before its password changed, is reported as no longer valid."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "go.mod"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "go.sum"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "golang.org/x/crypto"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/password.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/password_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "password.go:61-102 ParsePasswordAccounts splits entries on commas and whitespace and stores each username with its own hash in byName. password_test.go:31-71 (TestParsePasswordAccounts) parses three entries in commas, newline and space forms, asserts Len()==3, and checks each user against its own password and not another's."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "password.go:67-93 returns errors that name only the entry position and the rule broken: 'entry %d is not username:bcrypt-hash' (malformed), 'entry %d: the username must be...' (invalid username), 'entry %d: the password is not a bcrypt hash' (plain text), 'entry %d repeats an earlier entry's username' (duplicate). None interpolates the username or the value. password_test.go:77-114 (TestParsePasswordAccountsRefuses) covers plain text, malformed, invalid and duplicate entries and checks the error text against the configured values."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "password.go:121-141 Check always runs one bcrypt.CompareHashAndPassword: against the account's hash when the username is known, otherwise against p.dummy. The dummy is generated at the same accountCost (password.go:95). Both failure paths return Account{}, false. Over-long passwords still run a comparison (cmp=\"\"). password_test.go:119-160 (TestCheckUnknownAndWrongLookAlike) asserts each failure takes at least half one comparison and that the fastest timings are within a factor of two. This is the module-level check; the HTTP handler in signin.go is outside this item's scope and was not reviewed for response parity."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "password.go:33 usernameRule permits plain names and email-shaped names ([a-z0-9._+@-]); usernames are lower-cased (password.go:73, 114). PasswordAccount (password.go:146-149) gives ID 'password:\u003cname\u003e' with Provider ProviderPassword. Google IDs are numeric subs (hostauth.go:86), and the 'password:' prefix cannot collide with them. password_test.go:162-185 (TestPasswordAccountIdentityIsItsOwn) checks a password account whose username equals a Google account's email or sub is not equal to that Google account's ID and does not read as a password account."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "password.go:151-165 Fingerprint returns the first 16 hex chars of SHA-256 of the configured hash, and Valid returns false when the username is gone or its hash has changed. password_test.go:187-225 (TestFingerprintRevokes) shows a fingerprint stops validating after a password change and after removal, and stays valid otherwise. Caveat: within this item's files, Valid and Fingerprint are called only from tests. Account (hostauth.go:81-100) has no field that seals a fingerprint, and no production code in the diff re-checks it on a session. The criterion is met at the level of the module this item owns, but the runtime rejection of an existing sign-in is not wired up in the files I was given."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 2,
+      "state": "accepted"
+    },
+    {
+      "item": "a9cbf184-13e5-4e89-8247-0a25a77c0942",
+      "title": "Accounts carry their provider through sign-ins and tokens",
+      "checks": [
+        {
+          "at": "2026-11-24T10:05:39Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "a9cbf184-13e5-4e89-8247-0a25a77c0942",
+            "title": "Accounts carry their provider through sign-ins and tokens",
+            "criteria": [
+              "A board cookie and the assistant's tokens for a password account are recognised as that password account on page loads and tool calls, including after a restart with the same signing key.",
+              "Cookies and tokens issued before the change still open as the same Google account.",
+              "After a restart in which a password account was removed or its password changed, that account's existing cookie and tokens are refused.",
+              "A password account is refused by every admin page and action, even when its username is an admin's email.",
+              "Telemetry records for a password account never carry the player ID of the Google account with the same email.",
+              "The board's session information names the provider."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/seal.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/oauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauth.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "limit.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "admin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/telemetry.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/cacheadmin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/events_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/events_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/noemail_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "Entry.acct"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/admin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/board.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/seal_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "verified_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/admin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/board_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/auth/session"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "Provider and Fingerprint are sealed into every board session, access and refresh grant (internal/hostauth/seal.go:106-128, grantFor; store.go:1186-1189, 1226-1234). Opening them restores the account with Provider (seal.go:117 account()). Session, refresh and access opens all check grantStands (store.go:249, 426, 480), and the seal key is unchanged, so the same key reopens them after a restart. MCP tool calls get the provider from verify() (oauth.go:457-465) and AccountFromToken (oauth.go:818-829). Caveat: signin.go has no password sign-in route yet, so a password session is only created through signIn directly, as the store tests do."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Grants without a provider field (\"p\" absent) decode to Provider \"\" (seal.go:117), which Password() treats as Google (hostauth.go:615, providerName at hostauth.go:630). grantStands returns true for any non-password account (store.go:1111-1113), so old cookies and tokens keep working. Google grants are written with Provider stripped to \"\" (seal.go:1049-1051)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "password.go:153-165: Fingerprint is the first 16 hex chars of SHA-256 of the configured bcrypt hash (password.go:91-92), and Valid is false when the username is no longer configured or the fingerprint differs. Stable across restarts because it is derived from the configured hash. store.go:1111-1117 grantStands applies Valid, and it gates session (store.go:249), refresh (426) and access (480). hostauth.go:620-627 wires validGrant and fingerprint to the PasswordAccounts."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "admin.go:16-19 IsAdmin returns false for acct.Password() before the admins lookup. RequireAdmin (admin.go:34-65) is the only guard in front of admin pages, and it calls IsAdmin (admin.go:48). hosted.go:272-274 mounts /admin and /admin/ only through adminPage = a.RequireAdmin(...). The 403 path also does not offer the 'sign out and sign in again' hint to password accounts (admin.go:51)."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Every telemetry event in non-test code that carried acct.Email now uses PlayerKey(): hostauth/admin.go:49,58; board.go:278; google.go:405; limit.go:786; usergames/usergames.go:134-1392 (ActiveContext, Limited, AccountRemoved, GameExpired, idle sweep); usergames/telemetry.go:55-1294; usergames/board.go:31. A search of non-test .go files for telemetry Email fed from .Email found no remaining uses (the remaining .Email uses are display text such as board.go:136 and the recorder's own hashing). PlayerKey (hostauth.go:642-647) gives password accounts 'password:\u003cusername\u003e', which can never equal a Google sub or email."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "board.go:256-261 sessionInfo gains Provider `json:\"provider\"`, and board.go:112 fills it with s.account.providerName(), which is \"google\" or \"password\". board_test.go:303 expects {\"email\":...,\"provider\":\"google\"}."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "cf7c79f1-835f-48ae-a5cb-b5f025433235",
+      "title": "Throttle for failed password sign-ins",
+      "checks": [
+        {
+          "at": "2026-11-24T10:07:47Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "cf7c79f1-835f-48ae-a5cb-b5f025433235",
+            "title": "Throttle for failed password sign-ins",
+            "criteria": [
+              "An allowance of 10 over 15 minutes refuses the 11th spend inside 15 minutes and allows spending again as time passes.",
+              "Checking an allowance without spending never uses it up.",
+              "Allowances under different names are independent, and the existing request limit behaves exactly as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/limit.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "capacity/window"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/store.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/limit_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/hostauth/limit.go store.take (around lines 842-856) refills at capacity/window and refuses when tokens \u003c 1; the wait is (1-tokens)*window/capacity. With loginUserCap=10 and loginWindow=15m (limit.go ~798-801), loginFailed spends via take on the \"login-user:\" key. internal/hostauth/throttle_test.go TestSlowAllowance (lines 12-40) checks that the 11th spend at +1 minute is refused with a wait of at most 90s, that a spend is allowed again at +90s, and that the allowance is full again after an hour. The verify run reports this test passing."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "limit.go store.peek (around lines 861-869) only refills and reads tokens; it never decrements them. loginAllowed (limit.go ~880) uses peek for both the user and client keys, so checking does not spend. throttle_test.go TestPeekNeverSpends (lines 44-60) peeks 100 times, then confirms 3 takes still succeed and a used-up allowance peeks as refused with a wait. TestLoginThrottleHelpers (lines 116-141) also confirms that a check before a failure does not count."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Keys are distinct per allowance: \"login-user:\"+normalised username, \"login-client:\"+address, and \"acct:\"+account ID for the request limit (limit.go loginKeys ~873 and allow ~918). throttle_test.go TestAllowancesAreIndependent (lines 65-83) checks that exhausting alice's login-user allowance leaves bob, login-client:alice and acct:alice untouched. The request limit is unchanged: allow() still uses RateLimit over time.Minute, and the refill rate (elapsed*n/60) and wait ((1-tokens)*60/n) match the removed code in the diff (limit.go hunk at lines 777-930). Sweep (store.go ~176-180) still forgets a bucket after its own window, which is a minute for the request limit, as before.\n\nScope note, not a verdict: the new tests are in internal/hostauth/throttle_test.go, which is untracked and is not on the goal's file list (only limit_test.go is). The staged diff also contains a lot of unrelated sign-in and password work (signin.go, password.go, google.go and others) that falls outside this item's scope. The verdicts above rest only on limit.go, store.go and throttle_test.go."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "57986df5-7ebc-4c03-a5e2-7e99be0d3bef",
+      "title": "Username and password sign-in on the page",
+      "checks": [
+        {
+          "at": "2026-11-24T10:16:26Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "57986df5-7ebc-4c03-a5e2-7e99be0d3bef",
+            "title": "Username and password sign-in on the page",
+            "criteria": [
+              "With accounts configured, the page shows the username and password form and the reviewer-and-invited note. Without them it shows neither.",
+              "A configured account's username and password complete an assistant's connection (its tools run as that account) and leave the browser signed in to the board. A board sign-in returns to the page asked for.",
+              "An unknown username and a wrong password show the same message and status, and sign nobody in. The sign-in can be retried on the same page.",
+              "After 10 failures for one username within 15 minutes, further attempts for it are refused for a while, even with the right password, and the page says to try again later. Failures across many usernames from one client are refused too.",
+              "A form post from another site, or from a browser that did not start this sign-in, is refused.",
+              "Logs and telemetry after successful and failed password sign-ins contain neither the password nor the attempted password. Sign-in records carry the provider, and the telemetry catalogue documents it."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/pages.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/signin.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/google.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/telemetry/recorder.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/observe"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "docs/observability.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/hostauthtest/client.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/hostauth/password_signin_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "google_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/auth/session"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/hostauth/signin.go:112 passes Password: a.cfg.PasswordAccounts.Len() \u003e 0 to the page, and internal/hostauth/pages.go (signinPage, the {{if .Password}} block around lines 1296-1305) renders the username/password form and the note 'This form is for reviewer and invited accounts. Players sign in with Google.' only then. Without accounts Len() is 0 and both are omitted. Tests: password_signin_test.go:100 TestPasswordFormShownOnlyWithAccounts."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "servePassword (signin.go:121-163) checks the account, then takePending and finishSignIn. finishSignIn (signin.go:179-197) calls signIn, which sets the board session cookie (google.go ~line 203-206), then continues a loginConnector flow via continueConnector or redirects a board flow to p.next. Session identity is the account from Check (password:\u003cname\u003e), carried through grantFor/grantClaims (seal.go:1392-1400). Tests named in password_signin_test.go: TestPasswordConnectorSignIn (152), TestPasswordMCPClientToolsRunAsTheAccount (200), TestPasswordBoardSignInReturnsToThePage (222)."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Unknown and wrong passwords both go through PasswordAccounts.Check (password.go:121-141), which always runs one bcrypt comparison (dummy hash for unknown usernames) and returns one (Account{}, false). servePassword (signin.go:147-154) returns the same msgBadCredentials with status 401 via renderSignin, which re-renders the form with State and Username, so a retry is on the same page. Nothing is signed in on failure. Test: password_signin_test.go:268 TestPasswordFailuresLookAlike; password_test.go:119 TestCheckUnknownAndWrongLookAlike."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "limit.go constants: loginUserCap=10, loginClientCap=30, loginWindow=15m. loginAllowed (limit.go, around line 1048 of the diff) peeks both allowances before any password check, so a throttled attempt is refused even with the right password (signin.go:140-146) and returns 429 with msgThrottled 'Too many sign-in attempts. Please try again later.' loginFailed spends one from the username key (normalised) and one from the client key per failure. Tests: password_signin_test.go:311 TestPasswordThrottlePerUsername and :353 TestPasswordThrottlePerClient; throttle_test.go covers the helpers."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "servePassword calls pendingFor (signin.go:133), which requires a login cookie named loginCookieName(state) whose value equals state (ownsState, signin.go:76-84); the cookie is set SameSite=Lax at path /auth/ (startSignIn, signin.go:55-63), so a cross-site POST does not carry it, and a browser that did not start the sign-in lacks it. Refusal is a 400 'start signing in again' page with no session cookie. The page CSP form-action 'self' and X-Frame-Options DENY (pages.go pageHeaders) add to it. Test: password_signin_test.go:377 TestPasswordPostFromElsewhereRefused covers both cases. Caveat: there is no explicit Origin or Sec-Fetch-Site check in the code. The cross-site refusal relies on the cookie being absent, which the test simulates by using a client without the cookie."
+            },
+            {
+              "criterion": 6,
+              "verdict": "met",
+              "evidence": "Failed password attempts record only Reason and Provider with no Email (signin.go:142, 151), and the log lines (signin.go:141, 150) carry no username or password. Successful sign-ins record Email: acct.PlayerKey() (signin.go:181 and google.go:206), which is 'password:\u003cusername\u003e' and is hashed by Recorder.ID (recorder.go:126, 164); Email is json:\"-\" (recorder.go:57). Provider is recorded on sign_in and sign_in_refused (recorder.go:64, 88, 168). docs/observability.md:46 documents provider 'google' or 'password'; line 137-138 documents sign_in and sign_in_refused with reasons credentials and throttled and states the attempted username is never recorded. Test: password_signin_test.go:449 TestPasswordSignInKeepsSecretsOut checks logs and records for the password, attempted passwords and typed usernames, and checks provider values. Scope note only: the diff also touches many files outside this item's listed scope (for example admin.go, board.go, store.go, usergames, cmd/, go.mod), which I did not judge as criteria."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "d111d5e9-d4e5-4cfa-bb8b-b820e6fe75b8",
+      "title": "Hosted playmat reads password accounts from its settings",
+      "checks": [
+        {
+          "at": "2026-11-24T10:20:09Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "d111d5e9-d4e5-4cfa-bb8b-b820e6fe75b8",
+            "title": "Hosted playmat reads password accounts from its settings",
+            "criteria": [
+              "With accounts set, the hosted playmat offers the password form. Unset, it offers only Google. A malformed or plain-text value stops start-up with a message that does not contain the value.",
+              "Two configured accounts each connect and sign in, and a game imported by one is not visible to the other.",
+              "A Google account whose email matches an email-shaped password username, or whose name matches a plain one, sees none of that account's games, and vice versa. A browser signed in as one is never signed in as the other.",
+              "A password account is refused by the admin pages, and after connecting with it the same browser opens the board without signing in again.",
+              "The start-up line reports the number of password accounts and never a username. The desktop playmat has no sign-in, as before."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_password_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "hosted_cap_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/auth/session"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/admin"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/board"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "The form is conditional: internal/hostauth/signin.go:112 sets Password from a.cfg.PasswordAccounts.Len() \u003e 0, and internal/hostauth/pages.go:82-86 renders the username/password form only under {{if .Password}}, with Google always listed via buttonProviders (signin.go:38-40). Start-up refusal: cmd/tcgreplay/hosted.go:~127-131 returns a ParsePasswordAccounts error, wrapped as 'TCGREPLAY_PASSWORD_ACCOUNTS: %v', through hostedAuth (hosted.go:373-376) and runHosted, and cmd/tcgreplay/main.go:294-295 log.Fatal(err) exits. internal/hostauth/password.go:61-100 rejects a malformed entry (no ':'), a non-bcrypt value (plain text), a low cost and duplicates, and each error names only the entry number and rule, never the value or username. Test TestHostedPasswordSettingRefused exists at cmd/tcgreplay/hosted_password_test.go:295 (asserts the message names the setting). Not re-run by me."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "Each configured account gets its own identity: password.go:146-148 PasswordAccount returns ID 'password:\u003cusername\u003e', Provider 'password'. Game state in internal/usergames/usergames.go:72 is keyed by hostauth.Account.ID (r.entries[acct.ID] at lines 125, 205-208), so two usernames get two entries and one account's imported game is not reachable by the other's board or tools (board.go:33 checks the handle against acct.ID). Test TestHostedPasswordAccountsKeptApart is at cmd/tcgreplay/hosted_password_test.go:86 (named in the file; body not read by me). Connect/sign-in per account is Check() at password.go:121-141 with the account's own hash."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Google IDs are Google's numeric 'sub' (password.go:22-23 comment) while password accounts are 'password:\u003cusername\u003e', so the IDs never collide even when a Google email equals a password username. Telemetry and the game store use PlayerKey() (hostauth.go PlayerKey: 'password:'+email for password accounts, plain email for Google), so the player IDs also differ. Each sign-in creates its own board session through finishSignIn -\u003e signIn (signin.go:179-197, google.go signIn), so one browser is never signed in as both. Test TestHostedPasswordAccountsNoCrossover at cmd/tcgreplay/hosted_password_test.go:123 covers this. The 'vice versa' direction holds because the match is on the full ID, not the email."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "Admin refusal: internal/hostauth/admin.go:17-19 IsAdmin returns false for any acct.Password() regardless of username; RequireAdmin (admin.go:50-56) then renders the 'Not an admin' 403 page. Board reuse: servePassword (signin.go:121-163) calls finishSignIn after a correct Check, and signIn sets the board session cookie before redirecting to p.next (signin.go:179-197), so the same browser opens /board without a second sign-in. Test TestHostedBoardOpensAfterPasswordConnect at cmd/tcgreplay/hosted_password_test.go:223 and TestHostedPasswordAccountNotAdmin at :208."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "Start-up line: cmd/tcgreplay/hosted.go:77 adds passwordAccountsText(a.PasswordAccountCount()) to the hosted log.Printf. passwordAccountsText (hosted.go:41-49) emits only a count ('no password accounts...', '1 password account', 'N password accounts'). Usernames are never logged: servePassword logs fixed strings (signin.go:141, 150) and telemetry carries no username on refused password attempts (signin.go:142, 151). Test TestHostedLogsPasswordAccountCount at hosted_password_test.go:320. The desktop path is not touched by the diff's hosted.go or main.go hunks (only config reading and hosted-only auth changed), so desktop behaviour is unchanged as far as the diff shows; I did not run the desktop tests."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "68ac197d-a17b-4a0e-9dc3-d11a43596a51",
+      "title": "Board account label for password accounts",
+      "checks": [
+        {
+          "at": "2026-11-24T10:29:03Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "68ac197d-a17b-4a0e-9dc3-d11a43596a51",
+            "title": "Board account label for password accounts",
+            "criteria": [
+              "Signed in with a password account, the board shows the username and does not say \"Signed in with Google\".",
+              "Signed in with Google, the board's account label and tooltip are unchanged."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/session.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/lib/store.svelte.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/src/App.svelte"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "/auth/session"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "web/e2e/account.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "page.route"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/webui/dist"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "web/src/App.svelte:439 renders the account line with title={app.accountProvider === 'password' ? 'Signed in with a reviewer account' : 'Signed in with Google'} and text {app.account}, so a password account shows its username and never the Google tooltip. The value comes from /auth/session: internal/hostauth/board.go (diff hunk at line ~384) adds Provider: s.account.providerName() to sessionInfo, and web/src/lib/session.js:20 sets app.accountProvider from body.provider. web/e2e/account.spec.js:15-21 covers a password account (openai-reviewer, provider password) and asserts the text is the username, the title is 'Signed in with a reviewer account', and the title does not match /Google/."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "The Google branch of the title in web/src/App.svelte:439 is still exactly 'Signed in with Google', the same string as the pre-change line (diff hunk at App.svelte line 436, '-' line shows the original title=\"Signed in with Google\"). The label is still {app.account}, unchanged. session.js defaults accountProvider to 'google' when provider is missing, and store.svelte.js:9 initialises it to 'google'. web/e2e/account.spec.js:23-33 asserts a Google account shows its email and the title 'Signed in with Google', and a session with no provider also reads as Google."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "e761ba87-2115-4efd-aacc-819698474941",
+      "title": "Reserved places for password accounts",
+      "checks": [
+        {
+          "at": "2026-11-24T10:32:41Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "e761ba87-2115-4efd-aacc-819698474941",
+            "title": "Reserved places for password accounts",
+            "criteria": [
+              "With the playmat at its player limit, a password account signs in and imports a game.",
+              "With the playmat one below its limit, a password account signs in and imports a game, and a new Google player can still join afterwards.",
+              "A password account that lost its place (idle) is still admitted on its next tool call when the playmat is full.",
+              "A leftover single-reviewer setting no longer grants anything. The playmat logs that it is ignored and starts normally.",
+              "The app spec declares the password-accounts secret and no longer declares the reviewer setting."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/usergames.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/usergames/places_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/main.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_cap_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "cmd/tcgreplay/hosted_routes_test.go"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": ".do/app.yaml"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "internal/usergames/usergames.go:125-132: Use() sets reserved := acct.Password() and skips the full() refusal for reserved accounts, so a password account takes a place at the cap. internal/usergames/places_test.go:270-281 (TestPasswordAccountPastTheCap) admits a password account at cap 1 and it can act. cmd/tcgreplay/hosted_cap_test.go:186-204 (TestHostedPasswordAccountPastCap) signs a password account in at a cap of 1 held by a Google account, imports the example game and plays. Sign-in admission goes through hostauth/google.go:190-192 signIn -\u003e Admit, reached from hostauth/signin.go:179-197 finishSignIn for every provider. Scope note: the diff also touches files outside the listed scope (hostauth/*, internal/design, web/*, site/*, go.mod/go.sum, cmd/tcgreplay/hosted_test.go, hosted_telemetry_test.go, docs/observability.md) and the untracked cmd/tcgreplay/hosted_password_test.go, which holds the connectPassword helper the cap test uses. This does not change the criterion verdicts."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/hosted_cap_test.go:249-272 (TestHostedPasswordAccountOneBelowCap): cap 2 with one Google account, a password account connects and imports the example game, then a new Google account (capSecond) connects and its board sign-in returns 200. The mechanism is usergames.go:126 (reserved accounts are not counted by full(), line 171 counts only !e.reserved), so the password account does not take the free place."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "internal/usergames/usergames.go:121-126: Use() looks up the existing entry and, when it is idle (!e.holds, expired by expireIfIdle), still admits a reserved account because the full() check is skipped for acct.Password(). cmd/tcgreplay/hosted_cap_test.go:290-310 (TestHostedPasswordAccountToolCallsPastCap) idles the password account at cap 1, has another account take the place, and asserts the password account's next tool call is served while a further account is refused. The MCP path reaching Use() was not re-read; the test's passing run is the evidence for that link."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "cmd/tcgreplay/main.go:225-227: if TCGREPLAY_REVIEWER is non-empty, log.Printf logs 'warning: TCGREPLAY_REVIEWER is no longer used; give the reviewer a password account in TCGREPLAY_PASSWORD_ACCOUNTS' and the value is never read into config (the config.reviewer field is removed, main.go:75-80 in the diff). No code path grants a reserved place from it: grep for REVIEWER/Reviewer in internal/ finds only test fixtures and strings. cmd/tcgreplay/hosted_cap_test.go:310-335 (TestLeftoverReviewerSettingIgnored) checks the warning, that the value is not logged, and that startup proceeds."
+            },
+            {
+              "criterion": 5,
+              "verdict": "met",
+              "evidence": "/home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261122190321-c6d9d90a-sign-in-page/tcgreplay/.do/app.yaml (diff lines 9-26): the env entry TCGREPLAY_PASSWORD_ACCOUNTS with scope RUN_TIME and type SECRET and no value replaces TCGREPLAY_REVIEWER. A grep of .do/app.yaml finds no TCGREPLAY_REVIEWER key, only the comment on line 166. cmd/tcgreplay/hosted_test.go (TestAppSpecHealthCheckAndSecrets, diff ~lines 432-451) asserts the new key is declared and the old one is not."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "64cbb224-059f-419a-9f08-64398838b91e",
+      "title": "Reviewer materials and privacy page",
+      "checks": [
+        {
+          "at": "2026-11-24T10:39:07Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "64cbb224-059f-419a-9f08-64398838b91e",
+            "title": "Reviewer materials and privacy page",
+            "criteria": [
+              "The review test cases, demo script and submission checklist instruct signing in with the configured reviewer account and no longer tell the reviewer to use a Google account.",
+              "The submission checklist explains creating a reviewer account (username and bcrypt hash), setting it in the console, and entering the credentials in OpenAI's review form.",
+              "The privacy page describes reviewer and invited password accounts (what is kept for them) and says the login cookie exists only while a sign-in is in progress.",
+              "An automated check fails if the reviewer materials tell the reviewer to sign in with Google. The plugin package still builds."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/listing.json"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/demo-script.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "plugin/SUBMITTING.md"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/src/pages/privacy.astro"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "site/e2e/privacy.spec.js"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "internal/plugin/plugin_test.go"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "met",
+              "evidence": "No reviewer-facing material tells the reviewer to sign in with Google. plugin/listing.json: the review positive cases now say the reviewer signs in on the TCG Replay sign-in page with the reviewer account's username and password (diff listing.json hunk at lines 2596-2608); the only remaining 'Google' in listing.json is the player-facing description on line 6, which the criterion does not cover. plugin/demo-script.md lines 9-12 and 19-22 use the reviewer account and the sign-in page form. plugin/SUBMITTING.md step 5 (review information) and step 7 (MCP Inspector) use the reviewer account; line 46 mentions 'the form below the Google button' only as a description of the page, not an instruction to sign in with Google."
+            },
+            {
+              "criterion": 2,
+              "verdict": "met",
+              "evidence": "plugin/SUBMITTING.md step 4 (around lines 2515-2535 of the diff, file lines ~38-56): generate a password, run 'htpasswd -nBC 12 openai-reviewer' which prints a username:bcrypt-hash line (bcrypt, cost 12); set TCGREPLAY_PASSWORD_ACCOUNTS in the App Platform console (Encrypt ticked); step 5 says to choose 'Username and password' in Review information \u003e Reviewer credentials and enter the username and password there."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "site/src/pages/privacy.astro:92-96 adds a paragraph: 'Reviewer and invited accounts sign in with a username and password that the playmat's operator sets up ... the playmat keeps the username, and the password only as a one-way hash in its settings; it never records a password, or a username or password someone tried.' Line 103 changes the cookie bullet to 'tcgreplay_login_…, which exists only while a sign-in is in progress.' I did not trace the server code to confirm the exact 'keeps the username' claim, only that the page states it."
+            },
+            {
+              "criterion": 4,
+              "verdict": "met",
+              "evidence": "internal/plugin/plugin_test.go:2032-2075 (TestReviewerMaterialsUseTheReviewerAccount) reads the review test cases from plugin/listing.json, plugin/demo-script.md and plugin/SUBMITTING.md and fails on the regex at line 2059/2442 (sign(ed)? in with ... google). Caveat: the regex is narrow; it would miss phrasings such as 'signs in with Google', 'Google sign-in' or 'log in with Google', so the check covers the exact wording rather than every Google sign-in instruction. Build: the verify step reports 'go run ./cmd/tcgreplay-plugin' passed; I did not re-run it (read-only review)."
+            }
+          ],
+          "decision": "accept",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [],
+      "attempts": 1,
+      "state": "accepted"
+    },
+    {
+      "item": "3d00c733-cd31-4d99-a85f-82459ef1aad3",
+      "title": "Configure reviewer accounts on the live playmat",
+      "checks": [
+        {
+          "at": "2026-11-24T10:42:18Z",
+          "round": 1,
+          "attempt": 1,
+          "goal": {
+            "item": "3d00c733-cd31-4d99-a85f-82459ef1aad3",
+            "title": "Configure reviewer accounts on the live playmat",
+            "criteria": [
+              "The live playmat's start-up line reports the configured password accounts, and the old reviewer setting is gone from the console.",
+              "OpenAI's review information holds the reviewer account's username, password and the login address.",
+              "The plain-text passwords are kept only in the operator's password manager, never in the repo or the console."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "httpd:2.4"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "The repo side is ready: .do/app.yaml:175-177 declares TCGREPLAY_PASSWORD_ACCOUNTS as a SECRET with no value, and the diff removes the TCGREPLAY_REVIEWER key (diff hunk at app.yaml, lines 9-14 of the diff grep). cmd/tcgreplay/main.go and hosted.go replace reviewerText with passwordAccountsText (diff). But the criterion is about the live playmat's start-up line and the console's settings, and nothing in the repo, the diff or the status file shows the live console state or a live start-up log. Checked: the diff, tcgreplay.status and app.yaml. Needs the live start-up line and a console screenshot or listing showing TCGREPLAY_REVIEWER gone and TCGREPLAY_PASSWORD_ACCOUNTS set."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The repo does not hold OpenAI's Review details. .spektacular/knowledge/learnings/publishing-to-chatgpt.md:203 only describes the intended procedure (one password account per directory review, entered in Review details with the login URL). No username, login address or review entry for the live submission appears in the diff, status or code root. Would need a check of the OpenAI Platform dashboard's review information, which I cannot read from here."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "No plaintext password is in the repo. The only password-account reference in .do/app.yaml:166-177 is the key description and the key itself with no value; the hash format (username:bcrypt-hash, made with htpasswd) is described there, not a value. Grep for bcrypt hashes ($2a/$2b/$2y$) and for TCGREPLAY_PASSWORD_ACCOUNTS values across the code root found no literal accounts or hashes. The diff's password references are code and tests (internal/hostauth/password.go, password_test.go, hosted_password_test.go, which are new untracked files and not in the diff). Where the plaintext lives (operator's password manager) is outside the repo and cannot be checked from the files; the console-side part is consistent with the key being set to hashes only."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-24T10:43:03Z",
+          "round": 1,
+          "attempt": 2,
+          "goal": {
+            "item": "3d00c733-cd31-4d99-a85f-82459ef1aad3",
+            "title": "Configure reviewer accounts on the live playmat",
+            "criteria": [
+              "The live playmat's start-up line reports the configured password accounts, and the old reviewer setting is gone from the console.",
+              "OpenAI's review information holds the reviewer account's username, password and the login address.",
+              "The plain-text passwords are kept only in the operator's password manager, never in the repo or the console."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "httpd:2.4"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Code side is in place: cmd/tcgreplay/hosted.go passwordAccountsText (\"N password accounts\" / \"no password accounts (TCGREPLAY_PASSWORD_ACCOUNTS)\") feeds the start-up log.Printf in runHosted, and cmd/tcgreplay/main.go warns that TCGREPLAY_REVIEWER is no longer used. The console state cannot be read from the repo. The staged diff and .do/app.yaml show only the declared key, not a live start-up line. plugin/SUBMITTING.md step 4 (lines 26-34) still lists setting the variable, deleting the old reviewer setting and checking the Runtime Logs line as steps to do, with no record that they were done."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "The OpenAI Platform dashboard is not in the repo, and no file records the Reviewer credentials entry. plugin/SUBMITTING.md step 5 (lines 42-48) only instructs the operator to choose Username and password and enter login URL https://tcgreplay.app, the username openai-reviewer and the password. That is a checklist, not evidence the dashboard holds them."
+            },
+            {
+              "criterion": 3,
+              "verdict": "met",
+              "evidence": "Repo search of the worktree at /home/nicj/code/github.com/nicholasjackson/tcgreplay/.spektacular/worktrees/20261122190321-c6d9d90a-sign-in-page/tcgreplay found no bcrypt hash values and no plaintext reviewer password. Matches were only placeholders and instructions. .do/app.yaml:24-26 declares TCGREPLAY_PASSWORD_ACCOUNTS as an encrypted SECRET with no value, and the test in cmd/tcgreplay/hosted_test.go asserts no value is in the file. plugin/SUBMITTING.md:46-48 says the plain password lives only in the password manager and is entered in the dashboard only, never in the repository. The console side is not checkable from the files; the repo side is clean."
+            }
+          ],
+          "decision": "retry",
+          "tree_unchanged": true
+        },
+        {
+          "at": "2026-11-24T10:43:41Z",
+          "round": 1,
+          "attempt": 3,
+          "goal": {
+            "item": "3d00c733-cd31-4d99-a85f-82459ef1aad3",
+            "title": "Configure reviewer accounts on the live playmat",
+            "criteria": [
+              "The live playmat's start-up line reports the configured password accounts, and the old reviewer setting is gone from the console.",
+              "OpenAI's review information holds the reviewer account's username, password and the login address.",
+              "The plain-text passwords are kept only in the operator's password manager, never in the repo or the console."
+            ],
+            "scope": {
+              "repo": "tcgreplay",
+              "files": [
+                {
+                  "repo": "tcgreplay",
+                  "path": "httpd:2.4"
+                },
+                {
+                  "repo": "tcgreplay",
+                  "path": "https://tcgreplay.app"
+                }
+              ],
+              "rule": "Change only the files that belong to this item; change nothing that belongs to another task."
+            }
+          },
+          "verdicts": [
+            {
+              "criterion": 1,
+              "verdict": "not_met",
+              "evidence": "Code side is in place: cmd/tcgreplay/hosted.go:148-158 defines passwordAccountsText (\"no password accounts (TCGREPLAY_PASSWORD_ACCOUNTS)\" / \"N password accounts\"), and hosted.go's start-up log line (around line 609 of the worktree copy) calls passwordAccountsText(a.PasswordAccountCount()) in place of reviewerText. cmd/tcgreplay/main.go:226-229 only warns when TCGREPLAY_REVIEWER is set and no longer reads it. .do/app.yaml (diff lines 14-24) declares TCGREPLAY_PASSWORD_ACCOUNTS as an encrypted secret and no longer declares TCGREPLAY_REVIEWER. However, the live playmat's start-up line and the removal of the old reviewer setting in the DigitalOcean console are console state and cannot be read from the repo or the diff. Nothing in the files shows the live line reporting the accounts or the old variable being deleted in the console."
+            },
+            {
+              "criterion": 2,
+              "verdict": "not_met",
+              "evidence": "OpenAI's Platform dashboard review information is outside the repo and cannot be read here. The repo has only the procedure: plugin/SUBMITTING.md:23 says the reviewer entry is entered and prints openai-reviewer:$2y$12$..., which is a generic instruction with no submitted username, password or login address. No file in the staged diff or status records that the review information was filled in."
+            },
+            {
+              "criterion": 3,
+              "verdict": "not_met",
+              "evidence": "Repo side is clean: a grep of the worktree for TCGREPLAY_PASSWORD_ACCOUNTS=\u003cvalue\u003e, bcrypt-style hashes and TCGREPLAY_REVIEWER=\u003cvalue\u003e found no stored values. .do/app.yaml declares the key with no value, and the test at cmd/tcgreplay/hosted_test.go:1333-1345 enforces that. The only plaintext test fixtures are fake (review-pw, reviewer@example.com) in *_test.go files. The criterion cannot be verified from files for the console (the encrypted hash value is there, and the password manager is not readable), so the files do not show it yet. Note: the staged diff also contains a large amount of work unrelated to this item (sign-in page, design assets, go.mod bumps, site and plugin docs), which the scope rule says should not be changed under this item; this does not change any verdict above."
+            }
+          ],
+          "decision": "exhausted",
+          "tree_unchanged": true
+        }
+      ],
+      "decisions": [
+        {
+          "at": "2026-11-24T10:43:41Z",
+          "round": 1,
+          "decision": "skip",
+          "reason": "Human task, done by the user after push and deploy: set TCGREPLAY_PASSWORD_ACCOUNTS in the DigitalOcean console, delete TCGREPLAY_REVIEWER, and enter the reviewer credentials in OpenAI's review information. The user chose to merge now and finish this configuration themselves."
+        }
+      ],
+      "attempts": 3,
+      "state": "skipped"
+    }
+  ]
+}

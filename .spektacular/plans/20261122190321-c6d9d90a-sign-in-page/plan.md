@@ -26,13 +26,13 @@ TCG Replay's hosted playmat gets its own sign-in page, shown whenever an assista
 
 All work lands in the one registered repo, `tcgreplay`, mostly in `internal/hostauth`.
 
-**One page where every sign-in starts.** Today both entry points, the connector's `GET /authorize` (`internal/hostauth/oauth.go:258-298`) and the board's `GET /auth/login` (`internal/hostauth/board.go:20-27`), call `startGoogle` (`google.go:41`), which redirects straight to Google. That call becomes `startSignIn`. It records the sign-in in progress exactly as now (a `pendingLogin` with its kind, its `next` path or its connector request, and a 10-minute life), ties it to the browser with the per-state login cookie, and redirects to the TCG Replay sign-in page at `GET /auth/signin?state=…`. The login cookie's path widens from `/auth/google/callback` to `/auth/` so that the page, the password form and the Google callback can all read it. The page is rendered from the pending sign-in. It shows a "Sign in with Google" button (`GET /auth/google?state=…`, which adds the nonce and PKCE verifier to that same pending entry and then redirects to Google as `startGoogle` does now). It shows the username and password form (`POST /auth/password`) only when password accounts are configured. Under the form is the note that it is for reviewer and invited accounts. Every route checks that the state matches this browser's login cookie, as the Google callback already does. This also makes a cross-site form post fail (the cookie is `SameSite=Lax`). The connector's OAuth contract (registration, `/authorize` parameters and checks, PKCE, `/token`) does not change: only what the browser sees between `/authorize` and the redirect back with a code changes, as the spec's constraint requires.
+**One page where every sign-in starts.** Today both entry points, the connector's `GET /authorize` (`internal/hostauth/oauth.go:261-299`) and the board's `GET /auth/login` (`internal/hostauth/board.go:22`), call `startGoogle` (`google.go:41`), which redirects straight to Google. That call becomes `startSignIn`. It records the sign-in in progress exactly as now (a `pendingLogin` with its kind, its `next` path or its connector request, and a 10-minute life), ties it to the browser with the per-state login cookie, and redirects to the TCG Replay sign-in page at `GET /auth/signin?state=…`. The login cookie's path widens from `/auth/google/callback` to `/auth/` so that the page, the password form and the Google callback can all read it. The page is rendered from the pending sign-in. It shows a "Sign in with Google" button (`GET /auth/google?state=…`, which adds the nonce and PKCE verifier to that same pending entry and then redirects to Google as `startGoogle` does now). It shows the username and password form (`POST /auth/password`) only when password accounts are configured. Under the form is the note that it is for reviewer and invited accounts. Every route checks that the state matches this browser's login cookie, as the Google callback already does. This also makes a cross-site form post fail (the cookie is `SameSite=Lax`). The connector's OAuth contract (registration, `/authorize` parameters and checks, PKCE, `/token`) does not change: only what the browser sees between `/authorize` and the redirect back with a code changes, as the spec's constraint requires.
 
-**Providers end in one completion.** The tail of `serveGoogleCallback` (`google.go:94-111`) becomes `finishSignIn(w, r, pending, account)`. It runs `signIn` (cap check through `Places.Admit`, board session cookie, telemetry), then continues the flow by kind: `continueConnector` issues the code to the assistant, and a board sign-in redirects to its `next` path. Google's callback and the password handler both end there. That is why one password sign-in covers connecting and the board, just as a Google sign-in does today. The page lists its button providers from a small table (`id`, label, start route). Google is the only entry now, and a later Facebook is one more entry plus its callback, so neither the password nor the Google code is reworked. Password sign-in is a form rather than a button, so it is a separate, optional block on the page and not a table entry.
+**Providers end in one completion.** The tail of `serveGoogleCallback` (`google.go:94-111`) becomes `finishSignIn(w, r, pending, account)`. It runs `signIn(r.Context(), w, acct)` (cap check through `Places.Admit(ctx, acct)`, board session cookie, telemetry), then continues the flow by kind: `continueConnector` issues the code to the assistant, and a board sign-in redirects to its `next` path. Google's callback and the password handler both end there. That is why one password sign-in covers connecting and the board, just as a Google sign-in does today. The page lists its button providers from a small table (`id`, label, start route). Google is the only entry now, and a later Facebook is one more entry plus its callback, so neither the password nor the Google code is reworked. Password sign-in is a form rather than a button, so it is a separate, optional block on the page and not a table entry.
 
-**Password accounts: configured, hashed, throttled, and kept apart.** Accounts come from one encrypted env value, `TCGREPLAY_PASSWORD_ACCOUNTS`: comma- or newline-separated `username:bcrypt-hash` entries. This is the format `htpasswd -nBC 12 <username>` prints. It is read at start-up beside the other hosted secrets (`cmd/tcgreplay/hosted.go:121-137`). A malformed entry, a hash that is not bcrypt (so a plain-text password is refused), a duplicate username or an invalid username stops start-up with an error that never echoes the value. Unset means no accounts, and the page then shows only Google. A username is either a plain name or an email address (1–254 characters of letters, digits, `.`, `_`, `-`, `+` and `@`, matched case-insensitively). OpenAI's review form asks for a "username" without saying it must be an email, and an email-shaped username covers a form that does. Its shape therefore guarantees nothing about separation from Google, and separation rests on the provider instead. A password account signs in as `Account{ID: "password:<username>", Email: <username>, Provider: "password"}`. Google `sub` values are numeric, so the `password:` prefix keeps the account ID, board handle (`usergames.Handle`), registry entry and board session disjoint from every Google account's. That holds even when the username is the same email as a Google account. Telemetry names players by a keyed hash of what it is handed. Every recorder call therefore passes the account's player key (`Account.PlayerKey()`: the email for Google, unchanged so existing player IDs stay stable, and `password:<username>` for a password account), never the bare email. `IsAdmin` refuses any non-Google account outright, on top of its verified-email rule, so an email-shaped username listed in `TCGREPLAY_ADMINS` still gets no admin rights. `Account` gains a `Provider` field that rides everywhere the account does. It is sealed into the board cookie and both tokens as an optional claim (absent means Google, so every existing sign-in keeps working). It is put into `TokenInfo.Extra` by `verify` and read back by `AccountFromToken`, so the reserved place holds on tool calls too, not only at sign-in. A password grant also carries a short fingerprint of the account's configured hash. Opening any sealed grant for a password account checks that the username is still configured with that hash. Removing an account or changing its password in the console therefore revokes its cookies and tokens at the next restart, which saving settings causes anyway. Failed attempts go through the existing token-bucket limiter (`limit.go:37-65`), extended to take a capacity and a refill window. The limits are 10 failures per 15 minutes per username and 30 per 15 minutes per client address. The handler checks both buckets before it checks the password, so a throttled attempt is refused even with the right password. Each failure spends from both buckets. An unknown username is still compared against a dummy bcrypt hash, so its timing and message ("That username and password don't match.") are the same as for a wrong password. Neither the password nor the attempted username is ever logged or recorded. A successful sign-in records `sign_in` with `provider: password` under the username's player ID.
+**Password accounts: configured, hashed, throttled, and kept apart.** Accounts come from one encrypted env value, `TCGREPLAY_PASSWORD_ACCOUNTS`: comma- or newline-separated `username:bcrypt-hash` entries. This is the format `htpasswd -nBC 12 <username>` prints. It is read at start-up beside the other hosted secrets (`cmd/tcgreplay/hosted.go:123-140`). A malformed entry, a hash that is not bcrypt (so a plain-text password is refused), a duplicate username or an invalid username stops start-up with an error that never echoes the value. Unset means no accounts, and the page then shows only Google. A username is either a plain name or an email address (1–254 characters of letters, digits, `.`, `_`, `-`, `+` and `@`, matched case-insensitively). OpenAI's review form asks for a "username" without saying it must be an email, and an email-shaped username covers a form that does. Its shape therefore guarantees nothing about separation from Google, and separation rests on the provider instead. A password account signs in as `Account{ID: "password:<username>", Email: <username>, Provider: "password"}`. Google `sub` values are numeric, so the `password:` prefix keeps the account ID, board handle (`usergames.Handle`), registry entry and board session disjoint from every Google account's. That holds even when the username is the same email as a Google account. Telemetry names players by a keyed hash of what it is handed. Every place that hashes an account into a player ID therefore passes the account's player key (`Account.PlayerKey()`: the email for Google, unchanged so existing player IDs stay stable, and `password:<username>` for a password account), never the bare email: every recorder event, the `player_day` activity call (`Recorder.ActiveContext`), and the player attribute on the board and MCP trace spans (`cmd/tcgreplay/hosted.go`, `rec.ID`). The admin cache tools keep hashing emails, since admins are always Google accounts. `IsAdmin` refuses any non-Google account outright, on top of its verified-email rule, so an email-shaped username listed in `TCGREPLAY_ADMINS` still gets no admin rights. `Account` gains a `Provider` field that rides everywhere the account does. It is sealed into the board cookie and both tokens as an optional claim (absent means Google, so every existing sign-in keeps working). It is put into `TokenInfo.Extra` by `verify` and read back by `AccountFromToken`, so the reserved place holds on tool calls too, not only at sign-in. A password grant also carries a short fingerprint of the account's configured hash. Opening any sealed grant for a password account checks that the username is still configured with that hash. Removing an account or changing its password in the console therefore revokes its cookies and tokens at the next restart, which saving settings causes anyway. Failed attempts go through the existing token-bucket limiter (`limit.go:43-65`), extended to take a capacity and a refill window. The limits are 10 failures per 15 minutes per username and 30 per 15 minutes per client address. The handler checks both buckets before it checks the password, so a throttled attempt is refused even with the right password. Each failure spends from both buckets. An unknown username is still compared against a dummy bcrypt hash, so its timing and message ("That username and password don't match.") are the same as for a wrong password. Neither the password nor the attempted username is ever logged or recorded. A successful sign-in records `sign_in` with `provider: password` under the username's player ID.
 
-**Reserved places move from one email to every password account.** `usergames.Registry` drops `Config.Reviewer` and its verified-email match (`usergames.go:164`). An account whose provider is `password` is admitted at the cap and is not counted against `MaxUsers`. `TCGREPLAY_REVIEWER` is retired: if it is still set, start-up logs a warning and carries on. The start-up line reports "N password accounts" in place of "reviewer account set". The page uses the Studio colour tokens and the mark from `internal/design` (`tokens.css` and `mark.svg`, embedded), in the light interface. The website has no dark theme in the Studio design. Its font stack names IBM Plex Sans without loading Google Fonts, so it adds no outside resource (privacy-page convention). The Google button is the first, primary action and follows Google's button branding. The existing problem, busy and signed-out pages move onto the same styling. The board's account tooltip stops saying "Signed in with Google" for password accounts (`/auth/session` adds `provider`). Player-facing docs that promise "no tcgreplay page in between", the privacy page's login-cookie line, a What's new entry, and the reviewer materials (`plugin/listing.json` test cases, `plugin/demo-script.md`, `plugin/SUBMITTING.md`) are updated in the same change. This direction reuses the existing pending sign-in, cookie, completion and limiter, so the new surface is one page, two small handlers and an account list. A separate login flow, inline rendering at each entry point, or a local fake identity provider would each duplicate the completion or the state handling (see `research.md#alternatives-considered-and-rejected`).
+**Reserved places move from one email to every password account.** `usergames.Registry` drops `Config.Reviewer` and its verified-email match (`usergames.go:168`). An account whose provider is `password` is admitted at the cap and is not counted against `MaxUsers`. `TCGREPLAY_REVIEWER` is retired: if it is still set, start-up logs a warning and carries on. The start-up line reports "N password accounts" in place of "reviewer account set". The page uses the Studio colour tokens and the mark from `internal/design` (`tokens.css` and `mark.svg`, embedded), in the light interface. The website has no dark theme in the Studio design. Its font stack names IBM Plex Sans without loading Google Fonts, so it adds no outside resource (privacy-page convention). The Google button is the first, primary action and follows Google's button branding. The existing problem, busy and signed-out pages move onto the same styling. The board's account tooltip stops saying "Signed in with Google" for password accounts (`/auth/session` adds `provider`). Player-facing docs that promise "no tcgreplay page in between", the privacy page's login-cookie line, a What's new entry, and the reviewer materials (`plugin/listing.json` test cases, `plugin/demo-script.md`, `plugin/SUBMITTING.md`) are updated in the same change. This direction reuses the existing pending sign-in, cookie, completion and limiter, so the new surface is one page, two small handlers and an account list. A separate login flow, inline rendering at each entry point, or a local fake identity provider would each duplicate the completion or the state handling (see `research.md#alternatives-considered-and-rejected`).
 
 ## Component Breakdown
 
@@ -114,7 +114,7 @@ type buttonProvider struct{ ID, Label, StartPath string } // Google: {"google", 
 
 **Throttle bucket (changed, internal)**: `store.take` gains a capacity and refill window per call (the request limit passes `limit` per minute as now), plus a non-spending `peek`. Bucket keys are namespaced (`acct:<id>`, `login-user:<username>`, `login-client:<addr>`).
 
-**Telemetry `sign_in` (changed record)**: gains a `provider` field (`google` or `password`), listed in `docs/observability.md`. Failed password attempts are recorded as `sign_in_refused` with a reason (`credentials` or `throttled`) and no player.
+**Telemetry `sign_in` (changed record)**: its `provider` field (added by the observability change, today always `google`) now also takes `password`, listed in `docs/observability.md`. Failed password attempts are recorded as `sign_in_refused` with a reason (`credentials` or `throttled`), `provider: password` and no player.
 
 **Configuration (new)**: `TCGREPLAY_PASSWORD_ACCOUNTS`, an encrypted runtime secret. `TCGREPLAY_REVIEWER` is removed: it is ignored with a warning if still set.
 
@@ -142,9 +142,9 @@ type buttonProvider struct{ ID, Label, StartPath string } // Google: {"google", 
 - **`internal/hostauth/hostauthtest` (changed).** The fake-Google browser helpers must click through the page before any existing sign-in test can pass again, so they change in the same task as the page.
 - **`internal/usergames` (changed).** The reserved place moves to password accounts. Depends on `Account.Password()` existing.
 - **`internal/design` (changed, small).** Exports the embedded `tokens.css` and `mark.svg` for the server-rendered pages. No token values change.
-- **`internal/telemetry` and `docs/observability.md` (changed, small).** A `provider` field on records, and the catalogue documents it. The recorder itself is unchanged, but every caller in hostauth and usergames passes `Account.PlayerKey()` in place of `Account.Email`.
+- **`internal/telemetry` and `docs/observability.md` (changed, small).** The `provider` field already exists on records (observability change); it gains the `password` value and the `credentials`/`throttled` refusal reasons, and the catalogue documents them. The recorder itself is unchanged, but every caller in hostauth and usergames (events and `ActiveContext`) and the trace-span player attribute in `cmd/tcgreplay/hosted.go` pass `Account.PlayerKey()` in place of `Account.Email`. Most of these call sites take a `context.Context` and use `RecordContext`.
 - **`cmd/tcgreplay` (changed).** Env parsing, start-up log and wiring; the hosted end-to-end tests.
-- **`web/` board (changed, small).** The account label reads the provider from `/auth/session`. Needs a board rebuild (`internal/webui/dist`).
+- **`web/` board (changed, small).** The account label reads the provider from `/auth/session`. No board e2e spec stubs `/auth/session` today, so the label test adds one. Needs a board rebuild (`internal/webui/dist`).
 - **`site/` website (changed).** Sign-in and connect docs, privacy page, What's new. Needs a site rebuild (`internal/site/dist`) and the site browser suite.
 - **`plugin/` reviewer materials (changed).** `listing.json` test cases, `demo-script.md`, `SUBMITTING.md`. These files hold uncommitted, unrelated edits on the current branch, so changes must be merged into them, not overwritten.
 - **DigitalOcean App Platform (operator action).** The `TCGREPLAY_PASSWORD_ACCOUNTS` value is set in the console, encrypted. It is optional, so it can be set before or after the push. `TCGREPLAY_REVIEWER` is deleted from the console once the reviewer has a password account. `.do/app.yaml` records the change but does not apply it (knowledge gotcha `app-spec-not-applied-by-deploy`).
@@ -193,7 +193,7 @@ type buttonProvider struct{ ID, Label, StartPath string } // Google: {"google", 
 
 **Validation point**: Every existing Google sign-in suite passes through the page via the updated test helpers. New tests show both entry points land on the page, the page has no form when no accounts are configured, and old sealed sign-ins still open. The site browser suite passes with the new docs wording.
 
-#### - [ ] Task: Sign-in page in front of Google
+#### - [x] Task: Sign-in page in front of Google
 **Id:** 40150ba2-ff2b-4ea1-ad7e-1f49d3ce93dc
 **Repo:** tcgreplay
 **Depends on:** none
@@ -204,14 +204,14 @@ Both ways a sign-in starts (an assistant connecting, a signed-out browser openin
 *Technical detail:* [context.md#task-sign-in-page-in-front-of-google](./context.md#task-sign-in-page-in-front-of-google)
 
 **Acceptance criteria**:
-- [ ] An assistant starting to connect, and a signed-out browser opening a board page, are both shown the TCG Replay sign-in page, not Google.
-- [ ] Choosing "Sign in with Google" and completing Google's sign-in leaves the same account signed in, completes the assistant's connection or returns to the board page asked for, and signs that browser in to the board, exactly as before.
-- [ ] With no password accounts configured, the page shows the Google button and no username or password fields. It has no sign-up, change-password or recovery control.
-- [ ] A page, button or callback reached with a missing, expired or other browser's sign-in shows the existing "start signing in again" problem page.
-- [ ] The connector's registration, authorization checks, PKCE and token exchange behave exactly as before, and sign-ins sealed before the change still work.
-- [ ] Every existing sign-in, connector, board, cap, admin and hosted test passes.
+- [x] An assistant starting to connect, and a signed-out browser opening a board page, are both shown the TCG Replay sign-in page, not Google.
+- [x] Choosing "Sign in with Google" and completing Google's sign-in leaves the same account signed in, completes the assistant's connection or returns to the board page asked for, and signs that browser in to the board, exactly as before.
+- [x] With no password accounts configured, the page shows the Google button and no username or password fields. It has no sign-up, change-password or recovery control.
+- [x] A page, button or callback reached with a missing, expired or other browser's sign-in shows the existing "start signing in again" problem page.
+- [x] The connector's registration, authorization checks, PKCE and token exchange behave exactly as before, and sign-ins sealed before the change still work.
+- [x] Every existing sign-in, connector, board, cap, admin and hosted test passes.
 
-#### - [ ] Task: Studio look for the sign-in and problem pages
+#### - [x] Task: Studio look for the sign-in and problem pages
 **Id:** cec2eb15-9867-449f-a047-e6eeee98293c
 **Repo:** tcgreplay
 **Depends on:**
@@ -223,11 +223,11 @@ Gives the server-rendered pages (the sign-in page, and the problem, busy and sig
 *Technical detail:* [context.md#task-studio-look-for-the-sign-in-and-problem-pages](./context.md#task-studio-look-for-the-sign-in-and-problem-pages)
 
 **Acceptance criteria**:
-- [ ] The sign-in, problem, busy and signed-out pages show the TCG Replay mark and use the Studio colour tokens, readable at phone and desktop width without sideways scrolling.
-- [ ] The Google button is the first and most prominent action, labelled "Sign in with Google" with Google's mark.
-- [ ] The pages request no font, script, stylesheet or image from any other site, and responses tell browsers not to frame them or cache them.
+- [x] The sign-in, problem, busy and signed-out pages show the TCG Replay mark and use the Studio colour tokens, readable at phone and desktop width without sideways scrolling.
+- [x] The Google button is the first and most prominent action, labelled "Sign in with Google" with Google's mark.
+- [x] The pages request no font, script, stylesheet or image from any other site, and responses tell browsers not to frame them or cache them.
 
-#### - [ ] Task: Website docs and news entry for the sign-in page
+#### - [x] Task: Website docs and news entry for the sign-in page
 **Id:** 30c3d86e-10cd-4a2b-a186-eefccbccb16f
 **Repo:** tcgreplay
 **Depends on:**
@@ -239,9 +239,9 @@ Updates the website's sign-in and connecting guides, which today promise that Go
 *Technical detail:* [context.md#task-website-docs-and-news-entry-for-the-sign-in-page](./context.md#task-website-docs-and-news-entry-for-the-sign-in-page)
 
 **Acceptance criteria**:
-- [ ] The sign-in guide and the connecting steps for each assistant say a TCG Replay sign-in page opens first and players choose "Sign in with Google" there. None still says there is no TCG Replay page in between.
-- [ ] A What's new entry dated the release day announces the sign-in page, with refresh set to false.
-- [ ] The website builds and its browser suite passes.
+- [x] The sign-in guide and the connecting steps for each assistant say a TCG Replay sign-in page opens first and players choose "Sign in with Google" there. None still says there is no TCG Replay page in between.
+- [x] A What's new entry dated the release day announces the sign-in page, with refresh set to false.
+- [x] The website builds and its browser suite passes.
 
 ### Milestone 2: Operator-configured accounts sign in with a username and password
 
@@ -249,7 +249,7 @@ Updates the website's sign-in and connecting guides, which today promise that Go
 
 **Validation point**: Tests for every password acceptance criterion pass (connect, board, two accounts kept apart, identical failures, throttling with recovery, no crossover with a same-named Google account, admin refused, revocation after restart, config validation, logs and telemetry free of passwords). The full Go suite and the board suite pass.
 
-#### - [ ] Task: Password accounts from configuration
+#### - [x] Task: Password accounts from configuration
 **Id:** 818852b8-40c3-4519-900b-cadbd4477c2a
 **Repo:** tcgreplay
 **Depends on:** none
@@ -260,13 +260,13 @@ Adds the self-contained piece that reads the operator's password accounts (usern
 *Technical detail:* [context.md#task-password-accounts-from-configuration](./context.md#task-password-accounts-from-configuration)
 
 **Acceptance criteria**:
-- [ ] A configuration with several `username:bcrypt-hash` entries yields that many accounts, each checked against its own password.
-- [ ] A plain-text password, a malformed entry, an invalid username or a duplicate username is refused with an error that does not contain the configured value.
-- [ ] A wrong password and an unknown username both fail in the same way and take about the same time.
-- [ ] Usernames may be a plain name or an email address. A password account's identity never equals a Google account's, even when the username is exactly a Google account's email.
-- [ ] A sign-in made before an account was removed, or before its password changed, is reported as no longer valid.
+- [x] A configuration with several `username:bcrypt-hash` entries yields that many accounts, each checked against its own password.
+- [x] A plain-text password, a malformed entry, an invalid username or a duplicate username is refused with an error that does not contain the configured value.
+- [x] A wrong password and an unknown username both fail in the same way and take about the same time.
+- [x] Usernames may be a plain name or an email address. A password account's identity never equals a Google account's, even when the username is exactly a Google account's email.
+- [x] A sign-in made before an account was removed, or before its password changed, is reported as no longer valid.
 
-#### - [ ] Task: Accounts carry their provider through sign-ins and tokens
+#### - [x] Task: Accounts carry their provider through sign-ins and tokens
 **Id:** a9cbf184-13e5-4e89-8247-0a25a77c0942
 **Repo:** tcgreplay
 **Depends on:**
@@ -278,14 +278,14 @@ The signed-in account records how it signed in (Google or password), and that tr
 *Technical detail:* [context.md#task-accounts-carry-their-provider-through-sign-ins-and-tokens](./context.md#task-accounts-carry-their-provider-through-sign-ins-and-tokens)
 
 **Acceptance criteria**:
-- [ ] A board cookie and the assistant's tokens for a password account are recognised as that password account on page loads and tool calls, including after a restart with the same signing key.
-- [ ] Cookies and tokens issued before the change still open as the same Google account.
-- [ ] After a restart in which a password account was removed or its password changed, that account's existing cookie and tokens are refused.
-- [ ] A password account is refused by every admin page and action, even when its username is an admin's email.
-- [ ] Telemetry records for a password account never carry the player ID of the Google account with the same email.
-- [ ] The board's session information names the provider.
+- [x] A board cookie and the assistant's tokens for a password account are recognised as that password account on page loads and tool calls, including after a restart with the same signing key.
+- [x] Cookies and tokens issued before the change still open as the same Google account.
+- [x] After a restart in which a password account was removed or its password changed, that account's existing cookie and tokens are refused.
+- [x] A password account is refused by every admin page and action, even when its username is an admin's email.
+- [x] Telemetry records for a password account never carry the player ID of the Google account with the same email.
+- [x] The board's session information names the provider.
 
-#### - [ ] Task: Throttle for failed password sign-ins
+#### - [x] Task: Throttle for failed password sign-ins
 **Id:** cf7c79f1-835f-48ae-a5cb-b5f025433235
 **Repo:** tcgreplay
 **Depends on:** none
@@ -296,11 +296,11 @@ Extends the playmat's existing request limiter so it can hold a slower allowance
 *Technical detail:* [context.md#task-throttle-for-failed-password-sign-ins](./context.md#task-throttle-for-failed-password-sign-ins)
 
 **Acceptance criteria**:
-- [ ] An allowance of 10 over 15 minutes refuses the 11th spend inside 15 minutes and allows spending again as time passes.
-- [ ] Checking an allowance without spending never uses it up.
-- [ ] Allowances under different names are independent, and the existing request limit behaves exactly as before.
+- [x] An allowance of 10 over 15 minutes refuses the 11th spend inside 15 minutes and allows spending again as time passes.
+- [x] Checking an allowance without spending never uses it up.
+- [x] Allowances under different names are independent, and the existing request limit behaves exactly as before.
 
-#### - [ ] Task: Username and password sign-in on the page
+#### - [x] Task: Username and password sign-in on the page
 **Id:** 57986df5-7ebc-4c03-a5e2-7e99be0d3bef
 **Repo:** tcgreplay
 **Depends on:**
@@ -315,14 +315,14 @@ When password accounts are configured, the sign-in page shows a username and pas
 *Technical detail:* [context.md#task-username-and-password-sign-in-on-the-page](./context.md#task-username-and-password-sign-in-on-the-page)
 
 **Acceptance criteria**:
-- [ ] With accounts configured, the page shows the username and password form and the reviewer-and-invited note. Without them it shows neither.
-- [ ] A configured account's username and password complete an assistant's connection (its tools run as that account) and leave the browser signed in to the board. A board sign-in returns to the page asked for.
-- [ ] An unknown username and a wrong password show the same message and status, and sign nobody in. The sign-in can be retried on the same page.
-- [ ] After 10 failures for one username within 15 minutes, further attempts for it are refused for a while, even with the right password, and the page says to try again later. Failures across many usernames from one client are refused too.
-- [ ] A form post from another site, or from a browser that did not start this sign-in, is refused.
-- [ ] Logs and telemetry after successful and failed password sign-ins contain neither the password nor the attempted password. Sign-in records carry the provider, and the telemetry catalogue documents it.
+- [x] With accounts configured, the page shows the username and password form and the reviewer-and-invited note. Without them it shows neither.
+- [x] A configured account's username and password complete an assistant's connection (its tools run as that account) and leave the browser signed in to the board. A board sign-in returns to the page asked for.
+- [x] An unknown username and a wrong password show the same message and status, and sign nobody in. The sign-in can be retried on the same page.
+- [x] After 10 failures for one username within 15 minutes, further attempts for it are refused for a while, even with the right password, and the page says to try again later. Failures across many usernames from one client are refused too.
+- [x] A form post from another site, or from a browser that did not start this sign-in, is refused.
+- [x] Logs and telemetry after successful and failed password sign-ins contain neither the password nor the attempted password. Sign-in records carry the provider, and the telemetry catalogue documents it.
 
-#### - [ ] Task: Hosted playmat reads password accounts from its settings
+#### - [x] Task: Hosted playmat reads password accounts from its settings
 **Id:** d111d5e9-d4e5-4cfa-bb8b-b820e6fe75b8
 **Repo:** tcgreplay
 **Depends on:**
@@ -334,13 +334,13 @@ The hosted playmat reads its password accounts from a new encrypted setting at s
 *Technical detail:* [context.md#task-hosted-playmat-reads-password-accounts-from-its-settings](./context.md#task-hosted-playmat-reads-password-accounts-from-its-settings)
 
 **Acceptance criteria**:
-- [ ] With accounts set, the hosted playmat offers the password form. Unset, it offers only Google. A malformed or plain-text value stops start-up with a message that does not contain the value.
-- [ ] Two configured accounts each connect and sign in, and a game imported by one is not visible to the other.
-- [ ] A Google account whose email matches an email-shaped password username, or whose name matches a plain one, sees none of that account's games, and vice versa. A browser signed in as one is never signed in as the other.
-- [ ] A password account is refused by the admin pages, and after connecting with it the same browser opens the board without signing in again.
-- [ ] The start-up line reports the number of password accounts and never a username. The desktop playmat has no sign-in, as before.
+- [x] With accounts set, the hosted playmat offers the password form. Unset, it offers only Google. A malformed or plain-text value stops start-up with a message that does not contain the value.
+- [x] Two configured accounts each connect and sign in, and a game imported by one is not visible to the other.
+- [x] A Google account whose email matches an email-shaped password username, or whose name matches a plain one, sees none of that account's games, and vice versa. A browser signed in as one is never signed in as the other.
+- [x] A password account is refused by the admin pages, and after connecting with it the same browser opens the board without signing in again.
+- [x] The start-up line reports the number of password accounts and never a username. The desktop playmat has no sign-in, as before.
 
-#### - [ ] Task: Board account label for password accounts
+#### - [x] Task: Board account label for password accounts
 **Id:** 68ac197d-a17b-4a0e-9dc3-d11a43596a51
 **Repo:** tcgreplay
 **Depends on:**
@@ -352,8 +352,8 @@ The board's menu shows the signed-in account with a tooltip saying it signed in 
 *Technical detail:* [context.md#task-board-account-label-for-password-accounts](./context.md#task-board-account-label-for-password-accounts)
 
 **Acceptance criteria**:
-- [ ] Signed in with a password account, the board shows the username and does not say "Signed in with Google".
-- [ ] Signed in with Google, the board's account label and tooltip are unchanged.
+- [x] Signed in with a password account, the board shows the username and does not say "Signed in with Google".
+- [x] Signed in with Google, the board's account label and tooltip are unchanged.
 
 ### Milestone 3: Reviewer accounts always get in, and the review materials use them
 
@@ -361,7 +361,7 @@ The board's menu shows the signed-in account with a tooltip saying it signed in 
 
 **Validation point**: Cap tests pass: a password account gets in at the cap, a Google player still joins when one place was free, and tool calls stay admitted after the place is lost. Start-up tests cover the leftover reviewer setting and the count. The reviewer-materials check passes. The full Go, board and site suites pass.
 
-#### - [ ] Task: Reserved places for password accounts
+#### - [x] Task: Reserved places for password accounts
 **Id:** e761ba87-2115-4efd-aacc-819698474941
 **Repo:** tcgreplay
 **Depends on:**
@@ -374,13 +374,13 @@ Every configured password account gets the reserved place the single Google revi
 *Technical detail:* [context.md#task-reserved-places-for-password-accounts](./context.md#task-reserved-places-for-password-accounts)
 
 **Acceptance criteria**:
-- [ ] With the playmat at its player limit, a password account signs in and imports a game.
-- [ ] With the playmat one below its limit, a password account signs in and imports a game, and a new Google player can still join afterwards.
-- [ ] A password account that lost its place (idle) is still admitted on its next tool call when the playmat is full.
-- [ ] A leftover single-reviewer setting no longer grants anything. The playmat logs that it is ignored and starts normally.
-- [ ] The app spec declares the password-accounts secret and no longer declares the reviewer setting.
+- [x] With the playmat at its player limit, a password account signs in and imports a game.
+- [x] With the playmat one below its limit, a password account signs in and imports a game, and a new Google player can still join afterwards.
+- [x] A password account that lost its place (idle) is still admitted on its next tool call when the playmat is full.
+- [x] A leftover single-reviewer setting no longer grants anything. The playmat logs that it is ignored and starts normally.
+- [x] The app spec declares the password-accounts secret and no longer declares the reviewer setting.
 
-#### - [ ] Task: Reviewer materials and privacy page
+#### - [x] Task: Reviewer materials and privacy page
 **Id:** 64cbb224-059f-419a-9f08-64398838b91e
 **Repo:** tcgreplay
 **Depends on:**
@@ -392,10 +392,10 @@ The plugin's review test cases, demo script and submission checklist tell the re
 *Technical detail:* [context.md#task-reviewer-materials-and-privacy-page](./context.md#task-reviewer-materials-and-privacy-page)
 
 **Acceptance criteria**:
-- [ ] The review test cases, demo script and submission checklist instruct signing in with the configured reviewer account and no longer tell the reviewer to use a Google account.
-- [ ] The submission checklist explains creating a reviewer account (username and bcrypt hash), setting it in the console, and entering the credentials in OpenAI's review form.
-- [ ] The privacy page describes reviewer and invited password accounts (what is kept for them) and says the login cookie exists only while a sign-in is in progress.
-- [ ] An automated check fails if the reviewer materials tell the reviewer to sign in with Google. The plugin package still builds.
+- [x] The review test cases, demo script and submission checklist instruct signing in with the configured reviewer account and no longer tell the reviewer to use a Google account.
+- [x] The submission checklist explains creating a reviewer account (username and bcrypt hash), setting it in the console, and entering the credentials in OpenAI's review form.
+- [x] The privacy page describes reviewer and invited password accounts (what is kept for them) and says the login cookie exists only while a sign-in is in progress.
+- [x] An automated check fails if the reviewer materials tell the reviewer to sign in with Google. The plugin package still builds.
 
 #### - [ ] Task: Configure reviewer accounts on the live playmat
 **Id:** 3d00c733-cd31-4d99-a85f-82459ef1aad3
@@ -432,3 +432,209 @@ Creates the reviewer accounts (one for OpenAI's review, one ready for Claude's),
 - **Changing the player-facing listing description**: "Sign in with your Google account" in the plugin listing stays true for players. Only the reviewer test cases, demo script and checklist change.
 - **The desktop playmat**: it has no sign-in and is untouched (spec constraint).
 - **Log forwarding for App Platform**: needed to keep `sign_in` records for the Google sign-in success metric (Insights holds no App Platform logs). It is handled separately because it needs a provider choice and is billed.
+
+## Changelog
+
+### 2026-11-24 — Task: Sign-in page in front of Google
+
+**What was done**: Both sign-in entry points (`/authorize` for connectors, `/auth/login` for the board) now record the sign-in in progress with `startSignIn` and redirect to a new TCG Replay sign-in page at `/auth/signin?state=…`, whose "Sign in with Google" button (`/auth/google?state=…`) starts Google for that same sign-in. Google's callback ends in a shared `finishSignIn` (cap, board session, telemetry, then connector code or board redirect) that later providers will reuse. The test helpers click through the page, so every existing Google suite still runs.
+
+**Deviations**: The tests for this High task were first drafted in the main context during analysis. An independent sub-agent then reviewed them against the acceptance criteria in the test step and added five more. Beyond the plan: the Google nonce and PKCE verifier are set under the store lock (`setGoogleKeys`), and `takePending` returns a copy taken under the lock, so a double-clicked button cannot race the callback. `hostauthtest`'s address alias now reports the browser's original request on responses. Without this, links on the page resolved to the loopback host, and the cookie jar's public-host cookies were not sent.
+
+**Files changed**:
+- `internal/hostauth/signin.go` (new)
+- `internal/hostauth/signin_test.go` (new)
+- `internal/hostauth/google.go`
+- `internal/hostauth/store.go`
+- `internal/hostauth/pages.go`
+- `internal/hostauth/oauth.go`
+- `internal/hostauth/board.go`
+- `internal/hostauth/hostauth.go`
+- `internal/hostauth/hostauthtest/client.go`
+- `internal/hostauth/hostauthtest/google.go`
+- `internal/hostauth/google_test.go`
+- `internal/hostauth/oauth_test.go`
+- `internal/hostauth/seal_test.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `cmd/tcgreplay/hosted_cap_test.go`
+
+**Discoveries**:
+- `http.Transport` sets `resp.Request` to the request it actually sent. A RoundTripper that rewrites the host on a clone therefore leaks the rewritten URL into `resp.Request`, and relative links resolved against it go to the wrong host.
+- A fresh worktree has no built website (`internal/site/dist/app` is untracked), so `cmd/tcgreplay` `TestOpenAIChallengeNotSet` fails until `make site` runs in the worktree.
+- The internal test helper `get` now chooses Google on the sign-in page. Use `getPage` when a test must stop on the page.
+
+### 2026-11-24 — Task: Studio look for the sign-in and problem pages
+
+**What was done**: The sign-in, problem, busy and signed-out pages now share one layout. It inlines the generated design tokens and the TCG Replay mark (newly exported from `internal/design` as `TokensCSS` and `MarkSVG`) and a small token-only stylesheet: a light, single-column panel, max 24rem. The Google button comes first, full width at touch-target height, with Google's "G" in its own colours. Every page is sent `no-store`, `X-Frame-Options: DENY` and a CSP of `default-src 'none'` (inline styles, data: images and same-site forms only), and loads nothing from another site.
+
+**Deviations**: None. The busy page's "tcgreplay is busy" wording was kept, since existing tests pin it and renaming it is not part of this task.
+
+**Files changed**:
+- `internal/design/design.go`
+- `internal/hostauth/pages.go`
+- `internal/hostauth/pages_test.go` (new)
+- `internal/hostauth/signin_test.go`
+
+**Discoveries**: The design stray-value scanner only covers `web/src` and `site/src`, so the Google mark's brand colours in `pages.go` are not flagged. Keep page CSS on tokens by convention.
+
+### 2026-11-24 — Task: Website docs and news entry for the sign-in page
+
+**What was done**: The sign-in guide now says TCG Replay's sign-in page opens first, where players choose Sign in with Google, and that the username and password form is only for reviewer and invited accounts. The "no tcgreplay page in between" claim is gone. The connecting steps for claude.ai, ChatGPT (both the directory listing and the custom plugin) and Claude Code describe the page. A What's new entry (2026-11-24, refresh false) announces it. The site browser check on the sign-in guide now expects the page wording and checks the old claim is absent.
+
+**Deviations**: Screenshot baselines for /docs/connect, /docs/sign-in, /docs/whats-new (laptop and phone) and /docs (phone, whose index shows the sign-in description) were re-recorded, since their text changed. `index.astro` needed no change.
+
+**Files changed**:
+- `site/src/content/docs/sign-in.md`
+- `site/src/pages/docs/connect.astro`
+- `site/src/data/whats-new.yaml`
+- `site/e2e/connect.spec.js`
+- `site/e2e/__screenshots__/laptop/docs-connect.png`, `docs-sign-in.png`, `docs-whats-new.png`
+- `site/e2e/__screenshots__/phone/docs-connect.png`, `docs-sign-in.png`, `docs-whats-new.png`, `docs.png`
+
+**Discoveries**: Any docs copy change breaks the full-page screenshot baselines in `site/e2e/screenshots.spec.js`; re-record them deliberately with `--update-snapshots` and check only the intended pages changed.
+
+### 2026-11-24 — Task: Password accounts from configuration
+
+**What was done**: A new `PasswordAccounts` type parses the operator's `username:bcrypt-hash` list, separated by commas or whitespace (the format `htpasswd -nBC 12` prints). It refuses plain text, malformed entries, bad or repeated usernames, a bcrypt cost below 10, and mixed costs, with errors that name only the entry's position. `Check` always runs exactly one bcrypt comparison (against a dummy hash at the accounts' cost for an unknown username) and returns one answer. Each account signs in as `password:<username>`, with provider `password`. `Fingerprint`/`Valid` say whether a sign-in sealed with an account's hash fingerprint still stands. `Account` gains `Provider` and `Password()`, and `Config` gains `PasswordAccounts`.
+
+**Deviations**: Parsing also refuses entries at different bcrypt costs, which the plan did not list. The first goal check found that with a dummy hash at the highest cost, a wrong password for a cheaper account would answer faster than an unknown username. One cost for all accounts makes the two take the same time. `go get golang.org/x/crypto` also raised the indirect `x/net`, `x/sys` and `x/text` versions.
+
+**Files changed**:
+- `go.mod`
+- `go.sum`
+- `internal/hostauth/password.go` (new)
+- `internal/hostauth/password_test.go` (new)
+- `internal/hostauth/hostauth.go`
+
+**Discoveries**: The first goal check also judged "a sign-in made before removal is reported as no longer valid" against runtime wiring. That wiring (sealing the fingerprint into cookies and tokens and refusing stale ones) is the next task's job. This task delivers the predicate.
+
+### 2026-11-24 — Task: Accounts carry their provider through sign-ins and tokens
+
+**What was done**: Board cookies, access tokens and refresh tokens now seal the account's provider (`p`, absent for Google) and, for a password account, its hash fingerprint (`k`). Opening any of them refuses a password grant whose account was removed or re-passworded, via store hooks wired from `Config.PasswordAccounts` by `usePasswordAccounts`. Grants sealed before the change open as Google. Token verification puts the provider in `TokenInfo.Extra`, and `AccountFromToken` reads it back. `Account.PlayerKey()` (the email for Google, `password:<username>` for password accounts) replaces the email in every place a player ID is hashed. `IsAdmin` refuses password accounts. `/auth/session` reports the provider.
+
+**Deviations**: Beyond the plan's list of recorder calls, `PlayerKey()` also feeds `Recorder.ActiveContext` (player_day) and the board and MCP trace-span player attributes in `cmd/tcgreplay/hosted.go`, as recorded when the plan was corrected after the drift check. The registry's account refresh also keeps the provider. `internal/cacheadmin` still hashes admin emails (admins are Google accounts).
+
+**Files changed**:
+- `internal/hostauth/seal.go`
+- `internal/hostauth/store.go`
+- `internal/hostauth/oauth.go`
+- `internal/hostauth/hostauth.go`
+- `internal/hostauth/google.go`
+- `internal/hostauth/signin.go`
+- `internal/hostauth/board.go`
+- `internal/hostauth/limit.go`
+- `internal/hostauth/admin.go`
+- `internal/hostauth/board_test.go`
+- `internal/hostauth/provider_test.go` (new)
+- `internal/usergames/usergames.go`
+- `internal/usergames/board.go`
+- `internal/usergames/telemetry.go`
+- `internal/usergames/telemetry_test.go`
+- `cmd/tcgreplay/hosted.go`
+
+**Discoveries**: The store checks a sealed grant's validity before its in-memory lookup, so in a test a password session only opens when the service has that account configured (use `usePasswordAccounts`).
+
+### 2026-11-24 — Task: Throttle for failed password sign-ins
+
+**What was done**: The limiter's token bucket now takes a capacity and a refill window per call, and gains a non-spending `peek`. The request limit calls it as `acct:<id>`, `RateLimit` per minute, so it behaves as before. New helpers give the password sign-in its allowances: `loginAllowed` peeks, and `loginFailed` spends from both the username (10 per 15 minutes) and the client address (30 per 15 minutes). `clientAddr` reads `do-connecting-ip`, then `CF-Connecting-IP`, then the peer. The sweep forgets a bucket only after its own window.
+
+**Deviations**: The new tests are in `internal/hostauth/throttle_test.go`, not `limit_test.go`, which is unchanged and still passes.
+
+**Files changed**:
+- `internal/hostauth/limit.go`
+- `internal/hostauth/store.go`
+- `internal/hostauth/throttle_test.go` (new)
+
+**Discoveries**: None.
+
+### 2026-11-24 — Task: Username and password sign-in on the page
+
+**What was done**: With password accounts configured, the sign-in page shows a username and password form below the Google button, with the note "This form is for reviewer and invited accounts. Players sign in with Google." The new `POST /auth/password` checks the browser's login cookie for the state (refusing cross-site and foreign posts), then the per-username and per-client allowances (refused with 429 before any password check), then the password. A failure gives one 401 message, keeps the sign-in for a retry, and records `sign_in_refused` (reason `credentials` or `throttled`, provider `password`, no player). A success ends in the shared completion, like Google. Nothing about an attempt is logged. `hostauthtest` gains password versions of its sign-in helpers. The telemetry comments and `docs/observability.md` cover the password provider and reasons.
+
+**Deviations**: The client-address source is logged once, at the first password attempt (the header's name, never the address), as the plan's open question asked. `TestRunbookListsProvider` (cmd/tcgreplay) was updated for the new docs rows. The tests were written by a separate sub-agent.
+
+**Files changed**:
+- `internal/hostauth/signin.go`
+- `internal/hostauth/pages.go`
+- `internal/hostauth/limit.go`
+- `internal/hostauth/hostauth.go`
+- `internal/hostauth/hostauthtest/client.go`
+- `internal/hostauth/password_signin_test.go` (new)
+- `internal/telemetry/recorder.go`
+- `docs/observability.md`
+- `cmd/tcgreplay/hosted_telemetry_test.go`
+
+**Discoveries**: Under the race detector the hostauth package's tests take about a minute, because of the bcrypt comparisons. That is expected, not a hang.
+
+### 2026-11-24 — Task: Hosted playmat reads password accounts from its settings
+
+**What was done**: Hosted mode reads `TCGREPLAY_PASSWORD_ACCOUNTS` from the environment only, never a flag, and parses it into the sign-in service's password accounts. A bad value stops start-up with `TCGREPLAY_PASSWORD_ACCOUNTS: entry N …`, never the value. The start-up line reports "N password accounts" (or "no password accounts (TCGREPLAY_PASSWORD_ACCOUNTS)"), never a username, through a new `Auth.PasswordAccountCount`. End-to-end tests run the real hosted playmat with configured accounts. They check two accounts kept apart, no crossover with same-named Google accounts (games, player IDs, browser session), admin refused, the board opening signed in after connecting, the form following the setting, a malformed setting refused, and the count in the start-up line.
+
+**Deviations**: `TCGREPLAY_REVIEWER` is still read and honoured; retiring it is the next milestone's task.
+
+**Files changed**:
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_password_test.go` (new)
+- `internal/hostauth/admin.go`
+
+**Discoveries**: None.
+
+### 2026-11-24 — Task: Board account label for password accounts
+
+**What was done**: The board reads `provider` from `/auth/session` into `app.accountProvider` (defaulting to Google). The menu's account line keeps "Signed in with Google" for Google accounts. For a password account it shows the username with the tooltip "Signed in with a reviewer account". A new board spec stubs `/auth/session` to check both, and a session without a provider.
+
+**Deviations**: No board spec stubbed `/auth/session` before, so the spec is new (`web/e2e/account.spec.js`). It targets `header .account[title]`, because on the phone layout the menu's game name reuses the `account` class. The board was rebuilt into `internal/webui/dist`, which is untracked.
+
+**Files changed**:
+- `web/src/lib/session.js`
+- `web/src/lib/store.svelte.js`
+- `web/src/App.svelte`
+- `web/e2e/account.spec.js` (new)
+
+**Discoveries**: The board's e2e server is the desktop playmat, which has no `/auth/session`. Hosted-only board behaviour is tested by routing that request in Playwright and reloading.
+
+### 2026-11-24 — Task: Reserved places for password accounts
+
+**What was done**: The registry's reserved place moves from the single configured reviewer email to every password account (`acct.Password()`). Such an account is admitted at the player cap and not counted against it, at sign-in and on tool calls. `usergames.Config.Reviewer`, the `reviewer` config field and `reviewerText` are gone. A leftover `TCGREPLAY_REVIEWER` logs "warning: TCGREPLAY_REVIEWER is no longer used; …" and is otherwise ignored. `.do/app.yaml` declares `TCGREPLAY_PASSWORD_ACCOUNTS` (SECRET) in place of `TCGREPLAY_REVIEWER`.
+
+**Deviations**: The plan said to convert `TestUnverifiedReviewerEmailIsRefused`. It became `TestGoogleAccountNamedLikeAPasswordAccountIsCounted`, which checks that Google accounts named like a password account (even one with the `password:` ID but no provider) are counted. `TestNoReviewerConfigured` and `TestReviewerSettingNormalised` were removed with the setting. `TestMainServesOpenAIChallengeFromEnv` and `TestAppSpecHealthCheckAndSecrets` were updated for the new setting.
+
+**Files changed**:
+- `internal/usergames/usergames.go`
+- `internal/usergames/places_test.go`
+- `cmd/tcgreplay/main.go`
+- `cmd/tcgreplay/hosted.go`
+- `cmd/tcgreplay/hosted_cap_test.go`
+- `cmd/tcgreplay/hosted_routes_test.go`
+- `cmd/tcgreplay/hosted_test.go`
+- `.do/app.yaml`
+
+**Discoveries**: None.
+
+### 2026-11-24 — Task: Reviewer materials and privacy page
+
+**What was done**: The review test cases (`plugin/listing.json`) and the demo script tell the reviewer to sign in on the TCG Replay sign-in page with the reviewer account's username and password. The submission checklist explains creating the account with `htpasswd -nBC 12 openai-reviewer`, setting `TCGREPLAY_PASSWORD_ACCOUNTS` (encrypted) in the console, checking the start-up count, and choosing Username and password in OpenAI's Reviewer credentials step. Its MCP Inspector step uses the reviewer account too. The privacy page describes reviewer and invited password accounts (username kept, password only as a one-way hash, attempts never recorded) and words the login cookie for any sign-in. A new plugin test fails if the reviewer materials tell the reviewer to sign in with Google or name the retired setting.
+
+**Deviations**: The existing `internal/plugin/review_test.go` pinned the old wording (Google in the first case, two-step verification, `TCGREPLAY_REVIEWER`) and was updated to the new checks. The privacy page's screenshot baselines (laptop and phone) were re-recorded. The edits for this task first landed in the main checkout, because a compound `cd` into the worktree exited non-zero and so did not persist. They were moved into the worktree as a patch, the five files restored in the main checkout (they were clean at the start of the session), and the main checkout's website rebuilt.
+
+**Files changed**:
+- `plugin/listing.json`
+- `plugin/demo-script.md`
+- `plugin/SUBMITTING.md`
+- `site/src/pages/privacy.astro`
+- `site/e2e/__screenshots__/laptop/privacy.png`, `site/e2e/__screenshots__/phone/privacy.png`
+- `internal/plugin/plugin_test.go`
+- `internal/plugin/review_test.go`
+
+**Discoveries**: The goal reviewer noted the drift check's pattern is narrow (it catches "sign in with Google" phrasings, not "Google sign-in" or "log in with Google").
+
+### 2026-11-24 — Task: Configure reviewer accounts on the live playmat
+
+**What was done**: Nothing in this run: it is a human task (DigitalOcean console and OpenAI Platform dashboard, creating secrets) that can only happen after the code is merged and deployed.
+
+**Deviations**: Skipped at the user's decision after the goal check stopped. Criteria left unticked: the live start-up line reporting the accounts with `TCGREPLAY_REVIEWER` gone from the console; OpenAI's review information holding the reviewer username, password and login address; plain-text passwords kept only in the password manager. The user will push, deploy and do these steps, following step 4 and step 5 of `plugin/SUBMITTING.md`.
+
+**Files changed**: None.
+
+**Discoveries**: A human task in a whole-plan run can only be passed over through the goal check: it has to stop (exhausted) before `implement goal decide` accepts a skip.

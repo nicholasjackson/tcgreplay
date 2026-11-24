@@ -65,7 +65,7 @@ These stay the same in every theme:
   - pile chips: Hand, Deck, Discard and Lost, each with its count and opening that pile;
   - a thumbnail of the top card of the discard pile.
 - **Bench:** a zone panel. Under each card, its HP left in mono (pink when damaged) and its Energy dots. An empty slot is a recessed box.
-- **Active Pokémon:** a panel outlined in the player's colour, holding the card and a readout: name, HP left over maximum in large mono, an HP bar, the damage tag (for example −60), and the Energy dots with their count.
+- **Active Pokémon:** a panel outlined in the player's colour, holding the card and a readout: name, HP left over maximum in large mono, an HP bar, the damage tag (for example −60), and the Energy dots with their count. A Special Condition is named as a chip in the readout's line, after the damage tag: Poisoned and Burned in their condition colours with white text, Asleep, Confused and Paralyzed in the mat's chip colour. The card itself is never turned for a condition: an upside-down card read as a fault.
 - **Turn strip:**
   - the Stadium on the left: a single card, a Legendary Stadium (below), or an empty recessed box labelled "Stadium";
   - in the middle, the turn tag ("T5"), "Alice's turn" and the step;
@@ -145,7 +145,7 @@ The same tokens, light interface only.
 
 - **Header:**
   - the mark and "TCG Replay", which links home;
-  - links: Guides, Example, Limits, What's new, with the current page underlined;
+  - links: Guides, Example, What's new, with the current page underlined;
   - Get started as a button.
 
   Home and Privacy leave the top bar; Privacy is in the footer.
@@ -164,7 +164,6 @@ The same tokens, light interface only.
 - **Coaching workflows:** cards grouped into After a game (Import a game, The opponent's likely deck, Review a game), Practice (Replay drill, Before you move, Numbers drill) and Play (Play a game). Each card shows the guide's name and an example prompt.
 - **What's new:** entries on a timeline. An entry that needs a refresh gets an amber callout linking to the refresh steps. Each change sits on its own row.
 - **Example game:** the two steps, the prompt, then the decklist (light) and the battle log (dark) side by side, each with a Copy button.
-- **Limits:** stat tiles for games per account, idle time, players at once and requests a minute. The numbers are read from the site facts, never typed in. Then the sections as today.
 - **Privacy and Terms:** a text column with an "On this page" card and the last-updated date in mono.
 - **404:** a small stack-of-cards picture, then Go to the home page and All docs.
 
