@@ -1,5 +1,5 @@
 // The terms of service at /terms: open without signing in, linked from
-// every page's footer, naming the tcgreplay project, covering each point
+// every page's footer, naming Nic Jackson as running it, covering each point
 // the spec lists, with the hosted limits from the App Platform definition
 // and the trademarks section from the shared notice file.
 import { readFileSync } from 'node:fs';
@@ -56,10 +56,10 @@ test('it has a section for each point the spec lists', async ({ page }) => {
   }
 });
 
-test('it names the tcgreplay project and says free, as is, no availability guarantee, and games can be lost', async ({ page }) => {
+test('it names Nic Jackson as running it and says free, as is, no availability guarantee, and games can be lost', async ({ page }) => {
   await page.goto('/terms');
   const section = (name) => page.getByRole('region', { name, exact: true });
-  await expect(section('Who runs tcgreplay')).toContainText('run by the tcgreplay project');
+  await expect(section('Who runs tcgreplay')).toContainText('run by Nic Jackson');
   const asIs = section('Free, and provided as is');
   await expect(asIs).toContainText('free');
   await expect(asIs).toContainText('provided as is');
