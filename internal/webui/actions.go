@@ -182,7 +182,11 @@ var decisionVerbs = map[string]bool{"attack": true, "end_turn": true, "checkout"
 func (s *Server) held(g *game.Game, seat state.Seat, req request) error {
 	switch s.M.Hold() {
 	case game.HoldFull:
-		if lookVerbs[req.Verb] {
+		// Two catch-up moves on the player's own side are never held:
+		// promoting into an empty Active Spot, which is allowed on either
+		// player's turn (the assistant's attack may have knocked out the
+		// player's Active), and taking a prize card they left untaken.
+		if lookVerbs[req.Verb] || (req.Verb == "take_prize" && seat == s.Human) || (req.Verb == "switch" && activeEmpty(g, seat)) {
 			return nil
 		}
 		return errOpponentActing
@@ -246,6 +250,12 @@ func (s *Server) held(g *game.Game, seat state.Seat, req request) error {
 		}
 	}
 	return nil
+}
+
+// activeEmpty reports whether seat's Active Spot is empty.
+func activeEmpty(g *game.Game, seat state.Seat) bool {
+	side := g.State().Sides[seat]
+	return side != nil && side.Active.Empty()
 }
 
 func (s *Server) do(ctx context.Context, c *client, req request, res *response) (any, *game.Result, error) {

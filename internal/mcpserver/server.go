@@ -40,6 +40,12 @@ type Server struct {
 	// error refuses the call with its message. It is what get_account
 	// answers. Nil (the desktop) means get_account is not offered.
 	Account func(ctx context.Context, extra *mcp.RequestExtra) (id string, err error)
+	// ReportImport, if set (hosted mode with the shared store), saves a
+	// battle log that failed to import, for the maintainer, once the
+	// player has agreed, and returns the saved report's ID. A failed
+	// import_log then says how to offer it. Nil (the desktop) means
+	// report_import is not offered.
+	ReportImport func(ctx context.Context, extra *mcp.RequestExtra, r ImportReport) (id string, err error)
 }
 
 const actor = state.ActorClaude
@@ -67,6 +73,9 @@ func (s *Server) MCP() *mcp.Server {
 	})
 	s.register(srv)
 	s.registerGuides(srv)
+	if s.ReportImport != nil {
+		s.registerReport(srv)
+	}
 	if s.Account != nil {
 		s.registerAccount(srv)
 	}
@@ -347,8 +356,9 @@ type (
 		Seat string `json:"seat,omitempty" jsonschema:"for the seat view in review mode"`
 	}
 	GetLog struct {
-		Since int    `json:"since,omitempty" jsonschema:"only events after this id"`
-		View  string `json:"view,omitempty" jsonschema:"seat, coach or reveal; default seat in play mode, reveal in review mode"`
+		Since  int    `json:"since,omitempty" jsonschema:"only events after this id"`
+		View   string `json:"view,omitempty" jsonschema:"seat, coach or reveal; default seat in play mode, reveal in review mode"`
+		Branch string `json:"branch,omitempty" jsonschema:"read this branch instead of the current one, without moving the board (e.g. main while the player is on a practice branch)"`
 	}
 	WaitArg struct {
 		Seat  string `json:"seat,omitempty" jsonschema:"review mode: the seat you handed to the player; defaults to the seat whose turn it is. Play mode: the player's seat only"`
@@ -505,7 +515,7 @@ func (s *Server) register(srv *mcp.Server) {
 	add(s, srv, "import_log", "Import a TCG Live game", "Use this when the user pastes or attaches a Pokémon TCG Live battle log (Setup, \"<name>'s Turn\", \"<name> drew a card.\", \"<name> took a Prize card.\") or a saved game record, or asks to look at, review or analyse a game they played, even if they do not mention TCG Replay: import it here rather than reading the log yourself, and read the import-game guide first. Do not use it to start a fresh game (new_game). It needs the player's decklist (deck): if you do not have it, ask the player to paste the list they played (exported from the TCG Live deck editor) and import once they do; do not review the game from the log text instead. Imports a Pokémon TCG Live battle log as a new game in review mode, owner at p1 and opponent at p2. The owner's side is exact. Pass opp_deck, a likely 60-card list for the opponent's archetype, so both decks are complete: cards the log never names (prizes, hand, deck) are dealt at random from what the list has left. Without it they stay unknown; set_opponent_deck can add a list later. Returns the game summary, report.observed (the minimum count of each opponent card the log proves), problems and warnings. Also restores a game from its record: pass the record as log, alone. The result's record holds the log, both lists, the player's name and the seed: give it to the player to keep; importing it later rebuilds the identical game (branches and notes are not kept).", func(ctx context.Context, in ImportLog) (any, error) {
 		res, err := s.m(ctx).Import(ctx, game.ImportRequest{ID: in.ID, Log: in.Log, Deck: in.Deck, OppDeck: in.OppDeck, Me: in.Me})
 		if err != nil {
-			return nil, err
+			return nil, s.importFailed(in, err)
 		}
 		g := res.Game
 		warnings := res.Warnings
@@ -557,7 +567,7 @@ func (s *Server) register(srv *mcp.Server) {
 			"board": v,
 		}, nil
 	})
-	add(s, srv, "get_log", "Read the game log", "Use this when you need the current branch's events as text lines, redacted for the view, e.g. what happened in a turn or event ids to rewind to or annotate. Do not use it for the current position (get_state).", func(ctx context.Context, in GetLog) (any, error) {
+	add(s, srv, "get_log", "Read the game log", "Use this when you need a branch's events as text lines, redacted for the view, e.g. what happened in a turn or event ids to rewind to or annotate. It reads the current branch, or the one named in branch without moving the board: never checkout a branch just to read it, since the player's board follows checkouts. Do not use it for the current position (get_state).", func(ctx context.Context, in GetLog) (any, error) {
 		g, err := s.m(ctx).Current()
 		if err != nil {
 			return nil, err
@@ -570,7 +580,7 @@ func (s *Server) register(srv *mcp.Server) {
 		if err != nil {
 			return nil, err
 		}
-		lines, err := g.Log(in.Since, viewer, "get_log:"+viewName(view), string(actor))
+		lines, err := g.BranchLog(in.Branch, in.Since, viewer, "get_log:"+viewName(view), string(actor))
 		if err != nil {
 			return nil, err
 		}
@@ -741,7 +751,7 @@ func (s *Server) register(srv *mcp.Server) {
 			return g.PlaceDamage(seat, actor, l, in.Amount)
 		})
 	})
-	add(s, srv, "end_turn", "End the turn", "Use this when the acting seat ends its turn. The opponent's turn starts and they draw a card. Refused while a player with a Benched Pokémon has an empty Active Spot (promote first) or while prize cards are owed for this turn's Knock Outs (take them first); force overrides both when an effect changes the rules. Do not use it to close a compound action (end_action). In play mode, call wait_for_turn next.", func(ctx context.Context, in EndTurnArg) (any, error) {
+	add(s, srv, "end_turn", "End the turn", "Use this when the acting seat ends its turn. The opponent's turn starts and they draw a card. Refused while a player with a Benched Pokémon has an empty Active Spot (promote first) or while prize cards are owed for this turn's Knock Outs (take them first); force overrides both when an effect changes the rules. The exception is the opponent's empty Active Spot: your turn ends with a warning and they promote at the start of theirs, on the board or (in review mode) with switch. Do not use it to close a compound action (end_action). In play mode, call wait_for_turn next.", func(ctx context.Context, in EndTurnArg) (any, error) {
 		r, err := s.verb(ctx, in.Seat, func(g *game.Game, seat state.Seat) (*game.Result, error) {
 			return g.EndTurnWith(seat, actor, game.EndTurnOptions{Force: in.Force})
 		})

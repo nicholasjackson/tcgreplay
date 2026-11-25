@@ -36,6 +36,8 @@ Otherwise call `import_log` with:
 - `deck`: the player's list for this game, always. The playmat keeps no list between imports. Take it from wherever you keep the player's records, and confirm with them which list they played if you are not sure; otherwise ask for their TCG Live export.
 - `id`: omit to get one from the date and opponent.
 
+If `import_log` fails, fix what the error names (a missing decklist, the wrong player, text pasted before `Setup`) and try again. If it still fails and its error offers `report_import`, ask the player in one line whether to send the log to the developer, exactly as the error says, and call `report_import` only if they agree. Do not rebuild the game by hand either way.
+
 ## 4. Check the result
 
 - **`report.problems`** lists log lines that could not be replayed. A few are tolerable; say which and what they affect (e.g. "Itchy Pollen's item lock is not shown"). Many mean the import is unreliable: tell the player rather than reviewing on top of it.

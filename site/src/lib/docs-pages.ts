@@ -8,7 +8,8 @@ import { getCollection } from 'astro:content';
 export type DocsPage = { href: string; title: string; description?: string; order: number };
 
 // Pages that are not Markdown docs, placed among them by order. The order
-// is the Studio design's DocsSidebar: Get started, Signing in, Importing a
+// is the Studio design's DocsSidebar: Get started, How it works (added
+// after the design), Signing in, Importing a
 // game, Rewind, Coaching workflows, Example game, Running it on
 // your desktop, What's new, For developers. (The refresh steps are a
 // section of Get started, reached from its On this page rail.)

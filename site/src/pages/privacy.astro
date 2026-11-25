@@ -30,7 +30,7 @@ import Base from '../layouts/Base.astro';
 import { limits, site } from '../lib/facts';
 import { notice } from '../lib/notice';
 
-const updated = '23 November 2026';
+const updated = '25 November 2026';
 
 // The On this page card: each section's id and its heading, in page order.
 const toc = [
@@ -117,7 +117,27 @@ const toc = [
       </p>
       <p>
         All of it is held in memory only. It is never written to disk or to any storage service, and it is gone when
-        the playmat restarts.
+        the playmat restarts. The one exception is a battle log that fails to import, and only if you agree to send it:
+        see <a href="#import-reports">import reports</a>.
+      </p>
+    </section>
+
+    <section id="import-reports" aria-labelledby="h-import-reports">
+      <h2 id="h-import-reports">Import reports</h2>
+      <p>
+        When a battle log fails to import, your assistant may ask whether you will send it to the maintainer so the
+        import can be fixed. Nothing is sent unless you say yes.
+      </p>
+      <p>
+        If you agree, the playmat keeps an <strong>import report</strong>: the battle log, the decklists sent with it,
+        the error, which assistant sent it and your player ID. Before it is stored, both players' names (yours and your
+        opponent's) are replaced with "Player 1" and "Player 2" wherever the playmat can find them in the log. It holds
+        no email address.
+      </p>
+      <p>
+        Reports are stored privately on DigitalOcean Spaces, readable only by the maintainer from the admin page, and
+        each is deleted <span data-retention="reports">14 days</span> after it was sent. Your assistant tells you the
+        report's ID; to have it deleted sooner, send the maintainer that ID.
       </p>
     </section>
 
@@ -158,8 +178,8 @@ const toc = [
           <strong>The playmat's own usage and error records</strong>: sign-ins, refused sign-ins and sign-outs, each
           request your assistant makes (which tool, and which assistant), imports and new games, your first activity
           each day, limits reached, games expiring, accounts removed, attempts to open another player's board, refused
-          visits to the admin page, the maintainers' admin checks and actions, and errors, with any of your own text
-          removed from the error message.
+          visits to the admin page, the maintainers' admin checks and actions, import reports you agreed to send (by
+          their ID), and errors, with any of your own text removed from the error message.
         </li>
       </ul>
       <p>
@@ -207,6 +227,10 @@ const toc = [
           lasts up to 10 minutes.
         </li>
         <li>
+          <strong>Import reports</strong>, sent only with your agreement, are deleted 14 days after they were sent
+          (see <a href="#import-reports">import reports</a>).
+        </li>
+        <li>
           <strong>Logs.</strong> The playmat's own records hold no email address;
           see <a href="#diagnostics">diagnostics</a> for what they hold and how long. The hosting providers, DigitalOcean and
           Cloudflare, may keep their own request logs.
@@ -234,8 +258,8 @@ const toc = [
           them, they see that request as they would any visit to their site.
         </li>
         <li>
-          <strong>DigitalOcean</strong> hosts the playmat, stores the card data and images (DigitalOcean Spaces) and
-          keeps its own request and performance metrics.
+          <strong>DigitalOcean</strong> hosts the playmat, stores the card data and images (DigitalOcean Spaces), stores
+          the import reports you agree to send, privately, and keeps its own request and performance metrics.
         </li>
         <li>
           <strong>Grafana Cloud</strong> (Grafana Labs) stores the playmat's usage and error records, request traces and

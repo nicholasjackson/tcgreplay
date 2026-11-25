@@ -11,6 +11,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/nicholasjackson/tcgreplay/internal/importreports"
 	"log"
 	"net/http"
 	"net/url"
@@ -47,6 +48,10 @@ type Config struct {
 	// expiries, removals, foreign board links) by player ID, never by
 	// email; nil records nothing.
 	Recorder *telemetry.Recorder
+	// Reports keeps battle logs that failed to import, sent with the
+	// player's agreement; nil means none are kept (report_import is not
+	// offered).
+	Reports *importreports.Service
 }
 
 // purgeAfter is how long an entry that holds no place is kept without

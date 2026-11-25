@@ -202,10 +202,26 @@ func (g *Game) DeltaFor(res *Result, viewer state.Seat) ([]string, error) {
 }
 
 func (g *Game) Log(since int, viewer state.Seat, tool string, actor string) ([]LogLine, error) {
+	return g.BranchLog("", since, viewer, tool, actor)
+}
+
+// BranchLog is Log for the named branch, or the current one when branch
+// is "". Reading another branch leaves the board where it is, so the
+// assistant can read the real game while the player is on a practice
+// branch.
+func (g *Game) BranchLog(branch string, since int, viewer state.Seat, tool string, actor string) ([]LogLine, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	g.audit(tool, viewer, actor)
-	path, err := g.log.PathTo(g.log.Head())
+	head := g.log.Head()
+	if branch != "" {
+		h, ok := g.log.Branches()[branch]
+		if !ok {
+			return nil, fmt.Errorf("no branch %q: list_branches lists them", branch)
+		}
+		head = h
+	}
+	path, err := g.log.PathTo(head)
 	if err != nil {
 		return nil, err
 	}

@@ -217,9 +217,17 @@ func playmatWords(t *testing.T, cs *mcp.ClientSession) map[string]bool {
 }
 
 // TestGuidesNameRealTools: every tool or argument a guide names exists on
-// the playmat, so a renamed or removed one fails here.
+// the playmat, so a renamed or removed one fails here. The server offers
+// the hosted-only tools too (get_account, report_import), which guides may
+// name for when they are offered.
 func TestGuidesNameRealTools(t *testing.T) {
-	cs, _ := connect(t, transports[0])
+	cs, _ := connectServer(t, transports[0], &Server{
+		Version: "test",
+		Account: func(context.Context, *mcp.RequestExtra) (string, error) { return "acct", nil },
+		ReportImport: func(context.Context, *mcp.RequestExtra, ImportReport) (string, error) {
+			return "", nil
+		},
+	})
 	known := playmatWords(t, cs)
 	// The check itself: a removed tool is flagged, a real one is not.
 	if got := unknownPlaymatWords("call list_games, then import_log", known); !reflect.DeepEqual(got, []string{"list_games"}) {

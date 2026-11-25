@@ -212,6 +212,46 @@ func TestLockRefusesGameActions(t *testing.T) {
 	}
 }
 
+// TestLockAllowsPromotion: the assistant's attack knocked out the player's
+// Active during its turn (a full hold). The board still lets the player
+// promote into the empty Active Spot, which is allowed on either turn, but
+// not switch an occupied one.
+func TestLockAllowsPromotion(t *testing.T) {
+	ts, m := setup(t)
+	m.Timing = game.Timing{WaitCap: 5 * time.Second, CheckIn: time.Minute, LockRelease: time.Minute}
+	g, _ := m.Current()
+	startPlay(t, g)
+	if l, _ := g.State().Find("p1-2"); l.Zone != state.Hand {
+		g.Move(state.P1, state.ActorSystem, "p1-2", state.Loc{Zone: state.Hand}, "", "")
+	}
+	if _, err := g.Bench(state.P1, state.ActorSystem, "p1-2", -1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := g.EndTurn(state.P1, state.ActorHuman); err != nil {
+		t.Fatal(err)
+	}
+	c := dial(t, ts)
+	var st stateMsg
+	next(t, c, "state", &st)
+
+	m.AssistantMoved(true)
+	if r := send(t, c, 1, "switch", map[string]any{"to_slot": 0}); r.OK || r.Error != actingRefusal {
+		t.Fatalf("switching an occupied Active while the assistant acts: %+v, want error %q", r, actingRefusal)
+	}
+	if _, err := g.KnockOut(state.P2, state.ActorClaude, state.Loc{Seat: state.P1, Zone: state.Active}); err != nil {
+		t.Fatal(err)
+	}
+	if r := send(t, c, 2, "switch", map[string]any{"to_slot": 0}); !r.OK {
+		t.Fatalf("promoting into the empty Active while the assistant acts: %s, want allowed", r.Error)
+	}
+	if top := g.State().Sides[state.P1].Active.Top(); top != "p1-2" {
+		t.Fatalf("p1's Active is %q after promoting, want p1-2", top)
+	}
+	if m.Hold() != game.HoldFull {
+		t.Errorf("promoting released the assistant's hold (%q)", m.Hold())
+	}
+}
+
 // TestLockReleasesAfterFinish: the player's actions work again in the same
 // turn once the assistant waits again after answering (a knock-out), or
 // once it ends its own turn.

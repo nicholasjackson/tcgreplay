@@ -8,6 +8,7 @@ import (
 
 	"github.com/nicholasjackson/tcgreplay/internal/cards"
 	"github.com/nicholasjackson/tcgreplay/internal/hostauth"
+	"github.com/nicholasjackson/tcgreplay/internal/importreports"
 	"github.com/nicholasjackson/tcgreplay/internal/telemetry"
 )
 
@@ -26,7 +27,34 @@ func (s *Service) Handler() http.Handler {
 	mux.HandleFunc("POST /admin/clear", s.serveClear)
 	mux.HandleFunc("POST /admin/check", s.serveCheck)
 	mux.HandleFunc("POST /admin/player", s.servePlayer)
+	mux.HandleFunc("GET /admin/import-reports/{id}", s.serveReport)
 	return mux
+}
+
+// serveReport downloads one import report as a JSON file, and records the
+// download as the admin's admin_action. It is a GET only so the page can
+// link it; reading changes nothing.
+func (s *Service) serveReport(w http.ResponseWriter, r *http.Request) {
+	if s.Reports == nil {
+		http.NotFound(w, r)
+		return
+	}
+	id := r.PathValue("id")
+	b, err := s.Reports.Get(r.Context(), id)
+	switch {
+	case errors.Is(err, importreports.ErrNotFound):
+		s.render(w, http.StatusNotFound, email(r), "No import report has that ID; it may have been deleted after 14 days.")
+		return
+	case err != nil:
+		s.render(w, http.StatusBadGateway, email(r), "The import report could not be read: "+err.Error()+".")
+		return
+	}
+	s.Recorder.RecordContext(r.Context(), telemetry.Event{Name: telemetry.AdminAction, Email: email(r), Action: "report"})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", id+".json"))
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Write(b)
 }
 
 // serveCheck checks for published card sets at once and sends the admin

@@ -221,7 +221,10 @@ func (g *Game) EndTurn(seat state.Seat, actor state.Actor) (*Result, error) {
 // EndTurnWith is EndTurn with its checks relaxed by opts. It refuses while
 // a player with a Benched Pokémon has an empty Active Spot (they must
 // promote first) and while prize cards are owed for this turn's Knock
-// Outs.
+// Outs. The assistant ending its turn is the exception for the player
+// about to play: the assistant cannot promote for them in play mode, and
+// waiting on their promotion deadlocked the two, so the turn ends with a
+// warning and they promote at the start of their turn.
 func (g *Game) EndTurnWith(seat state.Seat, actor state.Actor, opts EndTurnOptions) (*Result, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -230,11 +233,16 @@ func (g *Game) EndTurnWith(seat state.Seat, actor state.Actor, opts EndTurnOptio
 	if g.st.Phase == state.PhasePlaying && g.st.TurnOpen && g.st.Current != seat {
 		return nil, fmt.Errorf("it is %s's turn (turn %d), not %s's", g.st.Current, state.Round(g.st.Turn), seat)
 	}
+	var promoteWarn []string
 	if g.st.Phase == state.PhasePlaying && !opts.Force {
 		if winner, _ := g.st.Winner(); winner == "" {
 			for _, s := range state.Seats {
 				side := g.st.Sides[s]
 				if side.Active.Empty() && slices.ContainsFunc(side.Bench, func(b *state.Stack) bool { return !b.Empty() }) {
+					if actor == state.ActorClaude && s == seat.Other() {
+						promoteWarn = append(promoteWarn, fmt.Sprintf("%s has no Active Pokémon: they promote a Benched Pokémon (switch) before anything else this turn", s))
+						continue
+					}
 					return nil, fmt.Errorf("%s has no Active Pokémon: they must promote a Benched Pokémon (switch) before the turn ends", s)
 				}
 			}
@@ -271,7 +279,7 @@ func (g *Game) EndTurnWith(seat state.Seat, actor state.Actor, opts EndTurnOptio
 	}
 	res.Events = append(res.Events, res2.Events...)
 	res.Delta = append(res.Delta, res2.Delta...)
-	res.Warnings = append(append(closing, res.Warnings...), res2.Warnings...)
+	res.Warnings = append(append(append(closing, res.Warnings...), res2.Warnings...), promoteWarn...)
 	g.notify(res)
 	return res, nil
 }
@@ -290,19 +298,66 @@ func (g *Game) prizesOwedLocked() []prizeDebt {
 	if err != nil {
 		return nil
 	}
-	start := 0
-	for i := len(path) - 1; i >= 0; i-- {
+	return g.prizesOwedIn(path, turnStartBefore(path, len(path)), len(path))
+}
+
+// turnStartBefore is the index in path of the last turn-start event
+// before index end, or 0 when there is none.
+func turnStartBefore(path []state.Event, end int) int {
+	for i := end - 1; i >= 0; i-- {
 		if path[i].Type == state.EvTurn {
 			if p, err := path[i].Decode(); err == nil && p.(*state.TurnPayload).Phase == "start" {
-				start = i
+				return i
+			}
+		}
+	}
+	return 0
+}
+
+// PrizeDebt is a player still owed prize cards for a turn's Knock Outs.
+type PrizeDebt struct {
+	Seat        state.Seat
+	Owed, Taken int
+}
+
+// PrizesOwedLastTurn lists the players left owed prize cards by the last
+// turn that ended on the current branch, so the assistant can catch a turn
+// that ended with prizes untaken (the board lets the player turn its
+// reminder off).
+func (g *Game) PrizesOwedLastTurn() []PrizeDebt {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	path, err := g.log.PathTo(g.log.Head())
+	if err != nil {
+		return nil
+	}
+	end := -1
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i].Type == state.EvTurn {
+			if p, err := path[i].Decode(); err == nil && p.(*state.TurnPayload).Phase == "end" {
+				end = i
 				break
 			}
 		}
 	}
+	if end < 0 {
+		return nil
+	}
+	// Prizes taken after the turn ended (late, on the next turn) still pay.
+	var out []PrizeDebt
+	for _, d := range g.prizesOwedIn(path, turnStartBefore(path, end), len(path)) {
+		out = append(out, PrizeDebt{Seat: d.seat, Owed: d.owed, Taken: d.taken})
+	}
+	return out
+}
+
+// prizesOwedIn is prizesOwedLocked over path[start:end]. The caller holds
+// g.mu.
+func (g *Game) prizesOwedIn(path []state.Event, start, end int) []prizeDebt {
 	owed, taken := map[state.Seat]int{}, map[state.Seat]int{}
 	ko := map[string]int{} // knock-out action -> its highest prize value
 	koSeat := map[string]state.Seat{}
-	for i := start; i < len(path); i++ {
+	for i := start; i < end; i++ {
 		e := &path[i]
 		if e.Type != state.EvMove {
 			continue
@@ -777,7 +832,10 @@ func plural(n int) string {
 // TakePrize moves a prize card to seat's hand. slot < 0 takes the first
 // remaining prize.
 func (g *Game) TakePrize(seat state.Seat, actor state.Actor, slot int) (*Result, error) {
-	return g.run(seat, actor, actionSpec{label: "Take prize", kind: "prize"}, func(t *tx) error {
+	// A player whose last turn ended with prizes untaken may take them on
+	// the opponent's turn: catching up is better than losing them.
+	late := slices.ContainsFunc(g.PrizesOwedLastTurn(), func(d PrizeDebt) bool { return d.Seat == seat })
+	return g.run(seat, actor, actionSpec{label: "Take prize", kind: "prize", anyTurn: late}, func(t *tx) error {
 		prizes := t.st.Sides[seat].Prizes
 		if slot < 0 {
 			slot = slices.IndexFunc(prizes, func(p state.IID) bool { return p != "" })

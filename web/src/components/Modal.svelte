@@ -46,7 +46,28 @@
     act('take_prize', args);
   }
 
+  // A deck search ends in a shuffle, as every searching card says: when
+  // the view closes (Done, the X, Escape or anything else) after a card
+  // left the deck and no one pressed Shuffle, the board shuffles. Plain
+  // variables, not state, so the effect below does not track them.
+  let search = { open: false, seat: null, took: false, shuffled: false };
+  $effect(() => {
+    const k = m?.kind;
+    if (k === 'search' && !search.open) {
+      search = { open: true, seat: m.seat, took: false, shuffled: false };
+    } else if (k !== 'search' && search.open) {
+      const { seat, took, shuffled } = search;
+      search = { open: false, seat: null, took: false, shuffled: false };
+      if (took && !shuffled) act('shuffle', { whose: seat });
+    }
+  });
+  async function shuffleSearch() {
+    await run(() => act('shuffle', { whose: m.seat }));
+    search.shuffled = true;
+  }
+
   async function run(fn) {
+    if (m?.kind === 'search') search = { ...search, took: true, shuffled: false };
     await fn();
     // Searches and peeks are snapshots; refresh them after a change.
     if (m?.kind === 'search') openSearch(m.seat, filter);
@@ -248,13 +269,13 @@
             <input bind:value={filter} aria-label="Filter the deck" placeholder={phone ? 'e.g. basic fighting' : 'e.g. basic fighting, supporter'} />
             <button type="submit" aria-label="Filter" title="Filter"><Icon name="search" /></button>
           </form>
-          <button class="hb" onclick={() => run(() => act('shuffle', { whose: m.seat }))}><Icon name="shuffle" />Shuffle</button>
+          <button class="hb" onclick={shuffleSearch}><Icon name="shuffle" />Shuffle</button>
           {#if !phone}{@render keyButton()}{@render closeButton('Done')}{/if}
         </div>
       </header>
       <div class="lvbody">
         {@render key(pileKey('deck'))}
-        <p class="note">Sorted by category and name, never in deck order. Remember to shuffle.</p>
+        <p class="note">Sorted by category and name, never in deck order. The deck is shuffled when you close this if you took a card.</p>
         <div class="plist" role="list" aria-label={title}>
           {#each m.cards as c (c.iid)}
             {@render row(c, 'deck', 0)}

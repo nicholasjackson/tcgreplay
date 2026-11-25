@@ -1,6 +1,7 @@
 package cacheadmin
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"html/template"
@@ -65,6 +66,9 @@ code { font-size: 1.1em; user-select: all; overflow-wrap: anywhere; }
 <p>Records name players by ID, never by email. Enter the email a player signed in with to get the ID to search the records for.</p>
 <form method="post" action="/admin/player"><label>Email <input type="email" name="email" autocomplete="off" required></label> <button>Find ID</button></form>
 {{with .Found}}<p>The player ID for {{.Email}} is <code>{{.ID}}</code>.</p>{{end}}{{end}}
+{{if .Reports}}<h2>Import reports</h2>
+<p>Battle logs that failed to import, sent with the player's agreement, players' names replaced. Each is deleted 14 days after it was sent. Its ID is in the player's <code>import_reported</code> record.</p>
+{{if .ReportsError}}<p class="failed">The reports could not be listed: {{.ReportsError}}</p>{{else}}{{with .ReportList}}<ul>{{range .}}<li><a href="/admin/import-reports/{{.ID}}" download>{{.ID}}</a>{{if .Saved}}, {{.Saved}}{{end}}{{if .Error}}: {{.Error}}{{end}}</li>{{end}}</ul>{{else}}<p>No reports.</p>{{end}}{{end}}{{end}}
 <p><a href="/board">Back to the board</a></p>
 </main>
 </body>
@@ -94,8 +98,20 @@ type Lookup struct {
 	Email, ID string
 }
 
+// reportLine is an import report as the page lists it.
+type reportLine struct {
+	ID, Saved, Error string
+}
+
+// reportsShown is how many import reports the page lists, newest first.
+const reportsShown = 20
+
 type pageData struct {
 	Email, Message string
+	// Reports offers the import reports, listed in ReportList.
+	Reports      bool
+	ReportList   []reportLine
+	ReportsError string
 	// Lookup offers the player-ID lookup; Found is its result.
 	Lookup        bool
 	Found         *Lookup
@@ -167,6 +183,22 @@ func (s *Service) renderLookup(w http.ResponseWriter, status int, email, msg str
 		}
 		for _, r := range j.Reports {
 			d.Tiers = append(d.Tiers, tierText(r))
+		}
+	}
+	if s.Reports != nil {
+		d.Reports = true
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		list, err := s.Reports.List(ctx, reportsShown)
+		cancel()
+		if err != nil {
+			d.ReportsError = err.Error()
+		}
+		for _, r := range list {
+			l := reportLine{ID: r.ID, Error: r.Error}
+			if !r.Saved.IsZero() {
+				l.Saved = when(r.Saved)
+			}
+			d.ReportList = append(d.ReportList, l)
 		}
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

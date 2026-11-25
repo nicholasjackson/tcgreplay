@@ -21,7 +21,7 @@ Ask one at a time. Let the player answer before moving on, then check the answer
 2. **My kill: name the target, does the number reach?**
    Target HP: printed HP, plus HP Tools, minus Stadium or other HP effects. Damage: base, plus the attacker's boosts, then Weakness doubles, then Resistance subtracts. If it does not reach, do not swing for it and do not spend boosts trying.
 3. **Can I act: is the attacker Active with its Energy?**
-   Active already, or a switch effect (Switch, Air Balloon or another retreat cost reducer, already attached or in hand), and the Energy on it or going on this turn. If no, it is a setup turn: attach, bench, and save gusts and boosts.
+   Active already, or a switch effect (Switch, Air Balloon or another retreat cost reducer, already attached or in hand), and the Energy on it or going on this turn: one attachment, one retreat, one Supporter. Check attack locks ("can't use this attack next turn") and protection on the target too, as in the playable check of the `review-game` guide. If no, it is a setup turn: attach, bench, and save gusts and boosts.
 
 Then: **spend last.** Gusts, boosts and hand-shuffling Supporters wait until all three questions have answers, and draw before committing an attachment unless the attachment enables the draw.
 

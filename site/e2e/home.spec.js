@@ -57,7 +57,7 @@ test('the hero says who it works with, offers the example game and has its fine 
   expect([...order].sort((a, b) => a - b)).toEqual(order);
 });
 
-test('How it works is three steps: connect, import a game, review it on the board', async ({ page }) => {
+test('How it works is three steps: connect, import a game, review it on the board, with a link to the How it works page', async ({ page }) => {
   await page.goto('/');
   const how = page.getByRole('region', { name: 'How it works' });
   const steps = how.getByRole('listitem');
@@ -66,6 +66,7 @@ test('How it works is three steps: connect, import a game, review it on the boar
   await expect(steps.nth(1)).toContainText(/battle log/i);
   await expect(steps.nth(2)).toContainText(/review/i);
   for (let i = 0; i < 3; i++) await expect(steps.nth(i).getByRole('heading', { level: 3 })).toBeVisible();
+  await expect(how.getByRole('link', { name: /needs no trained model/ })).toHaveAttribute('href', '/docs/how-it-works');
 });
 
 test('What it does sits on a slate band, the mat colour, the width of the window', async ({ page }) => {

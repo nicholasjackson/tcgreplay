@@ -66,7 +66,10 @@ const guides = featured.map(({ guide, prompt }) => {
   </section>
 
   <section class="how" aria-labelledby="how-heading">
-    <h2 id="how-heading">How it works</h2>
+    <div class="guides-head">
+      <h2 id="how-heading">How it works</h2>
+      <a href="/docs/how-it-works">Why it needs no trained model →</a>
+    </div>
     <ol class="steps">
       {steps.map((s, i) => (
         <li>

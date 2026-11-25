@@ -103,7 +103,9 @@ func LogCodes(text, name string) []string {
 	return out
 }
 
-var turnRe = regexp.MustCompile(`^(.+)'s Turn$`)
+// turnRe matches a turn header: "<name>'s Turn", or with the turn number
+// some logs put first, "Turn # 3 - <name>'s Turn".
+var turnRe = regexp.MustCompile(`^(?:Turn # \d+ - )?(.+)'s Turn$`)
 
 // Parse splits a log into sections of nested lines.
 func Parse(text string) ([]*Section, error) {
@@ -245,4 +247,30 @@ func Players(secs []*Section, me string) (string, string, error) {
 		return names[1], names[0], nil
 	}
 	return "", "", fmt.Errorf("cannot tell which player owns the log (players %v)", names)
+}
+
+// Names finds the player names a battle log mentions, in the order they
+// first appear: from the Setup lines Players reads and from every turn
+// header. It reads the text line by line rather than through Parse, so it
+// still finds them in a log that fails to parse (an import report hides
+// them before it is stored). me, when not empty, comes first.
+func Names(text, me string) []string {
+	var names []string
+	add := func(n string) {
+		n = strings.TrimSpace(n)
+		if n == "" || slices.Contains(names, n) {
+			return
+		}
+		names = append(names, n)
+	}
+	add(me)
+	for _, raw := range strings.Split(Normalize(text), "\n") {
+		line := strings.TrimSpace(raw)
+		for _, re := range []*regexp.Regexp{coinChoiceRe, coinWonRe, openingRe, activeRe, turnRe} {
+			if m := re.FindStringSubmatch(line); m != nil {
+				add(m[1])
+			}
+		}
+	}
+	return names
 }

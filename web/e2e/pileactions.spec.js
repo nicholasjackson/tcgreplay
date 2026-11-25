@@ -3,7 +3,7 @@
 // fixed cells, an action the card can't take disabled with the reason; a
 // key under the header names the six, and "Hide key" is remembered in the
 // browser. The discard is a list of rows in the pile's own order.
-import { test, expect, act, pile, isTouch, isPhone, isWide } from './fixtures.js';
+import { test, expect, act, pile, isTouch, isPhone, isWide, timelineLines } from './fixtures.js';
 
 const press = (locator, testInfo) => (isTouch(testInfo) ? locator.tap() : locator.click());
 const view = (page) => page.locator('.modal');
@@ -62,6 +62,31 @@ test('every row of the deck search and the discard shows all six cells', async (
     const got = await cells(rows(page).nth(i).getByRole('group').getByRole('button'));
     expect(got.map((c) => c.name)).toEqual(SIX_DECK);
   }
+});
+
+test('closing a deck search after taking a card shuffles the deck, unless it was shuffled', async ({ page }, testInfo) => {
+  test.skip(isWide(testInfo), 'the views are the same on the landscape mat');
+  const shuffles = async () => (await timelineLines(page)).filter((l) => /shuffle/i.test(l)).length;
+  const before = await shuffles();
+  // Looking without taking anything leaves the deck alone.
+  await openSearch(page, testInfo);
+  await page.keyboard.press('Escape');
+  await expect(view(page)).toHaveCount(0);
+  expect(await shuffles()).toBe(before);
+  // Taking a card and closing shuffles once.
+  await openSearch(page, testInfo);
+  await press(rows(page).first().getByRole('group').getByRole('button').first(), testInfo);
+  await page.keyboard.press('Escape');
+  await expect.poll(shuffles).toBe(before + 1);
+  // Taking a card and pressing Shuffle does not shuffle again on close.
+  await openSearch(page, testInfo);
+  await press(rows(page).first().getByRole('group').getByRole('button').first(), testInfo);
+  await press(view(page).getByRole('button', { name: 'Shuffle' }), testInfo);
+  await expect.poll(shuffles).toBe(before + 2);
+  await page.keyboard.press('Escape');
+  await expect(view(page)).toHaveCount(0);
+  await page.waitForTimeout(300);
+  expect(await shuffles()).toBe(before + 2);
 });
 
 test('an action a card cannot take is a disabled cell that says why', async ({ page }, testInfo) => {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/nicholasjackson/tcgreplay/internal/importreports"
 	"io"
 	"log"
 	"net"
@@ -338,6 +339,15 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 	}
 	var reg *usergames.Registry
 	var a *hostauth.Auth // set below, before any board is built
+	// Failed imports the player agrees to send are kept in a private
+	// prefix of the shared store, so only with it.
+	var reports *importreports.Service
+	if images != nil && images.Spaces != nil {
+		reports = &importreports.Service{Store: images.Spaces, Now: c.now}
+		log.Printf("import reports: kept in the shared store under %s for %s, with the player's agreement", importreports.Prefix, humanDays(importreports.DefaultKeep))
+	} else {
+		log.Printf("import reports: off (no shared store)")
+	}
 	reg = usergames.New(usergames.Config{
 		NewManager: func() *game.Manager {
 			m := game.NewManager(c.dataDir, src)
@@ -359,6 +369,7 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 		MaxUsers: c.maxUsers,
 		Now:      c.now,
 		Recorder: rec,
+		Reports:  reports,
 	})
 	a, err = hostedAuth(c, public, google, reg, rec, tel)
 	if err != nil {
@@ -366,7 +377,11 @@ func newHosted(c config, src game.CardSource, images *cards.ImageCache, public *
 	}
 	// BoardURL keeps the instructions' board-link line; each result's link
 	// comes from Resolve.
-	srv := (&mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/board", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet, Account: reg.AccountID}).MCP()
+	ms := &mcpserver.Server{ClaudeSeat: state.Seat(c.seat), Version: version, BoardURL: public.String() + "/board", Resolve: reg.ResolveMCP, ResolveQuiet: reg.ResolveMCPQuiet, Account: reg.AccountID}
+	if reports != nil {
+		ms.ReportImport = reg.ReportImport
+	}
+	srv := ms.MCP()
 	// One call, so tracing is outermost (the limit, the recorder and the
 	// tools run inside each call's span) and the tool-call recorder runs
 	// inside the rate limit: a later AddReceivingMiddleware call would wrap
@@ -600,6 +615,10 @@ func runHosted(ctx context.Context, c config) error {
 		go images.Run(ctx)
 	}
 	admin := hostedAdmin(loader, images, reg.Recorder())
+	if r := reg.Reports(); r != nil {
+		admin.Reports = r
+		go r.Run(ctx)
+	}
 	go admin.Run(ctx)
 
 	ln, err := net.Listen("tcp", listen)
@@ -626,4 +645,9 @@ func runHosted(ctx context.Context, c config) error {
 	tel.Shutdown(context.Background())
 	log.Printf("tcgreplay hosted: stopped")
 	return nil
+}
+
+// humanDays renders a whole number of days, for the start-up log.
+func humanDays(d time.Duration) string {
+	return fmt.Sprintf("%d days", int(d/(24*time.Hour)))
 }

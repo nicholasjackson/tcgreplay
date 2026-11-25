@@ -47,6 +47,7 @@ field is left out.
 | `message` | an error or refusal message, redacted (see below) |
 | `reason` | why a request was refused or an account removed |
 | `idle` | the idle time an expired game went past (`TCGREPLAY_IDLE_TIMEOUT`, in words, e.g. `60 minutes`) |
+| `report` | the ID of a saved import report (`ir-` and the date), on `import_reported` |
 
 Some example lines:
 
@@ -76,7 +77,8 @@ The events form a closed list:
 | `account_removed` | `reason` (`signed_out` or `idle`) | an account's entry is removed: its last sign-in ended, or it went a day without activity |
 | `board_refused` | none | a player opens another account's board link |
 | `admin_refused` | `reason` (`not admin` or `not sent from the playmat`) | a non-admin reaches /admin, or an admin change comes from another site |
-| `admin_action` | `action` (`check`, `clear` or `lookup`) | an admin checks for card sets, clears images or looks up a player's ID |
+| `admin_action` | `action` (`check`, `clear`, `lookup` or `report`) | an admin checks for card sets, clears images, looks up a player's ID or downloads an import report |
+| `import_reported` | `report`, `assistant` | the player agreed to send a battle log that failed to import, and it was saved (see [Import reports](#import-reports)) |
 
 The playmat's other log lines name no player and stay plain text: start-up,
 card sets, card images, refused tokens and client registrations. They reach
@@ -88,7 +90,7 @@ card-set checks and image clears name the admin by player ID.
 
 In Grafana each record is a Loki log line whose body is the JSON line
 above. Its fields are also structured metadata (`event`, `player`, `tool`,
-`action`, `assistant`, `reason`, `provider`), and a record written while
+`action`, `assistant`, `reason`, `provider`, `report`), and a record written while
 serving a request carries that request's `trace_id` and `span_id`.
 Background records (idle games, idle accounts) carry none.
 
@@ -216,6 +218,12 @@ live. Diagnostics must never go to a service the privacy page does not name.
 6. **Import the dashboard.** Go to Dashboards > New > Import, upload
    `docs/grafana/tcgreplay-usage.json`, and choose the stack's Prometheus
    data source. The daily totals fill in after the first full UTC day.
+   Import `docs/grafana/tcgreplay-sign-ins.json` the same way for sign-ins
+   and misuse: completed sign-ins by provider, wrong and throttled password
+   attempts, Google sign-in problems, requests the sign-in service refused
+   and paths probed while signed out. It reads the logs in Loki (data
+   source `grafanacloud-logs`), so it covers the last 14 days. Failed
+   password attempts carry no username, password or client address.
 
 To stop sending, remove the settings (or just the token) and save.
 
@@ -292,6 +300,30 @@ When a player reports a problem:
    span** button opens the records written while serving it. If the button
    is missing, open the Tempo data source's **Trace to logs** setting,
    choose the Loki data source and filter by trace ID.
+
+## Import reports
+
+When `import_log` fails on a battle log, its error asks the assistant to
+offer the player to send the log. Only if the player agrees does the
+assistant call `report_import`, which saves an **import report**: the log,
+the decklists sent with it, the error, the assistant and the player ID,
+with both players' names replaced by `Player 1` and `Player 2` wherever
+the playmat finds them (`importer.Names`: the Setup lines and the turn
+headers). It writes an `import_reported` record carrying the report's ID.
+
+- **Where:** a private object at
+  `import-reports/<YYYY-MM-DD>/<id>.json` in the shared store (the
+  `TCGREPLAY_SPACES_*` bucket). Without the shared store, reports are off,
+  `report_import` is not offered, and the start-up log says
+  `import reports: off (no shared store)`.
+- **Reading one:** the admin page lists the 20 newest under **Import
+  reports**, each a download link. To go from a player's error to their
+  report, run
+  `{service_name="tcgreplay"} | player="p_…" | event="import_reported"`
+  and take the `report` field.
+- **Deleting:** an hourly sweep deletes reports saved on a UTC day that
+  ended more than 14 days ago. A player can ask for theirs sooner by its
+  ID: delete that object from the bucket.
 
 ## Traces
 
@@ -467,6 +499,7 @@ that each figure it shows appears in this section. Keep the wording exact
 | Request traces | Grafana Cloud Tempo | **14 days**: the Free tier's trace retention |
 | Raw usage metrics (`tcgreplay_*_total`) | Grafana Cloud Mimir | **14 days**: the Free tier's metric retention |
 | Daily usage totals (`tcgreplay_usage_daily`, no player ID) | Grafana Cloud Mimir, carried by the playmat | **six weeks**: the playmat keeps re-sending the last 42 days |
+| Import reports (a failed battle log the player agreed to send, names replaced, by player ID) | DigitalOcean Spaces, private, `import-reports/` | **14 days**: the playmat's hourly sweep deletes them |
 | Platform metrics (request rate, response time, status codes, CPU, memory, restarts) | App Platform metrics and Insights | **7 days**, provisional: the longest range the dashboards are relied on for. To be confirmed by the maintainer. |
 | Alert history | DigitalOcean Insights | 30 days, as documented by DigitalOcean (Insights limits page) |
 | Cloudflare's edge traces (only if turned on and persisted) | Cloudflare | 7 days on the Free plan; the playmat's setup turns persistence off |
@@ -491,6 +524,8 @@ that each figure it shows appears in this section. Keep the wording exact
   update the privacy page at the same time.
 - **App Platform's own Runtime Logs tab** keeps no history, so it holds no
   records.
-- **Nothing is stored by the playmat itself.** It keeps today's set of seen
-  player IDs and the daily table in memory only. The table is read back
-  from Grafana after a restart.
+- **The playmat stores nothing of its own but import reports.** It keeps
+  today's set of seen player IDs and the daily table in memory only (the
+  table is read back from Grafana after a restart). The only thing it
+  writes is an import report, with the player's agreement, to the shared
+  store, deleted after 14 days.

@@ -96,6 +96,16 @@ test('it describes diagnostics: DigitalOcean metrics, usage and error records an
   await expect(diag.locator('[data-retention="totals"]')).toHaveText('six weeks');
 });
 
+test('it describes import reports: sent only with agreement, names replaced, private, deleted after 14 days', async ({ page }) => {
+  await page.goto('/privacy');
+  const reports = page.getByRole('region', { name: 'Import reports' });
+  for (const words of ['fails to import', 'Nothing is sent unless you say yes', 'player ID', '"Player 1" and "Player 2"', 'no email address', 'privately', 'only by the maintainer']) {
+    await expect(reports, words).toContainText(words);
+  }
+  await expect(reports.locator('[data-retention="reports"]')).toHaveText('14 days');
+  await expect(page.getByRole('region', { name: 'While you play' })).toContainText('import reports');
+});
+
 test('its outside services name Grafana Cloud for diagnostics and DigitalOcean for hosting', async ({ page }) => {
   await page.goto('/privacy');
   const services = page.getByRole('region', { name: 'Outside services' });
@@ -125,7 +135,7 @@ test('its retention figures appear in the observability runbook\'s Retention sec
   const section = retentionSection();
   await page.goto('/privacy');
   const kinds = await page.locator('[data-retention]').evaluateAll((els) => els.map((el) => el.getAttribute('data-retention')));
-  expect(kinds.sort(), 'every retention figure on the page is checked').toEqual(['logs', 'metrics', 'totals', 'traces', 'visits']);
+  expect(kinds.sort(), 'every retention figure on the page is checked').toEqual(['logs', 'metrics', 'reports', 'totals', 'traces', 'visits']);
   for (const kind of kinds) {
     const figure = (await page.locator(`[data-retention="${kind}"]`).textContent()).trim();
     expect(figure, `${kind} retention`).not.toBe('');

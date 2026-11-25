@@ -13,6 +13,7 @@ import { test, expect } from './fixtures.js';
 // The Studio design's DocsSidebar order.
 const sidebar = [
   { name: 'Get started', href: '/docs/connect' },
+  { name: 'How it works', href: '/docs/how-it-works' },
   { name: 'Signing in and opening the board', href: '/docs/sign-in' },
   { name: 'Importing a game', href: '/docs/import' },
   { name: 'Rewind and try another line', href: '/docs/rewind' },

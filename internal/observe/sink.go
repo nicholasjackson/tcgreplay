@@ -48,7 +48,7 @@ func (s recordSink) Emit(ctx context.Context, l telemetry.Line) {
 	attrs := []attribute.KeyValue{attribute.String("log.source", "record")}
 	for _, f := range []struct{ k, v string }{
 		{"event", l.Event}, {"player", l.Player}, {"tool", l.Tool}, {"action", l.Action},
-		{"assistant", l.Assistant}, {"reason", l.Reason}, {"provider", l.Provider},
+		{"assistant", l.Assistant}, {"reason", l.Reason}, {"provider", l.Provider}, {"report", l.Report},
 	} {
 		if f.v != "" {
 			attrs = append(attrs, attribute.String(f.k, f.v))

@@ -44,9 +44,12 @@ const (
 	// AdminRefused: a non-admin or cross-site request reaches /admin
 	// (Reason).
 	AdminRefused = "admin_refused"
-	// AdminAction: an admin checks card sets, clears images or looks up a
-	// player (Action).
+	// AdminAction: an admin checks card sets, clears images, looks up a
+	// player or downloads an import report (Action).
 	AdminAction = "admin_action"
+	// ImportReported: the player agreed to send a battle log that failed
+	// to import, and it was saved (Report, Assistant).
+	ImportReported = "import_reported"
 )
 
 // Event is one record to write. Callers hand over the player's email,
@@ -62,6 +65,7 @@ type Event struct {
 	Reason    string
 	Idle      string
 	Provider  string // the sign-in provider ("google" or "password"), on sign_in and a refused password attempt
+	Report    string // the saved import report's ID, on import_reported
 }
 
 // line is the record as written, in its fixed field order.
@@ -77,6 +81,7 @@ type line struct {
 	Message   string `json:"message,omitempty"`
 	Reason    string `json:"reason,omitempty"`
 	Idle      string `json:"idle,omitempty"`
+	Report    string `json:"report,omitempty"`
 }
 
 // Line is a record as it was written, handed to the recorder's sink: its
@@ -85,7 +90,7 @@ type line struct {
 type Line struct {
 	Time                                                   time.Time
 	Level, Event, Player, Tool, Action, Assistant, Message string
-	Reason, Idle, Provider                                 string
+	Reason, Idle, Provider, Report                         string
 	JSON                                                   []byte
 }
 
@@ -169,6 +174,7 @@ func (r *Recorder) RecordContext(ctx context.Context, e Event) {
 		Message:   cut(e.Message, e.Email),
 		Reason:    cut(e.Reason, e.Email),
 		Idle:      e.Idle,
+		Report:    e.Report,
 	}
 	b, err := json.Marshal(l)
 	if err != nil {
@@ -183,7 +189,7 @@ func (r *Recorder) RecordContext(ctx context.Context, e Event) {
 	if sink != nil {
 		sink.Emit(ctx, Line{
 			Time: now, Level: l.Level, Event: l.Event, Player: l.Player, Tool: l.Tool, Action: l.Action,
-			Assistant: l.Assistant, Message: l.Message, Reason: l.Reason, Idle: l.Idle, Provider: l.Provider,
+			Assistant: l.Assistant, Message: l.Message, Reason: l.Reason, Idle: l.Idle, Provider: l.Provider, Report: l.Report,
 			JSON: b,
 		})
 	}

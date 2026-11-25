@@ -24,7 +24,7 @@ Start from a typical current list for the archetype, then make it consistent wit
 - **Floors:** every observed card at least at its observed count.
 - **Ceilings:** at most 4 of any card by name, except Basic Energy; at most one ACE SPEC in the deck.
 - **Lines:** enough Basics for the evolutions (a 2-2 Stage 2 line needs Rare Candy or a Stage 1); energy types that pay for the attackers seen.
-- **Exactly 60 cards.**
+- **Exactly 60 cards.** Before applying, add up the sections and check each header's count matches its lines (Pokémon + Trainer + Energy = 60). Raising a floor (a third copy the log proves) means cutting a flex card to stay at 60.
 
 Fill the slots the log does not prove using how decks are actually built:
 
@@ -33,6 +33,7 @@ Fill the slots the log does not prove using how decks are actually built:
 - **Check the totals against the norm.** Most lists run about 10-14 Supporters (or Supporter-like draw), 6-12 Energy depending on how energy-hungry the attackers are, and 12-20 Pokémon. If your guessed list falls outside that, adjust before applying it.
 - **Read volume from the log.** How many Supporters were played turn after turn, how many Energy attached, how often the same search Item came up: a deck that played a draw Supporter every turn runs 4 of it.
 - **Evolution lines come in shapes:** 4-3-2 or 3-2-2 for a Stage 2 main attacker (fewer middle stages with Rare Candy), 4-4 or 3-3 for a key Stage 1, 2-2 or 1-1 for support lines.
+- **Card details from `card_text`.** When it does not recognise a card the log names (a set ID such as `me5-5_158`), say its text was not available and work from what the log shows it doing; never state its HP or attacks from memory.
 - **Names exactly as the log prints them** ("Basic Psychic Energy", "Lillie's Determination"). Set codes are optional; cards without them get their current print.
 
 Use TCG Live export format:

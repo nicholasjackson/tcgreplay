@@ -326,6 +326,51 @@ func TestWaitForTurnEnded(t *testing.T) {
 	})
 }
 
+// TestWaitForTurnExpired: a game dropped as idle ends the wait with the
+// expiry notice, so the assistant can tell the player why and how to carry
+// on rather than only that the game is gone.
+func TestWaitForTurnExpired(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
+		m.Timing = game.Timing{WaitCap: 100 * time.Millisecond, CheckIn: time.Minute}
+		waitGame(t, cs, m)
+		w := mustWait(t, cs, nil)
+		const notice = "Your game expired after 60 minutes without activity and was cleared."
+		m.Expire(notice)
+		w = mustWait(t, cs, map[string]any{"since": w.Since})
+		if w.Outcome != "ended" || w.Reason != "game_expired" || !strings.Contains(w.Next, notice) || !strings.Contains(w.Next, "import") {
+			t.Fatalf("expired: %+v", w)
+		}
+	})
+}
+
+// TestWaitForTurnOwedPrizes: when the player's turn ends with prizes
+// untaken for its Knock Outs, the hand-off says so, and in play mode tells
+// the assistant to have the player take them from the board.
+func TestWaitForTurnOwedPrizes(t *testing.T) {
+	forEachTransport(t, func(t *testing.T, cs *mcp.ClientSession, m *game.Manager) {
+		m.Timing = game.Timing{WaitCap: 2 * time.Second, CheckIn: time.Minute}
+		g := waitGameBench(t, cs, m, true)
+		w := mustWait(t, cs, nil)
+		if _, err := g.KnockOut(state.P1, state.ActorHuman, state.Loc{Seat: state.P2, Zone: state.Active}); err != nil {
+			t.Fatal(err)
+		}
+		w = mustWait(t, cs, map[string]any{"since": w.Since})
+		if w.Outcome != "decide" {
+			t.Fatalf("after the knock-out: %+v, want a promotion decision", w)
+		}
+		if out, isErr := call(t, cs, "switch", map[string]any{"seat": "p2", "to_slot": 0}); isErr {
+			t.Fatal(out)
+		}
+		if _, err := g.EndTurnWith(state.P1, state.ActorHuman, game.EndTurnOptions{IgnorePrizes: true}); err != nil {
+			t.Fatal(err)
+		}
+		w = mustWait(t, cs, map[string]any{"since": w.Since})
+		if w.Outcome != "turn_ended" || !strings.Contains(w.Next, "ended with 1 prize card untaken") || !strings.Contains(w.Next, "tell the player") {
+			t.Fatalf("hand-off after a turn with a prize untaken: %+v", w)
+		}
+	})
+}
+
 // TestWaitUsesQuietResolver: wait_for_turn finds its game through
 // ResolveQuiet when one is set, and through Resolve otherwise; other tools
 // keep using Resolve.

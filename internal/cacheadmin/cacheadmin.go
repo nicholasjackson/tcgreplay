@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/nicholasjackson/tcgreplay/internal/importreports"
 	"log"
 	"strings"
 	"sync"
@@ -93,6 +94,12 @@ func (j Job) Failed() bool {
 	return false
 }
 
+// Reports lists and reads import reports (an *importreports.Service).
+type Reports interface {
+	List(ctx context.Context, limit int) ([]importreports.Summary, error)
+	Get(ctx context.Context, id string) ([]byte, error)
+}
+
 // Service runs one image clear job at a time, in the background, so a
 // long clear is never cut off by a request time limit, keeps the current
 // or last job for the page, and runs admins' checks for published card
@@ -114,6 +121,9 @@ type Service struct {
 	// Recorder records each admin action (admin_action) by player ID; nil
 	// records nothing.
 	Recorder *telemetry.Recorder
+	// Reports lists and reads the failed imports players sent (an
+	// *importreports.Service); nil means none are kept.
+	Reports Reports
 
 	mu    sync.Mutex
 	job   *Job

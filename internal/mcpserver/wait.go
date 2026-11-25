@@ -130,6 +130,9 @@ func (s *Server) waitForTurn(ctx context.Context, in WaitArg) (any, error) {
 		if len(appliedNames) > 0 {
 			r.Next += " The playmat applied its side of: " + strings.Join(appliedNames, ", ") + "; see applied."
 		}
+		if g != nil {
+			r.Next += owedNote(g, o.Seat)
+		}
 	case game.WaitDecide:
 		mine := o.Seat.Other()
 		r.Action = o.Action
@@ -170,6 +173,15 @@ func (s *Server) waitForTurn(ctx context.Context, in WaitArg) (any, error) {
 			reason = o.Reason
 		}
 		r.Next = fmt.Sprintf("Stop waiting: %s. Wait again only after you hand the player a turn.", reason)
+		if o.Reason == game.EndGameExpired {
+			// Neither side did anything for the idle time: waiting is not
+			// activity, so a turn both sides are waiting on still expires.
+			notice := m.Notice()
+			if notice == "" {
+				notice = "The game expired without activity and was cleared."
+			}
+			r.Next = "Stop waiting: " + notice + " Tell the player in one line and offer to import the game's saved record or battle log again; do not wait again."
+		}
 		if o.Reason == game.EndGameOver && g != nil {
 			winner, why := g.State().Winner()
 			r.Next = fmt.Sprintf("Stop waiting: the game is over, %s wins (%s). Tell the player the result and offer a review of the game; do not wait again.", winner, why)
@@ -207,4 +219,26 @@ func (s *Server) waitLog(g *game.Game, since int) (string, error) {
 		b.WriteByte('\n')
 	}
 	return b.String(), nil
+}
+
+// owedNote says, before the assistant plays its turn, that the player's
+// turn ended with prize cards untaken for its Knock Outs (the board lets
+// the player turn its reminder off), or "" when none are owed.
+func owedNote(g *game.Game, seat state.Seat) string {
+	for _, d := range g.PrizesOwedLastTurn() {
+		if d.Seat != seat {
+			continue
+		}
+		missing := d.Owed - d.Taken
+		cards := "cards"
+		if missing == 1 {
+			cards = "card"
+		}
+		how := fmt.Sprintf("take them for the player first with take_prize (seat %s), one call per prize, and tell them which cards they got", seat)
+		if g.Mode() == game.ModePlay {
+			how = "tell the player in one line to take them from their prize cards on the board (it lets them during your turn) before you play"
+		}
+		return fmt.Sprintf(" The player's turn ended with %d prize %s untaken for its Knock Outs (owed %d, took %d): %s.", missing, cards, d.Owed, d.Taken, how)
+	}
+	return ""
 }

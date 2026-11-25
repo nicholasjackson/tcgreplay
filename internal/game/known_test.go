@@ -207,6 +207,33 @@ func TestUnpaidCostWarns(t *testing.T) {
 	}
 }
 
+// The assistant's attack can knock out the Active of the player about to
+// play. It cannot promote for them in play mode, so its end of turn goes
+// through with a warning and they promote at the start of their turn; the
+// player ending their own turn is still refused.
+func TestAssistantEndTurnLeavesPromotionToNextPlayer(t *testing.T) {
+	g := benchedGame(t)
+	must(t)(g.KnockOut(state.P1, state.ActorClaude, state.Loc{Seat: state.P2, Zone: state.Active}))
+	must(t)(g.TakePrize(state.P1, state.ActorClaude, -1))
+	res, err := g.EndTurn(state.P1, state.ActorClaude)
+	if err != nil {
+		t.Fatalf("assistant ends its turn with p2's Active empty: %v, want it to go through", err)
+	}
+	if !hasWarning(res.Warnings, "p2 has no Active Pokémon: they promote a Benched Pokémon (switch) before anything else this turn") {
+		t.Fatalf("end turn warned %v, want the promotion reminder", res.Warnings)
+	}
+	if st := g.State(); st.Current != state.P2 || !st.Sides[state.P2].Active.Empty() {
+		t.Fatalf("after the assistant's end of turn: current %s, p2 Active empty %v; want p2 to move with its Active empty", st.Current, st.Sides[state.P2].Active.Empty())
+	}
+	if _, err := g.EndTurn(state.P2, state.ActorHuman); err == nil || !strings.Contains(err.Error(), "must promote") {
+		t.Fatalf("p2 ends its own turn without promoting: %v, want a refusal", err)
+	}
+	must(t)(g.Switch(state.P2, state.ActorHuman, 0))
+	if _, err := g.EndTurn(state.P2, state.ActorHuman); err != nil {
+		t.Fatalf("p2 ends its turn after promoting: %v", err)
+	}
+}
+
 // The turn cannot end while a player must promote or is owed prizes; taking
 // the last prize ends the game.
 func TestEndTurnChecksAndGameOver(t *testing.T) {
@@ -233,5 +260,62 @@ func TestEndTurnChecksAndGameOver(t *testing.T) {
 	}
 	if w, _ := g.State().Winner(); w != state.P2 {
 		t.Fatalf("winner %q, want p2", w)
+	}
+}
+
+// BranchLog reads another branch without moving the board, so the
+// assistant can read the real game while the player is on a practice
+// branch.
+func TestBranchLogLeavesBoard(t *testing.T) {
+	g := benchedGame(t)
+	fork := g.Head()
+	must(t)(g.KnockOut(state.P1, state.ActorHuman, state.Loc{Seat: state.P2, Zone: state.Active}))
+	mainHead := g.Head()
+	if _, err := g.Rewind(fork, "practice"); err != nil {
+		t.Fatal(err)
+	}
+
+	lines, err := g.BranchLog("main", fork, "", "test", "claude")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(lines) == 0 || lines[len(lines)-1].ID != mainHead {
+		t.Fatalf("main's log after the fork: %v, want it to end at event %d", lines, mainHead)
+	}
+	if g.Branch() != "practice" || g.Head() != fork {
+		t.Fatalf("reading main moved the board to %s@%d, want practice@%d", g.Branch(), g.Head(), fork)
+	}
+	if cur, err := g.BranchLog("", fork, "", "test", "claude"); err != nil || len(cur) != 0 {
+		t.Fatalf("current branch's log after the fork: %v, %v; want no events", cur, err)
+	}
+	if _, err := g.BranchLog("nope", 0, "", "test", "claude"); err == nil || !strings.Contains(err.Error(), "no branch") {
+		t.Fatalf("unknown branch: %v, want a refusal", err)
+	}
+}
+
+// A turn that ended with prizes untaken (the board's reminder can be
+// turned off) leaves the debt readable, and the player may take those
+// prizes on the opponent's turn, even in play mode; once paid, the turn
+// lock applies again.
+func TestLatePrizes(t *testing.T) {
+	g := benchedGame(t)
+	must(t)(g.KnockOut(state.P1, state.ActorHuman, state.Loc{Seat: state.P2, Zone: state.Active}))
+	must(t)(g.Switch(state.P2, state.ActorHuman, 0))
+	must(t)(g.EndTurnWith(state.P1, state.ActorHuman, EndTurnOptions{IgnorePrizes: true}))
+	debts := g.PrizesOwedLastTurn()
+	if len(debts) != 1 || debts[0] != (PrizeDebt{Seat: state.P1, Owed: 1, Taken: 0}) {
+		t.Fatalf("debts after a turn ended with a prize untaken: %+v, want p1 owed 1", debts)
+	}
+	if err := g.SetMode(ModePlay); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := g.TakePrize(state.P1, state.ActorHuman, -1); err != nil {
+		t.Fatalf("late prize on p2's turn in play mode: %v, want allowed", err)
+	}
+	if debts := g.PrizesOwedLastTurn(); len(debts) != 0 {
+		t.Fatalf("debts after the late prize: %+v, want none", debts)
+	}
+	if _, err := g.TakePrize(state.P1, state.ActorHuman, -1); err == nil {
+		t.Fatal("a prize beyond the debt on p2's turn in play mode went through, want the turn lock")
 	}
 }

@@ -911,3 +911,44 @@ func TestStadiumLoneHalf(t *testing.T) {
 		t.Errorf("Stadium moves %+v, want a single play and its replacement", mv)
 	}
 }
+
+// Some logs number their turn headers ("Turn # 2 - <name>'s Turn", the
+// number shared by both players' turns in a round). They import exactly
+// as the plain headers do.
+func TestNumberedTurnHeaders(t *testing.T) {
+	entries, games := loadCorpus(t)
+	g := games[0]
+	text, err := os.ReadFile(filepath.Join(corpus, g.File))
+	if err != nil {
+		t.Fatal(err)
+	}
+	plain, err := Import(string(text), Options{MyDeck: entries, Seed: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(string(text), "\n")
+	first, round := "", 0
+	for i, l := range lines {
+		m := turnRe.FindStringSubmatch(l)
+		if m == nil || strings.HasPrefix(l, " ") || strings.HasPrefix(l, "-") {
+			continue
+		}
+		if first == "" {
+			first = m[1]
+		}
+		if m[1] == first {
+			round++
+		}
+		lines[i] = fmt.Sprintf("Turn # %d - %s", round, l)
+	}
+	if round == 0 {
+		t.Fatal("no turn headers in the corpus log")
+	}
+	numbered, err := Import(strings.Join(lines, "\n"), Options{MyDeck: entries, Seed: 1})
+	if err != nil {
+		t.Fatalf("numbered headers: %v", err)
+	}
+	if a, b := len(plain.Events()), len(numbered.Events()); a != b {
+		t.Fatalf("numbered headers gave %d events, plain %d", b, a)
+	}
+}

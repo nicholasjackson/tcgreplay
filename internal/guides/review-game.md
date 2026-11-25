@@ -12,8 +12,9 @@ A review has two parts. First a **turn-by-turn analysis**: every one of the play
 - **Rate decisions, not outcomes.** Distinguish a **poor decision** from a **bad outcome**: a correct play that lost to variance is not an error, and a lucky one is still a mistake.
 - **Put the board where you are talking.** When you practise a turn, `rewind` to the start of it on a branch named for the turn and the player whose turn it is (`review-t2-p2`), so the playmat and its timeline show that turn rather than the end of the game. Never just tell the player which timeline header to click. During the analysis itself, leave the board alone: the findings you record on the main branch (step 3) put each verdict on the timeline.
 - **Name turns as players do.** Turn N counts both players: it is the first player's Nth turn and the second player's Nth turn, the way the timeline and the log show it (`T2 p2`). Always say whose turn it is: "turn 2, your turn" or "turn 2, <opponent>'s turn".
-- **Check the current branch before you move anything.** Branch switches are shared with the player's browser; `list_branches` first, and never make test moves on a branch the player is using.
-- **Card text from `card_text`**, never memory. Quote the numbers you rely on: HP, attack costs, damage, Weakness, Resistance, Tool effects.
+- **Check the current branch before you move anything.** Branch switches are shared with the player's browser; `list_branches` first, and never make test moves on a branch the player is using. Never `checkout` another branch while the player is on the board, even to read it: the switch shows in their browser. Read another branch with `get_log` and its `branch` argument instead.
+- **Card text from `card_text`**, never memory. Quote the numbers you rely on: HP, attack costs, damage, Weakness, Resistance, Tool effects. When an effect scales or targets, restate in your own words whose cards it counts or hits ("counts the cards in your opponent's hand") before you build advice on it.
+- **The log shows actions, not knowledge or intent.** Before marking a `Mistake`, check what the player could have known: prizes they had seen, cards already revealed. If a play looks odd, ask why in one line rather than assume. Credit deliberate plays as deliberate. A play with a sound reason that was wrong in this spot is still a mistake, but its principle should address the reason ("check their Active's cheapest attack before hedging"), not the action.
 - **Hidden information is an assumption.** The opponent's unseen cards come from an assumed list: say "they had" only for cards the log proves, "they likely had" otherwise.
 
 ## 1. Read the game
@@ -26,8 +27,20 @@ Read the game with `get_log` (view `coach` shows what the player could see; `rev
 - Damaged or multi-prize Pokémon left where the opponent's gust could reach them.
 - Prize-race swings: the turn where the prizes needed to win changed by two or more.
 - Attacks short of a knockout by a small amount (a Tool, a boost, Weakness misapplied).
+- Plays that added to the board (evolving, benching, attaching to a Benched Pokémon). Ask what the opponent's gust does to it next turn: a Mega that cannot attack this turn is 3 prizes on a plate for Boss's Orders, and a 2-prize Benched Pokémon is the same at lower HP. When the opponent needs exactly the prizes that Pokémon gives up, the play loses.
 
-Before calling anything a mistake, check the better line: it is legal, and the numbers reach (count damage in order: attacker bonuses, then Weakness doubles, then Resistance subtracts; Tools and Stadiums change HP). If you cannot show a concrete better line, the turn is at most worth examining.
+### Check a line is playable
+
+Before you call anything a mistake or suggest a line, prove it was playable that turn with only what the player had. The other guides use this same check.
+
+- **Energy:** one attachment per turn. Count what is already on the attacker, plus that one.
+- **Getting the attacker Active:** the retreat cost paid from attached Energy, at most one retreat per turn; or Switch, Air Balloon or a gust still in hand or reachable. Check effects that stop retreating.
+- **Supporter:** one per turn, and none for the player going first on their first turn. If the line uses a Supporter, nothing else in it can be one.
+- **Locks:** "can't use this attack next turn" unless the attacker went to the Bench and back; Item lock; protection on the target (no damage from Basic Pokémon, from ex, and the like).
+- **Stadium:** one per turn.
+- **The numbers:** HP from `card_text`, plus HP Tools; damage in order: attacker bonuses, then Weakness doubles, then Resistance subtracts.
+
+If any of these fails, the line does not exist: say so instead of suggesting it. If you cannot show a concrete better line, the turn is at most worth examining.
 
 ## 2. Turn-by-turn analysis
 
@@ -35,7 +48,7 @@ In one reply, go through every one of the player's turns in game order. For each
 
 - **A heading** with the turn, whose it is and a few words of verdict: "Turn 3, your turn: good recovery".
 - **What they did**, in a sentence or two: the plays that mattered, not every card.
-- **Your assessment**: why it was right, or what was better and why, naming the alternative concretely (the card, the target, the order). Mention the opponent's turn only where it set up the player's choice.
+- **Your assessment**: why it was right, or what was better and why, naming the alternative concretely (the card, the target, the order). Test the alternative against the opponent's best reply before you recommend it. Mention the opponent's turn only where it set up the player's choice.
 - **A verdict**, one of: `Strong play`, `Good`, `Reasonable`, `Worth examining`, `Mistake`, `Dealt` (forced by the draw or the prizes, not a mistake).
 
 Keep it tight: a turn with no real choice gets one line. Then close the analysis in a few lines: your overall assessment, whether the result was earned, gifted, dealt or played, what went well (name real good plays), and any principle that showed up more than once, since that is the thing to practise.
@@ -73,8 +86,9 @@ Add that the player can pick any other turn, or stop here, and ask which they wo
 
 1. `rewind` to the start of the turn (after the turn's draw) on a `review-t<N>-<seat>` branch (`<seat>` is `p1` or `p2`, the player whose turn it is).
 2. Set the scene in a few lines: both boards, the player's hand, prizes, what the opponent threatens next turn. Do not repeat your verdict yet.
-3. Ask: "It's turn N, your turn. What's your play? Play it on the board, or tell me." Then, in that same reply, call `wait_for_turn` with their seat straight away. Keep calling it, acting on any `decide` outcome (a promotion or a card the playmat could not apply) and handing the turn back in the same reply, until it reports the turn ended, then read their moves from the result. The playmat carries out your side of shuffle-hand-and-draw cards the player uses (Judge, Iono and the like) by itself and lists them in `applied`: do not do them again. A move that does not end the turn is not a cue to post. Never ask them to say they are done or to end their turn. If they answer in chat instead, take their play from there.
-4. Compare their play with the line from your analysis. If theirs is as good or better, say so: a practice that finds the player was right is still a good practice.
+3. Ask: "It's turn N, your turn. What's your play? Play it on the board, or tell me.", with the board link from the import result in that same message (the player may be on another device or have closed the tab). Then, in that same reply, call `wait_for_turn` with their seat straight away. Keep calling it, acting on any `decide` outcome (a promotion or a card the playmat could not apply) and handing the turn back in the same reply, until it reports the turn ended, then read their moves from the result. The playmat carries out your side of shuffle-hand-and-draw cards the player uses (Judge, Iono and the like) by itself and lists them in `applied`: do not do them again. A move that does not end the turn is not a cue to post. Never ask them to say they are done or to end their turn. If they answer in chat instead, take their play from there.
+4. Check each move as it arrives against [Check a line is playable](#check-a-line-is-playable). If a move is illegal, say which rule it breaks in one line, `undo` it, and keep waiting: an illegal line on a practice branch makes the comparison meaningless. If the turn ended with prizes untaken, the `wait_for_turn` result says so and how to take them; tell the player which cards they got.
+5. Compare their play with the line from your analysis. If theirs is as good or better, say so: a practice that finds the player was right is still a good practice.
 
 ### Test the alternative
 
@@ -83,7 +97,10 @@ Then play the scenarios out on the board:
 - Play the better line on its own branch (`review-t<N>-<seat>-alt`) with the normal verbs, one move per action, so the player can press Play on the playmat and watch it at their own speed. Use `annotate` on a key event to explain the reasoning; notes show as captions during playback.
 - Test the opponent's best reply, not their worst. `sample_hidden` after rewinding to the same event deals plausible hidden cards; try two or three samples on separate branches before claiming a line is safe.
 - If the alternative turns out no better, say so, and change your verdict.
+- Every line you play yourself passes the same playable check as the player's.
 - To play a line out with the player taking one seat, play the other seat's turns yourself and, after each `end_turn`, call `wait_for_turn` on the player's seat; reply when it reports their turn ended. Never ask them to say "done".
+- Playing the opponent's side: while the branch matches the real game, play the opponent's real moves. Once it diverges, play their best line from what they could see: take the biggest prize swing, gust 2-prize and damaged Benched Pokémon, and finish the game when it can be finished. Enforce their rules as strictly as the player's (Bench size when a Stadium that raised it leaves, one Supporter, attack costs). A soft opponent teaches the wrong lesson.
+- If your attack knocks out the player's Active, `end_turn` still goes through with a warning, and the player promotes at the start of their turn. In review mode, ask them which Pokémon to promote; they can do it on the board.
 
 Finish the turn with its one principle, and `annotate` the finding's event on the main branch again with what the practice showed and the branch names to open. Then offer the turns left on the list, or to stop.
 
